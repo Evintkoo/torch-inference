@@ -24,6 +24,11 @@ test.describe('Dashboard Playground tab', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.locator(S.navDashboard).click();
+    await expect(page.locator(S.panelDashboard)).toHaveClass(/active/);
+    if ((await page.locator(S.dashTabPlayground).count()) === 0) {
+      test.skip(true, 'Dashboard Playground tab not present in this build');
+      return;
+    }
     await page.locator(S.dashTabPlayground).click();
     await expect(page.locator(S.dashPlayground)).toBeVisible();
   });

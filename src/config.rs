@@ -75,12 +75,14 @@ pub struct ServerConfig {
     #[serde(default)]
     pub shutdown_timeout_secs: u64,
     /// Maximum JSON request body size (MiB). Default: 50.
-    #[serde(default)]
+    #[serde(default = "default_json_body_limit_mb")]
     pub json_body_limit_mb: usize,
     /// Timeout for outbound proxy requests to microservices (seconds). Default: 300.
     #[serde(default)]
     pub proxy_timeout_secs: u64,
 }
+
+fn default_json_body_limit_mb() -> usize { 50 }
 
 /// Microservice host/port configuration. The main server spawns these as child
 /// processes and proxies requests to them.

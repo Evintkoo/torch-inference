@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Netra RT — Torch Inference</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><rect width='32' height='32' rx='0' fill='%23ff4800'/><text x='4' y='23' font-family='sans-serif' font-size='16' font-weight='700' fill='white'>NR</text></svg>" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><rect width='32' height='32' rx='0' fill='%230066F5'/><text x='4' y='23' font-family='sans-serif' font-size='16' font-weight='700' fill='white'>NR</text></svg>" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap" rel="stylesheet" />
@@ -18,10 +18,10 @@
     --surface2:  #f8f8f8;
     --border:    #e2e2e2;
     --border2:   #eaeaea;
-    --accent:    #ff4800;
-    --accent-hi: #ff6a33;
-    --accent-lo: #cc3a00;
-    --accent-bg: #fff3ee;
+    --accent:    #0066F5;
+    --accent-hi: #3385f7;
+    --accent-lo: #0052C4;
+    --accent-bg: #F0F6FE;
     --green:     #3ABC3F;
     --green-bg:  #F3FBF4;
     --green-text:#2E9632;
@@ -80,7 +80,7 @@
     display: inline-flex; align-items: center; gap: 5px;
     font-size: 12px; padding: 3px 9px; border-radius:0;
     background: var(--accent-bg); color: var(--accent);
-    border: 1px solid rgba(255,72,0,.2);
+    border: 1px solid rgba(0,102,245,.2);
   }
   .dot {
     width: 6px; height: 6px; border-radius: 50%;
@@ -172,7 +172,7 @@
   input[type=text]:focus, input[type=number]:focus, select:focus {
     border-color: var(--accent);
     outline: none;
-    box-shadow: 0 0 0 2px rgba(255,72,0,.15);
+    box-shadow: 0 0 0 2px rgba(0,102,245,.15);
   }
   textarea {
     width: 100%; min-height: 90px;
@@ -188,7 +188,7 @@
   textarea:focus {
     border-color: var(--accent);
     outline: none;
-    box-shadow: 0 0 0 2px rgba(255,72,0,.15);
+    box-shadow: 0 0 0 2px rgba(0,102,245,.15);
   }
   .field { display: flex; flex-direction: column; gap: 0; margin-bottom: 12px; }
   .field:last-child { margin-bottom: 0; }
@@ -212,7 +212,7 @@
     border: 1px solid #0D0E0F;
   }
   .btn-primary:hover:not(:disabled) {
-    background: linear-gradient(90deg, #0D0E0F, #FF3131, #ff4800);
+    background: linear-gradient(90deg, #0D0E0F, #FF3131, #0066F5);
     background-size: 300% 300%;
     animation: gradientMove 3s ease infinite;
   }
@@ -278,7 +278,7 @@
     padding: 2px 7px; border-radius:0; flex-shrink: 0;
   }
   .method.get  { background: #F3FBF4; color: #2E9632; }
-  .method.post { background: #fff3ee; color: #cc3a00; }
+  .method.post { background: #F0F6FE; color: #0052C4; }
   .ep-path { font-family: var(--mono); color: var(--text); flex: 1; }
   .ep-desc { color: var(--text-muted); }
 
@@ -337,7 +337,7 @@
   }
   .tab.active {
     background: var(--accent-bg); color: var(--accent);
-    border: 1px solid rgba(255,72,0,.2);
+    border: 1px solid rgba(0,102,245,.2);
   }
   .tab-icon { font-size: 14px; font-style: normal; }
   .subtab-bar {
@@ -422,7 +422,7 @@
   .dl-task-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
   .dl-task-name { font-size: 13px; font-weight: 500; font-family: var(--mono); }
   .dl-status-badge { font-size: 11px; padding: 2px 8px; border-radius:0; }
-  .dl-status-badge.downloading { background: #fff3ee; color: #cc3a00; }
+  .dl-status-badge.downloading { background: #F0F6FE; color: #0052C4; }
   .dl-status-badge.completed   { background: #F3FBF4; color: #2E9632; }
   .dl-status-badge.failed      { background: #FFF3F3; color: #CC2727; }
   .dl-status-badge.pending     { background: #FFFAF3; color: #CC8727; }
@@ -486,7 +486,7 @@
   .dl-model-sub  { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
   .dl-model-status { font-size: 11px; padding: 2px 8px; border-radius:0; flex-shrink: 0; }
   .dl-model-status.loaded   { background: #F3FBF4; color: #2E9632; }
-  .dl-model-status.cached   { background: #fff3ee; color: #cc3a00; }
+  .dl-model-status.cached   { background: #F0F6FE; color: #0052C4; }
   .dl-model-status.unknown  { background: var(--bg); color: var(--text-muted); }
 
   /* Model select row (select + refresh button) */
@@ -528,8 +528,8 @@
     border-top: 1px solid var(--border); transition: background .1s;
   }
   .ced-item:first-child { border-top: none; }
-  .ced-item:hover { background: var(--hover, rgba(255,72,0,.06)); }
-  .ced-item.ced-selected { background: rgba(255,72,0,.1); color: var(--accent); }
+  .ced-item:hover { background: var(--hover, rgba(0,102,245,.06)); }
+  .ced-item.ced-selected { background: rgba(0,102,245,.1); color: var(--accent); }
   .ced-item-name { flex: 1; min-width: 0; }
   .ced-check { font-size: 13px; color: var(--accent); width: 14px; flex-shrink: 0; }
   .ced-badge {
@@ -550,10 +550,10 @@
     --surface2:  #222222;
     --border:    #2a2a2a;
     --border2:   #242424;
-    --accent:    #ff4800;
-    --accent-hi: #ff6a33;
-    --accent-lo: #cc3a00;
-    --accent-bg: #2a1200;
+    --accent:    #0066F5;
+    --accent-hi: #3385f7;
+    --accent-lo: #0052C4;
+    --accent-bg: #0a1929;
     --green:     #3abc3f;
     --green-bg:  #0d2410;
     --green-text:#4ecb54;
@@ -1495,7 +1495,7 @@
             <div class="card-title">Resource Usage</div>
             <div class="res-row">
               <span class="res-name">CPU</span>
-              <div class="res-bar-track"><div class="res-bar-fill" id="bar-cpu" style="width:0%;background:#ff4800"></div></div>
+              <div class="res-bar-track"><div class="res-bar-fill" id="bar-cpu" style="width:0%;background:#0066F5"></div></div>
               <span class="res-val" id="val-cpu">—</span>
             </div>
             <div class="res-row">
@@ -2185,19 +2185,19 @@ function updateSparkline(rps) {
   sparkData.forEach((v, i) => ctx.lineTo(i * step, H - (v / max) * (H - 6)));
   ctx.lineTo(W, H); ctx.closePath();
   const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, 'rgba(255,72,0,0.18)');
-  grad.addColorStop(1, 'rgba(255,72,0,0.02)');
+  grad.addColorStop(0, 'rgba(0,102,245,0.18)');
+  grad.addColorStop(1, 'rgba(0,102,245,0.02)');
   ctx.fillStyle = grad; ctx.fill();
   ctx.beginPath();
   sparkData.forEach((v, i) => {
     const x = i * step, y = H - (v / max) * (H - 6);
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
   });
-  ctx.strokeStyle = '#ff4800'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.strokeStyle = '#0066F5'; ctx.lineWidth = 1.5; ctx.stroke();
   const lx = (sparkData.length - 1) * step;
   const ly = H - (sparkData[sparkData.length - 1] / max) * (H - 6);
   ctx.beginPath(); ctx.arc(lx, ly, 3, 0, Math.PI * 2);
-  ctx.fillStyle = '#ff4800'; ctx.fill();
+  ctx.fillStyle = '#0066F5'; ctx.fill();
 }
 
 function updateResourceBars(m, gpuList) {
@@ -4023,7 +4023,7 @@ function drawDetections(detections) {
   const canvas = document.getElementById('detect-canvas');
   const ctx    = canvas.getContext('2d');
   ctx.drawImage(detectImgEl, 0, 0);
-  const palette = ['#FF3131','#ff4800','#3ABC3F','#FFA931','#CC27CC','#27CCCC','#CC7027','#2762CC'];
+  const palette = ['#FF3131','#0066F5','#3ABC3F','#FFA931','#CC27CC','#27CCCC','#CC7027','#2762CC'];
   detections.forEach(d => {
     const hash  = [...(d.class_name || '')].reduce((a, c) => a + c.charCodeAt(0), 0);
     const color = palette[hash % palette.length];
@@ -4235,7 +4235,7 @@ function detStartFrameLoop() {
   }, Math.round(1000 / fps));
 }
 
-const DET_PALETTE = ['#FF3131','#ff4800','#3ABC3F','#FFA931','#CC27CC','#27CCCC'];
+const DET_PALETTE = ['#FF3131','#0066F5','#3ABC3F','#FFA931','#CC27CC','#27CCCC'];
 
 // Pure draw: clears the overlay canvas and draws bboxes (no video copy — video
 // is visible behind the transparent canvas via the <video> element).
@@ -4582,7 +4582,7 @@ function stopPgAudio() { if (pgAudioAbort) { pgAudioAbort.abort(); pgAudioAbort 
 const API_REF = [
   {
     group: 'TTS — Text-to-Speech',
-    color: '#ff4800',
+    color: '#0066F5',
     icon: 'ri-music-2-line',
     endpoints: [
       {
@@ -4923,7 +4923,7 @@ function renderApiRef() {
 /* WS method badge style */
 (function addWsStyle() {
   const s = document.createElement('style');
-  s.textContent = '.method.ws{background:var(--accent-bg);color:var(--accent);border:1px solid rgba(255,72,0,.25)}';
+  s.textContent = '.method.ws{background:var(--accent-bg);color:var(--accent);border:1px solid rgba(0,102,245,.25)}';
   document.head.appendChild(s);
 }());
 
