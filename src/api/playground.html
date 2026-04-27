@@ -1495,7 +1495,7 @@
             <div class="card-title">Resource Usage</div>
             <div class="res-row">
               <span class="res-name">CPU</span>
-              <div class="res-bar-track"><div class="res-bar-fill" id="bar-cpu" style="width:0%;background:#0066F5"></div></div>
+              <div class="res-bar-track"><div class="res-bar-fill" id="bar-cpu" style="width:0%;background:#ff4800"></div></div>
               <span class="res-val" id="val-cpu">—</span>
             </div>
             <div class="res-row">
@@ -2185,19 +2185,19 @@ function updateSparkline(rps) {
   sparkData.forEach((v, i) => ctx.lineTo(i * step, H - (v / max) * (H - 6)));
   ctx.lineTo(W, H); ctx.closePath();
   const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, 'rgba(0,102,245,0.18)');
-  grad.addColorStop(1, 'rgba(0,102,245,0.02)');
+  grad.addColorStop(0, 'rgba(255,72,0,0.18)');
+  grad.addColorStop(1, 'rgba(255,72,0,0.02)');
   ctx.fillStyle = grad; ctx.fill();
   ctx.beginPath();
   sparkData.forEach((v, i) => {
     const x = i * step, y = H - (v / max) * (H - 6);
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
   });
-  ctx.strokeStyle = '#0066F5'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.strokeStyle = '#ff4800'; ctx.lineWidth = 1.5; ctx.stroke();
   const lx = (sparkData.length - 1) * step;
   const ly = H - (sparkData[sparkData.length - 1] / max) * (H - 6);
   ctx.beginPath(); ctx.arc(lx, ly, 3, 0, Math.PI * 2);
-  ctx.fillStyle = '#0066F5'; ctx.fill();
+  ctx.fillStyle = '#ff4800'; ctx.fill();
 }
 
 function updateResourceBars(m, gpuList) {
@@ -4023,7 +4023,7 @@ function drawDetections(detections) {
   const canvas = document.getElementById('detect-canvas');
   const ctx    = canvas.getContext('2d');
   ctx.drawImage(detectImgEl, 0, 0);
-  const palette = ['#FF3131','#0066F5','#3ABC3F','#FFA931','#CC27CC','#27CCCC','#CC7027','#2762CC'];
+  const palette = ['#FF3131','#ff4800','#3ABC3F','#FFA931','#CC27CC','#27CCCC','#CC7027','#2762CC'];
   detections.forEach(d => {
     const hash  = [...(d.class_name || '')].reduce((a, c) => a + c.charCodeAt(0), 0);
     const color = palette[hash % palette.length];
@@ -4235,7 +4235,7 @@ function detStartFrameLoop() {
   }, Math.round(1000 / fps));
 }
 
-const DET_PALETTE = ['#FF3131','#0066F5','#3ABC3F','#FFA931','#CC27CC','#27CCCC'];
+const DET_PALETTE = ['#FF3131','#ff4800','#3ABC3F','#FFA931','#CC27CC','#27CCCC'];
 
 // Pure draw: clears the overlay canvas and draws bboxes (no video copy — video
 // is visible behind the transparent canvas via the <video> element).
@@ -4582,7 +4582,7 @@ function stopPgAudio() { if (pgAudioAbort) { pgAudioAbort.abort(); pgAudioAbort 
 const API_REF = [
   {
     group: 'TTS — Text-to-Speech',
-    color: '#0066F5',
+    color: '#ff4800',
     icon: 'ri-music-2-line',
     endpoints: [
       {
