@@ -55,11 +55,7 @@ test.describe('Dashboard', () => {
     await expect(page.locator(S.gpuDeviceInfo)).toBeAttached();
   });
 
-  test('Playground tab interaction (skip if not present)', async ({ page }) => {
-    if ((await page.locator(S.dashTabPlayground).count()) === 0) {
-      test.skip(true, 'Dashboard Playground tab not present in this build');
-      return;
-    }
+  test('Playground tab shows playground, hides overview', async ({ page }) => {
     await page.locator(S.dashTabPlayground).click();
     await expect(page.locator(S.dashPlayground)).toBeVisible();
     await expect(page.locator(S.dashOverview)).toBeHidden();

@@ -1458,7 +1458,9 @@
         <button class="tab active" id="dash-tab-overview"    onclick="switchDashTab('overview')">
           <i class="tab-icon ri-bar-chart-line"></i> Overview
         </button>
-
+        <button class="tab" id="dash-tab-playground" onclick="switchDashTab('playground')">
+          <i class="tab-icon ri-gamepad-line"></i> Playground
+        </button>
       </div>
 
       <!-- ── Overview ─────────────────────────────────────── -->
@@ -1547,7 +1549,87 @@
       </div><!-- /#dash-overview -->
 
       <!-- ── Playground ────────────────────────────────────── -->
+      <div id="dash-playground" style="display:none">
 
+        <div class="tab-bar" style="margin-bottom:16px">
+          <button class="tab active" id="pg-tab-tts"        onclick="switchPgTab('tts',this)">TTS</button>
+          <button class="tab"        id="pg-tab-classify"   onclick="switchPgTab('classify',this)">Classify</button>
+          <button class="tab"        id="pg-tab-llm"        onclick="switchPgTab('llm',this)">LLM Chat</button>
+          <button class="tab"        id="pg-tab-completion" onclick="switchPgTab('completion',this)">Completion</button>
+        </div>
+
+        <!-- TTS sub-panel -->
+        <div id="pg-tts">
+          <div class="field" style="margin-bottom:10px">
+            <label>Text</label>
+            <textarea id="pg-tts-text" rows="4" style="width:100%" placeholder="Enter text to synthesise…"></textarea>
+          </div>
+          <div class="dl-form-row" style="margin-bottom:10px">
+            <div class="field">
+              <label>Engine</label>
+              <select id="pg-tts-engine"><option value="">auto</option></select>
+            </div>
+            <div class="field">
+              <label>Voice</label>
+              <select id="pg-tts-voice"><option value="">default</option></select>
+            </div>
+            <div class="field slim">
+              <label>Speed</label>
+              <input type="number" id="pg-tts-speed" value="1.0" step="0.1" min="0.5" max="2.0" style="width:70px"/>
+            </div>
+            <div class="field" style="flex:0 0 auto;align-self:flex-end">
+              <button class="btn btn-primary" id="pg-tts-btn" onclick="runPgTTS()">Synthesise</button>
+              <button class="btn" id="pg-tts-stop-btn" onclick="stopPgTTS()" style="margin-left:6px">Stop</button>
+            </div>
+          </div>
+          <div id="pg-tts-no-engine-banner" style="display:none;color:var(--warn);margin-bottom:8px">No TTS engine loaded.</div>
+          <div class="status-box" id="pg-tts-status">waiting…</div>
+          <div id="pg-tts-audio-wrap" style="display:none;margin-top:8px">
+            <audio id="pg-tts-audio" controls style="width:100%"></audio>
+          </div>
+        </div><!-- /#pg-tts -->
+
+        <!-- Classify sub-panel -->
+        <div id="pg-classify" style="display:none">
+          <div class="pg-dropzone" id="pg-dropzone" style="border:2px dashed var(--border2);border-radius:8px;padding:32px;text-align:center;cursor:pointer;margin-bottom:10px"
+               onclick="document.getElementById('pg-img-file').click()"
+               ondragover="event.preventDefault();this.classList.add('over')"
+               ondragleave="this.classList.remove('over')"
+               ondrop="handlePgDrop(event)">
+            Drop image here or click to upload
+          </div>
+          <input type="file" id="pg-img-file" accept="image/*" style="display:none"
+                 onchange="handlePgFile(this.files)"/>
+          <img id="pg-img-preview" style="display:none;max-width:180px;border-radius:6px;margin-bottom:8px"/>
+          <div class="dl-form-row" style="margin-bottom:10px;align-items:flex-end">
+            <div class="field slim"><label>Top-K</label><input type="number" id="pg-cls-topk" value="5" min="1" max="20" style="width:60px"/></div>
+            <div class="field slim"><label>Width</label><input type="number" id="pg-cls-w" value="224" min="32" max="1024" style="width:70px"/></div>
+            <div class="field slim"><label>Height</label><input type="number" id="pg-cls-h" value="224" min="32" max="1024" style="width:70px"/></div>
+            <div class="field" style="flex:0 0 auto">
+              <button class="btn btn-primary" id="pg-cls-btn" onclick="runPgClassify()" disabled>Classify</button>
+            </div>
+          </div>
+          <div class="status-box" id="pg-cls-out">waiting for image…</div>
+        </div><!-- /#pg-classify -->
+
+        <!-- LLM Chat sub-panel -->
+        <div id="pg-llm" style="display:none">
+          <div id="pg-chat-history" style="min-height:120px;max-height:320px;overflow-y:auto;border:1px solid var(--border2);border-radius:8px;padding:12px;margin-bottom:12px"></div>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="pg-chat-input" placeholder="Type a message…" style="flex:1"
+                   onkeydown="if(event.key==='Enter')document.getElementById('pg-chat-btn').click()"/>
+            <button class="btn btn-primary" id="pg-chat-btn" onclick="runPgChat()">Send</button>
+          </div>
+        </div><!-- /#pg-llm -->
+
+        <!-- Completion sub-panel -->
+        <div id="pg-completion" style="display:none">
+          <textarea id="pg-cmp-prompt" rows="6" style="width:100%;margin-bottom:8px" placeholder="Enter a prompt…"></textarea>
+          <button class="btn btn-primary" id="pg-cmp-btn" onclick="runPgCompletion()">Complete</button>
+          <div class="status-box" id="pg-cmp-out" style="margin-top:8px">waiting…</div>
+        </div><!-- /#pg-completion -->
+
+      </div><!-- /#dash-playground -->
 
     </section><!-- /#panel-dashboard -->
 
@@ -2350,8 +2432,75 @@ function showDlError(msg) {
 
 /* ── Dashboard tab switching ───────────────────────────── */
 function switchDashTab(tab) {
-  const overview = document.getElementById('dash-overview');
-  if (overview) overview.style.display = '';
+  const overview    = document.getElementById('dash-overview');
+  const playground  = document.getElementById('dash-playground');
+  if (overview)   overview.style.display   = tab === 'overview'   ? '' : 'none';
+  if (playground) playground.style.display = tab === 'playground' ? '' : 'none';
+  document.querySelectorAll('#panel-dashboard > .tab-bar .tab').forEach(b => {
+    b.classList.toggle('active', b.id === 'dash-tab-' + tab);
+  });
+}
+
+function switchPgTab(tab, btn) {
+  ['tts','classify','llm','completion'].forEach(t => {
+    const el = document.getElementById('pg-' + t);
+    if (el) el.style.display = t === tab ? '' : 'none';
+  });
+  document.querySelectorAll('#dash-playground > .tab-bar .tab').forEach(b => {
+    b.classList.toggle('active', b === btn);
+  });
+}
+
+/* ── Playground LLM Chat ─────────────────────────────── */
+async function runPgChat() {
+  const input = document.getElementById('pg-chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  const history = document.getElementById('pg-chat-history');
+  const uDiv = document.createElement('div');
+  uDiv.className = 'msg user';
+  uDiv.textContent = msg;
+  history.appendChild(uDiv);
+  history.scrollTop = history.scrollHeight;
+  input.value = '';
+  const btn = document.getElementById('pg-chat-btn');
+  btn.disabled = true;
+  try {
+    const res = await fetch('/v1/chat/completions', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({model:'default', messages:[{role:'user',content:msg}]})
+    });
+    const data = await safeJson(res);
+    const reply = data?.choices?.[0]?.message?.content ?? data?.error ?? JSON.stringify(data);
+    const aDiv = document.createElement('div');
+    aDiv.className = 'msg asst';
+    aDiv.textContent = reply;
+    history.appendChild(aDiv);
+    history.scrollTop = history.scrollHeight;
+  } catch(e) {
+    const eDiv = document.createElement('div');
+    eDiv.className = 'msg asst';
+    eDiv.textContent = 'Error: ' + e.message;
+    history.appendChild(eDiv);
+  } finally { btn.disabled = false; }
+}
+
+/* ── Playground Completion ───────────────────────────── */
+async function runPgCompletion() {
+  const prompt = document.getElementById('pg-cmp-prompt').value;
+  const btn    = document.getElementById('pg-cmp-btn');
+  btn.disabled = true;
+  setBox('pg-cmp-out', 'Generating…', 'stream');
+  try {
+    const res = await fetch('/v1/completions', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({model:'default', prompt, max_tokens: 200})
+    });
+    const data = await safeJson(res);
+    const text = data?.choices?.[0]?.text ?? data?.error ?? JSON.stringify(data);
+    setBox('pg-cmp-out', text || '(empty response)', 'ok');
+  } catch(e) { setBox('pg-cmp-out', 'Error: ' + e.message, 'error'); }
+  finally { btn.disabled = false; }
 }
 
 /* ── Playground TTS ─────────────────────────────────────── */

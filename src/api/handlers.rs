@@ -323,8 +323,17 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
             "/logs/{log_file}",
             web::delete().to(crate::api::logging::clear_log_file),
         )
+        // OpenAI-compatible v1 endpoints
+        .route("/v1/models", web::get().to(v1_list_models))
         .configure(crate::api::llm_proxy::configure_routes)
         .configure(crate::api::stt_proxy::configure_routes);
+}
+
+async fn v1_list_models() -> impl Responder {
+    HttpResponse::Ok().json(json!({
+        "object": "list",
+        "data": []
+    }))
 }
 
 #[cfg(test)]

@@ -1344,9 +1344,10 @@ mod tests {
     // These tests require a working ORT runtime and are therefore ignored in CI
     // environments where libonnxruntime.dylib is not installed.
 
-    #[ignore = "requires ORT runtime library (libonnxruntime.dylib)"]
-    #[tokio::test]
+    #[tokio::test(flavor = "current_thread")]
+    #[serial_test::serial]
     async fn test_initialize_defaults_runs_without_panic() {
+        crate::test_utils::ort_test_setup();
         // initialize_defaults logs warnings for missing models, returns Ok(())
         let manager = TTSManager::new(TTSManagerConfig::default());
         let result = manager.initialize_defaults().await;
@@ -1358,9 +1359,10 @@ mod tests {
         // The manager may have 0 or 1+ engines depending on what models are present
     }
 
-    #[ignore = "requires ORT runtime library (libonnxruntime.dylib)"]
-    #[tokio::test]
+    #[tokio::test(flavor = "current_thread")]
+    #[serial_test::serial]
     async fn test_initialize_defaults_engine_count_zero_or_positive() {
+        crate::test_utils::ort_test_setup();
         let manager = TTSManager::new(TTSManagerConfig::default());
         manager.initialize_defaults().await.unwrap();
         let stats = manager.get_stats();
@@ -1420,9 +1422,10 @@ mod tests {
     // returns Ok(()).  We exercise the full method body (lines 197-316) without
     // needing any real model files — every engine load attempt fails gracefully.
 
-    #[tokio::test]
-    #[ignore = "requires libonnxruntime.dylib"]
+    #[tokio::test(flavor = "current_thread")]
+    #[serial_test::serial]
     async fn test_initialize_defaults_returns_ok_when_no_models_present() {
+        crate::test_utils::ort_test_setup();
         // All engines will fail to load (no models on disk), but the method
         // must still return Ok(()) because each failure is caught by a match arm.
         let manager = TTSManager::new(TTSManagerConfig::default());
@@ -1434,9 +1437,10 @@ mod tests {
         );
     }
 
-    #[tokio::test]
-    #[ignore = "requires libonnxruntime.dylib"]
+    #[tokio::test(flavor = "current_thread")]
+    #[serial_test::serial]
     async fn test_initialize_defaults_engine_count_is_zero_or_positive_when_no_models() {
+        crate::test_utils::ort_test_setup();
         // Exercises the `engine_count == 0` branch at line 310 when no models exist.
         let manager = TTSManager::new(TTSManagerConfig::default());
         manager.initialize_defaults().await.unwrap();
@@ -1449,9 +1453,10 @@ mod tests {
         );
     }
 
-    #[tokio::test]
-    #[ignore = "requires libonnxruntime.dylib"]
+    #[tokio::test(flavor = "current_thread")]
+    #[serial_test::serial]
     async fn test_initialize_defaults_is_idempotent_no_panic() {
+        crate::test_utils::ort_test_setup();
         // Calling initialize_defaults twice should not panic.
         // On the second call, 'kokoro-onnx' may already be registered (if the
         // first call succeeded) and register_engine would fail — that Err is
@@ -1469,9 +1474,10 @@ mod tests {
         );
     }
 
-    #[tokio::test]
-    #[ignore = "requires libonnxruntime.dylib"]
+    #[tokio::test(flavor = "current_thread")]
+    #[serial_test::serial]
     async fn test_initialize_defaults_does_not_panic_on_missing_models() {
+        crate::test_utils::ort_test_setup();
         // This exercises lines 200-316: every individual engine loading attempt
         // with a non-existent model path is matched to its Err arm.
         let manager = TTSManager::new(TTSManagerConfig {
@@ -1485,9 +1491,10 @@ mod tests {
         assert!(result.is_ok());
     }
 
-    #[tokio::test]
-    #[ignore = "requires libonnxruntime.dylib"]
+    #[tokio::test(flavor = "current_thread")]
+    #[serial_test::serial]
     async fn test_initialize_defaults_stats_after_call() {
+        crate::test_utils::ort_test_setup();
         // After initialize_defaults, get_stats should reflect whatever was loaded
         // (likely 0 engines when models are absent) plus correct cache metadata.
         let manager = TTSManager::new(TTSManagerConfig::default());
@@ -1730,9 +1737,10 @@ mod tests {
     /// Covers lines 197-316: the full body of `initialize_defaults`.
     /// Every engine-load attempt either succeeds or is caught by a `match` arm.
     /// The function must return `Ok(())` regardless.
-    #[tokio::test]
-    #[ignore = "requires ORT (run with ORT_DYLIB_PATH=/opt/homebrew/lib/libonnxruntime.dylib)"]
+    #[tokio::test(flavor = "current_thread")]
+    #[serial_test::serial]
     async fn test_initialize_defaults_covers_all_engine_load_arms() {
+        crate::test_utils::ort_test_setup();
         let manager = TTSManager::new(TTSManagerConfig::default());
         // Lines 197-316 are executed here.
         let result = manager.initialize_defaults().await;
@@ -1748,9 +1756,10 @@ mod tests {
     /// Achieved by supplying a config whose default engine name won't be found
     /// and using a custom manager — but initialize_defaults always uses its own
     /// hardcoded paths, so we call it normally and accept either branch.
-    #[tokio::test]
-    #[ignore = "requires ORT (run with ORT_DYLIB_PATH=/opt/homebrew/lib/libonnxruntime.dylib)"]
+    #[tokio::test(flavor = "current_thread")]
+    #[serial_test::serial]
     async fn test_initialize_defaults_engine_count_branch_line_309() {
+        crate::test_utils::ort_test_setup();
         let manager = TTSManager::new(TTSManagerConfig::default());
         manager.initialize_defaults().await.unwrap();
         let stats = manager.get_stats();
@@ -1766,9 +1775,10 @@ mod tests {
     /// Exercises the non-zero engine-count branch (line 313).
     /// After initialize_defaults, at least one engine (e.g. kokoro, vits, bark)
     /// should be registered since their `new()` always returns Ok.
-    #[tokio::test]
-    #[ignore = "requires ORT (run with ORT_DYLIB_PATH=/opt/homebrew/lib/libonnxruntime.dylib)"]
+    #[tokio::test(flavor = "current_thread")]
+    #[serial_test::serial]
     async fn test_initialize_defaults_non_zero_engine_count_line_313() {
+        crate::test_utils::ort_test_setup();
         let manager = TTSManager::new(TTSManagerConfig::default());
         manager.initialize_defaults().await.unwrap();
         let stats = manager.get_stats();
@@ -1787,9 +1797,10 @@ mod tests {
     /// On machines without ORT the `Err` arm (line 208) is exercised.
     /// On machines with ORT and without model files the `Err` arm is exercised.
     /// On machines with ORT and with model files the `Ok` arm (line 207) is exercised.
-    #[tokio::test]
-    #[ignore = "requires ORT (run with ORT_DYLIB_PATH=/opt/homebrew/lib/libonnxruntime.dylib)"]
+    #[tokio::test(flavor = "current_thread")]
+    #[serial_test::serial]
     async fn test_initialize_defaults_kokoro_onnx_block_lines_201_208() {
+        crate::test_utils::ort_test_setup();
         let manager = TTSManager::new(TTSManagerConfig::default());
         // This call exercises lines 197-208 at minimum.
         let r = manager.initialize_defaults().await;
@@ -1798,9 +1809,10 @@ mod tests {
 
     /// Covers lines 212-219: kokoro (non-ONNX) engine load attempt.
     /// KokoroEngine::new always returns Ok, so line 217-218 (Ok arm) is exercised.
-    #[tokio::test]
-    #[ignore = "requires ORT (run with ORT_DYLIB_PATH=/opt/homebrew/lib/libonnxruntime.dylib)"]
+    #[tokio::test(flavor = "current_thread")]
+    #[serial_test::serial]
     async fn test_initialize_defaults_kokoro_block_lines_212_219() {
+        crate::test_utils::ort_test_setup();
         let manager = TTSManager::new(TTSManagerConfig::default());
         manager.initialize_defaults().await.unwrap();
         // KokoroEngine::new always returns Ok, so 'kokoro' should be registered.
@@ -1813,9 +1825,10 @@ mod tests {
 
     /// Covers lines 262-270: vits engine load attempt.
     /// VITSEngine::new always returns Ok, so line 268-269 (Ok arm) is exercised.
-    #[tokio::test]
-    #[ignore = "requires ORT (run with ORT_DYLIB_PATH=/opt/homebrew/lib/libonnxruntime.dylib)"]
+    #[tokio::test(flavor = "current_thread")]
+    #[serial_test::serial]
     async fn test_initialize_defaults_vits_block_lines_262_270() {
+        crate::test_utils::ort_test_setup();
         let manager = TTSManager::new(TTSManagerConfig::default());
         manager.initialize_defaults().await.unwrap();
         // VITSEngine::new always succeeds — 'vits' must be registered.
@@ -1827,9 +1840,10 @@ mod tests {
     }
 
     /// Covers lines 274-282: styletts2 engine load attempt.
-    #[tokio::test]
-    #[ignore = "requires ORT (run with ORT_DYLIB_PATH=/opt/homebrew/lib/libonnxruntime.dylib)"]
+    #[tokio::test(flavor = "current_thread")]
+    #[serial_test::serial]
     async fn test_initialize_defaults_styletts2_block_lines_274_282() {
+        crate::test_utils::ort_test_setup();
         let manager = TTSManager::new(TTSManagerConfig::default());
         manager.initialize_defaults().await.unwrap();
         assert!(
@@ -1839,9 +1853,10 @@ mod tests {
     }
 
     /// Covers lines 286-294: bark engine load attempt.
-    #[tokio::test]
-    #[ignore = "requires ORT (run with ORT_DYLIB_PATH=/opt/homebrew/lib/libonnxruntime.dylib)"]
+    #[tokio::test(flavor = "current_thread")]
+    #[serial_test::serial]
     async fn test_initialize_defaults_bark_block_lines_286_294() {
+        crate::test_utils::ort_test_setup();
         let manager = TTSManager::new(TTSManagerConfig::default());
         manager.initialize_defaults().await.unwrap();
         assert!(
@@ -1851,9 +1866,10 @@ mod tests {
     }
 
     /// Covers lines 298-306: xtts engine load attempt.
-    #[tokio::test]
-    #[ignore = "requires ORT (run with ORT_DYLIB_PATH=/opt/homebrew/lib/libonnxruntime.dylib)"]
+    #[tokio::test(flavor = "current_thread")]
+    #[serial_test::serial]
     async fn test_initialize_defaults_xtts_block_lines_298_306() {
+        crate::test_utils::ort_test_setup();
         let manager = TTSManager::new(TTSManagerConfig::default());
         manager.initialize_defaults().await.unwrap();
         assert!(
@@ -1864,9 +1880,10 @@ mod tests {
 
     /// Covers line 316 (Ok(()) return) and line 313 (non-zero engine log).
     /// Verifies the engine_ids returned in stats match registered engines.
-    #[tokio::test]
-    #[ignore = "requires ORT (run with ORT_DYLIB_PATH=/opt/homebrew/lib/libonnxruntime.dylib)"]
+    #[tokio::test(flavor = "current_thread")]
+    #[serial_test::serial]
     async fn test_initialize_defaults_return_ok_and_stats_consistent() {
+        crate::test_utils::ort_test_setup();
         let manager = TTSManager::new(TTSManagerConfig::default());
         // Line 316: Ok(()) is the return value.
         let result = manager.initialize_defaults().await;
@@ -1889,9 +1906,10 @@ mod tests {
     /// does not panic (duplicate-registration errors are caught by match arms).
     /// This exercises the Err arm of multiple engine load blocks (206-208, etc.)
     /// on the second call when engines are already registered.
-    #[tokio::test]
-    #[ignore = "requires ORT (run with ORT_DYLIB_PATH=/opt/homebrew/lib/libonnxruntime.dylib)"]
+    #[tokio::test(flavor = "current_thread")]
+    #[serial_test::serial]
     async fn test_initialize_defaults_second_call_covers_err_arms() {
+        crate::test_utils::ort_test_setup();
         let manager = TTSManager::new(TTSManagerConfig::default());
         manager.initialize_defaults().await.unwrap();
         let count_after_first = manager.get_stats().total_engines;
@@ -1915,9 +1933,10 @@ mod tests {
 
     // ──────────────────────────── initialize_defaults ───────────────────────
 
-    #[ignore = "requires ORT runtime library (libonnxruntime.dylib)"]
-    #[tokio::test]
+    #[tokio::test(flavor = "current_thread")]
+    #[serial_test::serial]
     async fn test_initialize_defaults_completes_without_panic() {
+        crate::test_utils::ort_test_setup();
         let manager = TTSManager::new(TTSManagerConfig::default());
         // All engines will fail to load (no models present) but should not panic
         let result = manager.initialize_defaults().await;
@@ -1928,9 +1947,10 @@ mod tests {
         );
     }
 
-    #[ignore = "requires ORT runtime library (libonnxruntime.dylib)"]
-    #[tokio::test]
+    #[tokio::test(flavor = "current_thread")]
+    #[serial_test::serial]
     async fn test_initialize_defaults_engines_fail_gracefully() {
+        crate::test_utils::ort_test_setup();
         let manager = TTSManager::new(TTSManagerConfig::default());
         manager.initialize_defaults().await.unwrap();
         // All loads fail gracefully - engine count is 0 (no models present in CI)
@@ -2057,9 +2077,10 @@ mod tests {
         assert_eq!(a.samples, b.samples);
     }
 
-    #[tokio::test]
-    #[ignore = "requires ORT runtime library (libonnxruntime.dylib)"]
+    #[tokio::test(flavor = "current_thread")]
+    #[serial_test::serial]
     async fn test_initialize_defaults_does_not_panic_when_models_absent() {
+        crate::test_utils::ort_test_setup();
         // All engines fail to load (no model files present), must complete Ok (lines 201-316)
         let manager = TTSManager::new(TTSManagerConfig::default());
         let result = manager.initialize_defaults().await;

@@ -35,12 +35,6 @@ test.describe('Navigation', () => {
     await expect(page.locator(S.panelLLM)).toHaveClass(/active/);
   });
 
-  test('clicking Completion shows Completion panel', async ({ page }) => {
-    if ((await page.locator(S.navCompletion).count()) === 0) { test.skip(true, 'Completion panel not present in this build'); return; }
-    await page.locator(S.navCompletion).click();
-    await expect(page.locator(S.panelCompletion)).toHaveClass(/active/);
-  });
-
   test('clicking Dashboard shows Dashboard panel', async ({ page }) => {
     await page.locator(S.navDashboard).click();
     await expect(page.locator(S.panelDashboard)).toHaveClass(/active/);

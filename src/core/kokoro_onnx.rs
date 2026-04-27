@@ -722,7 +722,9 @@ mod tests {
     // ── KokoroOnnxEngine::new error path ─────────────────────────────────────
 
     #[test]
+    #[serial_test::serial]
     fn test_onnx_engine_errors_when_model_absent() {
+        crate::test_utils::ort_test_setup();
         let config = serde_json::json!({
             "model_dir": "/nonexistent/kokoro-onnx",
             "sample_rate": 24000
@@ -1024,7 +1026,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "requires libonnxruntime.dylib"]
     fn test_onnx_engine_new_default_model_dir_fails_without_model() {
         // When model_dir key is absent, default "models/kokoro-82m" is used
         let config = serde_json::json!({"sample_rate": 24000});

@@ -133,6 +133,7 @@ test-case = "3.3"
 serial_test = "3.0"
 futures-util = "0.3"
 wiremock = "0.6"
+libloading = "0.8"
 
 [features]
 default = ["jemalloc"]  # Use jemalloc by default for better performance
