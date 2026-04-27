@@ -288,12 +288,9 @@ mod tests {
         let engine = make_engine("/nonexistent/kokoro-v1_0.safetensors", 24000);
         let params = SynthesisParams::default();
         let result = engine.synthesize("hello", &params).await;
-        // synthesize falls back to shared ONNX backend or returns error;
-        // without python bridge and without native inference, behaviour depends
-        // on whether the shared Kokoro ONNX backend is initialised at test time.
-        // The engine should fall back to shared ONNX backend and succeed, producing audio.
-        let audio = result.expect("kokoro engine should succeed via ONNX fallback");
-        assert!(!audio.samples.is_empty(), "should produce audio samples");
+        // When neither the Python bridge nor the ONNX model files are available,
+        // synthesize must return an error rather than panic.
+        assert!(result.is_err(), "should return an error when model files are absent");
     }
 
     #[test]

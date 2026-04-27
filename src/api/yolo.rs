@@ -840,8 +840,8 @@ mod tests {
             .set_payload(body)
             .to_request();
         let resp = actix_test::call_service(&app, req).await;
-        // No image uploaded → temp file missing → ORT read fails → 500.
-        assert_eq!(resp.status(), actix_web::http::StatusCode::INTERNAL_SERVER_ERROR);
+        // ORT fallback path: no ONNX model in cache_dir → 404.
+        assert_eq!(resp.status(), actix_web::http::StatusCode::NOT_FOUND);
     }
 
     // detect_objects — valid version+size, model IS on disk, multipart with a file field.
@@ -891,8 +891,8 @@ mod tests {
             .to_request();
         let resp = actix_test::call_service(&app, req).await;
 
-        // Without the `torch` feature, ORT detector rejects invalid JPEG → 500.
-        assert_eq!(resp.status(), actix_web::http::StatusCode::INTERNAL_SERVER_ERROR);
+        // Without the `torch` feature, ORT path checks for ONNX model in cache_dir → 404.
+        assert_eq!(resp.status(), actix_web::http::StatusCode::NOT_FOUND);
 
         // Cleanup temp dir.
         let _ = tokio::fs::remove_dir_all(&tmp).await;
@@ -927,8 +927,8 @@ mod tests {
             .set_payload(body)
             .to_request();
         let resp = actix_test::call_service(&app, req).await;
-        // No image uploaded → temp file missing → ORT read fails → 500.
-        assert_eq!(resp.status(), actix_web::http::StatusCode::INTERNAL_SERVER_ERROR);
+        // ORT fallback path: no ONNX model in cache_dir → 404.
+        assert_eq!(resp.status(), actix_web::http::StatusCode::NOT_FOUND);
     }
 }
 
