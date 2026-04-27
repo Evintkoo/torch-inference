@@ -70,7 +70,7 @@
   .logo { display: flex; align-items: center; gap: 8px; }
   .logo-mark {
     width: 28px; height: 28px; background: var(--accent);
-    border-radius: 7px; display: grid; place-items: center;
+    border-radius:0; display: grid; place-items: center;
     font-weight: 700; font-size: 11px; color: #fff; letter-spacing: .5px;
   }
   .logo-name { font-weight: 600; font-size: 15px; font-family: var(--serif); }
@@ -78,7 +78,7 @@
   .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
   .badge {
     display: inline-flex; align-items: center; gap: 5px;
-    font-size: 12px; padding: 3px 9px; border-radius: 20px;
+    font-size: 12px; padding: 3px 9px; border-radius:0;
     background: var(--accent-bg); color: var(--accent);
     border: 1px solid rgba(255,72,0,.2);
   }
@@ -103,7 +103,7 @@
   }
   .nav-item {
     display: flex; align-items: center; gap: 9px;
-    padding: 7px 8px; border-radius: 7px; cursor: pointer;
+    padding: 7px 8px; border-radius:0; cursor: pointer;
     font-size: 13px; font-weight: 500; color: var(--text-muted);
     transition: background .15s, color .15s;
     user-select: none;
@@ -126,7 +126,7 @@
   /* Cards */
   .card {
     background: var(--surface); border: 1px solid var(--border2);
-    border-radius: 12px; padding: 20px;
+    border-radius:0; padding: 20px;
   }
   .card-title {
     font-size: 13px; font-weight: 600;
@@ -140,7 +140,7 @@
     width: 100%; height: 36px;
     padding: 0 14px;
     background: var(--surface); color: var(--text);
-    border: 1px solid var(--border); border-radius: 10px;
+    border: 1px solid var(--border); border-radius:0;
     font-family: var(--font); font-size: 14px; font-weight: 400;
     outline: none; transition: border-color .15s;
   }
@@ -178,7 +178,7 @@
     width: 100%; min-height: 90px;
     padding: 8px 12px;
     background: var(--surface); color: var(--text);
-    border: 1px solid var(--border); border-radius: 12px;
+    border: 1px solid var(--border); border-radius:0;
     font-family: var(--font); font-size: 14px; font-weight: 400;
     line-height: 1.6; outline: none; resize: vertical;
     transition: border-color .15s;
@@ -199,7 +199,7 @@
   .btn {
     display: inline-flex; align-items: center; gap: 6px;
     height: 36px; padding: 0 14px;
-    border-radius: 10px; border: none; cursor: pointer;
+    border-radius:0; border: none; cursor: pointer;
     font-family: var(--font); font-size: 14px; font-weight: 500;
     line-height: 20px; letter-spacing: 0.3px;
     text-decoration: none;
@@ -241,7 +241,7 @@
   /* Response */
   .response-box {
     background: #F1F3F4; border: 1px solid var(--border2);
-    border-radius: 10px; padding: 14px;
+    border-radius:0; padding: 14px;
     font-family: var(--mono); font-size: 12.5px; line-height: 1.7;
     color: var(--text-muted); min-height: 80px;
     white-space: pre-wrap; word-break: break-all;
@@ -257,7 +257,7 @@
   }
   .stat-card {
     background: var(--surface); border: 1px solid var(--border2);
-    border-radius: 12px; padding: 14px 16px;
+    border-radius:0; padding: 14px 16px;
   }
   .stat-label { font-size: 11px; color: var(--text-dim); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
   .stat-value { font-size: 20px; font-weight: 700; font-family: var(--mono); }
@@ -271,11 +271,11 @@
   .endpoint-row {
     display: flex; align-items: center; gap: 10px;
     padding: 8px 12px; background: var(--surface);
-    border: 1px solid var(--border2); border-radius: 8px; font-size: 12px;
+    border: 1px solid var(--border2); border-radius:0; font-size: 12px;
   }
   .method {
     font-family: var(--mono); font-size: 11px; font-weight: 600;
-    padding: 2px 7px; border-radius: 4px; flex-shrink: 0;
+    padding: 2px 7px; border-radius:0; flex-shrink: 0;
   }
   .method.get  { background: #F3FBF4; color: #2E9632; }
   .method.post { background: #fff3ee; color: #cc3a00; }
@@ -288,7 +288,7 @@
 
   /* Image upload */
   .dropzone {
-    border: 2px dashed var(--border2); border-radius: 8px;
+    border: 2px dashed var(--border2); border-radius:0;
     padding: 28px; text-align: center; cursor: pointer;
     color: var(--text-muted); font-size: 13px;
     transition: border-color .15s, background .15s;
@@ -298,12 +298,12 @@
   }
   .dropzone input { display: none; }
   .drop-icon { font-size: 28px; margin-bottom: 6px; }
-  #img-preview { max-width: 200px; border-radius: 8px; margin-top: 10px; display: none; }
+  #img-preview { max-width: 200px; border-radius:0; margin-top: 10px; display: none; }
 
   /* Chat */
   .chat-history {
     background: #F1F3F4; border: 1px solid var(--border2);
-    border-radius: 10px; padding: 14px; min-height: 180px;
+    border-radius:0; padding: 14px; min-height: 180px;
     max-height: 320px; overflow-y: auto;
     display: flex; flex-direction: column; gap: 10px;
   }
@@ -315,7 +315,7 @@
     text-transform: uppercase; color: var(--text-dim);
   }
   .msg-body {
-    padding: 9px 13px; border-radius: 10px;
+    padding: 9px 13px; border-radius:0;
     font-size: 13px; line-height: 1.55;
   }
   .msg.user .msg-body { background: var(--accent); color: #fff; }
@@ -327,10 +327,10 @@
   .tab-bar {
     display: flex; gap: 2px;
     background: var(--surface); border: 1px solid var(--border2);
-    border-radius: 10px; padding: 3px; width: fit-content; margin-bottom: 20px;
+    border-radius:0; padding: 3px; width: fit-content; margin-bottom: 20px;
   }
   .tab {
-    padding: 6px 18px; border-radius: 8px;
+    padding: 6px 18px; border-radius:0;
     font-size: 13px; font-weight: 500; color: var(--text-muted);
     cursor: pointer; border: none; background: none; transition: all .15s;
     display: flex; align-items: center; gap: 7px; font-family: var(--font);
@@ -361,7 +361,7 @@
   .ws-tab.active-ws-tab { color: var(--accent); border-bottom-color: var(--accent); }
   .live-badge {
     display: inline-flex; align-items: center; gap: 5px;
-    font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px;
+    font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius:0;
     background: #F3FBF4; color: #2E9632;
     border: 1px solid rgba(58,188,63,.25);
   }
@@ -383,7 +383,7 @@
   }
   .dash-tile {
     background: var(--surface); border: 1px solid var(--border2);
-    border-radius: 12px; padding: 14px 16px;
+    border-radius:0; padding: 14px 16px;
   }
   .dash-tile-label {
     font-size: 10px; color: var(--text-dim);
@@ -397,12 +397,12 @@
   .res-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
   .res-row:last-child { margin-bottom: 0; }
   .res-name { font-size: 12px; color: var(--text-muted); width: 44px; flex-shrink: 0; }
-  .res-bar-track { flex: 1; height: 6px; background: var(--border2); border-radius: 3px; overflow: hidden; }
-  .res-bar-fill  { height: 100%; border-radius: 3px; transition: width .6s ease; }
+  .res-bar-track { flex: 1; height: 6px; background: var(--border2); border-radius:0; overflow: hidden; }
+  .res-bar-fill  { height: 100%; border-radius:0; transition: width .6s ease; }
   .res-val { font-size: 11px; font-family: var(--mono); color: var(--text); width: 56px; text-align: right; }
   .gpu-device {
     background: var(--surface); border: 1px solid var(--border2);
-    border-radius: 10px; padding: 12px; margin-top: 12px;
+    border-radius:0; padding: 12px; margin-top: 12px;
   }
   .gpu-device-name { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
   .gpu-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 3px; }
@@ -416,18 +416,18 @@
   .dl-form-row .field.slim   { flex: 0 0 150px; }
   .dl-task {
     background: var(--surface); border: 1px solid var(--border2);
-    border-radius: 10px; padding: 12px; margin-bottom: 8px;
+    border-radius:0; padding: 12px; margin-bottom: 8px;
   }
   .dl-task:last-child { margin-bottom: 0; }
   .dl-task-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
   .dl-task-name { font-size: 13px; font-weight: 500; font-family: var(--mono); }
-  .dl-status-badge { font-size: 11px; padding: 2px 8px; border-radius: 12px; }
+  .dl-status-badge { font-size: 11px; padding: 2px 8px; border-radius:0; }
   .dl-status-badge.downloading { background: #fff3ee; color: #cc3a00; }
   .dl-status-badge.completed   { background: #F3FBF4; color: #2E9632; }
   .dl-status-badge.failed      { background: #FFF3F3; color: #CC2727; }
   .dl-status-badge.pending     { background: #FFFAF3; color: #CC8727; }
-  .dl-progress-track { height: 5px; background: var(--border2); border-radius: 3px; overflow: hidden; margin-bottom: 5px; }
-  .dl-progress-fill  { height: 100%; border-radius: 3px; background: var(--accent); transition: width .4s ease; }
+  .dl-progress-track { height: 5px; background: var(--border2); border-radius:0; overflow: hidden; margin-bottom: 5px; }
+  .dl-progress-fill  { height: 100%; border-radius:0; background: var(--accent); transition: width .4s ease; }
   .dl-progress-fill.done   { background: var(--green); }
   .dl-progress-fill.failed { background: var(--red); }
   .dl-meta { font-size: 10px; color: var(--text-dim); display: flex; justify-content: space-between; }
@@ -436,7 +436,7 @@
 
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius:0; }
 
   /* ── Models panel ─────────────────────────────────────── */
   .model-grid {
@@ -446,7 +446,7 @@
   }
   .model-card {
     background: var(--surface); border: 1px solid var(--border2);
-    border-radius: 12px; padding: 16px;
+    border-radius:0; padding: 16px;
     display: flex; flex-direction: column; gap: 10px;
     transition: border-color .15s;
   }
@@ -455,7 +455,7 @@
   .model-card-name { font-size: 13px; font-weight: 600; word-break: break-all; line-height: 1.4; }
   .model-task-badge {
     flex-shrink: 0; font-size: 10px; font-weight: 600; letter-spacing: .04em;
-    text-transform: uppercase; padding: 2px 8px; border-radius: 20px;
+    text-transform: uppercase; padding: 2px 8px; border-radius:0;
   }
   .task-tts        { background: #F5F0FE; color: #6C27CC; }
   .task-classify   { background: #FFF3E0; color: #B85C00; }
@@ -477,14 +477,14 @@
   .dl-model-row {
     display: flex; align-items: center; gap: 12px; padding: 12px;
     background: var(--surface); border: 1px solid var(--border2);
-    border-radius: 10px; margin-bottom: 8px;
+    border-radius:0; margin-bottom: 8px;
   }
   .dl-model-row:last-child { margin-bottom: 0; }
   .dl-model-icon { font-size: 18px; color: var(--text-dim); flex-shrink: 0; }
   .dl-model-info { flex: 1; min-width: 0; }
   .dl-model-name { font-size: 13px; font-weight: 500; font-family: var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .dl-model-sub  { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
-  .dl-model-status { font-size: 11px; padding: 2px 8px; border-radius: 12px; flex-shrink: 0; }
+  .dl-model-status { font-size: 11px; padding: 2px 8px; border-radius:0; flex-shrink: 0; }
   .dl-model-status.loaded   { background: #F3FBF4; color: #2E9632; }
   .dl-model-status.cached   { background: #fff3ee; color: #cc3a00; }
   .dl-model-status.unknown  { background: var(--bg); color: var(--text-muted); }
@@ -496,7 +496,7 @@
     flex-shrink: 0; height: 36px; width: 36px; padding: 0;
     display: flex; align-items: center; justify-content: center;
     background: var(--surface); border: 1px solid var(--border);
-    border-radius: 10px; cursor: pointer; color: var(--text-muted);
+    border-radius:0; cursor: pointer; color: var(--text-muted);
     font-size: 15px; transition: color .15s, border-color .15s;
   }
   .model-select-row .btn-refresh:hover { color: var(--accent); border-color: var(--accent); }
@@ -506,7 +506,7 @@
   .ced-trigger {
     display: flex; align-items: center; justify-content: space-between;
     height: 36px; padding: 0 12px; background: var(--input-bg); border: 1px solid var(--border);
-    border-radius: 10px; cursor: pointer; font-size: 14px; color: var(--text);
+    border-radius:0; cursor: pointer; font-size: 14px; color: var(--text);
     gap: 6px; transition: border-color .15s; user-select: none;
   }
   .ced-trigger:hover, .ced-trigger.open { border-color: var(--accent); }
@@ -533,7 +533,7 @@
   .ced-item-name { flex: 1; min-width: 0; }
   .ced-check { font-size: 13px; color: var(--accent); width: 14px; flex-shrink: 0; }
   .ced-badge {
-    font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px;
+    font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius:0;
     white-space: nowrap; flex-shrink: 0; letter-spacing: .3px;
   }
   .ced-badge-ok   { background: rgba(46,160,67,.15);  color: #2ea043; }
@@ -575,7 +575,7 @@
 
   /* ── Theme toggle button ───────────────────────────────── */
   .btn-theme-toggle {
-    width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+    width: 32px; height: 32px; border-radius:0; border: 1px solid var(--border);
     background: var(--surface); color: var(--text-muted); cursor: pointer;
     display: flex; align-items: center; justify-content: center; font-size: 16px;
     transition: color .15s, border-color .15s;
@@ -583,8 +583,8 @@
   .btn-theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
 
   /* ── Markdown in chat bubbles ──────────────────────────── */
-  .msg-body pre { background: rgba(0,0,0,0.06); border-radius: 6px; padding: 10px; overflow-x: auto; font-family: var(--mono); font-size: 12px; margin: 6px 0; white-space: pre-wrap; }
-  .msg-body code { background: rgba(0,0,0,0.07); padding: 1px 5px; border-radius: 4px; font-family: var(--mono); font-size: 12px; }
+  .msg-body pre { background: rgba(0,0,0,0.06); border-radius:0; padding: 10px; overflow-x: auto; font-family: var(--mono); font-size: 12px; margin: 6px 0; white-space: pre-wrap; }
+  .msg-body code { background: rgba(0,0,0,0.07); padding: 1px 5px; border-radius:0; font-family: var(--mono); font-size: 12px; }
   .msg-body pre code { background: none; padding: 0; }
   .msg-body h3, .msg-body h4 { margin: 8px 0 4px; font-size: 14px; }
   .msg-body ul, .msg-body ol { padding-left: 20px; margin: 4px 0; }
@@ -601,14 +601,14 @@
   /* ── Stat tile (System > Performance) ─────────────────── */
   .stat-tile {
     background: var(--surface); border: 1px solid var(--border2);
-    border-radius: 12px; padding: 14px 16px;
+    border-radius:0; padding: 14px 16px;
     display: flex; flex-direction: column; gap: 4px;
   }
   .stat-tile .stat-label { font-size: 11px; color: var(--text-dim); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
   .stat-tile .stat-value { font-size: 18px; font-weight: 700; font-family: var(--mono); color: var(--accent); }
 
   /* ── System prompt field ───────────────────────────────── */
-  .system-prompt-field textarea { border-left: 3px solid var(--accent); border-radius: 0; }
+  .system-prompt-field textarea { border-left: 3px solid var(--accent); border-radius:0; }
 
   /* ── ChatGPT-style Assistant ────────────────────────────── */
   #panel-assistant { padding: 0; gap: 0; }
@@ -623,12 +623,12 @@
 
   .gpt-model-sel {
     background: var(--input-bg); border: 1px solid var(--border);
-    border-radius: 8px; color: var(--text); font-size: 13px;
+    border-radius:0; color: var(--text); font-size: 13px;
     padding: 5px 10px; cursor: pointer; outline: none;
   }
   .gpt-pill-btn {
     display: inline-flex; align-items: center; gap: 5px;
-    padding: 5px 10px; border-radius: 8px;
+    padding: 5px 10px; border-radius:0;
     border: 1px solid var(--border); background: transparent;
     color: var(--text-muted); font-size: 12px; cursor: pointer;
     transition: color .15s, border-color .15s, background .15s;
@@ -645,7 +645,7 @@
   .gpt-settings-panel textarea {
     width: 100%; padding: 7px 10px;
     background: var(--input-bg); border: 1px solid var(--border);
-    border-radius: 8px; color: var(--text); font-size: 13px;
+    border-radius:0; color: var(--text); font-size: 13px;
     font-family: inherit; resize: vertical; min-height: 60px;
   }
 
@@ -672,7 +672,7 @@
   }
   .gpt-cap-card {
     background: var(--surface); border: 1px solid var(--border2);
-    border-radius: 12px; padding: 14px 16px; font-size: 13px;
+    border-radius:0; padding: 14px 16px; font-size: 13px;
     color: var(--text); cursor: pointer; text-align: left;
     transition: border-color .15s, background .15s; line-height: 1.4;
   }
@@ -690,7 +690,7 @@
 
   .chat-row.user .chat-bubble {
     background: var(--accent); color: #fff;
-    border-radius: 18px 18px 4px 18px;
+    border-radius:0;
     padding: 10px 16px; max-width: 78%;
     font-size: 14px; line-height: 1.6; word-break: break-word;
     white-space: pre-wrap;
@@ -710,8 +710,8 @@
   .chat-asst-name { font-size: 13px; font-weight: 600; color: var(--text); }
 
   /* Markdown inside assistant bubble */
-  .chat-bubble pre { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; overflow-x: auto; font-family: var(--mono); font-size: 12px; margin: 10px 0; white-space: pre-wrap; position: relative; }
-  .chat-bubble code { background: rgba(0,0,0,.08); padding: 2px 5px; border-radius: 4px; font-family: var(--mono); font-size: 12px; }
+  .chat-bubble pre { background: var(--surface); border: 1px solid var(--border); border-radius:0; padding: 12px; overflow-x: auto; font-family: var(--mono); font-size: 12px; margin: 10px 0; white-space: pre-wrap; position: relative; }
+  .chat-bubble code { background: rgba(0,0,0,.08); padding: 2px 5px; border-radius:0; font-family: var(--mono); font-size: 12px; }
   .chat-bubble pre code { background: none; padding: 0; }
   .chat-bubble h3, .chat-bubble h4 { margin: 10px 0 4px; font-size: 14px; }
   .chat-bubble ul, .chat-bubble ol { padding-left: 22px; margin: 6px 0; }
@@ -726,7 +726,7 @@
   }
   .chat-row:hover .chat-actions { opacity: 1; }
   .chat-action-btn {
-    background: none; border: 1px solid var(--border); border-radius: 6px;
+    background: none; border: 1px solid var(--border); border-radius:0;
     padding: 3px 9px; font-size: 11px; color: var(--text-muted);
     cursor: pointer; display: flex; align-items: center; gap: 4px;
     transition: color .15s, border-color .15s;
@@ -734,7 +734,7 @@
   .chat-action-btn:hover { color: var(--accent); border-color: var(--accent); }
   .chat-action-btn.copied { color: #3fb950; border-color: #3fb950; }
 
-  .chat-img-thumb { max-height: 140px; max-width: 200px; border-radius: 10px; display: block; margin-bottom: 6px; object-fit: cover; }
+  .chat-img-thumb { max-height: 140px; max-width: 200px; border-radius:0; display: block; margin-bottom: 6px; object-fit: cover; }
 
   /* Attach preview bar (above composer) */
   .gpt-attach-bar {
@@ -742,7 +742,7 @@
     display: flex; align-items: center; gap: 10px;
     max-width: 800px; margin: 0 auto; width: 100%;
   }
-  .gpt-attach-thumb { max-height: 60px; max-width: 80px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); }
+  .gpt-attach-thumb { max-height: 60px; max-width: 80px; border-radius:0; object-fit: cover; border: 1px solid var(--border); }
   .gpt-attach-info { font-size: 12px; color: var(--text-muted); flex: 1; }
   .gpt-attach-clear { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; padding: 2px 4px; }
   .gpt-attach-clear:hover { color: var(--red-text, #f85149); }
@@ -755,7 +755,7 @@
   .gpt-composer {
     display: flex; align-items: flex-end; gap: 8px;
     background: var(--input-bg); border: 1px solid var(--border);
-    border-radius: 14px; padding: 10px 12px;
+    border-radius:0; padding: 10px 12px;
     max-width: 760px; margin: 0 auto;
     transition: border-color .15s;
   }
@@ -766,7 +766,7 @@
     min-height: 24px; max-height: 180px; line-height: 1.55; padding: 2px 0;
   }
   .gpt-icon-btn {
-    width: 32px; height: 32px; border-radius: 8px;
+    width: 32px; height: 32px; border-radius:0;
     border: 1px solid var(--border); background: transparent;
     color: var(--text-muted); cursor: pointer;
     display: flex; align-items: center; justify-content: center;
@@ -777,7 +777,7 @@
   .gpt-icon-btn.active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
   .gpt-icon-btn.recording { background: #da3633; color: #fff; border-color: #da3633; animation: pulse 1s infinite; }
   .gpt-send-btn {
-    width: 32px; height: 32px; border-radius: 8px;
+    width: 32px; height: 32px; border-radius:0;
     border: none; background: var(--accent); color: #fff;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
     font-size: 17px; flex-shrink: 0; transition: opacity .15s;
@@ -883,7 +883,7 @@
       <!-- Top bar -->
       <div class="gpt-topbar">
         <div class="gpt-topbar-left">
-          <span id="llm-health-badge" style="display:none;font-size:12px;padding:2px 9px;border-radius:12px"></span>
+          <span id="llm-health-badge" style="display:none;font-size:12px;padding:2px 9px;border-radius:0"></span>
           <input id="llm-model" type="text" value="BitNet-b1.58-2B-4T" class="gpt-model-sel" placeholder="model name" style="width:200px" title="Model ID" />
         </div>
         <div class="gpt-topbar-right">
@@ -903,15 +903,15 @@
       <div class="gpt-settings-panel" id="chat-settings-panel" style="display:none">
         <div class="field" style="width:100px">
           <label>Temperature</label>
-          <input id="llm-temp" type="number" value="0.7" min="0" max="2" step="0.05" style="width:100%;padding:5px 8px;background:var(--input-bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px" />
+          <input id="llm-temp" type="number" value="0.7" min="0" max="2" step="0.05" style="width:100%;padding:5px 8px;background:var(--input-bg);border:1px solid var(--border);border-radius:0;color:var(--text);font-size:13px" />
         </div>
         <div class="field" style="width:110px">
           <label>Max tokens</label>
-          <input id="llm-max-tokens" type="number" value="1024" min="64" max="8192" step="64" style="width:100%;padding:5px 8px;background:var(--input-bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px" />
+          <input id="llm-max-tokens" type="number" value="1024" min="64" max="8192" step="64" style="width:100%;padding:5px 8px;background:var(--input-bg);border:1px solid var(--border);border-radius:0;color:var(--text);font-size:13px" />
         </div>
         <div class="field" style="flex:1;min-width:240px">
           <label>System prompt</label>
-          <textarea id="llm-system" rows="2" style="width:100%;padding:6px 8px;background:var(--input-bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;font-family:inherit;resize:vertical">You are a helpful multimodal assistant. You have access to text-to-speech, speech-to-text, image classification, and object detection tools on this server.</textarea>
+          <textarea id="llm-system" rows="2" style="width:100%;padding:6px 8px;background:var(--input-bg);border:1px solid var(--border);border-radius:0;color:var(--text);font-size:13px;font-family:inherit;resize:vertical">You are a helpful multimodal assistant. You have access to text-to-speech, speech-to-text, image classification, and object detection tools on this server.</textarea>
         </div>
       </div>
 
@@ -978,7 +978,7 @@
         <div class="panel-title">TTS</div>
         <div class="panel-desc">Low-latency streaming synthesis via <span class="ep-code">GET /audio/ws</span>.</div>
       </div>
-      <div id="tts-no-engine-banner" style="display:none;padding:12px 16px;background:var(--yellow-bg);border:1px solid var(--yellow);border-radius:10px;font-size:13px;color:var(--yellow-text);margin-bottom:4px">
+      <div id="tts-no-engine-banner" style="display:none;padding:12px 16px;background:var(--yellow-bg);border:1px solid var(--yellow);border-radius:0;font-size:13px;color:var(--yellow-text);margin-bottom:4px">
         <i class="ri-alert-line"></i> <strong>No TTS engine loaded.</strong>
         Go to <a href="#" onclick="showModels()" style="color:inherit;font-weight:600;text-decoration:underline">Models → Download</a> and download a Kokoro TTS model first.
       </div>
@@ -1001,16 +1001,16 @@
             <div>
               <div class="field">
                 <label>Text to speak</label>
-                <textarea id="ws-tts-text" rows="4" style="width:100%;resize:vertical;font-size:13px;padding:8px;background:var(--input-bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:inherit" placeholder="Enter text…"></textarea>
+                <textarea id="ws-tts-text" rows="4" style="width:100%;resize:vertical;font-size:13px;padding:8px;background:var(--input-bg);border:1px solid var(--border);border-radius:0;color:var(--text);font-family:inherit" placeholder="Enter text…"></textarea>
               </div>
               <div class="row" style="margin-top:10px">
                 <div class="field">
                   <label>Voice / Engine</label>
-                  <input id="ws-tts-voice" type="text" placeholder="af_heart (or blank for default)" style="width:100%;padding:6px 8px;background:var(--input-bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px" />
+                  <input id="ws-tts-voice" type="text" placeholder="af_heart (or blank for default)" style="width:100%;padding:6px 8px;background:var(--input-bg);border:1px solid var(--border);border-radius:0;color:var(--text);font-size:13px" />
                 </div>
                 <div class="field" style="flex:0 0 100px">
                   <label>Speed</label>
-                  <input id="ws-tts-speed" type="number" value="1.0" min="0.25" max="4.0" step="0.05" style="width:100%;padding:6px 8px;background:var(--input-bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px" />
+                  <input id="ws-tts-speed" type="number" value="1.0" min="0.25" max="4.0" step="0.05" style="width:100%;padding:6px 8px;background:var(--input-bg);border:1px solid var(--border);border-radius:0;color:var(--text);font-size:13px" />
                 </div>
               </div>
               <div style="display:flex;gap:8px;margin-top:12px">
@@ -1020,7 +1020,7 @@
             </div>
             <div>
               <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px">Waveform</div>
-              <canvas id="ws-tts-canvas" width="320" height="80" style="width:100%;border-radius:6px;background:#0d1117"></canvas>
+              <canvas id="ws-tts-canvas" width="320" height="80" style="width:100%;border-radius:0;background:#0d1117"></canvas>
               <div id="ws-tts-status" style="font-size:12px;color:var(--text-muted);margin-top:6px">—</div>
               <div id="ws-tts-metrics" style="font-size:11px;color:var(--text-dim);margin-top:4px;display:none">
                 <span id="ws-tts-dur">—</span>
@@ -1105,7 +1105,7 @@
               <div class="card-title" style="margin-bottom:2px"><i class="ri-live-line" style="color:var(--accent)"></i> Live Classification Stream</div>
               <div style="font-size:12px;color:var(--text-muted)">WebSocket <span class="ep-code">GET /ws/classify</span> — JPEG frames → top-K labels</div>
               <div style="margin-top:4px">
-                <span id="cls-model-badge" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:12px;background:var(--border);color:var(--text-muted)">
+                <span id="cls-model-badge" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:0;background:var(--border);color:var(--text-muted)">
                   <span id="cls-model-dot" style="width:7px;height:7px;border-radius:50%;background:#555;display:inline-block"></span>
                   <span id="cls-model-label">checking model…</span>
                 </span>
@@ -1121,9 +1121,9 @@
           <div style="display:grid;grid-template-columns:1fr 280px;gap:16px">
             <!-- Camera/video column -->
             <div>
-              <div style="position:relative;background:#0d1117;border-radius:8px;overflow:hidden;min-height:240px">
+              <div style="position:relative;background:#0d1117;border-radius:0;overflow:hidden;min-height:240px">
                 <video id="cls-video" autoplay muted playsinline
-                       style="width:100%;display:none;border-radius:8px"></video>
+                       style="width:100%;display:none;border-radius:0"></video>
                 <div id="cls-live-placeholder" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:13px;flex-direction:column;gap:8px">
                   <i class="ri-camera-off-line" style="font-size:28px"></i>
                   <span>Start camera or open a video file</span>
@@ -1186,7 +1186,7 @@
       <div class="panel-header">
         <div style="display:flex;align-items:center;gap:12px">
           <div class="panel-title">STT</div>
-          <span id="audio-health-badge" style="font-size:12px;padding:2px 9px;border-radius:12px;background:var(--accent-bg);color:var(--accent)">checking…</span>
+          <span id="audio-health-badge" style="font-size:12px;padding:2px 9px;border-radius:0;background:var(--accent-bg);color:var(--accent)">checking…</span>
         </div>
         <div class="panel-desc">Upload audio and transcribe via <span class="ep-code">POST /audio/transcribe</span> · live stream via <span class="ep-code">GET /audio/ws</span>.</div>
       </div>
@@ -1263,7 +1263,7 @@
         </div>
         <div id="ws-pane-stt">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-            <span id="stt-model-badge" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:12px;background:var(--border);color:var(--text-muted)">
+            <span id="stt-model-badge" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:0;background:var(--border);color:var(--text-muted)">
               <span id="stt-model-dot" style="width:7px;height:7px;border-radius:50%;background:#555;display:inline-block"></span>
               <span id="stt-model-label">Checking STT model…</span>
             </span>
@@ -1283,7 +1283,7 @@
             </div>
             <div>
               <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px">Mic waveform</div>
-              <canvas id="ws-stt-canvas" width="320" height="80" style="width:100%;border-radius:6px;background:#0d1117"></canvas>
+              <canvas id="ws-stt-canvas" width="320" height="80" style="width:100%;border-radius:0;background:#0d1117"></canvas>
               <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-top:10px;margin-bottom:4px">Transcript</div>
               <div class="response-box" id="ws-stt-result" style="min-height:60px">Transcript appears here.</div>
             </div>
@@ -1352,7 +1352,7 @@
           </div>
           <div class="card">
             <div class="card-title">Result</div>
-            <canvas id="detect-canvas" style="max-width:100%;border-radius:8px;display:none"></canvas>
+            <canvas id="detect-canvas" style="max-width:100%;border-radius:0;display:none"></canvas>
             <div class="response-box" id="detect-out" style="margin-top:8px">Upload an image to detect objects.</div>
           </div>
         </div>
@@ -1366,7 +1366,7 @@
               <div class="card-title" style="margin-bottom:2px"><i class="ri-live-line" style="color:var(--accent)"></i> Live Detection Stream</div>
               <div style="font-size:12px;color:var(--text-muted)">WebSocket <span class="ep-code">GET /ws/detect</span> — JPEG frames → bounding boxes</div>
               <div style="margin-top:4px">
-                <span id="det-model-badge" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:12px;background:var(--border);color:var(--text-muted)">
+                <span id="det-model-badge" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:0;background:var(--border);color:var(--text-muted)">
                   <span id="det-model-dot" style="width:7px;height:7px;border-radius:50%;background:#555;display:inline-block"></span>
                   <span id="det-model-label">checking model…</span>
                 </span>
@@ -1382,9 +1382,9 @@
           <div style="display:grid;grid-template-columns:1fr 280px;gap:16px">
             <!-- Canvas column -->
             <div>
-              <div style="position:relative;background:#0d1117;border-radius:8px;overflow:hidden;min-height:240px">
+              <div style="position:relative;background:#0d1117;border-radius:0;overflow:hidden;min-height:240px">
                 <video id="det-video" autoplay muted playsinline
-                       style="width:100%;display:none;border-radius:8px"></video>
+                       style="width:100%;display:none;border-radius:0"></video>
                 <canvas id="det-live-canvas"
                         style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none"></canvas>
                 <div id="det-live-placeholder" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:13px;flex-direction:column;gap:8px">
@@ -1673,7 +1673,7 @@
             <input type="text" id="log-search" placeholder="Search in log…" style="flex:1" oninput="searchLog()" />
             <span id="log-search-count" style="font-size:12px;color:var(--text-dim);align-self:center"></span>
           </div>
-          <pre id="logs-viewer-content" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;font-size:11px;font-family:var(--mono);max-height:400px;overflow:auto;white-space:pre-wrap;word-break:break-all;color:var(--text)">—</pre>
+          <pre id="logs-viewer-content" style="background:var(--bg);border:1px solid var(--border);border-radius:0;padding:10px;font-size:11px;font-family:var(--mono);max-height:400px;overflow:auto;white-space:pre-wrap;word-break:break-all;color:var(--text)">—</pre>
         </div>
       </div>
     </section>
@@ -1723,7 +1723,7 @@
             <i class="ri-file-copy-line"></i> Copy Config
           </button>
         </div>
-        <pre id="sys-config-content" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:12px;font-family:var(--mono);max-height:500px;overflow:auto;white-space:pre-wrap;word-break:break-all">Loading…</pre>
+        <pre id="sys-config-content" style="background:var(--bg);border:1px solid var(--border);border-radius:0;padding:14px;font-size:12px;font-family:var(--mono);max-height:500px;overflow:auto;white-space:pre-wrap;word-break:break-all">Loading…</pre>
       </div>
     </section>
 
@@ -2906,7 +2906,7 @@ function buildModelCard(m) {
     actions.appendChild(btn);
   } else if (!hasLink && (m.size === 'Built-in' || (m.url === '' || !m.url))) {
     const badge = mkEl('span', null, '⚙ Platform native');
-    badge.style.cssText = 'font-size:11px;padding:3px 9px;border-radius:12px;background:var(--surface2);color:var(--text-muted);border:1px solid var(--border)';
+    badge.style.cssText = 'font-size:11px;padding:3px 9px;border-radius:0;background:var(--surface2);color:var(--text-muted);border:1px solid var(--border)';
     actions.appendChild(badge);
   }
   card.appendChild(actions);
@@ -3229,7 +3229,7 @@ async function runAudio() {
         const row = mkEl('div', null);
         row.style.cssText = 'display:flex;gap:8px;align-items:flex-start;margin-bottom:4px;font-size:12px';
         const ts = mkEl('span', null, seg.start.toFixed(2) + 's–' + seg.end.toFixed(2) + 's');
-        ts.style.cssText = 'flex-shrink:0;background:var(--accent-bg);color:var(--accent);padding:1px 7px;border-radius:10px';
+        ts.style.cssText = 'flex-shrink:0;background:var(--accent-bg);color:var(--accent);padding:1px 7px;border-radius:0;
         row.appendChild(ts);
         row.appendChild(mkEl('span', null, seg.text));
         list.appendChild(row);
@@ -3687,7 +3687,7 @@ function searchLog() {
       const idx = lineLower.indexOf(termLower, i);
       if (idx === -1) { result += escHtml(line.slice(i)); break; }
       result += escHtml(line.slice(i, idx));
-      result += '<mark style="background:var(--yellow-bg);color:var(--yellow-text);border-radius:2px">' + escHtml(line.slice(idx, idx + term.length)) + '</mark>';
+      result += '<mark style="background:var(--yellow-bg);color:var(--yellow-text);border-radius:0">' + escHtml(line.slice(idx, idx + term.length)) + '</mark>';
       i = idx + term.length;
     }
     return result;
@@ -3909,7 +3909,7 @@ initPersistedSettings();
 function showCopyFeedback(msg) {
   const el = document.createElement('div');
   el.textContent = msg;
-  el.style.cssText = 'position:fixed;bottom:20px;right:20px;background:var(--accent);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;z-index:9999;pointer-events:none;opacity:1;transition:opacity .4s';
+  el.style.cssText = 'position:fixed;bottom:20px;right:20px;background:var(--accent);color:#fff;padding:8px 16px;border-radius:0;font-size:13px;z-index:9999;pointer-events:none;opacity:1;transition:opacity .4s';
   document.body.appendChild(el);
   setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 400); }, 1500);
 }
@@ -4451,8 +4451,8 @@ function clsRenderPreds(preds) {
       <div style="display:flex;justify-content:space-between;font-size:12px">
         <span>${p.label}</span><span style="color:${color}">${pct}%</span>
       </div>
-      <div style="height:4px;background:var(--surface2);border-radius:2px">
-        <div style="height:4px;width:${pct}%;background:${color};border-radius:2px"></div>
+      <div style="height:4px;background:var(--surface2);border-radius:0">
+        <div style="height:4px;width:${pct}%;background:${color};border-radius:0"></div>
       </div>
     </div>`;
   }).join('');
@@ -4564,7 +4564,7 @@ async function runPgAudio() {
         const row = mkEl('div', null);
         row.style.cssText = 'display:flex;gap:8px;align-items:flex-start;margin-bottom:4px;font-size:12px';
         const ts = mkEl('span', null, seg.start.toFixed(2) + 's–' + seg.end.toFixed(2) + 's');
-        ts.style.cssText = 'flex-shrink:0;background:var(--accent-bg);color:var(--accent);padding:1px 7px;border-radius:10px';
+        ts.style.cssText = 'flex-shrink:0;background:var(--accent-bg);color:var(--accent);padding:1px 7px;border-radius:0;
         row.appendChild(ts); row.appendChild(mkEl('span', null, seg.text));
         list.appendChild(row);
       });
@@ -4874,7 +4874,7 @@ function renderApiRef() {
       if (ep.request) {
         const det = mkEl('details', {style:'margin-bottom:10px'});
         det.appendChild(mkEl('summary', {style:'cursor:pointer;font-size:12px;font-weight:600;color:var(--text-muted);user-select:none', text:'Request body / params'}));
-        const pre = mkEl('pre', {style:'background:var(--code-bg,#0d1117);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:11px;overflow-x:auto;margin-top:8px;color:#e6edf3'});
+        const pre = mkEl('pre', {style:'background:var(--code-bg,#0d1117);border:1px solid var(--border);border-radius:0;padding:12px;font-size:11px;overflow-x:auto;margin-top:8px;color:#e6edf3'});
         pre.appendChild(mkEl('code', {text: ep.request}));
         det.appendChild(pre);
         card.appendChild(det);
@@ -4884,7 +4884,7 @@ function renderApiRef() {
       if (ep.response) {
         const det = mkEl('details', {style:'margin-bottom:10px'});
         det.appendChild(mkEl('summary', {style:'cursor:pointer;font-size:12px;font-weight:600;color:var(--text-muted);user-select:none', text:'Response'}));
-        const pre = mkEl('pre', {style:'background:var(--code-bg,#0d1117);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:11px;overflow-x:auto;margin-top:8px;color:#e6edf3'});
+        const pre = mkEl('pre', {style:'background:var(--code-bg,#0d1117);border:1px solid var(--border);border-radius:0;padding:12px;font-size:11px;overflow-x:auto;margin-top:8px;color:#e6edf3'});
         pre.appendChild(mkEl('code', {text: ep.response}));
         det.appendChild(pre);
         card.appendChild(det);
@@ -4898,10 +4898,10 @@ function renderApiRef() {
         const pane = mkEl('div', {class:'api-code-pane', style: lang === apiLangActive ? '' : 'display:none'});
         pane.setAttribute('data-lang', lang);
         const wrap = mkEl('div', {style:'position:relative'});
-        const pre = mkEl('pre', {style:'background:var(--code-bg,#0d1117);border:1px solid var(--border);border-radius:8px;padding:12px 12px 12px 14px;font-size:11px;overflow-x:auto;color:#e6edf3'});
+        const pre = mkEl('pre', {style:'background:var(--code-bg,#0d1117);border:1px solid var(--border);border-radius:0;padding:12px 12px 12px 14px;font-size:11px;overflow-x:auto;color:#e6edf3'});
         pre.appendChild(mkEl('code', {text: snippet}));
         const copyBtn = mkEl('button', {
-          style:'position:absolute;top:8px;right:8px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--text-muted)'
+          style:'position:absolute;top:8px;right:8px;background:var(--surface2);border:1px solid var(--border);border-radius:0;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--text-muted)'
         });
         copyBtn.appendChild(mkEl('i', {class:'ri-clipboard-line'}));
         const capturedSnippet = snippet;
@@ -4923,7 +4923,7 @@ function renderApiRef() {
 /* WS method badge style */
 (function addWsStyle() {
   const s = document.createElement('style');
-  s.textContent = '.method.ws{background:var(--accent-bg);color:var(--accent);border:1px solid rgba(0,102,245,.25)}';
+  s.textContent = '.method.ws{background:var(--accent-bg);color:var(--accent);border:1px solid rgba(255,72,0,.25)}';
   document.head.appendChild(s);
 }());
 
@@ -4943,7 +4943,7 @@ async function checkLlmHealth() {
     const r = await fetch('/llm/v1/models', { signal: AbortSignal.timeout(3000) });
     if (r.ok) {
       badge.textContent = 'online';
-      badge.style.cssText = 'font-size:12px;padding:2px 9px;border-radius:12px;background:rgba(46,160,67,.15);color:#3fb950';
+      badge.style.cssText = 'font-size:12px;padding:2px 9px;border-radius:0;background:rgba(46,160,67,.15);color:#3fb950';
       badge.style.display = '';
     }
   } catch (_) {
