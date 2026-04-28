@@ -1,3 +1,4 @@
+use crate::config::Config;
 use crate::core::gpu::GpuManager;
 use crate::error::ApiError;
 use actix_web::{web, HttpResponse, Result};
@@ -156,15 +157,11 @@ pub async fn get_system_info(state: web::Data<SystemInfoState>) -> Result<HttpRe
     }))
 }
 
-pub async fn get_config() -> Result<HttpResponse, ApiError> {
-    // Load from environment or config file
+pub async fn get_config(cfg: web::Data<Config>) -> Result<HttpResponse, ApiError> {
     let config = ConfigResponse {
         server: ServerConfig {
-            host: std::env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string()),
-            port: std::env::var("PORT")
-                .ok()
-                .and_then(|p| p.parse().ok())
-                .unwrap_or(8080),
+            host: cfg.server.host.clone(),
+            port: cfg.server.port,
             workers: num_cpus::get(),
             max_connections: 1000,
         },
@@ -174,6 +171,8 @@ pub async fn get_config() -> Result<HttpResponse, ApiError> {
             timeout_secs: 30,
             device: if cfg!(feature = "cuda") {
                 "cuda"
+            } else if cfg!(feature = "metal") {
+                "metal"
             } else {
                 "cpu"
             }

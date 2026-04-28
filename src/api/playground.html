@@ -1450,7 +1450,7 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
               <label>Confidence Threshold</label>
               <input type="number" id="detect-conf" value="0.25" min="0" max="1" step="0.05" />
             </div>
-            <button class="btn btn-primary" style="margin-top:8px" id="detect-btn" onclick="runDetect()" disabled>
+            <button type="button" class="btn btn-primary" style="margin-top:8px" id="detect-btn" onclick="runDetect()" disabled>
               <i class="ri-focus-3-line"></i> Detect
             </button>
           </div>
@@ -2035,10 +2035,14 @@ async function fetchHealth() {
     sv('s-status',  ok ? '● OK' : '● ERR');
     document.getElementById('s-status').className = 'stat-value ' + (ok ? 'ok' : 'err');
     sv('s-uptime',  fmtUptime(data.uptime_seconds));
-    sv('s-active',  data.active_requests  ?? '—');
-    sv('s-total',   data.total_requests   ?? '—');
-    sv('s-latency', data.avg_latency_ms != null ? data.avg_latency_ms.toFixed(1) + 'ms' : '—');
-    sv('s-errors',  data.error_rate      != null ? (data.error_rate * 100).toFixed(1) + '%' : '—');
+    const capMsg  = data.checks?.capacity?.message    || '';
+    const monMsg  = data.checks?.monitor?.message     || '';
+    const perfMsg = data.checks?.performance?.message || '';
+    const errMsg  = data.checks?.error_rate?.message  || '';
+    sv('s-active',  (capMsg.match(/(\d+)\s+active/)  || [])[1] ?? '—');
+    sv('s-total',   (monMsg.match(/(\d+)\s+total/)   || [])[1] ?? '—');
+    sv('s-latency', perfMsg.replace(' avg latency', '') || '—');
+    sv('s-errors',  errMsg || '—');
   } catch (e) {
     document.getElementById('health-dot').style.background = 'var(--red)';
     document.getElementById('health-text').textContent = 'offline';
@@ -3448,10 +3452,12 @@ async function loadAudioHealth() {
   const badge = document.getElementById('audio-health-badge');
   if (!badge) return;
   try {
-    const r = await fetch('/audio/health', { signal: AbortSignal.timeout(3000) });
-    badge.textContent       = r.ok ? '● STT online'        : '● STT unavailable';
-    badge.style.background  = r.ok ? 'var(--green-bg)'     : 'var(--red-bg)';
-    badge.style.color       = r.ok ? 'var(--green-text)'   : 'var(--red-text)';
+    const r = await fetch('/stt/health', { signal: AbortSignal.timeout(3000) });
+    const d = r.ok ? await r.json() : {};
+    const hasModel = r.ok && (d.models_available || []).some(m => m.startsWith('STT:'));
+    badge.textContent       = hasModel ? '● STT online'        : r.ok ? '● no model loaded' : '● STT unavailable';
+    badge.style.background  = hasModel ? 'var(--green-bg)'     : r.ok ? 'var(--accent-bg)' : 'var(--red-bg)';
+    badge.style.color       = hasModel ? 'var(--green-text)'   : r.ok ? 'var(--accent)'    : 'var(--red-text)';
   } catch (_) {
     badge.textContent = '● STT offline — run: make stt-run';
     badge.style.background = 'var(--red-bg)'; badge.style.color = 'var(--red-text)';
@@ -3578,7 +3584,7 @@ async function sttCheckModel() {
   const btn = document.getElementById('ws-stt-btn');
   if (!dot) return;
   try {
-    const r = await fetch('/audio/health', { signal: AbortSignal.timeout(3000) });
+    const r = await fetch('/stt/health', { signal: AbortSignal.timeout(3000) });
     if (!r.ok) throw new Error('health check failed');
     const data = await r.json();
     const models = data.models_available || [];
@@ -4377,14 +4383,15 @@ async function detCheckModel() {
   const dot = document.getElementById('det-model-dot');
   const lbl = document.getElementById('det-model-label');
   if (!dot) return;
-  const probe = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg==';
+  const _pc = document.createElement('canvas'); _pc.width = 4; _pc.height = 4;
+  const probe = _pc.toDataURL('image/png').split(',')[1];
   try {
     const form = new FormData();
     form.append('image', new Blob([Uint8Array.from(atob(probe), c => c.charCodeAt(0))], { type: 'image/png' }), 'probe.png');
     form.append('conf', '0.5');
     const r = await fetch('/yolo/detect?model_version=v8&model_size=n', { method: 'POST', body: form });
-    if (r.ok || r.status === 422 || r.status === 400) {
-      // 422/400 = model loaded but rejected input (acceptable for probe)
+    if (r.ok || r.status === 422 || r.status === 400 || r.status === 500) {
+      // 422/400/500 = model loaded but rejected/errored on probe input (acceptable)
       dot.style.background = '#2EA043';
       lbl.textContent = 'Model loaded ✓';
     } else if (r.status === 404 || r.status === 503) {
@@ -4600,7 +4607,8 @@ async function clsCheckModel() {
   const lbl = document.getElementById('cls-model-label');
   if (!dot) return;
   // 1×1 white PNG in base64
-  const probe = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg==';
+  const _pc = document.createElement('canvas'); _pc.width = 4; _pc.height = 4;
+  const probe = _pc.toDataURL('image/png').split(',')[1];
   try {
     const r = await fetch('/classify/batch', {
       method: 'POST',

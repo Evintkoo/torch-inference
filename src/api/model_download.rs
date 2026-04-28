@@ -198,7 +198,11 @@ fn parse_available_model_entry(
 
     let task = if let Some(task_str) = model_obj.get("task").and_then(|t| t.as_str()) {
         task_str.to_string()
-    } else if model_obj.get("voices").is_some() {
+    } else if model_obj
+        .get("voices")
+        .and_then(|v| v.as_str())
+        .map_or(false, |s| s != "N/A" && !s.is_empty())
+    {
         "text-to-speech".to_string()
     } else if model_obj.get("accuracy").is_some() {
         "image-classification".to_string()
