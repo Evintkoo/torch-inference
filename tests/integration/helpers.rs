@@ -19,6 +19,7 @@ pub fn monitor() -> web::Data<Arc<Monitor>> {
     web::Data::new(Arc::new(Monitor::new()))
 }
 
+#[allow(dead_code)]
 pub fn rate_limiter(max: u64) -> web::Data<Arc<RateLimiter>> {
     web::Data::new(Arc::new(RateLimiter::new(max, 60)))
 }

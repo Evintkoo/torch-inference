@@ -3661,7 +3661,7 @@ function wsOnMessage(ev) {
           // Redirect to chat input
           chatMicActive = false;
           const inp = document.getElementById('llm-input');
-          if (inp) { inp.value = msg.text || ''; autoResizeChatInput(inp); inp.focus(); }
+          if (inp) { inp.value = msg.text || ''; inp.placeholder = 'Message Assistant…'; autoResizeChatInput(inp); inp.focus(); }
           const mb = document.getElementById('chat-mic-btn');
           if (mb) mb.classList.remove('recording');
         } else {
@@ -5417,6 +5417,8 @@ async function chatMicToggle() {
     chatMicActive = false;
     btn.classList.remove('recording');
     wsSttStop();
+    const inp2 = document.getElementById('llm-input');
+    if (inp2) inp2.placeholder = 'Message Assistant…';
     return;
   }
   wsSetStatus('connecting');

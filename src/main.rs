@@ -25,6 +25,9 @@ mod worker_pool;
 #[cfg(feature = "torch")]
 mod torch_optimization;
 
+#[cfg(test)]
+mod test_utils;
+
 use actix_web::{web, App, HttpServer};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
