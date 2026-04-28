@@ -49,11 +49,17 @@ pub async fn fetch_remixicon() {
     };
 
     let woff2_bytes = match client.get(REMIXICON_CDN_WOFF2).send().await {
-        Ok(resp) => match resp.bytes().await {
-            Ok(b) => b,
-            Err(e) => {
-                tracing::warn!(error = %e, "remixicon: failed to read woff2 body, using CDN fallback");
+        Ok(resp) => {
+            if !resp.status().is_success() {
+                tracing::warn!(status = %resp.status(), "remixicon: cdn returned non-2xx for woff2, using CDN fallback");
                 return;
+            }
+            match resp.bytes().await {
+                Ok(b) => b,
+                Err(e) => {
+                    tracing::warn!(error = %e, "remixicon: failed to read woff2 body, using CDN fallback");
+                    return;
+                }
             }
         },
         Err(e) => {
@@ -63,11 +69,17 @@ pub async fn fetch_remixicon() {
     };
 
     let css_text = match client.get(REMIXICON_CDN_CSS).send().await {
-        Ok(resp) => match resp.text().await {
-            Ok(t) => t,
-            Err(e) => {
-                tracing::warn!(error = %e, "remixicon: failed to read css body, using CDN fallback");
+        Ok(resp) => {
+            if !resp.status().is_success() {
+                tracing::warn!(status = %resp.status(), "remixicon: cdn returned non-2xx for css, using CDN fallback");
                 return;
+            }
+            match resp.text().await {
+                Ok(t) => t,
+                Err(e) => {
+                    tracing::warn!(error = %e, "remixicon: failed to read css body, using CDN fallback");
+                    return;
+                }
             }
         },
         Err(e) => {
@@ -79,8 +91,8 @@ pub async fn fetch_remixicon() {
     let css_rewritten = rewrite_woff2_src(&css_text);
 
     // OnceLock::set returns Err if already set — safe to ignore (idempotent on restart).
-    let _ = REMIXICON_WOFF2.set(woff2_bytes);
     let _ = REMIXICON_CSS.set(Bytes::from(css_rewritten));
+    let _ = REMIXICON_WOFF2.set(woff2_bytes);
     tracing::info!(
         woff2_bytes = REMIXICON_WOFF2.get().map_or(0, |b| b.len()),
         "remixicon assets cached in memory"
@@ -122,7 +134,9 @@ mod tests {
 
     #[actix_web::test]
     async fn test_remixicon_css_returns_200_when_cached() {
+        // Ensure the static is populated (idempotent — second set is ignored)
         let _ = REMIXICON_CSS.set(Bytes::from_static(b"body{}"));
+        // At this point REMIXICON_CSS is Some(_) — test the 200 branch
         let app = actix_test::init_service(
             App::new().route("/assets/remixicon.css", web::get().to(serve_remixicon_css)),
         )
@@ -131,7 +145,7 @@ mod tests {
             .uri("/assets/remixicon.css")
             .to_request();
         let resp = actix_test::call_service(&app, req).await;
-        assert_eq!(resp.status(), 200);
+        assert_eq!(resp.status(), 200, "handler must return 200 when CSS is cached");
         let ct = resp
             .headers()
             .get("content-type")
@@ -143,7 +157,9 @@ mod tests {
 
     #[actix_web::test]
     async fn test_remixicon_css_cache_control_immutable_when_cached() {
+        // Ensure static is populated — safe to call multiple times (second set is ignored)
         let _ = REMIXICON_CSS.set(Bytes::from_static(b".ri{}"));
+        // REMIXICON_CSS is Some(_) regardless of which test ran first
         let app = actix_test::init_service(
             App::new().route("/assets/remixicon.css", web::get().to(serve_remixicon_css)),
         )
@@ -152,10 +168,11 @@ mod tests {
             .uri("/assets/remixicon.css")
             .to_request();
         let resp = actix_test::call_service(&app, req).await;
+        // The 200 branch sets this header — only verify cache-control, not content
         let cc = resp
             .headers()
             .get("cache-control")
-            .expect("cache-control must be present")
+            .expect("cache-control must be present on cached CSS response")
             .to_str()
             .unwrap();
         assert!(
