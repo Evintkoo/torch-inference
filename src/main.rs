@@ -28,7 +28,7 @@ mod torch_optimization;
 #[cfg(test)]
 mod test_utils;
 
-use actix_web::{web, App, HttpServer};
+use actix_web::{middleware::Compress, web, App, HttpServer};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 #[cfg(feature = "profiling")]
@@ -741,10 +741,11 @@ async fn async_main() -> std::io::Result<()> {
             .app_data(classify_state.clone())
             .app_data(yolo_state.clone())
             .app_data(nn_state.clone())
-            // CorrelationIdMiddleware runs first (innermost), RequestLogger runs last (outermost)
-            // so it captures total wall time for each request
+            // Middleware order (innermost → outermost on response path):
+            //   CorrelationIdMiddleware, RequestLogger (logs full wall time), Compress (gzip)
             .wrap(CorrelationIdMiddleware)
             .wrap(RequestLogger)
+            .wrap(Compress::default())
             // Health check endpoints
             .route("/health", web::get().to(crate::api::health::health))
             .route("/health/live", web::get().to(crate::api::health::liveness))
