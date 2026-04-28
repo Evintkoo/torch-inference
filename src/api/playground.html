@@ -5422,13 +5422,13 @@ async function chatMicToggle() {
   wsSetStatus('connecting');
   const ok = await wsEnsureAudio();
   if (!ok) {
-    const inp = document.getElementById('llm-input');
-    if (inp) inp.placeholder = 'Could not connect to audio WebSocket.';
+    showToast('Could not connect to audio WebSocket.');
+    wsSetStatus('');
     return;
   }
   if (!sttModelAvailable) {
-    const inp = document.getElementById('llm-input');
-    if (inp) inp.placeholder = 'STT model not loaded.';
+    showToast('STT model not loaded — Whisper is still initialising or unavailable.');
+    wsSetStatus('');
     return;
   }
   chatMicActive = true;
