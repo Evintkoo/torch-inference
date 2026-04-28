@@ -10,10 +10,32 @@ use crate::middleware::RateLimiter;
 use crate::models::manager::ModelManager;
 use crate::monitor::Monitor;
 
-pub async fn root() -> impl Responder {
+const PLAYGROUND_HTML: &str = include_str!("playground.html");
+static PLAYGROUND_ETAG: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+
+fn playground_etag() -> &'static str {
+    PLAYGROUND_ETAG.get_or_init(|| {
+        use sha2::Digest;
+        let hash = sha2::Sha256::digest(PLAYGROUND_HTML.as_bytes());
+        let hex: String = hash.iter().map(|b| format!("{:02x}", b)).collect();
+        format!("\"{}\"", hex)
+    })
+}
+
+pub async fn root(req: HttpRequest) -> impl Responder {
+    let etag = playground_etag();
+    if let Some(inm) = req.headers().get("if-none-match") {
+        if inm.to_str().unwrap_or("") == etag {
+            return HttpResponse::NotModified()
+                .insert_header(("ETag", etag))
+                .finish();
+        }
+    }
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
-        .body(include_str!("playground.html"))
+        .insert_header(("ETag", etag))
+        .insert_header(("Cache-Control", "no-cache"))
+        .body(PLAYGROUND_HTML)
 }
 
 pub async fn health_check(
@@ -1146,6 +1168,65 @@ mod tests {
         assert!(resp_body["audio_data"].is_string());
         assert!(resp_body["processing_time"].is_number());
         assert_eq!(resp_body["sample_rate"], 16000);
+    }
+
+    // ── ETag / Cache-Control on root ──────────────────────────────────────────
+
+    #[actix_web::test]
+    async fn test_root_etag_header_present() {
+        let app = test::init_service(App::new().route("/", web::get().to(root))).await;
+        let req = test::TestRequest::get().uri("/").to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
+        let etag = resp.headers().get("etag");
+        assert!(etag.is_some(), "ETag header must be present on 200 response");
+    }
+
+    #[actix_web::test]
+    async fn test_root_cache_control_is_no_cache() {
+        let app = test::init_service(App::new().route("/", web::get().to(root))).await;
+        let req = test::TestRequest::get().uri("/").to_request();
+        let resp = test::call_service(&app, req).await;
+        let cc = resp
+            .headers()
+            .get("cache-control")
+            .expect("Cache-Control header must be present")
+            .to_str()
+            .unwrap();
+        assert_eq!(cc, "no-cache");
+    }
+
+    #[actix_web::test]
+    async fn test_root_304_on_matching_if_none_match() {
+        let app = test::init_service(App::new().route("/", web::get().to(root))).await;
+        // First request — learn the ETag
+        let req1 = test::TestRequest::get().uri("/").to_request();
+        let resp1 = test::call_service(&app, req1).await;
+        let etag = resp1
+            .headers()
+            .get("etag")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_owned();
+        // Second request — send matching ETag, expect 304
+        let req2 = test::TestRequest::get()
+            .uri("/")
+            .insert_header(("if-none-match", etag.as_str()))
+            .to_request();
+        let resp2 = test::call_service(&app, req2).await;
+        assert_eq!(resp2.status(), 304);
+    }
+
+    #[actix_web::test]
+    async fn test_root_200_on_mismatched_if_none_match() {
+        let app = test::init_service(App::new().route("/", web::get().to(root))).await;
+        let req = test::TestRequest::get()
+            .uri("/")
+            .insert_header(("if-none-match", "\"stale-00000000\""))
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
     }
 
     // ── configure_routes ─────────────────────────────────────────────────────
