@@ -699,7 +699,8 @@
   .chat-row.asst { align-items: flex-start; }
 
   .chat-row.user .chat-bubble {
-    background: var(--accent); color: var(--accent-fg);
+    background: #ffffff; color: var(--text);
+    border: 1px solid #121212;
     border-radius:0;
     padding: 10px 16px; max-width: 78%;
     font-size: 14px; line-height: 1.6; word-break: break-word;
@@ -5639,18 +5640,30 @@ async function agentTTS(text, voice, bubble) {
       body: JSON.stringify({ text: text, voice: voice || 'af_heart', speed: 1.0 }),
     });
     if (!res.ok) throw new Error('TTS ' + res.status);
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
+    // /tts/stream returns raw PCM16-LE — collect chunks, then wrap in WAV
+    const reader = res.body.getReader();
+    const chunks = [];
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+    }
+    const total = chunks.reduce((s, c) => s + c.byteLength, 0);
+    const pcm = new Uint8Array(total);
+    let off = 0; for (const c of chunks) { pcm.set(c, off); off += c.byteLength; }
+    const wav = buildWav(pcm, 24000, 1);
+    const url = URL.createObjectURL(new Blob([wav], { type: 'audio/wav' }));
     const audio = document.createElement('audio');
     audio.controls = true;
     audio.src = url;
     audio.style.cssText = 'width:100%;margin-top:6px';
-    thinking.replaceWith(makeToolCard('🔊', 'Speech ready', audio.outerHTML));
-    // Also auto-play via the WS TTS pipeline if available
-    const inp = document.getElementById('ws-tts-text');
-    if (inp) inp.value = text;
-    await wsEnsureAudio();
-    wsTtsSpeak();
+    // Append audio element directly (avoid outerHTML blob URL serialisation issues)
+    const card = document.createElement('div');
+    card.className = 'tool-call-card';
+    card.innerHTML = '🔊 <strong>Speech ready</strong>';
+    card.appendChild(audio);
+    thinking.replaceWith(card);
+    audio.play().catch(() => {});
   } catch (err) {
     thinking.replaceWith(makeToolCard('⚠️', 'TTS failed', err.message));
   }
