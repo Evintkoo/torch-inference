@@ -1018,9 +1018,9 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
       <!-- Composer -->
       <div class="gpt-composer-wrap">
         <div class="gpt-composer">
-          <button class="gpt-icon-btn" id="chat-attach-btn" onclick="document.getElementById('chat-file-input').click()" title="Attach image for analysis">
+          <label class="gpt-icon-btn" id="chat-attach-btn" for="chat-file-input" title="Attach image for analysis" style="cursor:pointer">
             <i class="ri-image-add-line"></i>
-          </button>
+          </label>
           <input type="file" id="chat-file-input" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none" onchange="handleChatAttach(this.files[0]);this.value=''" />
           <textarea id="llm-input" rows="1" placeholder="Message Assistant…" onkeydown="llmInputKey(event)" oninput="autoResizeChatInput(this)"></textarea>
           <button class="gpt-icon-btn" id="chat-mic-btn" onclick="chatMicToggle()" title="Voice input (STT)">
@@ -1156,8 +1156,7 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
       <div id="cls-pane-file">
         <div class="card">
           <div class="card-title">Upload Image</div>
-          <div class="dropzone" id="dropzone"
-               onclick="document.getElementById('img-file').click()"
+          <label class="dropzone" id="dropzone" for="img-file"
                ondragover="event.preventDefault();this.classList.add('over')"
                ondragleave="this.classList.remove('over')"
                ondrop="handleDrop(event)">
@@ -1165,7 +1164,7 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
             <div>Click to upload or drag &amp; drop</div>
             <div style="font-size:11px;color:var(--text-dim);margin-top:4px">JPEG / PNG</div>
             <input type="file" id="img-file" accept="image/jpeg,image/png" multiple onchange="handleFile(this.files)" />
-          </div>
+          </label>
           <img id="img-preview" alt="preview" />
           <div class="field" style="margin-top:12px">
             <label>Model</label>
@@ -1240,9 +1239,9 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
                 <button class="btn btn-primary" id="cls-cam-btn" onclick="clsStartCamera()">
                   <i class="ri-camera-line"></i> Camera
                 </button>
-                <button class="btn btn-ghost" id="cls-vid-btn" onclick="document.getElementById('cls-vid-file').click()">
+                <label class="btn btn-ghost" id="cls-vid-btn" for="cls-vid-file" style="cursor:pointer">
                   <i class="ri-film-line"></i> Video File
-                </button>
+                </label>
                 <input type="file" id="cls-vid-file" accept="video/*" onchange="clsOpenVideo(this.files[0])" style="display:none" />
                 <button class="btn btn-ghost" id="cls-stop-src-btn" onclick="clsStopSource()" style="display:none">
                   <i class="ri-stop-line"></i> Stop
@@ -1300,8 +1299,7 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
         <div class="card">
           <div class="card-title">Input</div>
-          <div class="dropzone" id="audio-dropzone"
-               onclick="document.getElementById('audio-file').click()"
+          <label class="dropzone" id="audio-dropzone" for="audio-file"
                ondragover="event.preventDefault();this.classList.add('over')"
                ondragleave="this.classList.remove('over')"
                ondrop="handleAudioDrop(event)">
@@ -1309,7 +1307,7 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
             <div>Click to upload or drag &amp; drop</div>
             <div style="font-size:11px;color:var(--text-dim);margin-top:4px">WAV · MP3 · OGG · FLAC · M4A</div>
             <input type="file" id="audio-file" accept="audio/*" onchange="handleAudioFile(this.files[0])" />
-          </div>
+          </label>
           <div id="audio-file-name" style="font-size:12px;color:var(--text-muted);margin-top:6px;display:none"></div>
           <div class="field" style="margin-top:12px">
             <label>Model</label>
@@ -1417,8 +1415,7 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
           <div class="card">
             <div class="card-title">Input</div>
-            <div class="dropzone" id="detect-dropzone"
-                 onclick="document.getElementById('detect-file').click()"
+            <label class="dropzone" id="detect-dropzone" for="detect-file"
                  ondragover="event.preventDefault();this.classList.add('over')"
                  ondragleave="this.classList.remove('over')"
                  ondrop="handleDetectDrop(event)">
@@ -1426,7 +1423,7 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
               <div>Click to upload or drag &amp; drop</div>
               <div style="font-size:11px;color:var(--text-dim);margin-top:4px">JPEG / PNG</div>
               <input type="file" id="detect-file" accept="image/jpeg,image/png" onchange="handleDetectFile(this.files[0])" />
-            </div>
+            </label>
             <div class="row" style="margin-top:12px">
               <div class="field">
                 <label>Model Version</label>
@@ -1503,9 +1500,9 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
                 <button class="btn btn-primary" id="det-cam-btn" onclick="detStartCamera()">
                   <i class="ri-camera-line"></i> Camera
                 </button>
-                <button class="btn btn-ghost" id="det-vid-btn" onclick="document.getElementById('det-vid-file').click()">
+                <label class="btn btn-ghost" id="det-vid-btn" for="det-vid-file" style="cursor:pointer">
                   <i class="ri-film-line"></i> Video File
-                </button>
+                </label>
                 <input type="file" id="det-vid-file" accept="video/*" onchange="detOpenVideo(this.files[0])" style="display:none" />
                 <button class="btn btn-ghost" id="det-stop-src-btn" onclick="detStopSource()" style="display:none">
                   <i class="ri-stop-line"></i> Stop
@@ -1696,13 +1693,12 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
 
         <!-- Classify sub-panel -->
         <div id="pg-classify" style="display:none">
-          <div class="pg-dropzone" id="pg-dropzone" style="border:2px dashed var(--border2);border-radius:8px;padding:32px;text-align:center;cursor:pointer;margin-bottom:10px"
-               onclick="document.getElementById('pg-img-file').click()"
+          <label class="pg-dropzone" id="pg-dropzone" for="pg-img-file" style="border:2px dashed var(--border2);border-radius:8px;padding:32px;text-align:center;cursor:pointer;margin-bottom:10px;display:block"
                ondragover="event.preventDefault();this.classList.add('over')"
                ondragleave="this.classList.remove('over')"
                ondrop="handlePgDrop(event)">
             Drop image here or click to upload
-          </div>
+          </label>
           <input type="file" id="pg-img-file" accept="image/*" style="display:none"
                  onchange="handlePgFile(this.files)"/>
           <img id="pg-img-preview" style="display:none;max-width:180px;border-radius:6px;margin-bottom:8px"/>
@@ -1729,15 +1725,14 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
 
         <!-- Audio sub-panel -->
         <div id="pg-audio" style="display:none">
-          <div class="pg-dropzone" id="pg-audio-dropzone"
-               style="border:2px dashed var(--border2);padding:32px;text-align:center;cursor:pointer;margin-bottom:10px"
-               onclick="document.getElementById('pg-audio-file-input').click()"
+          <label class="pg-dropzone" id="pg-audio-dropzone" for="pg-audio-file-input"
+               style="border:2px dashed var(--border2);padding:32px;text-align:center;cursor:pointer;margin-bottom:10px;display:block"
                ondragover="event.preventDefault();this.classList.add('over')"
                ondragleave="this.classList.remove('over')"
                ondrop="handlePgAudioDrop(event)">
             Drop audio file here or click to upload
             <div id="pg-audio-file-name" style="display:none;margin-top:6px;font-size:12px;color:var(--accent)"></div>
-          </div>
+          </label>
           <input type="file" id="pg-audio-file-input" accept="audio/*" style="display:none" onchange="handlePgAudioFile(this.files[0])"/>
           <div class="dl-form-row" style="margin-bottom:10px;align-items:flex-end;flex-wrap:wrap;gap:10px">
             <div class="field">
