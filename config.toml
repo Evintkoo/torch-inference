@@ -98,6 +98,9 @@ refresh_token_expire_days = 7
 auto_load = ["example"]  # Models to auto-load on startup
 cache_dir = "models"  # Directory for model cache
 max_loaded_models = 5  # Maximum number of models to keep in memory
+classify_model = "models/classify/efficientnet-lite4-11.onnx"
+classify_labels = "models/classify/imagenet1000.txt"
+audio_model_dir = "models/audio"
 
 [guard]
 # System Guards - Protection & Auto-Mitigation

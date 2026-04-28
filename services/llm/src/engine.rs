@@ -42,7 +42,12 @@ impl LlamaEngine {
         tracing::info!(path = %config.model_path, "Loading GGUF model...");
         let backend = LlamaBackend::init().context("init llama backend")?;
 
-        let n_gpu = u32::try_from(config.n_gpu_layers.max(0)).unwrap_or(0);
+        // -1 means "all layers" in llama.cpp convention; clamp to i32::MAX as u32.
+        let n_gpu = if config.n_gpu_layers < 0 {
+            u32::MAX
+        } else {
+            config.n_gpu_layers as u32
+        };
         let model_params = LlamaModelParams::default().with_n_gpu_layers(n_gpu);
 
         let model = LlamaModel::load_from_file(&backend, model_path, &model_params)

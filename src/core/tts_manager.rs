@@ -61,6 +61,7 @@ impl TTSManager {
 
     /// FNV-1a 64-bit hash. Unlike `DefaultHasher`, this is stable across Rust
     /// versions and process restarts — safe for use as a persistent cache key.
+    #[allow(dead_code)]
     pub(crate) fn fnv1a_u64(data: &[u8]) -> u64 {
         const OFFSET_BASIS: u64 = 14695981039346656037;
         const PRIME: u64 = 1099511628211;
@@ -146,9 +147,19 @@ impl TTSManager {
         self.engines.get(id).map(|e| f(e.as_ref()))
     }
 
-    /// Get the default engine
+    /// Get the default engine, falling back to any available engine if the
+    /// configured default hasn't been loaded (e.g. model files absent).
     pub fn get_default_engine(&self) -> Option<Arc<dyn TTSEngine>> {
-        self.get_engine(&self.config.default_engine)
+        if let Some(e) = self.get_engine(&self.config.default_engine) {
+            return Some(e);
+        }
+        // Prefer kokoro > piper > anything else as the fallback order.
+        for id in &["kokoro", "piper", "vits", "styletts2", "bark", "xtts"] {
+            if let Some(e) = self.get_engine(id) {
+                return Some(e);
+            }
+        }
+        self.engines.iter().next().map(|e| e.value().clone())
     }
 
     /// List all registered engines

@@ -172,7 +172,6 @@ pub async fn transcribe_audio(
     state: web::Data<AudioState>,
 ) -> Result<HttpResponse, ApiError> {
     let mut audio_data = Vec::new();
-    let mut model_name = "default".to_string();
     let mut return_timestamps = false;
 
     // Extract audio file and parameters from multipart
@@ -186,13 +185,6 @@ pub async fn transcribe_audio(
                 let data = chunk.map_err(|e| ApiError::BadRequest(e.to_string()))?;
                 audio_data.extend_from_slice(&data);
             }
-        } else if field_name == "model" {
-            let mut model_str = String::new();
-            while let Some(chunk) = field.next().await {
-                let data = chunk.map_err(|e| ApiError::BadRequest(e.to_string()))?;
-                model_str.push_str(&String::from_utf8_lossy(&data));
-            }
-            model_name = model_str;
         } else if field_name == "timestamps" {
             let mut ts_str = String::new();
             while let Some(chunk) = field.next().await {
@@ -213,15 +205,10 @@ pub async fn transcribe_audio(
         .load_audio(&audio_data)
         .map_err(|e| ApiError::BadRequest(format!("Invalid audio: {}", e)))?;
 
-    // Get STT model
-    let model = state
+    // Transcribe via Whisper pipeline (or legacy STT model fallback)
+    let result = state
         .model_manager
-        .get_stt_model(&model_name)
-        .ok_or_else(|| ApiError::NotFound(format!("STT model '{}' not found", model_name)))?;
-
-    // Transcribe
-    let result = model
-        .transcribe(&audio, return_timestamps)
+        .transcribe_audio(&audio, return_timestamps)
         .map_err(|e| ApiError::InternalError(format!("Transcription failed: {}", e)))?;
 
     // Convert to response format
@@ -895,8 +882,9 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_transcribe_audio_stt_model_not_found_returns_404() {
-        let state = make_audio_state(); // no STT model loaded
+    async fn test_transcribe_audio_stt_model_not_found_returns_error() {
+        // No Whisper pipeline and no legacy STT model — transcribe_audio returns an error.
+        let state = make_audio_state();
         let wav_bytes = make_wav_bytes_for_test(16000, 1, 16000);
 
         let app = test::init_service(
@@ -917,7 +905,7 @@ mod tests {
             .set_payload(body)
             .to_request();
         let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+        assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
     }
 
     #[tokio::test]
@@ -1062,10 +1050,12 @@ mod tests {
         assert_eq!(resp.status(), StatusCode::OK);
     }
 
-    /// Exercises transcribe_audio when model field names a non-existent STT model,
-    /// confirming the 404 path (line 169) is reached.
+    /// The model field is now ignored by transcribe_audio — routing always goes to
+    /// the Whisper pipeline if loaded, or falls back to the "default" legacy model.
+    /// This test verifies that even when a non-existent model name is sent, the
+    /// request succeeds because the "default" legacy STT model is available.
     #[tokio::test]
-    async fn test_transcribe_audio_explicit_model_not_found() {
+    async fn test_transcribe_audio_explicit_model_ignored_uses_default() {
         let state = make_audio_state_with_stt().await;
         let wav_bytes = make_wav_bytes_for_test(16000, 1, 16000);
 
@@ -1102,7 +1092,9 @@ mod tests {
             .set_payload(body)
             .to_request();
         let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+        // With the Whisper routing layer, named model lookups are ignored;
+        // the "default" legacy model is used and returns 200.
+        assert_eq!(resp.status(), StatusCode::OK);
     }
 
     /// Exercises the validate_audio handler with a "file" field name (line 136:

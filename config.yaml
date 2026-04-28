@@ -19,6 +19,10 @@ server:
 models:
   default_model: "example"
   model_path: "models/"
+  cache_dir: "models"
+  classify_model: "models/classify/efficientnet-lite4-11.onnx"
+  classify_labels: "models/classify/imagenet1000.txt"
+  audio_model_dir: "models/audio"
   supported_formats:
     - ".pt"
     - ".pth"

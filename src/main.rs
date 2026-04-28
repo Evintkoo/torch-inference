@@ -433,15 +433,54 @@ async fn async_main() -> std::io::Result<()> {
         let am = Arc::new(crate::core::audio_models::AudioModelManager::new(
             &audio_model_dir,
         ));
-        {
-            let _span = tracing::info_span!("audio_init").entered();
-            tracing::info!(model_dir = %audio_model_dir, "audio manager initializing");
-            drop(_span);
-        }
         am.initialize_default_models().await.ok();
         tracing::info!(model_dir = %audio_model_dir, "audio manager ready");
         am
     };
+
+    // Load Whisper ONNX pipeline in the background so it doesn't delay HTTP
+    // server startup. Downloads on first run, then loads from cache.
+    {
+        let am_whisper = audio_model_manager.clone();
+        tokio::spawn(async move {
+            let whisper_dir = std::path::PathBuf::from("models/whisper-onnx");
+            if let Err(e) = crate::core::whisper_onnx::ensure_whisper_models(&whisper_dir).await {
+                tracing::warn!(error = %e, "Whisper download failed — STT unavailable");
+                return;
+            }
+            let dir = whisper_dir.clone();
+            match tokio::task::spawn_blocking(move || {
+                crate::core::whisper_onnx::WhisperOnnxPipeline::new(&dir)
+            })
+            .await
+            {
+                Ok(Ok(pipeline)) => {
+                    am_whisper.set_whisper_pipeline(pipeline);
+                    tracing::info!("WhisperOnnxPipeline ready");
+                }
+                Ok(Err(e)) => tracing::warn!(error = %e, "WhisperOnnxPipeline unavailable"),
+                Err(e) => tracing::warn!(error = %e, "WhisperOnnxPipeline task panicked"),
+            }
+        });
+    }
+
+    // Bootstrap bare-minimum model files in the background.
+    // Each function is a no-op if the file already exists.
+    {
+        let cache_dir = config.models.cache_dir.clone();
+        tokio::spawn(async move {
+            use crate::core::model_bootstrap::*;
+            if let Err(e) = ensure_kokoro_models(std::path::Path::new("models/kokoro-82m")).await {
+                tracing::warn!(error = %e, "kokoro bootstrap failed");
+            }
+            if let Err(e) = ensure_yolo_models(&cache_dir.join("yolo")).await {
+                tracing::warn!(error = %e, "yolo bootstrap failed");
+            }
+            if let Err(e) = ensure_classify_models(&cache_dir.join("classify")).await {
+                tracing::warn!(error = %e, "classify bootstrap failed");
+            }
+        });
+    }
 
     // Initialize modern TTS manager
     let tts_manager = {
@@ -484,6 +523,50 @@ async fn async_main() -> std::io::Result<()> {
     // Spawn STT and LLM microservices as child processes.
     let micro_children = Arc::new(parking_lot::Mutex::new(spawn_microservices()));
 
+    // Watchdog: if the LLM child exits unexpectedly, respawn it after a short delay.
+    {
+        let children_ref = micro_children.clone();
+        tokio::spawn(async move {
+            // Give the service time to load the model before we start monitoring.
+            tokio::time::sleep(std::time::Duration::from_secs(90)).await;
+            loop {
+                tokio::time::sleep(std::time::Duration::from_secs(15)).await;
+                let needs_respawn = {
+                    let mut children = children_ref.lock();
+                    let before = children.len();
+                    children.retain_mut(|c| {
+                        match c.try_wait() {
+                            Ok(Some(status)) => {
+                                tracing::warn!(pid = c.id(), ?status, service = "llm", "microservice exited");
+                                false
+                            }
+                            _ => true,
+                        }
+                    });
+                    children.len() < before
+                };
+                if needs_respawn && !port_in_use(8001) {
+                    let llm_bin = "services/llm/target/release/llm-service";
+                    let llm_path = std::path::Path::new(llm_bin);
+                    if llm_path.exists() {
+                        match std::process::Command::new(
+                            std::fs::canonicalize(llm_path).unwrap_or(llm_path.to_path_buf()),
+                        )
+                        .current_dir("services/llm")
+                        .spawn()
+                        {
+                            Ok(child) => {
+                                tracing::info!(service = "llm", pid = child.id(), "LLM service respawned");
+                                children_ref.lock().push(child);
+                            }
+                            Err(e) => tracing::warn!(service = "llm", error = %e, "failed to respawn LLM service"),
+                        }
+                    }
+                }
+            }
+        });
+    }
+
     // Warmup runs in the background so the HTTP server becomes reachable
     // (and /health returns 200) immediately rather than waiting for the first
     // inference pass to complete.
@@ -503,19 +586,39 @@ async fn async_main() -> std::io::Result<()> {
         );
     }
 
-    let addr = format!("{}:{}", config.server.host, config.server.port);
-    let display_addr = format!("localhost:{}", config.server.port);
+    let bound_port = {
+        let preferred = config.server.port;
+        let host = &config.server.host;
+        let mut found = None;
+        for p in preferred..preferred + 16 {
+            let a       = format!("{}:{}", host, p);
+            let a_local = format!("127.0.0.1:{}", p);
+            // Check both the configured bind address and the loopback interface.
+            // A service already bound to 127.0.0.1:p would be shadowed by our
+            // 0.0.0.0:p binding (browser connects via localhost → 127.0.0.1),
+            // so skip any port where loopback is already occupied.
+            if std::net::TcpListener::bind(&a).is_ok()
+                && std::net::TcpListener::bind(&a_local).is_ok()
+            {
+                found = Some(p);
+                break;
+            }
+        }
+        found.unwrap_or(preferred)
+    };
+    if bound_port != config.server.port {
+        tracing::warn!(
+            preferred = config.server.port,
+            actual    = bound_port,
+            "preferred port in use, using next available port"
+        );
+    }
+    let addr = format!("{}:{}", config.server.host, bound_port);
+    let display_addr = format!("localhost:{}", bound_port);
     let worker_count = resolve_worker_count(config.server.workers);
     tracing::info!(addr = %addr, workers = worker_count, "binding http server");
 
     let listener = std::net::TcpListener::bind(&addr)?;
-
-    // Create shared reqwest client for the proxy (connection pooling)
-    let proxy_client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(config.server.proxy_timeout_secs))
-        .build()
-        .expect("build reqwest client");
-    let proxy_client = web::Data::new(proxy_client);
 
     let config_data = web::Data::new(config.clone());
     let model_mgr = web::Data::new(model_manager);
@@ -587,7 +690,12 @@ async fn async_main() -> std::io::Result<()> {
         "server ready"
     );
     eprintln!(
-        "\n  WebApp:  http://{}/playground\n  API:     http://{}\n  Health:  http://{}/health\n",
+        "\n╔══════════════════════════════════════════════════════════╗\
+         \n║          Netra RT — Torch Inference  (ready)            ║\
+         \n╚══════════════════════════════════════════════════════════╝\
+         \n\n  WebApp:   http://{}/playground\
+         \n  API:      http://{}\
+         \n  Health:   http://{}/health\n",
         display_addr, display_addr, display_addr
     );
     tracing::info!(
@@ -630,7 +738,6 @@ async fn async_main() -> std::io::Result<()> {
             .app_data(classify_state.clone())
             .app_data(yolo_state.clone())
             .app_data(nn_state.clone())
-            .app_data(proxy_client.clone())
             // CorrelationIdMiddleware runs first (innermost), RequestLogger runs last (outermost)
             // so it captures total wall time for each request
             .wrap(CorrelationIdMiddleware)
@@ -877,40 +984,76 @@ mod tests {
 }
 
 /// Spawn the STT and LLM microservices as child processes.
+/// Returns true if something is already listening on `127.0.0.1:<port>`.
+fn port_in_use(port: u16) -> bool {
+    std::net::TcpStream::connect_timeout(
+        &std::net::SocketAddr::from(([127, 0, 0, 1], port)),
+        std::time::Duration::from_millis(200),
+    )
+    .is_ok()
+}
+
 /// Both services are optional: if the binary hasn't been built yet we log a
 /// warning and continue.  The returned `Child` handles are held by the caller
 /// and killed during graceful shutdown so the processes don't orphan.
 fn spawn_microservices() -> Vec<std::process::Child> {
-    // (binary path relative to project root, working dir relative to project root, label)
-    let services: &[(&str, &str, &str)] = &[
-        ("services/stt/target/release/stt-service", ".", "stt"),
-        ("services/llm/target/release/llm-service", "services/llm", "llm"),
-    ];
-
     let mut children = Vec::new();
-    for (bin, workdir, name) in services {
-        let path = std::path::Path::new(bin);
-        if !path.exists() {
-            tracing::warn!(
-                service = name,
-                bin = bin,
-                "{} microservice binary not found — run `make {}-build`",
-                name, name
-            );
-            continue;
-        }
-        match std::process::Command::new(std::fs::canonicalize(path).unwrap_or(path.to_path_buf()))
-            .current_dir(workdir)
-            .spawn()
+
+    // ── LLM microservice (Rust binary) ─────────────────────────────────────
+    let llm_bin = "services/llm/target/release/llm-service";
+    let llm_path = std::path::Path::new(llm_bin);
+    if port_in_use(8001) {
+        tracing::info!(service = "llm", "llm already running on port 8001, skipping spawn");
+    } else if llm_path.exists() {
+        match std::process::Command::new(
+            std::fs::canonicalize(llm_path).unwrap_or(llm_path.to_path_buf()),
+        )
+        .current_dir("services/llm")
+        .spawn()
         {
             Ok(child) => {
-                tracing::info!(service = name, pid = child.id(), "{} microservice started", name);
+                tracing::info!(service = "llm", pid = child.id(), "llm microservice started");
                 children.push(child);
             }
-            Err(e) => {
-                tracing::warn!(service = name, error = %e, "failed to start {} microservice", name);
+            Err(e) => tracing::warn!(service = "llm", error = %e, "failed to start llm microservice"),
+        }
+    } else {
+        tracing::warn!(
+            service = "llm",
+            "llm microservice not built — run `make llm-build` (chat will be unavailable)"
+        );
+    }
+
+    // ── STT microservice (Python script, optional) ─────────────────────────
+    // The built-in Whisper ONNX pipeline handles /audio/transcribe natively.
+    // This Python service only adds /stt/* proxy routes (faster-whisper).
+    let stt_script = "services/stt/server.py";
+    if port_in_use(8002) {
+        tracing::info!(service = "stt", "stt already running on port 8002, skipping spawn");
+    } else if std::path::Path::new(stt_script).exists() {
+        let python_ok = std::process::Command::new("python3")
+            .arg("--version")
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .status()
+            .map(|s| s.success())
+            .unwrap_or(false);
+
+        if python_ok {
+            match std::process::Command::new("python3")
+                .arg(stt_script)
+                .spawn()
+            {
+                Ok(child) => {
+                    tracing::info!(service = "stt", pid = child.id(), "stt microservice started");
+                    children.push(child);
+                }
+                Err(e) => tracing::warn!(service = "stt", error = %e, "failed to start stt microservice"),
             }
+        } else {
+            tracing::warn!(service = "stt", "python3 not found — /stt/* proxy routes unavailable");
         }
     }
+
     children
 }

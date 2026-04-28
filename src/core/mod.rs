@@ -33,6 +33,7 @@ pub mod windows_sapi_tts;
 pub mod xtts;
 
 // Speech-to-Text (STT) engine
+pub mod whisper_onnx;
 pub mod whisper_stt;
 
 // SIMD-fused image preprocessing pipeline (decode → resize → normalize)
@@ -50,4 +51,6 @@ pub mod yolo; // YOLO object detection (v5, v8, v10, v11, v12)
 // PyTorch auto-detection
 pub mod torch_autodetect;
 
+// Bare-minimum model bootstrap (check + download on first run)
+pub mod model_bootstrap;
 

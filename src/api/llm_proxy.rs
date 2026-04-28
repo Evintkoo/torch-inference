@@ -6,13 +6,33 @@ use futures_util::StreamExt;
 
 /// Forward any `/llm/{tail:.*}` request to the LLM microservice.
 /// Host and port are read from `[microservices]` in config — no hardcoded values.
+///
+/// A fresh reqwest::Client is created per request so it is always bound to the
+/// current actix-web worker's tokio `current_thread` runtime. Sharing a client
+/// that was built on the main `multi_thread` runtime across worker threads
+/// causes the hyper I/O driver to operate on the wrong runtime, which silently
+/// fails with connection errors even when the upstream is reachable.
 pub async fn proxy(
     req: HttpRequest,
     body: Bytes,
     path: web::Path<String>,
-    client: web::Data<reqwest::Client>,
     config: web::Data<crate::config::Config>,
 ) -> HttpResponse {
+    // Build client inside the handler — bound to the current worker's runtime.
+    let client = match reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(config.server.proxy_timeout_secs))
+        .connect_timeout(std::time::Duration::from_secs(2))
+        .no_proxy()
+        .build()
+    {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!(error = %e, "failed to build reqwest client for LLM proxy");
+            return HttpResponse::InternalServerError()
+                .json(serde_json::json!({"error": "proxy client build failure"}));
+        }
+    };
+
     let tail = path.into_inner();
     let base = config.microservices.llm_base_url();
     let url = format!("{}/{}", base, tail);
@@ -46,13 +66,25 @@ pub async fn proxy(
     rb = rb.body(body);
 
     match rb.send().await {
-        Err(e) if e.is_connect() || e.is_timeout() => {
+        Err(e) if e.is_connect() || e.is_timeout() || e.is_builder() || e.is_request() => {
+            tracing::warn!(
+                url = %url,
+                error = %e,
+                is_connect = e.is_connect(),
+                is_timeout = e.is_timeout(),
+                is_builder = e.is_builder(),
+                is_request = e.is_request(),
+                "LLM proxy error"
+            );
             HttpResponse::ServiceUnavailable().json(
-                serde_json::json!({"error": "LLM service unavailable — start it with `make llm-run`"})
+                serde_json::json!({"error": "LLM service unavailable — run `make llm-build && make llm-run` to start it"})
             )
         }
-        Err(e) => HttpResponse::BadGateway()
-            .json(serde_json::json!({"error": e.to_string()})),
+        Err(e) => {
+            tracing::warn!(url = %url, error = %e, "LLM proxy unexpected error");
+            HttpResponse::BadGateway()
+                .json(serde_json::json!({"error": format!("LLM proxy error: {}", e)}))
+        }
         Ok(upstream) => {
             let status = actix_web::http::StatusCode::from_u16(upstream.status().as_u16())
                 .unwrap_or(actix_web::http::StatusCode::INTERNAL_SERVER_ERROR);

@@ -8,9 +8,22 @@ pub async fn proxy(
     req: HttpRequest,
     body: Bytes,
     path: web::Path<String>,
-    client: web::Data<reqwest::Client>,
     config: web::Data<crate::config::Config>,
 ) -> HttpResponse {
+    let client = match reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(config.server.proxy_timeout_secs))
+        .connect_timeout(std::time::Duration::from_secs(2))
+        .no_proxy()
+        .build()
+    {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!(error = %e, "failed to build reqwest client for STT proxy");
+            return HttpResponse::InternalServerError()
+                .json(serde_json::json!({"error": "proxy client build failure"}));
+        }
+    };
+
     let tail = path.into_inner();
     let base = config.microservices.stt_base_url();
     let url = format!("{}/{}", base, tail);
@@ -41,13 +54,13 @@ pub async fn proxy(
     rb = rb.body(body);
 
     match rb.send().await {
-        Err(e) if e.is_connect() || e.is_timeout() => {
+        Err(e) if e.is_connect() || e.is_timeout() || e.is_builder() || e.is_request() => {
             HttpResponse::ServiceUnavailable().json(
-                serde_json::json!({"error": "STT service unavailable — start it with `make stt-run`"})
+                serde_json::json!({"error": "STT service unavailable — run `make stt-build && make stt-run` to start it"})
             )
         }
         Err(e) => HttpResponse::BadGateway()
-            .json(serde_json::json!({"error": e.to_string()})),
+            .json(serde_json::json!({"error": format!("STT proxy error: {}", e)})),
         Ok(upstream) => {
             let status = actix_web::http::StatusCode::from_u16(upstream.status().as_u16())
                 .unwrap_or(actix_web::http::StatusCode::INTERNAL_SERVER_ERROR);

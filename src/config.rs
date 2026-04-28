@@ -78,29 +78,45 @@ pub struct ServerConfig {
     #[serde(default = "default_json_body_limit_mb")]
     pub json_body_limit_mb: usize,
     /// Timeout for outbound proxy requests to microservices (seconds). Default: 300.
-    #[serde(default)]
+    #[serde(default = "default_proxy_timeout_secs")]
     pub proxy_timeout_secs: u64,
 }
 
 fn default_json_body_limit_mb() -> usize { 50 }
+fn default_proxy_timeout_secs() -> u64 { 300 }
 
 /// Microservice host/port configuration. The main server spawns these as child
 /// processes and proxies requests to them.
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MicroservicesConfig {
     /// Host for the STT microservice. Default: "127.0.0.1".
-    #[serde(default)]
+    #[serde(default = "default_localhost")]
     pub stt_host: String,
     /// Port for the STT microservice. Default: 8002.
-    #[serde(default)]
+    #[serde(default = "default_stt_port")]
     pub stt_port: u16,
     /// Host for the LLM microservice. Default: "127.0.0.1".
-    #[serde(default)]
+    #[serde(default = "default_localhost")]
     pub llm_host: String,
     /// Port for the LLM microservice. Default: 8001.
-    #[serde(default)]
+    #[serde(default = "default_llm_port")]
     pub llm_port: u16,
 }
+
+impl Default for MicroservicesConfig {
+    fn default() -> Self {
+        Self {
+            stt_host: default_localhost(),
+            stt_port: default_stt_port(),
+            llm_host: default_localhost(),
+            llm_port: default_llm_port(),
+        }
+    }
+}
+
+fn default_localhost() -> String { "127.0.0.1".to_string() }
+fn default_stt_port() -> u16 { 8002 }
+fn default_llm_port() -> u16 { 8001 }
 
 impl MicroservicesConfig {
     /// Base URL for the STT microservice proxy.

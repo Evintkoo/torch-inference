@@ -37,6 +37,7 @@ fast_image_resize = "2.7"
 
 # Audio processing
 hound = "3.5"
+rustfft = "6"
 rodio = "0.17"
 rubato = "0.14"
 symphonia = { version = "0.5", features = ["wav", "mp3", "flac", "pcm", "vorbis"] }
