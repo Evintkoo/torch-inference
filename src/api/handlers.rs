@@ -22,13 +22,22 @@ pub async fn health_check(
 ) -> impl Responder {
     let health = engine.health_check();
     let monitor_health = monitor.get_health_status();
+    let metrics = monitor.get_metrics();
+    let error_rate = if metrics.total_requests > 0 {
+        monitor_health.error_count as f64 / metrics.total_requests as f64
+    } else {
+        0.0
+    };
 
     HttpResponse::Ok().json(json!({
         "healthy": monitor_health.healthy,
         "checks": health,
         "uptime_seconds": monitor_health.uptime_seconds,
         "active_requests": monitor_health.active_requests,
+        "total_requests": metrics.total_requests,
+        "avg_latency_ms": monitor_health.response_time_ms,
         "error_count": monitor_health.error_count,
+        "error_rate": error_rate,
         "timestamp": Utc::now().to_rfc3339(),
     }))
 }

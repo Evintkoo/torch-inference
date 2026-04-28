@@ -1858,6 +1858,7 @@ function show(id, btn) {
 /* ── Helpers ───────────────────────────────────────────── */
 function setBox(id, text, cls) {
   const el = document.getElementById(id);
+  if (!el) return;
   el.textContent = text;
   el.className   = 'response-box' + (cls ? ' ' + cls : '');
 }
@@ -2090,7 +2091,7 @@ async function loadTtsHealth() {
 
 function showModels() {
   const btn = document.querySelector('.nav-item[onclick*="models"]');
-  if (btn) { show('models', btn); btn.click(); }
+  if (btn) show('models', btn);
 }
 
 function buildWav(pcm, sampleRate, ch) {
@@ -2466,7 +2467,7 @@ async function runPgChat() {
   const btn = document.getElementById('pg-chat-btn');
   btn.disabled = true;
   try {
-    const res = await fetch('/v1/chat/completions', {
+    const res = await fetch('/llm/v1/chat/completions', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({model:'default', messages:[{role:'user',content:msg}]})
     });
@@ -2492,7 +2493,7 @@ async function runPgCompletion() {
   btn.disabled = true;
   setBox('pg-cmp-out', 'Generating…', 'stream');
   try {
-    const res = await fetch('/v1/completions', {
+    const res = await fetch('/llm/v1/completions', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({model:'default', prompt, max_tokens: 200})
     });
@@ -5235,7 +5236,7 @@ async function analyzeAttachment(b64) {
     const form  = new FormData();
     form.append('image', new Blob([bytes], { type: 'image/png' }), 'img.png');
     form.append('conf', '0.3');
-    const dr = await fetch('/detect', { method: 'POST', body: form });
+    const dr = await fetch('/yolo/detect?model_version=v8&model_size=n&conf_threshold=0.3', { method: 'POST', body: form });
     if (dr.ok) {
       const dd  = await dr.json();
       const boxes = dd?.detections || dd?.results || dd?.data || [];
