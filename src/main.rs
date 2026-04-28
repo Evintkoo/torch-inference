@@ -467,6 +467,9 @@ async fn async_main() -> std::io::Result<()> {
         });
     }
 
+    // Prefetch Remixicon CSS + woff2 into memory so /assets/ routes are self-hosted.
+    tokio::spawn(crate::api::assets::fetch_remixicon());
+
     // Bootstrap bare-minimum model files in the background.
     // Each function is a no-op if the file already exists.
     {
