@@ -380,6 +380,32 @@ Spot-checked the high-severity claims and a sample of mediums against the actual
 
 ---
 
+## Follow-up bucket K — Test-suite hygiene (surfaced 2026-04-29)
+
+Surfaced while running `cargo test --lib` to verify Bucket C. None of these are caused by Bucket C; all reproduce on `main` before any of my edits. Logging here so they don't get forgotten.
+
+| Test | Failure | Likely category |
+|---|---|---|
+| `api::system::tests::test_get_config_*` (6 tests) | All asserting on config response shape | API drift since the test was written |
+| `api::yolo::tests::test_detect_objects_{model_exists_no_torch,no_model_on_disk,v5_small_no_model}` | Model-absence path | env-dependent or assertion drift |
+| `core::xtts::tests::test_xtts_synthesize_samples_clamped` | `panicked at "sample out of range: NaN"` (`src/core/xtts.rs:334`) | Real bug — clamp guard fails |
+| `core::bark_tts::tests::test_bark_synthesize_samples_clamped` | Same pattern | Real bug — same shape |
+| `core::styletts2::tests::test_styletts2_synthesize_samples_clamped` | Same pattern | Real bug — same shape |
+| `core::kokoro_tts::tests::test_kokoro_returns_error_when_model_absent` | `panicked at "should return an error when model files are absent"` (`src/core/kokoro_tts.rs:293`) | Test asserts negation; engine no longer errors as expected |
+| `api::models::download_coverage_tests::test_download_model_async_empty_model_type_tts_default` | Flaky (passed on second run) | Flake — likely network/IO timing |
+| (process-level) | `libc++abi: terminating ... mutex lock failed: Invalid argument` after the suite finishes; SIGABRT | OS-mutex (C++) misuse on teardown — likely a global static `Drop` |
+
+Sev/effort estimates:
+- The three `*_synthesize_samples_clamped` failures look like the same NaN-propagation bug across three engines — one fix, three call-sites. **Bug / medium / S–M.**
+- The 6 system-config tests are likely a single mass assertion update. **Polish / low / S.**
+- The YOLO model-absence tests need an env probe. **Polish / low / S.**
+- The Kokoro absent-model test is a contract change check. **Polish / low / S.**
+- The teardown SIGABRT is concerning but the root cause needs investigation before triage. **Bug / medium / M (investigation).**
+
+Recommendation: pick this up after Buckets A–H. The test-suite isn't actively misleading us — the failures are sharp and easy to ignore — but it should not stay red on `main`.
+
+---
+
 ## Next step
 
 Tell me which buckets / individual items are in scope, and I'll start Phase 3 with the first bucket (recommended: **C — Mutex poison resilience**, then **A — Security & DoS hardening**). Each bucket goes through brainstorm → spec → plan → implement → verify, separately.
