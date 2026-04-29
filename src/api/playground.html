@@ -5627,6 +5627,13 @@ function makeThinkingEl(label) {
   return el;
 }
 
+const SVG_ICONS = {
+  speaker: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:4px"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>',
+  warn:    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:4px"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>',
+  search:  '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:4px"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>',
+  target:  '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:4px"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>',
+};
+
 function makeToolCard(icon, title, bodyHTML) {
   const card = document.createElement('div');
   card.className = 'tool-call-card';
@@ -5638,10 +5645,13 @@ async function agentTTS(text, voice, bubble) {
   const thinking = makeThinkingEl('Synthesising speech…');
   bubble.appendChild(thinking);
   try {
+    // Strip emojis — TTS engines produce silence/corrupt audio on emoji codepoints
+    const cleanText = text.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
+    if (!cleanText) { thinking.replaceWith(makeToolCard(SVG_ICONS.warn, 'TTS skipped', 'No speakable text after emoji removal.')); return; }
     const res = await fetch('/tts/stream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: text, voice: voice || 'af_heart', speed: 1.0 }),
+      body: JSON.stringify({ text: cleanText, voice: voice || 'af_heart', speed: 1.0 }),
     });
     if (!res.ok) throw new Error('TTS ' + res.status);
     // /tts/stream returns raw PCM16-LE — collect chunks, then wrap in WAV
@@ -5664,17 +5674,17 @@ async function agentTTS(text, voice, bubble) {
     // Append audio element directly (avoid outerHTML blob URL serialisation issues)
     const card = document.createElement('div');
     card.className = 'tool-call-card';
-    card.innerHTML = '🔊 <strong>Speech ready</strong>';
+    card.innerHTML = SVG_ICONS.speaker + ' <strong>Speech ready</strong>';
     card.appendChild(audio);
     thinking.replaceWith(card);
     audio.play().catch(() => {});
   } catch (err) {
-    thinking.replaceWith(makeToolCard('⚠️', 'TTS failed', err.message));
+    thinking.replaceWith(makeToolCard(SVG_ICONS.warn, 'TTS failed', err.message));
   }
 }
 
 async function agentClassify(b64, bubble) {
-  if (!b64) { bubble.appendChild(makeToolCard('⚠️', 'Classify', 'No image attached.')); return; }
+  if (!b64) { bubble.appendChild(makeToolCard(SVG_ICONS.warn, 'Classify', 'No image attached.')); return; }
   const thinking = makeThinkingEl('Classifying image…');
   bubble.appendChild(thinking);
   try {
@@ -5694,14 +5704,14 @@ async function agentClassify(b64, bubble) {
     });
     if (!preds.length) html += '<li>No predictions</li>';
     html += '</ul>';
-    thinking.replaceWith(makeToolCard('🔍', 'Classification results', html));
+    thinking.replaceWith(makeToolCard(SVG_ICONS.search, 'Classification results', html));
   } catch (err) {
-    thinking.replaceWith(makeToolCard('⚠️', 'Classify failed', err.message));
+    thinking.replaceWith(makeToolCard(SVG_ICONS.warn, 'Classify failed', err.message));
   }
 }
 
 async function agentDetect(b64, bubble) {
-  if (!b64) { bubble.appendChild(makeToolCard('⚠️', 'Detect', 'No image attached.')); return; }
+  if (!b64) { bubble.appendChild(makeToolCard(SVG_ICONS.warn, 'Detect', 'No image attached.')); return; }
   const thinking = makeThinkingEl('Detecting objects…');
   bubble.appendChild(thinking);
   try {
@@ -5727,9 +5737,9 @@ async function agentDetect(b64, bubble) {
     });
     if (!boxes.length) html += '<li>No objects detected</li>';
     html += '</ul>';
-    thinking.replaceWith(makeToolCard('🎯', 'Detected objects', html));
+    thinking.replaceWith(makeToolCard(SVG_ICONS.target, 'Detected objects', html));
   } catch (err) {
-    thinking.replaceWith(makeToolCard('⚠️', 'Detect failed', err.message));
+    thinking.replaceWith(makeToolCard(SVG_ICONS.warn, 'Detect failed', err.message));
   }
 }
 
