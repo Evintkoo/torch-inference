@@ -16,7 +16,8 @@ use ort::session::builder::GraphOptimizationLevel;
 use ort::session::Session;
 use ort::value::Tensor;
 use std::path::Path;
-use std::sync::{Mutex, OnceLock};
+use parking_lot::Mutex;
+use std::sync::OnceLock;
 
 use crate::tensor_pool::{TensorPool, TensorShape};
 
@@ -185,7 +186,7 @@ impl ClassificationBackend for OrtClassificationBackend {
                 }
             };
 
-            let mut sess = self.session.lock().unwrap();
+            let mut sess = self.session.lock();
             let outputs = sess.run(ort::inputs![input_name => input_tensor])?;
 
             let (_shape, raw_view) = outputs[0].try_extract_tensor::<f32>()?;

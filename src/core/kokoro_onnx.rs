@@ -66,25 +66,28 @@ impl SessionPool {
     }
 
     /// Acquire a session from the pool.  Awaits if all sessions are in use.
-    async fn acquire(&self) -> SessionGuard<'_> {
+    /// Returns `Err` only if the pool has been closed (e.g. shutdown race) —
+    /// in which case callers should surface a 503-style failure rather than
+    /// crashing the worker.
+    async fn acquire(&self) -> anyhow::Result<SessionGuard<'_>> {
         // Acquire the semaphore permit *before* locking the Vec so we never
         // hold the Vec mutex while waiting.
         let permit = self
             .semaphore
             .acquire()
             .await
-            .expect("session pool semaphore closed");
+            .map_err(|_| anyhow::anyhow!("Kokoro session pool closed"))?;
         let session = {
             let mut guard = self.sessions.lock();
             guard
                 .pop()
-                .expect("session available after permit was acquired")
+                .ok_or_else(|| anyhow::anyhow!("session pool empty after permit acquired"))?
         };
-        SessionGuard {
+        Ok(SessionGuard {
             session: Some(session),
             pool: self,
             _permit: permit,
-        }
+        })
     }
 }
 
@@ -440,7 +443,7 @@ impl KokoroOnnxEngine {
         let speed_tensor = Tensor::<f32>::from_array(([1usize], vec![params.speed]))?;
 
         // Check out a session from the pool — async wait, no blocking.
-        let mut session = self.pool.acquire().await;
+        let mut session = self.pool.acquire().await?;
         let outputs = session.run(ort::inputs![
             "tokens" => tokens_tensor,
             "style"  => style_tensor,
