@@ -3,10 +3,11 @@
 use actix_web::{web, HttpRequest, HttpResponse};
 use bytes::Bytes;
 use futures_util::StreamExt;
+use tokio_stream::wrappers::ReceiverStream;
 
 pub async fn proxy(
     req: HttpRequest,
-    body: Bytes,
+    payload: web::Payload,
     path: web::Path<String>,
     config: web::Data<crate::config::Config>,
 ) -> HttpResponse {
@@ -51,7 +52,20 @@ pub async fn proxy(
             rb = rb.header(hname, v);
         }
     }
-    rb = rb.body(body);
+    // web::Payload is !Send (Rc internally) — bridge through an mpsc so
+    // reqwest's wrap_stream gets a Send receiver.
+    let (tx, rx) = tokio::sync::mpsc::channel::<Result<Bytes, std::io::Error>>(8);
+    let mut payload = payload;
+    actix_web::rt::spawn(async move {
+        while let Some(chunk) = payload.next().await {
+            let mapped = chunk.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()));
+            if tx.send(mapped).await.is_err() {
+                break;
+            }
+        }
+    });
+    let upstream_body = reqwest::Body::wrap_stream(ReceiverStream::new(rx));
+    rb = rb.body(upstream_body);
 
     match rb.send().await {
         Err(e) if e.is_connect() || e.is_timeout() || e.is_builder() || e.is_request() => {
