@@ -20,7 +20,7 @@ use crate::postprocess::{self, envelope::ResponseMeta, Envelope};
 /// Read the (width, height) header of an in-memory image without decoding
 /// pixels. Returns an `anyhow::Result` so the caller can format the error.
 fn image_dimensions_from_bytes(bytes: &[u8]) -> anyhow::Result<(u32, u32)> {
-    let reader = image::io::Reader::new(std::io::Cursor::new(bytes))
+    let reader = image::ImageReader::new(std::io::Cursor::new(bytes))
         .with_guessed_format()?;
     let dims = reader.into_dimensions()?;
     Ok(dims)

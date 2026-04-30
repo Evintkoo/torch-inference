@@ -1208,7 +1208,7 @@ mod tests {
         {
             let file = std::fs::File::create(&zip_path).unwrap();
             let mut zip = zip::ZipWriter::new(file);
-            let opts = zip::write::FileOptions::default()
+            let opts = zip::write::FileOptions::<()>::default()
                 .compression_method(zip::CompressionMethod::Stored);
             zip.add_directory("libtorch/lib/", opts).unwrap();
             zip.start_file("libtorch/lib/test.txt", opts).unwrap();
@@ -1505,7 +1505,7 @@ mod tests {
         {
             let file = std::fs::File::create(&zip_path).unwrap();
             let mut zip = zip::ZipWriter::new(file);
-            let opts = zip::write::FileOptions::default()
+            let opts = zip::write::FileOptions::<()>::default()
                 .compression_method(zip::CompressionMethod::Stored);
 
             // Add an entry with a ".." traversal component — enclosed_name() returns None
@@ -2189,7 +2189,7 @@ mod tests {
             let mut buf = Vec::new();
             {
                 let mut zip = zip::ZipWriter::new(std::io::Cursor::new(&mut buf));
-                let opts = zip::write::FileOptions::default()
+                let opts = zip::write::FileOptions::<()>::default()
                     .compression_method(zip::CompressionMethod::Stored);
                 zip.start_file("libtorch/lib/test.txt", opts).unwrap();
                 zip.write_all(b"hello").unwrap();

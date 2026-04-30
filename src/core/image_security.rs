@@ -107,7 +107,7 @@ impl ImageSecurityValidator {
         // with a 30 000 × 30 000 header would produce ~3.6 GB of pixels and
         // crash the worker before the dimension check below runs. Reject
         // anything bigger than the configured maximum up front.
-        let dims_pre = image::io::Reader::new(std::io::Cursor::new(image_data))
+        let dims_pre = image::ImageReader::new(std::io::Cursor::new(image_data))
             .with_guessed_format()
             .ok()
             .and_then(|r| r.into_dimensions().ok());
@@ -406,7 +406,7 @@ mod tests {
         let mut out = Vec::new();
         img.write_to(
             &mut std::io::Cursor::new(&mut out),
-            image::ImageOutputFormat::Png,
+            image::ImageFormat::Png,
         )
         .unwrap();
         out
@@ -420,7 +420,7 @@ mod tests {
         let mut out = Vec::new();
         img.write_to(
             &mut std::io::Cursor::new(&mut out),
-            image::ImageOutputFormat::Png,
+            image::ImageFormat::Png,
         )
         .unwrap();
         out
@@ -1098,7 +1098,7 @@ mod tests {
         let mut png = Vec::new();
         img.write_to(
             &mut std::io::Cursor::new(&mut png),
-            image::ImageOutputFormat::Png,
+            image::ImageFormat::Png,
         )
         .unwrap();
 
@@ -1131,7 +1131,7 @@ mod tests {
         let mut png = Vec::new();
         img.write_to(
             &mut std::io::Cursor::new(&mut png),
-            image::ImageOutputFormat::Png,
+            image::ImageFormat::Png,
         )
         .unwrap();
 
@@ -1329,7 +1329,7 @@ mod tests {
         let mut png = Vec::new();
         img.write_to(
             &mut std::io::Cursor::new(&mut png),
-            image::ImageOutputFormat::Png,
+            image::ImageFormat::Png,
         )
         .unwrap();
 

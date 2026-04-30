@@ -12,7 +12,7 @@ actix-web = "4.8"
 actix-ws = "0.3"
 actix-rt = "2.10"
 actix-files = "0.6"
-actix-multipart = "0.6"
+actix-multipart = "0.7"
 tokio = { version = "1.40", features = ["rt-multi-thread", "macros", "net", "time", "sync", "fs", "io-util"] }
 tokio-stream = "0.1"
 tokio-util = { version = "0.7", features = ["io"] }
@@ -30,14 +30,13 @@ futures = "0.3"
 futures-util = "0.3"
 async-trait = "0.1"
 
-# Image processing
-# TODO(security): bump image → 0.25 (CVE-2024-46751-class decoder DoS fixes),
-# zip → 1.x, actix-multipart → 0.7. The bumps have API churn so they're
-# being staged in a follow-up branch. CI runs `cargo audit --deny warnings`
-# to catch any new advisories.
-image = "0.24"
-imageproc = "0.23"
-fast_image_resize = "2.7"
+# Image processing — image 0.25 + matching imageproc 0.25 and
+# fast_image_resize 5.x. Closes the decoder-DoS CVE class flagged by
+# cargo-audit. API churn handled in image_security.rs / image_pipeline.rs
+# / image.rs.
+image = "0.25"
+imageproc = "0.25"
+fast_image_resize = "5"
 
 # Audio processing
 hound = "3.5"
@@ -90,7 +89,7 @@ ahash = "0.8"
 # Compression
 flate2 = "1.0"
 tar = "0.4"
-zip = "0.6"
+zip = "2.2"
 
 # System info
 num_cpus = "1.16"
