@@ -140,7 +140,7 @@ pub async fn synthesize_speech(
         .save_wav(&audio)
         .map_err(|e| ApiError::InternalError(e.to_string()))?;
 
-    let duration_secs = audio.samples.len() as f32 / audio.sample_rate as f32;
+    let duration_secs = audio.duration_secs();
     let audio_base64 = base64_encode(&wav_data);
 
     let model_name = req.model.as_deref().unwrap_or("default").to_string();

@@ -56,6 +56,21 @@ pub struct AudioData {
     pub channels: u16,
 }
 
+impl AudioData {
+    /// Audio duration in seconds.
+    ///
+    /// `samples` is interleaved (one entry per channel per frame), so the
+    /// frame count is `samples.len() / channels`. Returns 0.0 for invalid
+    /// inputs (zero sample-rate or zero channels) rather than panicking.
+    pub fn duration_secs(&self) -> f32 {
+        if self.sample_rate == 0 || self.channels == 0 {
+            return 0.0;
+        }
+        let frames = self.samples.len() as f32 / self.channels as f32;
+        frames / self.sample_rate as f32
+    }
+}
+
 pub struct AudioProcessor {
     default_sample_rate: u32,
     /// Maximum decoded audio duration. Enforced inside `validate_wav` (against
@@ -357,6 +372,18 @@ impl AudioProcessor {
 
         use rubato::{FftFixedInOut, Resampler};
 
+        // Reject malformed audio metadata before doing any work. The
+        // de-interleave below assumes `samples.len()` is a multiple of
+        // `channels`; violating that would silently corrupt audio or
+        // (with `channels == 0`) divide by zero.
+        anyhow::ensure!(audio.channels > 0, "channels must be >= 1");
+        anyhow::ensure!(
+            audio.samples.len() % audio.channels as usize == 0,
+            "interleaved sample count {} is not divisible by channels {}",
+            audio.samples.len(),
+            audio.channels
+        );
+
         let channels = audio.channels as usize;
         let in_rate = audio.sample_rate as usize;
         let out_rate = target_sample_rate as usize;
@@ -477,6 +504,85 @@ impl Default for AudioProcessor {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ---- AudioData::duration_secs -----------------------------------------
+
+    #[test]
+    fn duration_secs_mono_one_second() {
+        let audio = AudioData {
+            samples: vec![0.0; 16_000],
+            sample_rate: 16_000,
+            channels: 1,
+        };
+        assert!((audio.duration_secs() - 1.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn duration_secs_stereo_one_second() {
+        // interleaved stereo: 16 000 frames * 2 channels = 32 000 samples
+        let audio = AudioData {
+            samples: vec![0.0; 32_000],
+            sample_rate: 16_000,
+            channels: 2,
+        };
+        assert!(
+            (audio.duration_secs() - 1.0).abs() < 1e-6,
+            "stereo duration must account for channels"
+        );
+    }
+
+    #[test]
+    fn duration_secs_zero_channels_returns_zero() {
+        let audio = AudioData {
+            samples: vec![0.0; 16_000],
+            sample_rate: 16_000,
+            channels: 0,
+        };
+        assert_eq!(audio.duration_secs(), 0.0);
+    }
+
+    #[test]
+    fn duration_secs_zero_sample_rate_returns_zero() {
+        let audio = AudioData {
+            samples: vec![0.0; 16_000],
+            sample_rate: 0,
+            channels: 1,
+        };
+        assert_eq!(audio.duration_secs(), 0.0);
+    }
+
+    // ---- AudioProcessor::resample alignment guard -------------------------
+
+    #[test]
+    fn resample_rejects_misaligned_samples() {
+        let processor = AudioProcessor::new();
+        let audio = AudioData {
+            // 7 samples, channels = 2 → 7 % 2 != 0
+            samples: vec![0.0; 7],
+            sample_rate: 16_000,
+            channels: 2,
+        };
+        let err = processor
+            .resample(&audio, 8_000)
+            .expect_err("misaligned interleaved buffer must be rejected");
+        let msg = format!("{err}");
+        assert!(msg.contains("not divisible"), "got: {msg}");
+    }
+
+    #[test]
+    fn resample_rejects_zero_channels() {
+        let processor = AudioProcessor::new();
+        let audio = AudioData {
+            samples: vec![0.0; 16],
+            sample_rate: 16_000,
+            channels: 0,
+        };
+        let err = processor
+            .resample(&audio, 8_000)
+            .expect_err("zero channels must be rejected");
+        let msg = format!("{err}");
+        assert!(msg.contains("channels"), "got: {msg}");
+    }
 
     // ---- helpers --------------------------------------------------------
 

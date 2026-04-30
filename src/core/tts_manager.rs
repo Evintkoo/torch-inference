@@ -218,7 +218,7 @@ impl TTSManager {
 
         log::info!(
             "Synthesis complete: {:.2}s audio generated",
-            audio.samples.len() as f32 / audio.sample_rate as f32
+            audio.duration_secs()
         );
 
         // Store result; evicts LRU entry automatically when at capacity.

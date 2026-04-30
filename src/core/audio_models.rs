@@ -343,6 +343,11 @@ impl STTModel {
     }
 
     fn to_mono(&self, samples: &[f32], channels: u16) -> Vec<f32> {
+        // `channels == 0` would divide by zero. `channels == 1` is already
+        // mono — cloning is cheaper than the chunk + sum dance.
+        if channels <= 1 {
+            return samples.to_vec();
+        }
         samples
             .chunks(channels as usize)
             .map(|chunk| chunk.iter().sum::<f32>() / channels as f32)
