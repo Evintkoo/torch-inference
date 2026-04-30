@@ -98,6 +98,14 @@ pub struct ServerConfig {
     /// Applied during WAV validation and Symphonia decode to bound memory.
     #[serde(default = "default_audio_max_duration_secs")]
     pub audio_max_duration_secs: u32,
+    /// Per-chunk timeout for `/tts/stream` (seconds). Default: 30.
+    /// A stuck engine no longer holds the connection open indefinitely.
+    #[serde(default = "default_tts_chunk_timeout_secs")]
+    pub tts_chunk_timeout_secs: u64,
+    /// Per-image timeout for `/classify/stream` (seconds). Default: 30.
+    /// A hung inference task no longer blocks subsequent images.
+    #[serde(default = "default_classify_item_timeout_secs")]
+    pub classify_item_timeout_secs: u64,
 }
 
 fn default_json_body_limit_mb() -> usize { 50 }
@@ -106,6 +114,8 @@ fn default_multipart_audio_limit_mb() -> usize { 100 }
 fn default_multipart_image_limit_mb() -> usize { 10 }
 fn default_classify_image_limit_mb() -> usize { 5 }
 fn default_audio_max_duration_secs() -> u32 { 1800 }
+fn default_tts_chunk_timeout_secs() -> u64 { 30 }
+fn default_classify_item_timeout_secs() -> u64 { 30 }
 
 /// Microservice host/port configuration. The main server spawns these as child
 /// processes and proxies requests to them.
@@ -485,6 +495,8 @@ impl Default for Config {
                 multipart_image_limit_mb: 10,
                 classify_image_limit_mb: 5,
                 audio_max_duration_secs: 1800,
+                tts_chunk_timeout_secs: 30,
+                classify_item_timeout_secs: 30,
             },
             device: DeviceConfig {
                 device_type: "auto".to_string(),

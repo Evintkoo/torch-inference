@@ -226,6 +226,8 @@ pub async fn stream_classify(
     state: web::Data<ClassifyState>,
     config: web::Data<Config>,
 ) -> Result<HttpResponse, ApiError> {
+    let item_timeout =
+        std::time::Duration::from_secs(config.server.classify_item_timeout_secs);
     if req.images.is_empty() {
         return Err(ApiError::BadRequest("images must not be empty".to_string()));
     }
@@ -274,29 +276,39 @@ pub async fn stream_classify(
 
             // Preprocess + inference for one image are CPU-bound. Offload
             // to spawn_blocking so the SSE writer task can keep flushing
-            // earlier results to the client.
+            // earlier results to the client. Each item is bounded by
+            // `classify_item_timeout_secs` so a hung inference can't stall
+            // the rest of the batch.
             let cfg = PreprocessConfig::imagenet(width, height);
             let backend_b = backend.clone();
-            let preds_result = tokio::task::spawn_blocking(move || -> anyhow::Result<Vec<Prediction>> {
+            let blocking = tokio::task::spawn_blocking(move || -> anyhow::Result<Vec<Prediction>> {
                 let pipeline = ImagePipeline::new(cfg);
                 let batch = pipeline.preprocess_batch(&[raw])?;
                 let mut v = backend_b.classify_nchw(batch, top_k)?;
                 Ok(v.pop().unwrap_or_default())
-            })
-            .await;
+            });
 
-            let preds = match preds_result {
-                Ok(Ok(p)) => p,
-                Ok(Err(e)) => {
+            let preds = match tokio::time::timeout(item_timeout, blocking).await {
+                Ok(Ok(Ok(p))) => p,
+                Ok(Ok(Err(e))) => {
                     let ev = sse_event(&serde_json::json!({
                         "idx": idx, "total": total, "error": e.to_string()
                     }));
                     let _ = tx.send(Ok(ev)).await;
                     continue;
                 }
-                Err(join_err) => {
+                Ok(Err(join_err)) => {
                     let ev = sse_event(&serde_json::json!({
                         "idx": idx, "total": total, "error": format!("task join: {}", join_err)
+                    }));
+                    let _ = tx.send(Ok(ev)).await;
+                    continue;
+                }
+                Err(_) => {
+                    let ev = sse_event(&serde_json::json!({
+                        "idx": idx,
+                        "total": total,
+                        "error": format!("classify timeout after {}s", item_timeout.as_secs())
                     }));
                     let _ = tx.send(Ok(ev)).await;
                     continue;

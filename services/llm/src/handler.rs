@@ -4,11 +4,23 @@ use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use futures_util::StreamExt;
 
 use crate::engine::LlamaEngine;
+
+/// Total timeout for non-streaming `/v1/chat/completions` responses.
+/// A pathological inference (hang or panic) no longer blocks the request
+/// future indefinitely. Override via `KOLOSAL_LLM_RESP_TIMEOUT_SECS`.
+fn response_timeout() -> Duration {
+    let secs = std::env::var("KOLOSAL_LLM_RESP_TIMEOUT_SECS")
+        .ok()
+        .and_then(|v| v.parse::<u64>().ok())
+        .unwrap_or(300);
+    Duration::from_secs(secs)
+}
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
@@ -187,9 +199,19 @@ pub async fn chat_completions(
             }
         });
 
+        let timeout = response_timeout();
         let mut content = String::new();
-        while let Some(tok) = rx.recv().await {
-            content.push_str(&tok);
+        let collect_fut = async {
+            while let Some(tok) = rx.recv().await {
+                content.push_str(&tok);
+            }
+        };
+        if tokio::time::timeout(timeout, collect_fut).await.is_err() {
+            // Inference is still running on the blocking pool; we abandon
+            // the response. The blocking task will finish and discard its
+            // tokens when the channel drops at scope end.
+            return HttpResponse::GatewayTimeout()
+                .json(json!({"error": format!("inference timed out after {}s", timeout.as_secs())}));
         }
 
         match handle.await {

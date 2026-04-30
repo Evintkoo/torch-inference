@@ -1,11 +1,9 @@
 use actix_web::web::Bytes;
 /// Production TTS API - Clean, modular design
 use actix_web::{web, HttpRequest, HttpResponse};
-use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::Instant;
-use tokio_stream::wrappers::ReceiverStream;
 
 use crate::config::Config;
 use crate::core::audio::AudioProcessor;
@@ -183,6 +181,7 @@ pub async fn synthesize(
 pub async fn stream_synthesize(
     req: web::Json<SynthesisRequest>,
     state: web::Data<TTSState>,
+    config: web::Data<Config>,
 ) -> Result<HttpResponse, ApiError> {
     if req.text.is_empty() {
         return Err(ApiError::BadRequest("Text cannot be empty".to_string()));
@@ -210,11 +209,30 @@ pub async fn stream_synthesize(
     let pipeline = StreamingTtsPipeline::new(engine);
     let chunk_rx = pipeline.synthesize_streaming(&req.text, params);
 
-    // Convert the mpsc receiver into an async Stream of Bytes.
-    let byte_stream = ReceiverStream::new(chunk_rx).map(|result| {
-        result
-            .map(|chunk| Bytes::from(chunk.to_pcm16_le()))
-            .map_err(|e| actix_web::error::ErrorInternalServerError(e.to_string()))
+    // Per-chunk timeout: a stuck engine no longer holds the connection open
+    // indefinitely. We bound the gap *between* successful chunks, not the
+    // total stream length — long-text synthesis can legitimately take a
+    // while, but each sentence should arrive within the cap or we close.
+    let chunk_timeout = std::time::Duration::from_secs(config.server.tts_chunk_timeout_secs);
+    let byte_stream = futures_util::stream::unfold(chunk_rx, move |mut rx| async move {
+        match tokio::time::timeout(chunk_timeout, rx.recv()).await {
+            Ok(Some(Ok(chunk))) => {
+                let bytes = Bytes::from(chunk.to_pcm16_le());
+                Some((Ok::<Bytes, actix_web::Error>(bytes), rx))
+            }
+            Ok(Some(Err(e))) => Some((
+                Err(actix_web::error::ErrorInternalServerError(e.to_string())),
+                rx,
+            )),
+            Ok(None) => None, // upstream closed cleanly
+            Err(_) => Some((
+                Err(actix_web::error::ErrorGatewayTimeout(format!(
+                    "TTS chunk timeout after {}s",
+                    chunk_timeout.as_secs()
+                ))),
+                rx,
+            )),
+        }
     });
 
     Ok(HttpResponse::Ok()
@@ -904,7 +922,8 @@ mod tests {
             language: None,
             skip_postprocess: false,
         });
-        let result = stream_synthesize(req, state).await;
+        let cfg = web::Data::new(Config::default());
+        let result = stream_synthesize(req, state, cfg).await;
         assert!(matches!(
             result.unwrap_err(),
             crate::error::ApiError::BadRequest(_)
@@ -924,7 +943,8 @@ mod tests {
             language: None,
             skip_postprocess: false,
         });
-        let result = stream_synthesize(req, state).await;
+        let cfg = web::Data::new(Config::default());
+        let result = stream_synthesize(req, state, cfg).await;
         assert!(matches!(
             result.unwrap_err(),
             crate::error::ApiError::BadRequest(_)
