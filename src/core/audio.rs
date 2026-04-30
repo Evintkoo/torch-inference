@@ -58,19 +58,32 @@ pub struct AudioData {
 
 pub struct AudioProcessor {
     default_sample_rate: u32,
+    /// Maximum decoded audio duration. Enforced inside `validate_wav` (against
+    /// the WAV header's claimed frame count) and `load_with_symphonia` (during
+    /// decode). Default 1800 (30 min) — bumped/clamped from the server config
+    /// at handler entry via `with_max_duration_secs`.
+    max_duration_secs: u32,
 }
 
 impl AudioProcessor {
     pub fn new() -> Self {
         Self {
             default_sample_rate: 16000,
+            max_duration_secs: 1800,
         }
     }
 
     pub fn with_sample_rate(sample_rate: u32) -> Self {
         Self {
             default_sample_rate: sample_rate,
+            max_duration_secs: 1800,
         }
+    }
+
+    /// Override the decoded-duration cap (e.g. read from `Config::server`).
+    pub fn with_max_duration_secs(mut self, max_duration_secs: u32) -> Self {
+        self.max_duration_secs = max_duration_secs;
+        self
     }
 
     /// Validate audio file
@@ -102,7 +115,20 @@ impl AudioProcessor {
         let reader = hound::WavReader::new(cursor).context("Failed to parse WAV file")?;
 
         let spec = reader.spec();
-        let duration_secs = reader.duration() as f32 / spec.sample_rate as f32;
+        // Reject before any large allocation if the header claims more audio
+        // than we'll process. `reader.duration()` returns frame count.
+        let frames = reader.duration() as u64;
+        let max_frames = spec.sample_rate as u64 * self.max_duration_secs as u64;
+        if frames > max_frames {
+            bail!(
+                "audio too long: {} frames at {} Hz (~{:.0}s) exceeds the {} s cap",
+                frames,
+                spec.sample_rate,
+                frames as f64 / spec.sample_rate as f64,
+                self.max_duration_secs
+            );
+        }
+        let duration_secs = frames as f32 / spec.sample_rate as f32;
 
         Ok(AudioMetadata {
             format: AudioFormat::Wav,
@@ -272,6 +298,11 @@ impl AudioProcessor {
         let mut samples = Vec::new();
         let mut sample_rate = 44100;
         let mut channels = 2;
+        // Recomputed on the first decoded packet (we don't know the real
+        // sample-rate/channel layout until then). Initial value is
+        // overwritten before any read in the comparison below.
+        #[allow(unused_assignments)]
+        let mut max_samples: u64 = u64::MAX;
 
         while let Ok(packet) = probed.format.next_packet() {
             if packet.track_id() != track_id {
@@ -282,11 +313,26 @@ impl AudioProcessor {
                 Ok(decoded) => {
                     sample_rate = decoded.spec().rate;
                     channels = decoded.spec().channels.count() as u16;
+                    // Refine the cap once we know the spec. `samples` holds
+                    // interleaved samples (samples = frames * channels).
+                    max_samples = sample_rate as u64
+                        * channels as u64
+                        * self.max_duration_secs as u64;
 
                     let mut sample_buf =
                         SampleBuffer::<f32>::new(decoded.capacity() as u64, *decoded.spec());
                     sample_buf.copy_interleaved_ref(decoded);
                     samples.extend_from_slice(sample_buf.samples());
+
+                    if samples.len() as u64 > max_samples {
+                        bail!(
+                            "audio too long: decoded {} samples (~{:.0}s) exceeds the {} s cap",
+                            samples.len(),
+                            samples.len() as f64
+                                / (sample_rate as f64 * channels as f64).max(1.0),
+                            self.max_duration_secs
+                        );
+                    }
                 }
                 Err(_) => break,
             }

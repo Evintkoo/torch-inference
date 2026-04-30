@@ -59,6 +59,9 @@ pub enum ApiError {
 
     #[error("Not implemented: {0}")]
     NotImplemented(String),
+
+    #[error("Payload too large: {0}")]
+    PayloadTooLarge(String),
 }
 
 impl ResponseError for ApiError {
@@ -78,6 +81,7 @@ impl ResponseError for ApiError {
             ApiError::Unauthorized(_) => StatusCode::UNAUTHORIZED,
             ApiError::Forbidden(_) => StatusCode::FORBIDDEN,
             ApiError::NotImplemented(_) => StatusCode::NOT_IMPLEMENTED,
+            ApiError::PayloadTooLarge(_) => StatusCode::PAYLOAD_TOO_LARGE,
         }
     }
 }

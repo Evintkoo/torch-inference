@@ -80,10 +80,32 @@ pub struct ServerConfig {
     /// Timeout for outbound proxy requests to microservices (seconds). Default: 300.
     #[serde(default = "default_proxy_timeout_secs")]
     pub proxy_timeout_secs: u64,
+    /// Per-request cap on multipart audio uploads (MiB). Default: 100.
+    /// Protects `/stt/transcribe` from OOM via oversized files.
+    #[serde(default = "default_multipart_audio_limit_mb")]
+    pub multipart_audio_limit_mb: usize,
+    /// Per-request cap on multipart image uploads (MiB). Default: 10.
+    /// Protects `/yolo/detect` from OOM via oversized files.
+    #[serde(default = "default_multipart_image_limit_mb")]
+    pub multipart_image_limit_mb: usize,
+    /// Per-image cap on base64 strings inside JSON requests (MiB). Default: 5.
+    /// Protects `/classify/batch` and `/classify/stream` from OOM via large
+    /// individual items even when the batch as a whole fits within
+    /// `json_body_limit_mb`.
+    #[serde(default = "default_classify_image_limit_mb")]
+    pub classify_image_limit_mb: usize,
+    /// Maximum decoded audio duration (seconds). Default: 1800 (30 min).
+    /// Applied during WAV validation and Symphonia decode to bound memory.
+    #[serde(default = "default_audio_max_duration_secs")]
+    pub audio_max_duration_secs: u32,
 }
 
 fn default_json_body_limit_mb() -> usize { 50 }
 fn default_proxy_timeout_secs() -> u64 { 300 }
+fn default_multipart_audio_limit_mb() -> usize { 100 }
+fn default_multipart_image_limit_mb() -> usize { 10 }
+fn default_classify_image_limit_mb() -> usize { 5 }
+fn default_audio_max_duration_secs() -> u32 { 1800 }
 
 /// Microservice host/port configuration. The main server spawns these as child
 /// processes and proxies requests to them.
@@ -411,13 +433,37 @@ impl Config {
     pub fn load() -> anyhow::Result<Self> {
         let config_file = "config.toml";
 
-        if std::path::Path::new(config_file).exists() {
+        let config: Config = if std::path::Path::new(config_file).exists() {
             let content = std::fs::read_to_string(config_file)?;
-            let config: Config = toml::from_str(&content)?;
-            Ok(config)
+            toml::from_str(&content)?
         } else {
-            Ok(Config::default())
+            Config::default()
+        };
+
+        config.validate()?;
+        Ok(config)
+    }
+
+    /// Reject configurations that would ship insecure or nonsensical defaults.
+    /// Called at the end of `Config::load`.
+    pub fn validate(&self) -> anyhow::Result<()> {
+        if self.auth.enabled {
+            if self.auth.jwt_secret == "your-secret-key-here" {
+                anyhow::bail!(
+                    "auth.enabled is true but jwt_secret is the placeholder \
+                     'your-secret-key-here'; set a real secret in config.toml \
+                     under [auth] or via the deployment environment"
+                );
+            }
+            if self.auth.jwt_secret.len() < 32 {
+                anyhow::bail!(
+                    "auth.enabled is true but jwt_secret is shorter than 32 chars \
+                     ({}); use a high-entropy secret",
+                    self.auth.jwt_secret.len()
+                );
+            }
         }
+        Ok(())
     }
 }
 
@@ -435,6 +481,10 @@ impl Default for Config {
                 shutdown_timeout_secs: 30,
                 json_body_limit_mb: 50,
                 proxy_timeout_secs: 300,
+                multipart_audio_limit_mb: 100,
+                multipart_image_limit_mb: 10,
+                classify_image_limit_mb: 5,
+                audio_max_duration_secs: 1800,
             },
             device: DeviceConfig {
                 device_type: "auto".to_string(),
@@ -487,7 +537,13 @@ impl Default for Config {
                 enable_zero_scaling: false,
             },
             auth: AuthConfig {
-                enabled: true,
+                // Default is disabled: a server with no `[auth]` section in
+                // config.toml runs unauthenticated. To enable auth, set
+                // `auth.enabled = true` *and* provide a real `auth.jwt_secret`
+                // (>= 32 chars, not the placeholder). `Config::validate`
+                // refuses to start if the placeholder is paired with
+                // `enabled = true`.
+                enabled: false,
                 jwt_secret: "your-secret-key-here".to_string(),
                 jwt_algorithm: "HS256".to_string(),
                 access_token_expire_minutes: 60,
@@ -585,10 +641,51 @@ mod tests {
     #[test]
     fn test_auth_config_defaults() {
         let config = Config::default();
-        assert!(config.auth.enabled);
+        // Auth is disabled in the default Config so that a fresh checkout boots
+        // without forcing the operator to provision a JWT secret. Operators
+        // turning auth on must also set a non-placeholder secret — see
+        // `test_validate_rejects_placeholder_jwt_when_auth_enabled`.
+        assert!(!config.auth.enabled);
         assert_eq!(config.auth.jwt_algorithm, "HS256");
         assert_eq!(config.auth.access_token_expire_minutes, 60);
         assert_eq!(config.auth.refresh_token_expire_days, 7);
+    }
+
+    #[test]
+    fn test_validate_accepts_default_config() {
+        let config = Config::default();
+        assert!(
+            config.validate().is_ok(),
+            "default config should validate (auth disabled)"
+        );
+    }
+
+    #[test]
+    fn test_validate_rejects_placeholder_jwt_when_auth_enabled() {
+        let mut config = Config::default();
+        config.auth.enabled = true;
+        // jwt_secret is still the placeholder
+        let err = config.validate().unwrap_err();
+        let msg = format!("{err}");
+        assert!(msg.contains("placeholder"), "got: {msg}");
+    }
+
+    #[test]
+    fn test_validate_rejects_short_jwt_when_auth_enabled() {
+        let mut config = Config::default();
+        config.auth.enabled = true;
+        config.auth.jwt_secret = "short".to_string();
+        let err = config.validate().unwrap_err();
+        let msg = format!("{err}");
+        assert!(msg.contains("32 chars"), "got: {msg}");
+    }
+
+    #[test]
+    fn test_validate_accepts_strong_jwt_with_auth_enabled() {
+        let mut config = Config::default();
+        config.auth.enabled = true;
+        config.auth.jwt_secret = "x".repeat(64);
+        assert!(config.validate().is_ok());
     }
 
     #[test]

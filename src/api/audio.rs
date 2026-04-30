@@ -170,11 +170,17 @@ pub async fn synthesize_speech(
 pub async fn transcribe_audio(
     mut payload: Multipart,
     state: web::Data<AudioState>,
+    config: web::Data<Config>,
 ) -> Result<HttpResponse, ApiError> {
-    let mut audio_data = Vec::new();
+    let max_bytes = config.server.multipart_audio_limit_mb.saturating_mul(1024 * 1024);
+    let max_duration_secs = config.server.audio_max_duration_secs;
+
+    let mut audio_data: Vec<u8> = Vec::new();
     let mut return_timestamps = false;
 
-    // Extract audio file and parameters from multipart
+    // Extract audio file and parameters from multipart, bailing as soon as the
+    // accumulated audio bytes would exceed the per-request cap. Returning 413
+    // before allocating gigabytes is the whole point of this check.
     while let Some(item) = payload.next().await {
         let mut field = item.map_err(|e| ApiError::BadRequest(e.to_string()))?;
         let content_disposition = field.content_disposition();
@@ -183,6 +189,12 @@ pub async fn transcribe_audio(
         if field_name == "audio" || field_name == "file" {
             while let Some(chunk) = field.next().await {
                 let data = chunk.map_err(|e| ApiError::BadRequest(e.to_string()))?;
+                if audio_data.len().saturating_add(data.len()) > max_bytes {
+                    return Err(ApiError::PayloadTooLarge(format!(
+                        "audio upload exceeds {} MiB limit",
+                        config.server.multipart_audio_limit_mb
+                    )));
+                }
                 audio_data.extend_from_slice(&data);
             }
         } else if field_name == "timestamps" {
@@ -199,8 +211,10 @@ pub async fn transcribe_audio(
         return Err(ApiError::BadRequest("No audio data provided".to_string()));
     }
 
-    // Load and validate audio
-    let processor = AudioProcessor::new();
+    // Load and validate audio. The duration cap is enforced inside the
+    // processor against both the WAV header (pre-allocation) and the
+    // Symphonia decode loop.
+    let processor = AudioProcessor::new().with_max_duration_secs(max_duration_secs);
     let audio = processor
         .load_audio(&audio_data)
         .map_err(|e| ApiError::BadRequest(format!("Invalid audio: {}", e)))?;
@@ -863,6 +877,7 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .app_data(state.clone())
+                .app_data(web::Data::new(crate::config::Config::default()))
                 .route("/audio/transcribe", web::post().to(transcribe_audio)),
         )
         .await;
@@ -890,6 +905,7 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .app_data(state.clone())
+                .app_data(web::Data::new(crate::config::Config::default()))
                 .route("/audio/transcribe", web::post().to(transcribe_audio)),
         )
         .await;
@@ -916,6 +932,7 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .app_data(state.clone())
+                .app_data(web::Data::new(crate::config::Config::default()))
                 .route("/audio/transcribe", web::post().to(transcribe_audio)),
         )
         .await;
@@ -945,6 +962,7 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .app_data(state.clone())
+                .app_data(web::Data::new(crate::config::Config::default()))
                 .route("/audio/transcribe", web::post().to(transcribe_audio)),
         )
         .await;
@@ -984,6 +1002,7 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .app_data(state.clone())
+                .app_data(web::Data::new(crate::config::Config::default()))
                 .route("/audio/transcribe", web::post().to(transcribe_audio)),
         )
         .await;
@@ -1015,6 +1034,7 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .app_data(state.clone())
+                .app_data(web::Data::new(crate::config::Config::default()))
                 .route("/audio/transcribe", web::post().to(transcribe_audio)),
         )
         .await;
@@ -1062,6 +1082,7 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .app_data(state.clone())
+                .app_data(web::Data::new(crate::config::Config::default()))
                 .route("/audio/transcribe", web::post().to(transcribe_audio)),
         )
         .await;
@@ -1194,6 +1215,7 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .app_data(state.clone())
+                .app_data(web::Data::new(crate::config::Config::default()))
                 .route("/audio/transcribe", web::post().to(transcribe_audio)),
         )
         .await;

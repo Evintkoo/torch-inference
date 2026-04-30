@@ -106,7 +106,11 @@ pub async fn detect_objects(
     let temp_dir = std::env::temp_dir();
     let temp_file = temp_dir.join(format!("yolo_input_{}.jpg", uuid::Uuid::new_v4()));
 
-    // Extract image from multipart
+    // Extract image from multipart, refusing oversized payloads before they
+    // hit disk. The cap is per-request (not per-field) — a 50 MB JPEG is
+    // already excessive for detection.
+    let max_bytes = config.server.multipart_image_limit_mb.saturating_mul(1024 * 1024);
+    let mut total_bytes: usize = 0;
     while let Some(Ok(mut field)) = payload.next().await {
         let mut file = fs::File::create(&temp_file)
             .await
@@ -114,6 +118,15 @@ pub async fn detect_objects(
 
         while let Some(chunk) = field.next().await {
             let data = chunk.map_err(|e| ApiError::InternalError(e.to_string()))?;
+            total_bytes = total_bytes.saturating_add(data.len());
+            if total_bytes > max_bytes {
+                // Best-effort cleanup; ignore errors since we're about to bail.
+                let _ = fs::remove_file(&temp_file).await;
+                return Err(ApiError::PayloadTooLarge(format!(
+                    "image upload exceeds {} MiB limit",
+                    config.server.multipart_image_limit_mb
+                )));
+            }
             file.write_all(&data)
                 .await
                 .map_err(|e| ApiError::InternalError(e.to_string()))?;

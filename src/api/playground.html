@@ -5634,6 +5634,18 @@ const SVG_ICONS = {
   target:  '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:4px"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>',
 };
 
+// Minimal HTML-attribute-safe escape. Apply to every untrusted string before
+// concatenation into HTML (model labels, class names, error messages).
+// `makeToolCard.bodyHTML` is intentionally raw HTML — its callers escape.
+function escapeHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function makeToolCard(icon, title, bodyHTML) {
   const card = document.createElement('div');
   card.className = 'tool-call-card';
@@ -5679,7 +5691,7 @@ async function agentTTS(text, voice, bubble) {
     thinking.replaceWith(card);
     audio.play().catch(() => {});
   } catch (err) {
-    thinking.replaceWith(makeToolCard(SVG_ICONS.warn, 'TTS failed', err.message));
+    thinking.replaceWith(makeToolCard(SVG_ICONS.warn, 'TTS failed', escapeHtml(err.message)));
   }
 }
 
@@ -5700,13 +5712,13 @@ async function agentClassify(b64, bubble) {
     let html = '<ul style="margin:4px 0 0;padding-left:16px">';
     preds.slice(0, 5).forEach(function(p) {
       const pct = Math.round((p.confidence || 0) * 100);
-      html += '<li>' + (p.label || '?') + ' <strong>' + pct + '%</strong></li>';
+      html += '<li>' + escapeHtml(p.label || '?') + ' <strong>' + pct + '%</strong></li>';
     });
     if (!preds.length) html += '<li>No predictions</li>';
     html += '</ul>';
     thinking.replaceWith(makeToolCard(SVG_ICONS.search, 'Classification results', html));
   } catch (err) {
-    thinking.replaceWith(makeToolCard(SVG_ICONS.warn, 'Classify failed', err.message));
+    thinking.replaceWith(makeToolCard(SVG_ICONS.warn, 'Classify failed', escapeHtml(err.message)));
   }
 }
 
@@ -5733,13 +5745,13 @@ async function agentDetect(b64, bubble) {
     let html = '<ul style="margin:4px 0 0;padding-left:16px">';
     boxes.slice(0, 8).forEach(function(b) {
       const pct = Math.round((b.confidence || 0) * 100);
-      html += '<li>' + (b.class_name || '?') + ' <strong>' + pct + '%</strong></li>';
+      html += '<li>' + escapeHtml(b.class_name || '?') + ' <strong>' + pct + '%</strong></li>';
     });
     if (!boxes.length) html += '<li>No objects detected</li>';
     html += '</ul>';
     thinking.replaceWith(makeToolCard(SVG_ICONS.target, 'Detected objects', html));
   } catch (err) {
-    thinking.replaceWith(makeToolCard(SVG_ICONS.warn, 'Detect failed', err.message));
+    thinking.replaceWith(makeToolCard(SVG_ICONS.warn, 'Detect failed', escapeHtml(err.message)));
   }
 }
 

@@ -123,6 +123,22 @@ pub async fn batch_classify(
         ));
     }
 
+    // Per-image base64 cap: the JSON-level cap (config.server.json_body_limit_mb)
+    // gates total payload, but a single oversize item could still cause an OOM
+    // at decode. Reject before we touch base64.
+    let max_b64 = config
+        .server
+        .classify_image_limit_mb
+        .saturating_mul(1024 * 1024);
+    for (i, b64) in req.images.iter().enumerate() {
+        if b64.len() > max_b64 {
+            return Err(ApiError::PayloadTooLarge(format!(
+                "image[{}] base64 exceeds {} MiB limit",
+                i, config.server.classify_image_limit_mb
+            )));
+        }
+    }
+
     // Decode base64 → raw bytes.
     use base64::Engine as _;
     let raw_images: Vec<Vec<u8>> = req
@@ -205,12 +221,26 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
 pub async fn stream_classify(
     req: web::Json<BatchClassifyRequest>,
     state: web::Data<ClassifyState>,
+    config: web::Data<Config>,
 ) -> Result<HttpResponse, ApiError> {
     if req.images.is_empty() {
         return Err(ApiError::BadRequest("images must not be empty".to_string()));
     }
     if req.images.len() > 128 {
         return Err(ApiError::BadRequest("batch too large (max 128)".to_string()));
+    }
+    // Same per-image base64 cap as `/classify/batch`.
+    let max_b64 = config
+        .server
+        .classify_image_limit_mb
+        .saturating_mul(1024 * 1024);
+    for (i, b64) in req.images.iter().enumerate() {
+        if b64.len() > max_b64 {
+            return Err(ApiError::PayloadTooLarge(format!(
+                "image[{}] base64 exceeds {} MiB limit",
+                i, config.server.classify_image_limit_mb
+            )));
+        }
     }
     let top_k    = req.top_k.clamp(1, 1000);
     let width    = req.model_width.clamp(1, 4096);
