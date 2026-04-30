@@ -18,6 +18,7 @@ mod monitor;
 mod postprocess;
 mod resilience;
 mod security;
+mod spawn_safe;
 mod telemetry;
 mod tensor_pool;
 mod worker_pool;

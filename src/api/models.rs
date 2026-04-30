@@ -239,13 +239,13 @@ pub async fn download_model(req: web::Json<DownloadRequest>) -> Result<HttpRespo
                 })));
             }
 
-            // Spawn async download task
+            // Spawn async download task. Use spawn_logged_result so panics
+            // and Err(...) returns are surfaced via tracing instead of the
+            // default behaviour, which silently drops them.
             let model_id = req.model_id.clone();
             let model_clone = model.clone();
-            tokio::spawn(async move {
-                if let Err(e) = download_model_async(&model_id, &model_clone).await {
-                    log::error!("Failed to download {}: {}", model_id, e);
-                }
+            crate::spawn_safe::spawn_logged_result("download_model_async", async move {
+                download_model_async(&model_id, &model_clone).await
             });
 
             Ok(HttpResponse::Ok().json(serde_json::json!({

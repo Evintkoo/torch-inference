@@ -228,9 +228,10 @@ impl ModelDownloadManager {
 
         self.tasks.insert(task_id.clone(), task.clone());
 
-        // Spawn download task
+        // Spawn download task. spawn_logged ensures any panic in the
+        // worker is surfaced via tracing instead of being silently dropped.
         let manager = self.clone();
-        tokio::spawn(async move {
+        crate::spawn_safe::spawn_logged("model_download_worker", async move {
             if let Err(e) = manager.execute_download(task_id_clone.clone()).await {
                 manager.update_task_error(&task_id_clone, &e.to_string());
             }

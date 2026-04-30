@@ -17,6 +17,7 @@ pub mod monitor;
 pub mod postprocess;
 pub mod resilience;
 pub mod security;
+pub mod spawn_safe;
 pub mod telemetry;
 pub mod tensor_pool;
 pub mod worker_pool;

@@ -259,7 +259,7 @@ pub async fn stream_classify(
 
     let (tx, rx) = tokio::sync::mpsc::channel::<Result<Bytes, std::io::Error>>(32);
 
-    tokio::spawn(async move {
+    crate::spawn_safe::spawn_logged("classify_stream_writer", async move {
         use base64::Engine as _;
         let batch_start = Instant::now();
 
