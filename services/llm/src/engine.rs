@@ -15,6 +15,35 @@ use tokio::sync::mpsc;
 
 use crate::config::LlmConfig;
 
+/// Mirrors OpenAI `finish_reason` for chat completions. We deliberately
+/// only emit the two reasons we can actually produce — `content_filter`
+/// and `function_call` are not supported by this engine.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FinishReason {
+    /// Model emitted an end-of-generation token.
+    Stop,
+    /// Loop hit `max_tokens` before EOG.
+    Length,
+}
+
+impl FinishReason {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            FinishReason::Stop => "stop",
+            FinishReason::Length => "length",
+        }
+    }
+}
+
+/// Result of a single inference run, returned via the JoinHandle so the
+/// handler can populate the `usage` and `finish_reason` fields.
+#[derive(Debug, Clone, Copy)]
+pub struct InferStats {
+    pub prompt_tokens: usize,
+    pub completion_tokens: usize,
+    pub finish_reason: FinishReason,
+}
+
 pub struct LlamaEngine {
     pub backend: LlamaBackend,
     pub model: LlamaModel,
@@ -80,13 +109,18 @@ impl LlamaEngine {
 
     /// Run text-only inference. Sends generated tokens via `tx`.
     /// Must be called from a blocking thread (use tokio::task::spawn_blocking).
+    ///
+    /// Returns `InferStats` (prompt+completion token counts and finish
+    /// reason) so the handler can populate the OpenAI `usage` and
+    /// `finish_reason` fields. Returns `Err` if the prompt plus
+    /// `max_tokens` would exceed `ctx_size`.
     pub fn infer_text(
         &self,
         prompt: String,
         max_tokens: u32,
         temperature: f32,
         tx: mpsc::Sender<String>,
-    ) -> Result<()> {
+    ) -> Result<InferStats> {
         let ctx_params = LlamaContextParams::default()
             .with_n_ctx(Some(NonZeroU32::new(self.config.ctx_size).unwrap()))
             .with_n_threads(self.config.n_threads)
@@ -101,6 +135,19 @@ impl LlamaEngine {
             .context("tokenize prompt")?;
 
         let n_prompt = tokens.len();
+        // Reject prompts that, together with the requested generation,
+        // would not fit in the model's context window. Otherwise the
+        // generation silently truncates and the user gets bad output
+        // with `finish_reason: "length"` and no clear signal.
+        if (n_prompt as u64).saturating_add(max_tokens as u64) > self.config.ctx_size as u64 {
+            anyhow::bail!(
+                "prompt ({} tokens) + max_tokens ({}) exceeds ctx_size ({})",
+                n_prompt,
+                max_tokens,
+                self.config.ctx_size
+            );
+        }
+
         let mut batch = LlamaBatch::new(n_prompt.max(512), 1);
         for (i, &tok) in tokens.iter().enumerate() {
             batch.add(tok, i as i32, &[0], i == n_prompt - 1)
@@ -116,12 +163,15 @@ impl LlamaEngine {
         ]);
 
         let mut n_past = n_prompt as i32;
+        let mut completion_tokens: usize = 0;
+        let mut finish_reason = FinishReason::Length;
 
         for _ in 0..max_tokens {
             let new_token = sampler.sample(&ctx, batch.n_tokens() - 1);
             sampler.accept(new_token);
 
             if self.model.is_eog_token(new_token) {
+                finish_reason = FinishReason::Stop;
                 break;
             }
 
@@ -130,8 +180,11 @@ impl LlamaEngine {
                 .unwrap_or_default();
 
             if tx.blocking_send(token_str).is_err() {
+                // Client dropped — count this token but stop here.
+                completion_tokens += 1;
                 break;
             }
+            completion_tokens += 1;
 
             batch.clear();
             batch.add(new_token, n_past, &[0], true)
@@ -140,11 +193,20 @@ impl LlamaEngine {
             n_past += 1;
         }
 
-        Ok(())
+        Ok(InferStats {
+            prompt_tokens: n_prompt,
+            completion_tokens,
+            finish_reason,
+        })
     }
 
     /// Run multimodal inference with one image.
     /// `image_bytes` are raw JPEG/PNG bytes.
+    ///
+    /// Returns the same `InferStats` as `infer_text`. The prompt-token
+    /// count is the post-tokenisation `n_past` reported by mtmd's
+    /// `eval_chunks` (which folds image and text tokens together), so the
+    /// `prompt_tokens` figure includes vision tokens.
     pub fn infer_multimodal(
         &self,
         messages: &[(String, String)],
@@ -152,7 +214,7 @@ impl LlamaEngine {
         max_tokens: u32,
         temperature: f32,
         tx: mpsc::Sender<String>,
-    ) -> Result<()> {
+    ) -> Result<InferStats> {
         let mmproj = self.mmproj_path.as_deref()
             .context("multimodal not configured: mmproj_path missing or file not found")?;
 
@@ -208,14 +270,29 @@ impl LlamaEngine {
             LlamaSampler::dist(0),
         ]);
 
+        // Same ctx-fit guard as infer_text. n_past already includes the
+        // image's vision tokens at this point.
+        if (n_past as u64).saturating_add(max_tokens as u64) > self.config.ctx_size as u64 {
+            anyhow::bail!(
+                "prompt+image ({} tokens) + max_tokens ({}) exceeds ctx_size ({})",
+                n_past,
+                max_tokens,
+                self.config.ctx_size
+            );
+        }
+
         let mut batch = LlamaBatch::new(512, 1);
         let mut n_cur = n_past;
+        let prompt_tokens = n_past as usize;
+        let mut completion_tokens: usize = 0;
+        let mut finish_reason = FinishReason::Length;
 
         for _ in 0..max_tokens {
             let new_token = sampler.sample(&ctx, (n_cur - 1) as i32);
             sampler.accept(new_token);
 
             if self.model.is_eog_token(new_token) {
+                finish_reason = FinishReason::Stop;
                 break;
             }
 
@@ -224,8 +301,10 @@ impl LlamaEngine {
                 .unwrap_or_default();
 
             if tx.blocking_send(token_str).is_err() {
+                completion_tokens += 1;
                 break;
             }
+            completion_tokens += 1;
 
             batch.clear();
             batch.add(new_token, n_cur, &[0], true)
@@ -234,6 +313,10 @@ impl LlamaEngine {
             n_cur += 1;
         }
 
-        Ok(())
+        Ok(InferStats {
+            prompt_tokens,
+            completion_tokens,
+            finish_reason,
+        })
     }
 }

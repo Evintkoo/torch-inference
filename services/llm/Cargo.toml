@@ -38,6 +38,9 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 # Byte utilities
 bytes = "1.5"
 
+# Per-request response IDs (`chatcmpl-<uuid>`) for OpenAI-API parity.
+uuid = { version = "1", features = ["v4"] }
+
 [target.'cfg(target_os = "macos")'.dependencies]
 llama-cpp-2 = { version = "0.1", features = ["mtmd", "metal"] }
 
