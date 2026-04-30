@@ -4,6 +4,39 @@ use crate::error::ApiError;
 use actix_web::{web, HttpResponse, Result};
 use serde::Serialize;
 use std::sync::Arc;
+use std::sync::OnceLock;
+use std::time::{Duration, Instant};
+
+/// Shared `sysinfo::System` snapshot, refreshed on read no more often than
+/// every `SYSINFO_TTL`. Without this, every `/system/info` and every
+/// `/performance` scrape did a full `System::new_all()` (10–30 ms of
+/// syscalls), which meaningfully hurts latency under Prometheus-style
+/// scrape rates. Lock is held only for the refresh + caller closure;
+/// callers must do as little inside the closure as possible.
+const SYSINFO_TTL: Duration = Duration::from_secs(5);
+static SYSINFO_CACHE: OnceLock<parking_lot::Mutex<(Instant, sysinfo::System)>> = OnceLock::new();
+
+/// Run `f` against a fresh-enough `sysinfo::System`.
+///
+/// The first call initialises the cache; subsequent calls refresh only
+/// when the previous snapshot is older than `SYSINFO_TTL`. The closure is
+/// invoked under the cache's mutex — keep it short.
+pub fn with_cached_system<F, R>(f: F) -> R
+where
+    F: FnOnce(&sysinfo::System) -> R,
+{
+    let cell = SYSINFO_CACHE.get_or_init(|| {
+        let mut sys = sysinfo::System::new_all();
+        sys.refresh_all();
+        parking_lot::Mutex::new((Instant::now(), sys))
+    });
+    let mut guard = cell.lock();
+    if guard.0.elapsed() >= SYSINFO_TTL {
+        guard.1.refresh_all();
+        guard.0 = Instant::now();
+    }
+    f(&guard.1)
+}
 
 #[derive(Debug, Serialize)]
 pub struct SystemInfoResponse {
@@ -100,16 +133,14 @@ pub async fn get_system_info(state: web::Data<SystemInfoState>) -> Result<HttpRe
         .get_info()
         .map_err(|e| ApiError::InternalError(e.to_string()))?;
 
-    let sys = sysinfo::System::new_all();
-
-    let system = SystemDetails {
+    let system = with_cached_system(|sys| SystemDetails {
         os: std::env::consts::OS.to_string(),
         arch: std::env::consts::ARCH.to_string(),
         cpu_count: num_cpus::get(),
         total_memory_bytes: sys.total_memory(),
         total_memory_human: format_bytes(sys.total_memory()),
         hostname: sysinfo::System::host_name(),
-    };
+    });
 
     let gpu_devices: Vec<GpuDeviceInfo> = gpu_info
         .devices

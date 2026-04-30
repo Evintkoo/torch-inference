@@ -253,6 +253,9 @@ pub async fn stream_classify(
     let images   = req.into_inner().images;
     let total    = images.len();
     let backend  = state.into_inner().backend.clone();
+    // Build the preprocessing pipeline once for the whole stream — every
+    // image in this request shares the same target dimensions.
+    let pipeline = Arc::new(ImagePipeline::new(PreprocessConfig::imagenet(width, height)));
 
     let (tx, rx) = tokio::sync::mpsc::channel::<Result<Bytes, std::io::Error>>(32);
 
@@ -279,11 +282,10 @@ pub async fn stream_classify(
             // earlier results to the client. Each item is bounded by
             // `classify_item_timeout_secs` so a hung inference can't stall
             // the rest of the batch.
-            let cfg = PreprocessConfig::imagenet(width, height);
             let backend_b = backend.clone();
+            let pipeline_b = pipeline.clone();
             let blocking = tokio::task::spawn_blocking(move || -> anyhow::Result<Vec<Prediction>> {
-                let pipeline = ImagePipeline::new(cfg);
-                let batch = pipeline.preprocess_batch(&[raw])?;
+                let batch = pipeline_b.preprocess_batch(&[raw])?;
                 let mut v = backend_b.classify_nchw(batch, top_k)?;
                 Ok(v.pop().unwrap_or_default())
             });
