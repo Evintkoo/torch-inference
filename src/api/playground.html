@@ -32,8 +32,8 @@
     --yellow-bg: #FFFAF3;
     --yellow-text:#CC8727;
     --text:      #121212;
-    --text-muted:#888888;
-    --text-dim:  #b5b5b5;
+    --text-muted:#666666;     /* WCAG AA on white — bumped from #888 */
+    --text-dim:  #767676;     /* WCAG AA on white — bumped from #b5b5b5 (2.2:1 → 4.6:1) */
     --input-bg:  #ffffff;
     --radius:    0px;
     --font:      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -850,8 +850,8 @@
       <span class="logo-sub">Torch Inference</span>
     </div>
     <div class="topbar-right">
-      <button class="btn-theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">
-        <i class="ri-moon-line" id="theme-icon"></i>
+      <button class="btn-theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark/light mode" title="Toggle dark/light mode">
+        <i class="ri-moon-line" id="theme-icon" aria-hidden="true"></i>
       </button>
       <span class="badge">
         <span class="dot" id="health-dot" style="background:var(--text-dim);box-shadow:none"></span>
@@ -860,47 +860,47 @@
     </div>
   </header>
 
-  <nav class="sidebar">
+  <nav class="sidebar" role="tablist" aria-label="Playground sections">
     <div class="sidebar-section">
-      <div class="sidebar-label">Playground</div>
-      <button class="nav-item active" onclick="show('status',this)">
-        <i class="nav-icon ri-pulse-line"></i> Status
+      <div class="sidebar-label" id="rail-label-playground">Playground</div>
+      <button class="nav-item active" role="tab" aria-selected="true"  aria-controls="status"    onclick="show('status',this)">
+        <i class="nav-icon ri-pulse-line" aria-hidden="true"></i> Status
       </button>
-      <button class="nav-item" onclick="show('assistant',this)">
-        <i class="nav-icon ri-robot-2-line"></i> Assistant
+      <button class="nav-item"        role="tab" aria-selected="false" aria-controls="assistant" onclick="show('assistant',this)">
+        <i class="nav-icon ri-robot-2-line" aria-hidden="true"></i> Assistant
       </button>
-      <button class="nav-item" onclick="show('tts',this)">
-        <i class="nav-icon ri-music-2-line"></i> TTS
+      <button class="nav-item"        role="tab" aria-selected="false" aria-controls="tts"       onclick="show('tts',this)">
+        <i class="nav-icon ri-music-2-line" aria-hidden="true"></i> TTS
       </button>
-      <button class="nav-item" onclick="show('classify',this)">
-        <i class="nav-icon ri-image-line"></i> Classify
+      <button class="nav-item"        role="tab" aria-selected="false" aria-controls="classify"  onclick="show('classify',this)">
+        <i class="nav-icon ri-image-line" aria-hidden="true"></i> Classify
       </button>
-      <button class="nav-item" onclick="show('audio',this)">
-        <i class="nav-icon ri-mic-line"></i> STT
+      <button class="nav-item"        role="tab" aria-selected="false" aria-controls="audio"     onclick="show('audio',this)">
+        <i class="nav-icon ri-mic-line" aria-hidden="true"></i> STT
       </button>
-      <button class="nav-item" onclick="show('detect',this)">
-        <i class="nav-icon ri-focus-3-line"></i> Detect
+      <button class="nav-item"        role="tab" aria-selected="false" aria-controls="detect"    onclick="show('detect',this)">
+        <i class="nav-icon ri-focus-3-line" aria-hidden="true"></i> Detect
       </button>
-      <button class="nav-item" onclick="showDashboard(this)">
-        <i class="nav-icon ri-dashboard-3-line"></i> Dashboard
+      <button class="nav-item"        role="tab" aria-selected="false" aria-controls="dashboard" onclick="showDashboard(this)">
+        <i class="nav-icon ri-dashboard-3-line" aria-hidden="true"></i> Dashboard
       </button>
-      <button class="nav-item" onclick="show('models',this)">
-        <i class="nav-icon ri-box-3-line"></i> Models
+      <button class="nav-item"        role="tab" aria-selected="false" aria-controls="models"    onclick="show('models',this)">
+        <i class="nav-icon ri-box-3-line" aria-hidden="true"></i> Models
       </button>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label">Tools</div>
-      <button class="nav-item" onclick="show('logs',this)">
-        <i class="nav-icon ri-file-list-3-line"></i> Logs
+      <button class="nav-item" role="tab" aria-selected="false" aria-controls="logs"   onclick="show('logs',this)">
+        <i class="nav-icon ri-file-list-3-line" aria-hidden="true"></i> Logs
       </button>
-      <button class="nav-item" onclick="show('system',this)">
-        <i class="nav-icon ri-settings-3-line"></i> System
+      <button class="nav-item" role="tab" aria-selected="false" aria-controls="system" onclick="show('system',this)">
+        <i class="nav-icon ri-settings-3-line" aria-hidden="true"></i> System
       </button>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label">Reference</div>
-      <button class="nav-item" onclick="show('endpoints',this)">
-        <i class="nav-icon ri-link-m"></i> Endpoints
+      <button class="nav-item" role="tab" aria-selected="false" aria-controls="endpoints" onclick="show('endpoints',this)">
+        <i class="nav-icon ri-link-m" aria-hidden="true"></i> Endpoints
       </button>
     </div>
   </nav>
@@ -978,7 +978,7 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
       </div>
 
       <!-- Message thread -->
-      <div id="llm-chat-box" class="gpt-thread">
+      <div id="llm-chat-box" class="gpt-thread" role="log" aria-live="polite" aria-relevant="additions" aria-label="Assistant conversation">
         <!-- Welcome screen shown when no messages -->
         <div id="chat-welcome" class="gpt-welcome">
           <div class="gpt-welcome-avatar">N</div>
@@ -1021,12 +1021,12 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
             <i class="ri-image-add-line"></i>
           </label>
           <input type="file" id="chat-file-input" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none" onchange="handleChatAttach(this.files[0]);this.value=''" />
-          <textarea id="llm-input" rows="1" placeholder="Message Assistant…" onkeydown="llmInputKey(event)" oninput="autoResizeChatInput(this)"></textarea>
-          <button class="gpt-icon-btn" id="chat-mic-btn" onclick="chatMicToggle()" title="Voice input (STT)">
-            <i class="ri-mic-line"></i>
+          <textarea id="llm-input" rows="1" placeholder="Message Assistant…" aria-label="Chat message" onkeydown="llmInputKey(event)" oninput="autoResizeChatInput(this)"></textarea>
+          <button class="gpt-icon-btn" id="chat-mic-btn" onclick="chatMicToggle()" aria-label="Voice input via STT" title="Voice input (STT)">
+            <i class="ri-mic-line" aria-hidden="true"></i>
           </button>
-          <button class="gpt-send-btn" id="llm-send-btn" onclick="sendChat()" title="Send (Enter)">
-            <i class="ri-arrow-up-line"></i>
+          <button class="gpt-send-btn" id="llm-send-btn" onclick="sendChat()" aria-label="Send message" title="Send (Enter)">
+            <i class="ri-arrow-up-line" aria-hidden="true"></i>
           </button>
         </div>
         <div class="gpt-composer-hint">Enter to send &nbsp;·&nbsp; Shift+Enter for newline &nbsp;·&nbsp; <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> attach image for vision analysis</div>
@@ -1973,9 +1973,13 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
 function show(id, btn) {
   closeDashboardStream();
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-selected', 'false');
+  });
   document.getElementById('panel-' + id).classList.add('active');
   btn.classList.add('active');
+  btn.setAttribute('aria-selected', 'true');
   if (id === 'models')    switchMdlTab('available');
   if (id === 'tts')       loadTtsHealth();
   if (id === 'audio')     { loadAudioHealth(); sttCheckModel(); }
