@@ -166,8 +166,12 @@ pub async fn detect_objects(
         detector.set_conf_threshold(conf_threshold);
         detector.set_iou_threshold(iou_threshold);
 
-        let raw_results = detector
-            .detect(&temp_file)
+        // PyTorch inference is synchronous CPU/GPU work; mirror the ORT path's
+        // spawn_blocking treatment so we don't stall the actix reactor.
+        let temp_file_for_blocking = temp_file.clone();
+        let raw_results = tokio::task::spawn_blocking(move || detector.detect(&temp_file_for_blocking))
+            .await
+            .map_err(|e| ApiError::InternalError(format!("task join: {}", e)))?
             .map_err(|e| ApiError::InternalError(e.to_string()))?;
         let (img_w, img_h) = image::image_dimensions(&temp_file).unwrap_or((640, 640));
         let _ = fs::remove_file(&temp_file).await;

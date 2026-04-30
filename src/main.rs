@@ -55,9 +55,8 @@ use crate::telemetry::init_structured_logging;
 /// Used as fallback when the ONNX model file is not present.
 struct NoOpClassificationBackend;
 
-#[async_trait::async_trait]
 impl crate::api::classify::ClassificationBackend for NoOpClassificationBackend {
-    async fn classify_nchw(
+    fn classify_nchw(
         &self,
         _batch: ndarray::Array4<f32>,
         _top_k: usize,

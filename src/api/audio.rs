@@ -219,11 +219,16 @@ pub async fn transcribe_audio(
         .load_audio(&audio_data)
         .map_err(|e| ApiError::BadRequest(format!("Invalid audio: {}", e)))?;
 
-    // Transcribe via Whisper pipeline (or legacy STT model fallback)
-    let result = state
-        .model_manager
-        .transcribe_audio(&audio, return_timestamps)
-        .map_err(|e| ApiError::InternalError(format!("Transcription failed: {}", e)))?;
+    // Whisper inference (FFT, mel-spectrogram, ONNX session run) is CPU-bound
+    // and synchronous. Offload to a blocking task so the actix reactor stays
+    // free to serve other requests.
+    let model_manager = state.model_manager.clone();
+    let result = tokio::task::spawn_blocking(move || {
+        model_manager.transcribe_audio(&audio, return_timestamps)
+    })
+    .await
+    .map_err(|e| ApiError::InternalError(format!("task join: {}", e)))?
+    .map_err(|e| ApiError::InternalError(format!("Transcription failed: {}", e)))?;
 
     // Convert to response format
     let segments = result.segments.map(|segs| {

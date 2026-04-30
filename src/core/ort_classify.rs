@@ -10,7 +10,6 @@
 ///   Input  "images:0" : [1, H, W, 3] f32, pixel values 0-255
 ///   Output "Softmax:0": [1, C] f32   → already probabilities
 use anyhow::{Context, Result};
-use async_trait::async_trait;
 use ndarray::Array4;
 use ort::session::builder::GraphOptimizationLevel;
 use ort::session::Session;
@@ -153,9 +152,8 @@ impl OrtClassificationBackend {
     }
 }
 
-#[async_trait]
 impl ClassificationBackend for OrtClassificationBackend {
-    async fn classify_nchw(
+    fn classify_nchw(
         &self,
         batch: Array4<f32>,
         top_k: usize,
@@ -186,17 +184,26 @@ impl ClassificationBackend for OrtClassificationBackend {
                 }
             };
 
-            let mut sess = self.session.lock();
-            let outputs = sess.run(ort::inputs![input_name => input_tensor])?;
+            // Hold the session lock only across run() + the single copy out
+            // of the borrowed output tensor. Softmax and top-k run on the
+            // owned Vec after the lock is released so concurrent batch items
+            // don't serialize on post-processing.
+            let output_len;
+            let output_shape;
+            let mut raw_buf;
+            {
+                let mut sess = self.session.lock();
+                let outputs = sess.run(ort::inputs![input_name => input_tensor])?;
 
-            let (_shape, raw_view) = outputs[0].try_extract_tensor::<f32>()?;
-            let output_len = raw_view.len();
-            let output_shape = TensorShape::new(vec![output_len]);
-            let mut raw_buf = output_pool().acquire(output_shape.clone());
-            raw_buf.clear();
-            raw_buf.extend(raw_view.iter().copied());
+                let (_shape, raw_view) = outputs[0].try_extract_tensor::<f32>()?;
+                output_len = raw_view.len();
+                output_shape = TensorShape::new(vec![output_len]);
+                raw_buf = output_pool().acquire(output_shape.clone());
+                raw_buf.clear();
+                raw_buf.extend(raw_view.iter().copied());
+                // outputs (and the borrow into sess) drop here; sess released.
+            }
 
-            // softmax and top_k both take &[f32] — release buf before computing probs
             let probs: Vec<f32> = if self.output_is_prob {
                 raw_buf.to_vec()
             } else {

@@ -130,6 +130,7 @@ impl Default for DetectCfg {
     }
 }
 
+#[derive(Clone)]
 struct ClassifyCfg {
     top_k: usize,
     width: u32,
@@ -390,17 +391,20 @@ async fn process_classify_frame(
     cfg: &ClassifyCfg,
     state: &ClassifyState,
 ) -> Result<Vec<Prediction>, String> {
-    let pipeline = ImagePipeline::new(PreprocessConfig::imagenet(cfg.width, cfg.height));
-    let batch = pipeline
-        .preprocess_batch(&[image_bytes.to_vec()])
-        .map_err(|e| e.to_string())?;
-
-    state
-        .backend
-        .classify_nchw(batch, cfg.top_k)
-        .await
-        .map_err(|e| e.to_string())
-        .map(|mut v| v.pop().unwrap_or_default())
+    // Preprocess + ORT inference are CPU-bound; offload to spawn_blocking
+    // so the websocket reactor can keep flushing frames.
+    let backend = state.backend.clone();
+    let owned = image_bytes.to_vec();
+    let cfg = cfg.clone();
+    tokio::task::spawn_blocking(move || -> anyhow::Result<Vec<Prediction>> {
+        let pipeline = ImagePipeline::new(PreprocessConfig::imagenet(cfg.width, cfg.height));
+        let batch = pipeline.preprocess_batch(&[owned])?;
+        let mut v = backend.classify_nchw(batch, cfg.top_k)?;
+        Ok(v.pop().unwrap_or_default())
+    })
+    .await
+    .map_err(|e| format!("task join: {e}"))?
+    .map_err(|e| e.to_string())
 }
 
 // ── Route config ──────────────────────────────────────────────────────────────

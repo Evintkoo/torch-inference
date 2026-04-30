@@ -7,7 +7,6 @@
 /// The handler is decoupled from ORT via the [`ClassificationBackend`] trait so
 /// the endpoint can be unit-tested with a mock without a real `.onnx` file.
 use actix_web::{web, HttpRequest, HttpResponse};
-use async_trait::async_trait;
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -66,13 +65,16 @@ pub struct BatchClassifyResponse {
 ///
 /// Implement this trait on a struct that holds an ORT `Session` to wire
 /// real ONNX inference. Use [`MockClassificationBackend`] in tests.
-#[async_trait]
-pub trait ClassificationBackend: Send + Sync {
+///
+/// The method is intentionally synchronous: every impl does pure CPU work
+/// (ORT inference, softmax, top-k). Callers must run it on a blocking pool
+/// via `tokio::task::spawn_blocking` to avoid stalling the actix reactor.
+pub trait ClassificationBackend: Send + Sync + 'static {
     /// Run classification on a pre-normalised NCHW f32 batch.
     ///
     /// `batch` is shaped `[N, 3, H, W]`.  Return one `Vec<Prediction>` per
     /// image, sorted by confidence descending, truncated to `top_k`.
-    async fn classify_nchw(
+    fn classify_nchw(
         &self,
         batch: ndarray::Array4<f32>,
         top_k: usize,
@@ -152,19 +154,20 @@ pub async fn batch_classify(
         })
         .collect::<Result<_, _>>()?;
 
-    // Preprocess: decode → resize → normalise → NCHW f32.
+    // Preprocess and inference are CPU-bound; offload to a blocking task so
+    // the actix reactor stays free to serve other requests. We move owned
+    // data + a backend Arc into the closure.
     let cfg = PreprocessConfig::imagenet(req.model_width, req.model_height);
-    let pipeline = ImagePipeline::new(cfg);
-    let batch = pipeline
-        .preprocess_batch(&raw_images)
-        .map_err(|e| ApiError::BadRequest(format!("preprocess failed: {}", e)))?;
-
-    // Run inference via the backend.
-    let results = state
-        .backend
-        .classify_nchw(batch, req.top_k)
-        .await
-        .map_err(|e| ApiError::InternalError(format!("inference failed: {}", e)))?;
+    let backend = state.backend.clone();
+    let top_k = req.top_k;
+    let results = tokio::task::spawn_blocking(move || -> anyhow::Result<_> {
+        let pipeline = ImagePipeline::new(cfg);
+        let batch = pipeline.preprocess_batch(&raw_images)?;
+        backend.classify_nchw(batch, top_k)
+    })
+    .await
+    .map_err(|e| ApiError::InternalError(format!("task join: {}", e)))?
+    .map_err(|e| ApiError::BadRequest(format!("classify failed: {}", e)))?;
 
     // Post-process
     let (results, pp_steps, pp_warnings) = if !req.skip_postprocess {
@@ -269,24 +272,31 @@ pub async fn stream_classify(
                 }
             };
 
+            // Preprocess + inference for one image are CPU-bound. Offload
+            // to spawn_blocking so the SSE writer task can keep flushing
+            // earlier results to the client.
             let cfg = PreprocessConfig::imagenet(width, height);
-            let pipeline = ImagePipeline::new(cfg);
-            let batch = match pipeline.preprocess_batch(&[raw]) {
-                Ok(b) => b,
-                Err(e) => {
+            let backend_b = backend.clone();
+            let preds_result = tokio::task::spawn_blocking(move || -> anyhow::Result<Vec<Prediction>> {
+                let pipeline = ImagePipeline::new(cfg);
+                let batch = pipeline.preprocess_batch(&[raw])?;
+                let mut v = backend_b.classify_nchw(batch, top_k)?;
+                Ok(v.pop().unwrap_or_default())
+            })
+            .await;
+
+            let preds = match preds_result {
+                Ok(Ok(p)) => p,
+                Ok(Err(e)) => {
                     let ev = sse_event(&serde_json::json!({
                         "idx": idx, "total": total, "error": e.to_string()
                     }));
                     let _ = tx.send(Ok(ev)).await;
                     continue;
                 }
-            };
-
-            let preds = match backend.classify_nchw(batch, top_k).await {
-                Ok(mut v) => v.pop().unwrap_or_default(),
-                Err(e) => {
+                Err(join_err) => {
                     let ev = sse_event(&serde_json::json!({
-                        "idx": idx, "total": total, "error": e.to_string()
+                        "idx": idx, "total": total, "error": format!("task join: {}", join_err)
                     }));
                     let _ = tx.send(Ok(ev)).await;
                     continue;
@@ -355,9 +365,8 @@ pub mod tests {
         }
     }
 
-    #[async_trait]
     impl ClassificationBackend for MockClassificationBackend {
-        async fn classify_nchw(
+        fn classify_nchw(
             &self,
             batch: ndarray::Array4<f32>,
             top_k: usize,
