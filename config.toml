@@ -90,7 +90,10 @@ enable_cuda_graphs = true  # CUDA graphs for lower latency (NVIDIA only)
 
 [auth]
 # Authentication configuration
-enabled = true
+# Off by default so the playground and curl examples work out of the box.
+# Flip to true (and set jwt_secret to a real value) before exposing the
+# server to anything beyond loopback.
+enabled = false
 jwt_secret = "your-secret-key-here-change-in-production"
 jwt_algorithm = "HS256"
 access_token_expire_minutes = 60
