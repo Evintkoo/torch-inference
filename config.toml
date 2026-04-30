@@ -2,7 +2,10 @@
 # This configuration enables all performance optimizations
 
 [server]
-host = "0.0.0.0"
+# Bind to loopback by default. Set to "0.0.0.0" only when you intentionally
+# want the server reachable from the network — and ensure auth + TLS are in
+# place first (auth.enabled = true, jwt_secret set, behind a reverse proxy).
+host = "127.0.0.1"
 port = 8000
 log_level = "info"
 workers = 8  # Auto-detected based on CPU cores

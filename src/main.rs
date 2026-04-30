@@ -1037,30 +1037,32 @@ fn spawn_microservices() -> Vec<std::process::Child> {
     // The built-in Whisper ONNX pipeline handles /audio/transcribe natively.
     // This Python service only adds /stt/* proxy routes (faster-whisper).
     let stt_script = "services/stt/server.py";
+    // Resolve python via STT_PYTHON env var, else look in known absolute
+    // locations. Refuse to fall back to bare `python3` on PATH — a poisoned
+    // PATH would otherwise execute arbitrary code at server start.
+    let python_bin: Option<String> = std::env::var("STT_PYTHON").ok().or_else(|| {
+        ["/usr/bin/python3", "/usr/local/bin/python3", "/opt/homebrew/bin/python3"]
+            .iter()
+            .find(|p| std::path::Path::new(p).exists())
+            .map(|p| (*p).to_string())
+    });
+
     if port_in_use(8002) {
         tracing::info!(service = "stt", "stt already running on port 8002, skipping spawn");
     } else if std::path::Path::new(stt_script).exists() {
-        let python_ok = std::process::Command::new("python3")
-            .arg("--version")
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
-            .status()
-            .map(|s| s.success())
-            .unwrap_or(false);
-
-        if python_ok {
-            match std::process::Command::new("python3")
-                .arg(stt_script)
-                .spawn()
-            {
+        if let Some(py) = python_bin {
+            match std::process::Command::new(&py).arg(stt_script).spawn() {
                 Ok(child) => {
-                    tracing::info!(service = "stt", pid = child.id(), "stt microservice started");
+                    tracing::info!(service = "stt", pid = child.id(), python = %py, "stt microservice started");
                     children.push(child);
                 }
                 Err(e) => tracing::warn!(service = "stt", error = %e, "failed to start stt microservice"),
             }
         } else {
-            tracing::warn!(service = "stt", "python3 not found — /stt/* proxy routes unavailable");
+            tracing::warn!(
+                service = "stt",
+                "no python interpreter at known absolute paths (set STT_PYTHON=/abs/path) — /stt/* proxy routes unavailable"
+            );
         }
     }
 

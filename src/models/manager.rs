@@ -321,15 +321,15 @@ impl ModelManager {
         let idx = self.onnx_replica_idx.fetch_add(1, AtomicOrdering::Relaxed) % models.len();
         let model = &models[idx];
 
-        // Run inference — ORT `session.run()` is synchronous and CPU-bound.
-        // `block_in_place` tells Tokio "this thread will block" so the runtime
-        // can migrate other tasks off the current thread before we start.
-        // This keeps the async executor responsive under concurrent load.
-        let result = tokio::task::block_in_place(|| {
-            self.onnx_loader
-                .infer(model, input, &metadata)
-                .map_err(|e| InferenceError::ModelLoadError(e.to_string()))
-        })?;
+        // NOTE: actix-web uses a `current_thread` runtime — `block_in_place` panics
+        // on it. When `OnnxModelLoader::infer` is implemented for real (it currently
+        // returns the input as a stub), the real `session.run` call MUST be moved
+        // onto the blocking pool via `tokio::task::spawn_blocking` (and the model
+        // store changed to hold `Arc<LoadedOnnxModel>` so it can move).
+        let result = self
+            .onnx_loader
+            .infer(model, input, &metadata)
+            .map_err(|e| InferenceError::ModelLoadError(e.to_string()))?;
 
         // Mark as used
         self.registry

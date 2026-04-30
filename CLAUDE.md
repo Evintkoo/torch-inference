@@ -37,7 +37,7 @@ cargo bench --bench detection_bench
 ```
 src/
   main.rs           — server startup, state init (TTS 6 engines, ORT, GPU)
-  config.rs         — Config struct; reads config.yaml or env vars
+  config.rs         — Config struct; reads config.toml
   lib.rs            — crate root, re-exports all modules
   api/
     handlers.rs     — playground.html embedded via include_str!
@@ -73,8 +73,7 @@ src/
 - **Cache keys**: FNV-1a 64-bit hash with NUL byte separators. Never use `DefaultHasher` (not stable across runs).
 - **Async**: actix-web uses `current_thread` executor. Never use `tokio::task::block_in_place` inside handlers — use `reqwest::blocking::Client` or `spawn_blocking` instead.
 - **ORT**: Always enabled (`ort = "=2.0.0-rc.10"`). Loads `/opt/homebrew/lib/libonnxruntime.dylib` on macOS at runtime.
-- **Candle feature**: Optional (`--features candle`). Not used in production — do not enable.
-- **Config**: `config.yaml` or environment variables. Only fields mapped in `Config` struct affect runtime.
+- **Config**: `config.toml` (read by `Config::load()`). Env vars are not auto-loaded — only fields mapped in `Config` struct affect runtime.
 - **Error handling**: Use `anyhow::Result` internally; map to `actix_web::Error` at handler boundary.
 - **Logging**: `tracing` crate with JSON output. Use `tracing::info!`, `tracing::error!`, etc.
 
@@ -86,7 +85,8 @@ Located in `models/kokoro-82m/`:
 Server loads 6 TTS engines at startup via `TTSManager::initialize_defaults()`.
 
 ## Configuration
-`config.yaml` key sections (runtime-relevant):
-- `server.host`, `server.port` (default `0.0.0.0:8000`)
-- `tts.*` — engine settings
-- `security.*` — API key, rate limits
+`config.toml` key sections (runtime-relevant):
+- `server.host`, `server.port` — default `127.0.0.1:8000`. Use `0.0.0.0` only with auth + TLS in front.
+- `models.*` — cache dir, registry path
+- `auth.*` — JWT secret (must be set, no placeholder), bcrypt cost
+- `microservices.*` — LLM/STT proxy upstream URLs

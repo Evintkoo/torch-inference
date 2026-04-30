@@ -47,9 +47,6 @@ onnxruntime = { version = "0.0.14", optional = true }
 ort = { version = "=2.0.0-rc.10", default-features = false, features = ["load-dynamic", "half", "copy-dylibs", "coreml"] }
 ndarray = "0.15"
 tch = { version = "0.16", optional = true, features = [] }  # Requires PyTorch 2.3.0+
-candle-core = { version = "0.8", optional = true }
-candle-nn = { version = "0.8", optional = true }
-candle-transformers = { version = "0.8", optional = true }
 pyo3 = { version = "0.24", features = ["auto-initialize"], optional = true }
 
 # Logging and monitoring
@@ -79,10 +76,6 @@ base64 = "0.21"
 # Error handling
 anyhow = "1.0"
 thiserror = "1.0"
-
-# Configuration
-config = "0.13"
-dotenv = "0.15"
 
 # Caching
 dashmap = "5.5"
@@ -142,12 +135,11 @@ production = ["jemalloc", "metrics", "telemetry", "simd-image"]
 cuda = ["nvml-wrapper"]
 onnx = ["onnxruntime"]
 torch = ["tch"]
-candle = ["candle-core"]
 python = ["pyo3"]
 telemetry = ["tracing-opentelemetry", "opentelemetry", "opentelemetry-otlp", "opentelemetry_sdk"]
 metrics = ["prometheus"]
 jemalloc = ["tikv-jemallocator"]
-all-backends = ["cuda", "onnx", "torch", "candle"]
+all-backends = ["cuda", "onnx", "torch"]
 # High-performance features
 simd-image = []                         # SIMD image preprocessing (zune-jpeg + wide)
 profiling = ["dep:pprof"]               # Optional pprof flamegraph profiling (off by default)

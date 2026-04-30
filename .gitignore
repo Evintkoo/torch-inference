@@ -7,7 +7,7 @@
 *.pdb
 
 # Cargo
-Cargo.lock
+# NOTE: Cargo.lock IS committed for this binary crate (reproducible builds).
 .cargo/
 
 # LibTorch
@@ -107,6 +107,12 @@ services/llm/models/*.gguf
 
 # Coverage reports
 coverage/
+lcov.info
+tarpaulin-report.json
+target/tarpaulin/
+
+# Runtime logs directory
+logs/
 
 # Playwright MCP session data
 .playwright-mcp/

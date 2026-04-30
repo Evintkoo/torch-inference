@@ -10,9 +10,10 @@
 //!   vocab.json                     (GPT-2/Whisper BPE vocabulary)
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::{Mutex, OnceLock};
+use std::sync::OnceLock;
 
 use anyhow::{bail, Context, Result};
+use parking_lot::Mutex;
 use ort::session::builder::GraphOptimizationLevel;
 use ort::session::Session;
 use ort::value::Tensor;
@@ -293,7 +294,7 @@ impl WhisperOnnxPipeline {
 
         // 3. Encoder forward — lock, run, extract to owned Vec, drop lock
         let (enc_vec, enc_seq, enc_dim) = {
-            let mut enc = self.encoder.lock().unwrap();
+            let mut enc = self.encoder.lock();
             let enc_outputs = enc
                 .run(ort::inputs!["input_features" => mel_tensor])
                 .context("encoder run")?;
@@ -321,7 +322,7 @@ impl WhisperOnnxPipeline {
 
             // Lock decoder, run, extract logits to owned Vec, drop lock
             let logits: Vec<f32> = {
-                let mut dec = self.decoder.lock().unwrap();
+                let mut dec = self.decoder.lock();
                 let dec_outputs = dec
                     .run(ort::inputs![
                         "input_ids"              => ids_tensor,

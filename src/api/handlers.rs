@@ -120,13 +120,21 @@ pub async fn predict(
             let latency_ms = start.elapsed().as_millis() as u64;
             monitor.record_request_end(latency_ms, "/predict", false);
 
-            HttpResponse::InternalServerError().json(InferenceResponse {
+            let body = InferenceResponse {
                 success: false,
                 result: None,
                 error: Some(e.to_string()),
                 processing_time: Some(latency_ms as f64),
                 model_info: None,
-            })
+            };
+            match e {
+                crate::error::InferenceError::InvalidInput(_) => HttpResponse::BadRequest().json(body),
+                crate::error::InferenceError::ModelNotFound(_) => HttpResponse::NotFound().json(body),
+                crate::error::InferenceError::AuthenticationFailed(_) => HttpResponse::Unauthorized().json(body),
+                crate::error::InferenceError::Timeout => HttpResponse::GatewayTimeout().json(body),
+                crate::error::InferenceError::GpuError(_) => HttpResponse::ServiceUnavailable().json(body),
+                _ => HttpResponse::InternalServerError().json(body),
+            }
         }
     }
 }
@@ -158,7 +166,7 @@ pub async fn synthesize_tts(
             let latency_ms = start.elapsed().as_millis() as u64;
             monitor.record_request_end(latency_ms, "/synthesize", false);
 
-            HttpResponse::InternalServerError().json(TTSResponse {
+            let body = TTSResponse {
                 success: false,
                 audio_data: None,
                 audio_format: None,
@@ -166,7 +174,13 @@ pub async fn synthesize_tts(
                 sample_rate: None,
                 processing_time: Some(latency_ms as f64),
                 error: Some(e.to_string()),
-            })
+            };
+            match e {
+                crate::error::InferenceError::InvalidInput(_) => HttpResponse::BadRequest().json(body),
+                crate::error::InferenceError::ModelNotFound(_) => HttpResponse::NotFound().json(body),
+                crate::error::InferenceError::Timeout => HttpResponse::GatewayTimeout().json(body),
+                _ => HttpResponse::InternalServerError().json(body),
+            }
         }
     }
 }

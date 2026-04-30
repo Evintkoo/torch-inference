@@ -4750,19 +4750,35 @@ const CLS_CONF_COLORS = ['#333333','#3ABC3F','#FFA931','#CC27CC','#FF3131'];
 
 function clsRenderPreds(preds) {
   const box = document.getElementById('cls-live-preds');
-  if (!preds.length) { box.innerHTML = '<span style="color:var(--text-dim)">no predictions</span>'; return; }
-  box.innerHTML = preds.map((p, i) => {
+  while (box.firstChild) box.removeChild(box.firstChild);
+  if (!preds.length) {
+    const span = document.createElement('span');
+    span.style.color = 'var(--text-dim)';
+    span.textContent = 'no predictions';
+    box.appendChild(span);
+    return;
+  }
+  preds.forEach((p, i) => {
     const pct   = ((p.confidence || 0) * 100).toFixed(1);
     const color = CLS_CONF_COLORS[i % CLS_CONF_COLORS.length];
-    return `<div style="margin-bottom:4px">
-      <div style="display:flex;justify-content:space-between;font-size:12px">
-        <span>${p.label}</span><span style="color:${color}">${pct}%</span>
-      </div>
-      <div style="height:4px;background:var(--surface2);border-radius:0">
-        <div style="height:4px;width:${pct}%;background:${color};border-radius:0"></div>
-      </div>
-    </div>`;
-  }).join('');
+    const row = document.createElement('div');
+    row.style.marginBottom = '4px';
+    const head = document.createElement('div');
+    head.style.cssText = 'display:flex;justify-content:space-between;font-size:12px';
+    const lbl = document.createElement('span');
+    lbl.textContent = p.label != null ? String(p.label) : '';
+    const pctEl = document.createElement('span');
+    pctEl.style.color = color;
+    pctEl.textContent = pct + '%';
+    head.appendChild(lbl); head.appendChild(pctEl);
+    const track = document.createElement('div');
+    track.style.cssText = 'height:4px;background:var(--surface2);border-radius:0';
+    const bar = document.createElement('div');
+    bar.style.cssText = `height:4px;width:${pct}%;background:${color};border-radius:0`;
+    track.appendChild(bar);
+    row.appendChild(head); row.appendChild(track);
+    box.appendChild(row);
+  });
 }
 
 /* ── Classification SSE stream ──────────────────────────────────── */
