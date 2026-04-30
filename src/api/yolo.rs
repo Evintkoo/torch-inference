@@ -17,6 +17,15 @@ use crate::middleware::correlation_id::get_correlation_id;
 use crate::postprocess::yolo::EnrichedYoloResults;
 use crate::postprocess::{self, envelope::ResponseMeta, Envelope};
 
+/// Read the (width, height) header of an in-memory image without decoding
+/// pixels. Returns an `anyhow::Result` so the caller can format the error.
+fn image_dimensions_from_bytes(bytes: &[u8]) -> anyhow::Result<(u32, u32)> {
+    let reader = image::io::Reader::new(std::io::Cursor::new(bytes))
+        .with_guessed_format()?;
+    let dims = reader.into_dimensions()?;
+    Ok(dims)
+}
+
 /// YOLO detection request.
 /// `conf_threshold` and `iou_threshold` default to `None`, meaning "use server config defaults"
 /// (`config.models.yolo_conf_threshold` / `config.models.yolo_iou_threshold`).
@@ -108,35 +117,28 @@ pub async fn detect_objects(
     let size = YoloSize::from_suffix(&query.model_size)
         .ok_or_else(|| ApiError::BadRequest(format!("Invalid model size: {}", query.model_size)))?;
 
-    // Save uploaded image to temp file
-    let temp_dir = std::env::temp_dir();
-    let temp_file = temp_dir.join(format!("yolo_input_{}.jpg", uuid::Uuid::new_v4()));
-
-    // Extract image from multipart, refusing oversized payloads before they
-    // hit disk. The cap is per-request (not per-field) — a 50 MB JPEG is
-    // already excessive for detection.
+    // Accumulate the uploaded image in memory, capped at the configured
+    // multipart limit. We previously wrote to /tmp first and then read back —
+    // that was two extra disk hops per request and leaked temp files on any
+    // error path that returned before cleanup. The torch path below still
+    // needs a temp file because `YoloDetector::detect` takes a path; the ORT
+    // path takes bytes directly.
     let max_bytes = config.server.multipart_image_limit_mb.saturating_mul(1024 * 1024);
-    let mut total_bytes: usize = 0;
+    let mut image_bytes: Vec<u8> = Vec::new();
     while let Some(Ok(mut field)) = payload.next().await {
-        let mut file = fs::File::create(&temp_file)
-            .await
-            .map_err(|e| ApiError::InternalError(e.to_string()))?;
-
         while let Some(chunk) = field.next().await {
             let data = chunk.map_err(|e| ApiError::InternalError(e.to_string()))?;
-            total_bytes = total_bytes.saturating_add(data.len());
-            if total_bytes > max_bytes {
-                // Best-effort cleanup; ignore errors since we're about to bail.
-                let _ = fs::remove_file(&temp_file).await;
+            if image_bytes.len().saturating_add(data.len()) > max_bytes {
                 return Err(ApiError::PayloadTooLarge(format!(
                     "image upload exceeds {} MiB limit",
                     config.server.multipart_image_limit_mb
                 )));
             }
-            file.write_all(&data)
-                .await
-                .map_err(|e| ApiError::InternalError(e.to_string()))?;
+            image_bytes.extend_from_slice(&data);
         }
+    }
+    if image_bytes.is_empty() {
+        return Err(ApiError::BadRequest("empty image upload".into()));
     }
 
     // Model name (used in response metadata)
@@ -158,12 +160,22 @@ pub async fn detect_objects(
             .join(format!("{}.pt", model_name));
 
         if !model_path.exists() {
-            let _ = fs::remove_file(&temp_file).await;
             return Err(ApiError::NotFound(format!(
                 "Model not found: {}. Please download it first.",
                 model_name
             )));
         }
+
+        // The torch detector takes a path. Use a NamedTempFile so cleanup
+        // happens regardless of return path — including panics.
+        let mut tmp = tempfile::Builder::new()
+            .prefix("yolo_input_")
+            .suffix(".jpg")
+            .tempfile()
+            .map_err(|e| ApiError::InternalError(format!("tempfile: {}", e)))?;
+        std::io::Write::write_all(tmp.as_file_mut(), &image_bytes)
+            .map_err(|e| ApiError::InternalError(e.to_string()))?;
+        let temp_path = tmp.path().to_path_buf();
 
         use tch::Device;
         let mut detector =
@@ -174,24 +186,20 @@ pub async fn detect_objects(
 
         // PyTorch inference is synchronous CPU/GPU work; mirror the ORT path's
         // spawn_blocking treatment so we don't stall the actix reactor.
-        let temp_file_for_blocking = temp_file.clone();
-        let raw_results = tokio::task::spawn_blocking(move || detector.detect(&temp_file_for_blocking))
+        let temp_for_blocking = temp_path.clone();
+        let raw_results = tokio::task::spawn_blocking(move || detector.detect(&temp_for_blocking))
             .await
             .map_err(|e| ApiError::InternalError(format!("task join: {}", e)))?
             .map_err(|e| ApiError::InternalError(e.to_string()))?;
-        let (img_w, img_h) = image::image_dimensions(&temp_file).map_err(|e| {
-            // Best-effort cleanup of the temp file before bailing.
-            let path = temp_file.clone();
-            tokio::spawn(async move { let _ = fs::remove_file(path).await; });
-            ApiError::BadRequest(format!("could not read image dimensions: {e}"))
-        })?;
+        let (img_w, img_h) = image_dimensions_from_bytes(&image_bytes)
+            .map_err(|e| ApiError::BadRequest(format!("could not read image dimensions: {e}")))?;
         if img_w == 0 || img_h == 0 {
-            let _ = fs::remove_file(&temp_file).await;
             return Err(ApiError::BadRequest(format!(
                 "image has zero dimension: {img_w}x{img_h}"
             )));
         }
-        let _ = fs::remove_file(&temp_file).await;
+        // tmp is dropped here, removing the file.
+        drop(tmp);
 
         let pp = postprocess::yolo::process(raw_results, img_w, img_h, &config.postprocess.yolo);
         let (enriched, pp_steps, pp_warnings) = if !query.skip_postprocess {
@@ -224,7 +232,6 @@ pub async fn detect_objects(
     // Uses YOLOv8n ONNX model from config.models.cache_dir/yolo/yolov8n.onnx
     let ort_model_path = config.models.cache_dir.join("yolo/yolov8n.onnx");
     if !ort_model_path.exists() {
-        let _ = fs::remove_file(&temp_file).await;
         return Err(ApiError::NotFound(format!(
             "YOLO ORT model not found at {:?}", ort_model_path
         )));
@@ -251,21 +258,13 @@ pub async fn detect_objects(
         }
     };
 
-    let image_bytes = tokio::fs::read(&temp_file)
-        .await
-        .map_err(|e| ApiError::InternalError(e.to_string()))?;
-    let (img_w, img_h) = image::image_dimensions(&temp_file).map_err(|e| {
-        let path = temp_file.clone();
-        tokio::spawn(async move { let _ = fs::remove_file(path).await; });
-        ApiError::BadRequest(format!("could not read image dimensions: {e}"))
-    })?;
+    let (img_w, img_h) = image_dimensions_from_bytes(&image_bytes)
+        .map_err(|e| ApiError::BadRequest(format!("could not read image dimensions: {e}")))?;
     if img_w == 0 || img_h == 0 {
-        let _ = fs::remove_file(&temp_file).await;
         return Err(ApiError::BadRequest(format!(
             "image has zero dimension: {img_w}x{img_h}"
         )));
     }
-    let _ = fs::remove_file(&temp_file).await;
 
     let raw_results = tokio::task::spawn_blocking(move || {
         detector.detect_bytes(&image_bytes, conf_threshold, iou_threshold)

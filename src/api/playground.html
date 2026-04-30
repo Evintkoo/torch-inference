@@ -2104,7 +2104,13 @@ async function runTTS() {
     for (const c of chunks) { pcm.set(c, off); off += c.byteLength; }
 
     const wav   = buildWav(pcm, 24000, 1);
+    // Revoke the previous blob URL before allocating a new one — repeated
+    // synthesise clicks would otherwise leak one Blob URL per call.
+    if (typeof __lastTtsUrl !== 'undefined' && __lastTtsUrl) {
+      try { URL.revokeObjectURL(__lastTtsUrl); } catch (_) {}
+    }
     const url   = URL.createObjectURL(new Blob([wav], { type: 'audio/wav' }));
+    __lastTtsUrl = url;
     const audio = document.getElementById('tts-audio');
     audio.src   = url;
     document.getElementById('tts-audio-wrap').style.display = 'block';
@@ -2379,6 +2385,19 @@ window.addEventListener('pagehide', () => {
   try { if (typeof wsMicStream !== 'undefined' && wsMicStream) {
     wsMicStream.getTracks().forEach(t => t.stop());
   } } catch (_) {}
+  // Stop any active media-recorder + close audio contexts so the browser
+  // releases the mic/camera promptly (otherwise the LED stays on until GC).
+  try { if (typeof audioRecorder !== 'undefined' && audioRecorder && audioRecorder.state === 'recording') audioRecorder.stop(); } catch (_) {}
+  try { if (typeof wsMicProc !== 'undefined' && wsMicProc) {
+    if (wsMicProc.proc) try { wsMicProc.proc.disconnect(); } catch (_) {}
+    if (wsMicProc.ctx) try { wsMicProc.ctx.close(); } catch (_) {}
+  } } catch (_) {}
+  try { if (typeof wsAudioCtx !== 'undefined' && wsAudioCtx) wsAudioCtx.close(); } catch (_) {}
+  // Tear down detect/classify camera streams + revoke any preview blob URLs.
+  try { if (typeof detStopSource === 'function') detStopSource(); } catch (_) {}
+  try { if (typeof clsStopSource === 'function') clsStopSource(); } catch (_) {}
+  try { if (typeof __lastTtsUrl !== 'undefined' && __lastTtsUrl) { URL.revokeObjectURL(__lastTtsUrl); __lastTtsUrl = null; } } catch (_) {}
+  try { if (typeof __lastAgentAudio !== 'undefined' && __lastAgentAudio && __lastAgentAudio.url) { URL.revokeObjectURL(__lastAgentAudio.url); __lastAgentAudio = null; } } catch (_) {}
 });
 
 function fmtUptimeDash(s) {
@@ -5257,6 +5276,16 @@ let chatAutoTts   = false;
 let chatMicActive = false;
 let chatAttachB64  = null;
 let chatAttachName = null;
+// Cap chat history. Beyond this we trim from the head, keeping the most
+// recent turns. Without this, both browser heap and prompt-size grow
+// unbounded over a long session.
+const LLM_HISTORY_MAX_TURNS = 40;
+let __lastTtsUrl = null;
+function trimLlmHistory() {
+  if (llmMessages.length > LLM_HISTORY_MAX_TURNS) {
+    llmMessages.splice(0, llmMessages.length - LLM_HISTORY_MAX_TURNS);
+  }
+}
 
 let llmHealthPollTimer = null;
 async function checkLlmHealth() {
@@ -5845,6 +5874,7 @@ async function sendChat() {
 
   appendUserRow(rawText || '(image)', hasAttach ? attachSrc : null);
   llmMessages.push({ role: 'user', content: userContent });
+  trimLlmHistory();
 
   const systemPrompt = document.getElementById('llm-system').value.trim();
   const messages = [];
@@ -5894,9 +5924,17 @@ async function sendChat() {
         catch (_) { errMsg = 'Error ' + res.status; }
       }
       cursor.remove();
+      // Surface 401 / 429 with an actionable hint instead of swallowing.
+      if (res.status === 401) {
+        errMsg = 'Authentication required. Open the API key field and paste a valid token, then retry.';
+      } else if (res.status === 429) {
+        const ra = res.headers && res.headers.get && res.headers.get('Retry-After');
+        errMsg = 'Rate limited' + (ra ? ' — retry after ' + ra + 's' : '') + '. Slow down or raise server limits.';
+      }
       bubble.textContent = errMsg;
       bubble.style.color = '#f85149';
       llmMessages.push({ role: 'assistant', content: '' });
+      trimLlmHistory();
       return;
     }
 
@@ -5931,6 +5969,7 @@ async function sendChat() {
     const cleanText = stripAgenticTags(accumulated);
     renderMarkdown(bubble, cleanText || accumulated);
     llmMessages.push({ role: 'assistant', content: cleanText || accumulated });
+    trimLlmHistory();
     addMsgActions(actions, bubble, cleanText || accumulated);
 
     // Execute any tool calls the model emitted
@@ -5950,6 +5989,7 @@ async function sendChat() {
     bubble.textContent = 'Error: ' + e.message;
     bubble.style.color = '#f85149';
     llmMessages.push({ role: 'assistant', content: '' });
+    trimLlmHistory();
   } finally {
     llmStreaming = false;
     sendBtn.disabled = false;

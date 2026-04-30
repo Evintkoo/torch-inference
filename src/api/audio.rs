@@ -116,29 +116,36 @@ pub async fn synthesize_speech(
         energy: 1.0,
     };
 
-    // Synthesize audio
-    let mut audio = model
-        .synthesize(&sanitized_text, &params)
-        .map_err(|e| ApiError::InternalError(format!("TTS synthesis failed: {}", e)))?;
-
-    // Post-process audio samples
-    let (pp_steps, pp_warnings) = if !req.skip_postprocess {
-        let result = postprocess::audio::process(
-            std::mem::take(&mut audio.samples),
-            audio.sample_rate,
-            &config.postprocess.audio,
-        );
-        audio.samples = result.samples;
-        (result.steps, result.warnings)
-    } else {
-        (vec![], vec![])
-    };
-
-    // Convert to WAV
-    let processor = AudioProcessor::new();
-    let wav_data = processor
-        .save_wav(&audio)
-        .map_err(|e| ApiError::InternalError(e.to_string()))?;
+    // Synthesize + post-process + WAV-encode on the blocking pool. ORT
+    // session.run is synchronous and CPU-bound; running it on the actix
+    // current_thread executor blocks every other request on this worker.
+    // STT already does this — keep TTS in line.
+    let model_for_blocking = model.clone();
+    let text_for_blocking = sanitized_text.clone();
+    let params_for_blocking = params.clone();
+    let pp_cfg = config.postprocess.audio.clone();
+    let skip_pp = req.skip_postprocess;
+    let (audio, pp_steps, pp_warnings, wav_data) = tokio::task::spawn_blocking(move || -> Result<_, anyhow::Error> {
+        let mut audio = model_for_blocking
+            .synthesize(&text_for_blocking, &params_for_blocking)?;
+        let (pp_steps, pp_warnings) = if !skip_pp {
+            let result = postprocess::audio::process(
+                std::mem::take(&mut audio.samples),
+                audio.sample_rate,
+                &pp_cfg,
+            );
+            audio.samples = result.samples;
+            (result.steps, result.warnings)
+        } else {
+            (vec![], vec![])
+        };
+        let processor = AudioProcessor::new();
+        let wav = processor.save_wav(&audio)?;
+        Ok((audio, pp_steps, pp_warnings, wav))
+    })
+    .await
+    .map_err(|e| ApiError::InternalError(format!("TTS task join: {}", e)))?
+    .map_err(|e| ApiError::InternalError(format!("TTS synthesis failed: {}", e)))?;
 
     let duration_secs = audio.duration_secs();
     let audio_base64 = base64_encode(&wav_data);
