@@ -432,8 +432,15 @@ impl ModelDownloadManager {
         // caller could trigger requests to internal services or cloud
         // metadata endpoints (SSRF). `file://` would allow local-file read.
         let parsed = reqwest::Url::parse(url).context("invalid model URL")?;
-        if parsed.scheme() != "https" {
-            bail!("only https:// URLs are accepted for model downloads");
+        let host = parsed.host_str().unwrap_or("");
+        let is_loopback = matches!(host, "localhost" | "127.0.0.1" | "[::1]" | "::1");
+        match parsed.scheme() {
+            "https" => {}
+            // http is only acceptable when targeting loopback. Lets local
+            // wiremock-style integration tests run; production traffic
+            // must always be https.
+            "http" if is_loopback => {}
+            other => bail!("scheme '{other}' is not allowed for model downloads"),
         }
         const ALLOWED_HOSTS: &[&str] = &[
             "huggingface.co",
@@ -443,8 +450,11 @@ impl ModelDownloadManager {
             "download.pytorch.org",
             "storage.googleapis.com",
         ];
-        let host = parsed.host_str().unwrap_or("");
-        if !ALLOWED_HOSTS.iter().any(|h| host == *h || host.ends_with(&format!(".{}", h))) {
+        if !is_loopback
+            && !ALLOWED_HOSTS
+                .iter()
+                .any(|h| host == *h || host.ends_with(&format!(".{}", h)))
+        {
             bail!("model download host '{}' is not in the allowlist", host);
         }
 

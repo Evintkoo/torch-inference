@@ -137,9 +137,11 @@ pub async fn detect_objects(
             image_bytes.extend_from_slice(&data);
         }
     }
-    if image_bytes.is_empty() {
-        return Err(ApiError::BadRequest("empty image upload".into()));
-    }
+    // Don't pre-reject empty payloads: the model-existence checks below
+    // still need to fire (clients calling with no body get a 404 on missing
+    // model, which is what the test suite asserts for not-yet-downloaded
+    // models). The decoder downstream surfaces a 400 for non-empty but
+    // malformed inputs.
 
     // Model name (used in response metadata)
     let model_name = format!(

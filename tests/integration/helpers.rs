@@ -39,9 +39,8 @@ pub fn system_state() -> web::Data<SystemInfoState> {
 
 pub struct NoOpBackend;
 
-#[async_trait::async_trait]
 impl ClassificationBackend for NoOpBackend {
-    async fn classify_nchw(
+    fn classify_nchw(
         &self,
         _batch: ndarray::Array4<f32>,
         _top_k: usize,
