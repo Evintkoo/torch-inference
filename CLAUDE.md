@@ -84,6 +84,35 @@ Located in `models/kokoro-82m/`:
 
 Server loads 6 TTS engines at startup via `TTSManager::initialize_defaults()`.
 
+## Open follow-ups (deferred from the audit landed across commits cf2b566 → dcd7cf2)
+
+These are intentionally not in any of the audit batches because each needs
+either (a) representative benchmarks to validate or (b) a design RFC. Pick
+them up only with the relevant supporting work in hand.
+
+- **Whisper KV-cache decoder** (`src/core/whisper_onnx.rs`): the greedy
+  decode loop currently re-runs the full decoder over the full prefix
+  per token (O(N²) compute) and clones the encoder output (~3 MB) on
+  every iteration. A KV-cache rewrite is the single biggest STT
+  latency win, but it needs a bench harness.
+- **Sharded TTS synthesis cache** (`src/core/tts_manager.rs`): single
+  global `Mutex<LruCache>` clones full `AudioData` inside the lock.
+  Sharded LRU (16-way like `dedup.rs`) plus `Arc<AudioData>` would
+  remove the contention point but the AudioData → Arc<AudioData>
+  change is a public API churn.
+- **Drop ModelCache serde round-trip** (`src/core/model_cache.rs`):
+  every cache hit deserializes JSON. Replace with `Arc<dyn Any>`.
+- **YOLO preprocess on the SIMD pipeline** (`src/core/ort_yolo.rs`):
+  goes through `image::imageops::Lanczos3` + scalar normalize. The
+  classifier path already uses `fast_image_resize` + `wide::f32x8`;
+  routing YOLO through the same pipeline would 3-5× preprocess.
+- **Error envelope unification across handlers** — currently four
+  shapes (ApiError, registry::ApiResponse, predict ad-hoc, OpenAI).
+  Pick one and migrate; needs a small RFC to settle which.
+- **Audio resampler cache** (`src/core/audio.rs`): `FftFixedInOut`
+  is rebuilt per call. Cache-by-key, but the resampler is `&mut self`
+  per-process so a pool is needed. Worth 5-15 ms per STT request.
+
 ## Configuration
 `config.toml` key sections (runtime-relevant):
 - `server.host`, `server.port` — default `127.0.0.1:8000`. Use `0.0.0.0` only with auth + TLS in front.
