@@ -38,6 +38,7 @@ pub async fn root(req: HttpRequest) -> impl Responder {
         .body(PLAYGROUND_HTML)
 }
 
+#[allow(dead_code)] // superseded by api::health::health (registered at App level)
 pub async fn health_check(
     engine: web::Data<std::sync::Arc<InferenceEngine>>,
     monitor: web::Data<std::sync::Arc<Monitor>>,
@@ -244,24 +245,18 @@ pub async fn get_system_info(
 }
 
 pub fn configure_routes(cfg: &mut web::ServiceConfig) {
+    // Note: /health is registered at the App level in main.rs (canonical).
+    // /audio/transcribe and /audio/synthesize are also canonical at the App
+    // level — duplicates here would shadow them silently.
     cfg.route("/", web::get().to(root))
         .route("/playground", web::get().to(root))
-        .route("/health", web::get().to(health_check))
         .route("/predict", web::post().to(predict))
         .route("/synthesize", web::post().to(synthesize_tts))
         .route("/models", web::get().to(list_models))
         .route("/stats", web::get().to(get_stats))
         .route("/endpoints", web::get().to(get_endpoint_stats))
         .route("/info", web::get().to(get_system_info))
-        // Audio endpoints
-        .route(
-            "/audio/synthesize",
-            web::post().to(crate::api::audio::synthesize_speech),
-        )
-        .route(
-            "/audio/transcribe",
-            web::post().to(crate::api::audio::transcribe_audio),
-        )
+        // Audio endpoints (transcribe + synthesize are at the App level)
         .route(
             "/audio/validate",
             web::post().to(crate::api::audio::validate_audio),

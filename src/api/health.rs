@@ -254,9 +254,18 @@ pub async fn health(req: HttpRequest, monitor: web::Data<Arc<Monitor>>) -> Resul
         checks,
     };
 
-    Ok(HttpResponse::Ok()
-        .insert_header(("x-correlation-id", correlation_id.as_str()))
-        .json(response))
+    // Return 503 when a "down" component drives `unhealthy`. Most LB
+    // probes look at status code; conflating unhealthy with 200 hides the
+    // problem from anything that isn't actively reading the JSON body.
+    if overall_status == "unhealthy" {
+        Ok(HttpResponse::ServiceUnavailable()
+            .insert_header(("x-correlation-id", correlation_id.as_str()))
+            .json(response))
+    } else {
+        Ok(HttpResponse::Ok()
+            .insert_header(("x-correlation-id", correlation_id.as_str()))
+            .json(response))
+    }
 }
 
 #[cfg(test)]

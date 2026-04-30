@@ -41,7 +41,10 @@ use crate::config::Config;
 use crate::core::engine::InferenceEngine;
 use crate::core::gpu::GpuManager;
 use crate::dedup::RequestDeduplicator;
-use crate::middleware::{CorrelationIdMiddleware, RateLimiter, RequestLogger};
+use crate::middleware::{
+    AuthMiddleware, CorrelationIdMiddleware, RateLimitMiddleware, RateLimiter, RequestLogger,
+    SecurityHeaders,
+};
 use crate::models::download::ModelDownloadManager;
 use crate::models::manager::ModelManager;
 use crate::monitor::Monitor;
@@ -342,7 +345,9 @@ async fn async_main() -> std::io::Result<()> {
     let model_manager = Arc::new(ModelManager::new(&config, tensor_pool.clone()));
     let inference_engine = Arc::new(InferenceEngine::new(model_manager.clone(), &config));
     let monitor = Arc::new(Monitor::new());
-    let rate_limiter = Arc::new(RateLimiter::default());
+    // RateLimiter scope: per-IP, 600 requests/min by default. Wired into the
+    // App via RateLimitMiddleware below.
+    let rate_limiter = Arc::new(RateLimiter::new(600, 60));
     let circuit_breaker = Arc::new(CircuitBreaker::new(CircuitBreakerConfig::default()));
     let bulkhead = Arc::new(Bulkhead::new(BulkheadConfig::default()));
 
@@ -631,7 +636,10 @@ async fn async_main() -> std::io::Result<()> {
     let model_mgr = web::Data::new(model_manager);
     let infer_engine = web::Data::new(inference_engine);
     let monitor_data = web::Data::new(monitor.clone());
-    let rate_limiter_data = web::Data::new(rate_limiter);
+    let rate_limiter_data = web::Data::new(rate_limiter.clone());
+    let rate_limit_mw_limiter = rate_limiter.clone();
+    let auth_enabled = config.auth.enabled;
+    let auth_secret = config.auth.jwt_secret.clone();
     let circuit_breaker_data = web::Data::new(circuit_breaker);
     let bulkhead_data = web::Data::new(bulkhead);
     let cache_data = web::Data::new(cache);
@@ -747,9 +755,16 @@ async fn async_main() -> std::io::Result<()> {
             .app_data(yolo_state.clone())
             .app_data(nn_state.clone())
             // Middleware order (innermost → outermost on response path):
-            //   CorrelationIdMiddleware, RequestLogger (logs full wall time), Compress (gzip)
+            //   CorrelationIdMiddleware, RequestLogger, Auth (gates protected
+            //   routes), RateLimit (per-IP, skips /health and /metrics),
+            //   SecurityHeaders (adds CSP/XCTO/XFO), Compress (gzip).
+            // Wraps run outermost-first, so the order here is the order
+            // requests traverse top-down.
             .wrap(CorrelationIdMiddleware)
             .wrap(RequestLogger)
+            .wrap(AuthMiddleware::new(auth_enabled, &auth_secret))
+            .wrap(RateLimitMiddleware::new(rate_limit_mw_limiter.clone()))
+            .wrap(SecurityHeaders)
             .wrap(Compress::default())
             // Health check endpoints
             .route("/health", web::get().to(crate::api::health::health))
