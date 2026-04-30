@@ -2367,6 +2367,20 @@ function closeDashboardStream() {
   if (dashES) { dashES.close(); dashES = null; }
 }
 
+// Best-effort cleanup of long-lived browser resources when the tab
+// closes or is bfcached. Without this the dashboard EventSource (and
+// any inference WebSockets) survive navigation, holding server-side
+// resources until OS-level TCP timeout.
+window.addEventListener('pagehide', () => {
+  closeDashboardStream();
+  try { if (typeof detWs !== 'undefined' && detWs) detWs.close(); } catch (_) {}
+  try { if (typeof clsWs !== 'undefined' && clsWs) clsWs.close(); } catch (_) {}
+  try { if (typeof wsAudio !== 'undefined' && wsAudio) wsAudio.close(); } catch (_) {}
+  try { if (typeof wsMicStream !== 'undefined' && wsMicStream) {
+    wsMicStream.getTracks().forEach(t => t.stop());
+  } } catch (_) {}
+});
+
 function fmtUptimeDash(s) {
   if (!s) return '0s';
   if (s < 60)   return s + 's';
@@ -5679,10 +5693,21 @@ async function agentTTS(text, voice, bubble) {
     let off = 0; for (const c of chunks) { pcm.set(c, off); off += c.byteLength; }
     const wav = buildWav(pcm, 24000, 1);
     const url = URL.createObjectURL(new Blob([wav], { type: 'audio/wav' }));
+    // Stop any previous agent TTS playback so two rapid replies don't
+    // overlap. The element stays in the chat bubble (controls visible),
+    // but is paused. Older blob URLs are released as we go.
+    if (window.__lastAgentAudio) {
+      try { window.__lastAgentAudio.pause(); } catch (_) {}
+      if (window.__lastAgentAudioUrl) {
+        try { URL.revokeObjectURL(window.__lastAgentAudioUrl); } catch (_) {}
+      }
+    }
     const audio = document.createElement('audio');
     audio.controls = true;
     audio.src = url;
     audio.style.cssText = 'width:100%;margin-top:6px';
+    window.__lastAgentAudio = audio;
+    window.__lastAgentAudioUrl = url;
     // Append audio element directly (avoid outerHTML blob URL serialisation issues)
     const card = document.createElement('div');
     card.className = 'tool-call-card';
