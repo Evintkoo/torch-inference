@@ -205,18 +205,31 @@ impl OrtYoloDetector {
 
         let detections: Vec<Detection> = boxes.into_iter().enumerate()
             .filter(|(idx, _)| kept[*idx])
-            .map(|(_, b)| Detection {
-                class_id: b.class_id,
-                class_name: self.class_names.get(b.class_id)
-                    .cloned()
-                    .unwrap_or_else(|| format!("class_{}", b.class_id)),
-                confidence: b.score,
-                bbox: BoundingBox {
-                    x1: b.x1.max(0.0),
-                    y1: b.y1.max(0.0),
-                    x2: b.x2.min(orig_w),
-                    y2: b.y2.min(orig_h),
-                },
+            .map(|(_, b)| {
+                let class_name = match self.class_names.get(b.class_id) {
+                    Some(name) => name.clone(),
+                    None => {
+                        tracing::warn!(
+                            class_id = b.class_id,
+                            num_classes = self.class_names.len(),
+                            "YOLO returned class id outside the class-names list; \
+                             falling back to synthetic name — check that the names \
+                             list matches the model's class count"
+                        );
+                        format!("class_{}", b.class_id)
+                    }
+                };
+                Detection {
+                    class_id: b.class_id,
+                    class_name,
+                    confidence: b.score,
+                    bbox: BoundingBox {
+                        x1: b.x1.max(0.0),
+                        y1: b.y1.max(0.0),
+                        x2: b.x2.min(orig_w),
+                        y2: b.y2.min(orig_h),
+                    },
+                }
             })
             .collect();
 

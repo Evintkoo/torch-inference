@@ -213,16 +213,23 @@ impl ClassificationBackend for OrtClassificationBackend {
             output_pool().release(output_shape, raw_buf);
 
             let top = Self::top_k(&probs, top_k);
-            let preds = top
+            let preds: Vec<Prediction> = top
                 .into_iter()
-                .map(|(class_id, confidence)| Prediction {
-                    label: self
-                        .labels
-                        .get(class_id)
-                        .cloned()
-                        .unwrap_or_else(|| format!("class_{}", class_id)),
-                    confidence,
-                    class_id,
+                .map(|(class_id, confidence)| {
+                    let label = match self.labels.get(class_id) {
+                        Some(l) => l.clone(),
+                        None => {
+                            tracing::warn!(
+                                class_id,
+                                num_labels = self.labels.len(),
+                                "model returned class id outside the labels file; \
+                                 falling back to synthetic label — check that the \
+                                 labels list matches the model's output dimension"
+                            );
+                            format!("class_{}", class_id)
+                        }
+                    };
+                    Prediction { label, confidence, class_id }
                 })
                 .collect();
 

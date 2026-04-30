@@ -256,7 +256,9 @@ async fn async_main() -> std::io::Result<()> {
                         config.device.device_type = "mps".to_string();
                         tracing::info!(backend = "mps", "metal detected");
                         if config.device.metal_optimize_for_apple_silicon {
-                            let optimal_threads = (num_cpus::get() * 3) / 4;
+                            // `.max(1)` so a single-core or low-vcpu host doesn't
+                            // get 0 threads, which crashes ORT/PyTorch on init.
+                            let optimal_threads = ((num_cpus::get() * 3) / 4).max(1);
                             config.device.num_threads = optimal_threads;
                             tracing::info!(
                                 threads = optimal_threads,

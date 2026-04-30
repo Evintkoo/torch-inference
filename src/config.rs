@@ -473,6 +473,44 @@ impl Config {
                 );
             }
         }
+
+        if self.server.port == 0 {
+            anyhow::bail!("server.port must be in 1..=65535 (got 0)");
+        }
+
+        let min_w = self.performance.min_workers;
+        let max_w = self.performance.max_workers;
+        if min_w == 0 || max_w == 0 {
+            anyhow::bail!(
+                "performance.min_workers and max_workers must both be >= 1 \
+                 (min={}, max={})",
+                min_w,
+                max_w
+            );
+        }
+        if min_w > max_w {
+            anyhow::bail!(
+                "performance.min_workers ({}) must be <= max_workers ({})",
+                min_w,
+                max_w
+            );
+        }
+
+        let conf = self.models.yolo_conf_threshold;
+        if !(0.0..=1.0).contains(&conf) || conf.is_nan() {
+            anyhow::bail!(
+                "models.yolo_conf_threshold must be in [0.0, 1.0] (got {})",
+                conf
+            );
+        }
+        let iou = self.models.yolo_iou_threshold;
+        if !(0.0..=1.0).contains(&iou) || iou.is_nan() {
+            anyhow::bail!(
+                "models.yolo_iou_threshold must be in [0.0, 1.0] (got {})",
+                iou
+            );
+        }
+
         Ok(())
     }
 }
@@ -698,6 +736,44 @@ mod tests {
         config.auth.enabled = true;
         config.auth.jwt_secret = "x".repeat(64);
         assert!(config.validate().is_ok());
+    }
+
+    #[test]
+    fn test_validate_rejects_port_zero() {
+        let mut config = Config::default();
+        config.server.port = 0;
+        let err = config.validate().unwrap_err();
+        assert!(format!("{err}").contains("server.port"));
+    }
+
+    #[test]
+    fn test_validate_rejects_min_greater_than_max_workers() {
+        let mut config = Config::default();
+        config.performance.min_workers = 8;
+        config.performance.max_workers = 4;
+        let err = config.validate().unwrap_err();
+        assert!(format!("{err}").contains("min_workers"));
+    }
+
+    #[test]
+    fn test_validate_rejects_zero_workers() {
+        let mut config = Config::default();
+        config.performance.min_workers = 0;
+        let err = config.validate().unwrap_err();
+        assert!(format!("{err}").contains(">= 1"));
+    }
+
+    #[test]
+    fn test_validate_rejects_yolo_threshold_out_of_range() {
+        let mut config = Config::default();
+        config.models.yolo_conf_threshold = 1.5;
+        let err = config.validate().unwrap_err();
+        assert!(format!("{err}").contains("yolo_conf_threshold"));
+
+        let mut config = Config::default();
+        config.models.yolo_iou_threshold = -0.1;
+        let err = config.validate().unwrap_err();
+        assert!(format!("{err}").contains("yolo_iou_threshold"));
     }
 
     #[test]

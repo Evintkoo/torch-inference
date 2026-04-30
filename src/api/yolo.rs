@@ -173,7 +173,18 @@ pub async fn detect_objects(
             .await
             .map_err(|e| ApiError::InternalError(format!("task join: {}", e)))?
             .map_err(|e| ApiError::InternalError(e.to_string()))?;
-        let (img_w, img_h) = image::image_dimensions(&temp_file).unwrap_or((640, 640));
+        let (img_w, img_h) = image::image_dimensions(&temp_file).map_err(|e| {
+            // Best-effort cleanup of the temp file before bailing.
+            let path = temp_file.clone();
+            tokio::spawn(async move { let _ = fs::remove_file(path).await; });
+            ApiError::BadRequest(format!("could not read image dimensions: {e}"))
+        })?;
+        if img_w == 0 || img_h == 0 {
+            let _ = fs::remove_file(&temp_file).await;
+            return Err(ApiError::BadRequest(format!(
+                "image has zero dimension: {img_w}x{img_h}"
+            )));
+        }
         let _ = fs::remove_file(&temp_file).await;
 
         let pp = postprocess::yolo::process(raw_results, img_w, img_h, &config.postprocess.yolo);

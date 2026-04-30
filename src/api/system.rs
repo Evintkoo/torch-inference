@@ -169,9 +169,13 @@ pub async fn get_config(cfg: web::Data<Config>) -> Result<HttpResponse, ApiError
             default_batch_size: 1,
             max_batch_size: 32,
             timeout_secs: 30,
+            // CoreML on macOS routes ORT through Metal/ANE — no `metal`
+            // feature flag is required (and the previous `cfg!(feature =
+            // "metal")` branch was permanently dead, since the feature is
+            // not declared in Cargo.toml).
             device: if cfg!(feature = "cuda") {
                 "cuda"
-            } else if cfg!(feature = "metal") {
+            } else if cfg!(target_os = "macos") {
                 "metal"
             } else {
                 "cpu"
