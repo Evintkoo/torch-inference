@@ -41,18 +41,16 @@ struct BoxCandidate {
 pub struct OrtYoloDetector {
     session: Mutex<Session>,
     class_names: Vec<String>,
-    conf_threshold: f32,
-    iou_threshold: f32,
 }
 
 impl OrtYoloDetector {
-    /// `conf_threshold` and `iou_threshold` come from `config.models.yolo_conf_threshold`
-    /// and `config.models.yolo_iou_threshold`; pass them in rather than hardcoding here.
+    /// Load the ONNX session and class-name list. Confidence and IoU
+    /// thresholds are passed at call time — see `detect_bytes` — so a
+    /// single `Arc<OrtYoloDetector>` can be reused across requests
+    /// without per-request mutation.
     pub fn new(
         model_path: &Path,
         class_names: Vec<String>,
-        conf_threshold: f32,
-        iou_threshold: f32,
     ) -> Result<Self> {
         let physical_cpus = num_cpus::get_physical().max(1);
         let mut builder = Session::builder()?
@@ -84,26 +82,29 @@ impl OrtYoloDetector {
         Ok(Self {
             session: Mutex::new(session),
             class_names,
-            conf_threshold: conf_threshold.clamp(0.0, 1.0),
-            iou_threshold: iou_threshold.clamp(0.0, 1.0),
         })
     }
 
-    pub fn set_conf_threshold(&mut self, t: f32) { self.conf_threshold = t.clamp(0.0, 1.0); }
-    pub fn set_iou_threshold(&mut self, t: f32)  { self.iou_threshold  = t.clamp(0.0, 1.0); }
-
-    pub fn detect_bytes(&self, image_bytes: &[u8]) -> Result<YoloResults> {
+    /// Run inference on a JPEG/PNG/etc byte buffer with the supplied
+    /// thresholds. `&self` only; safe to share an `Arc<OrtYoloDetector>`
+    /// across concurrent requests.
+    pub fn detect_bytes(
+        &self,
+        image_bytes: &[u8],
+        conf_threshold: f32,
+        iou_threshold: f32,
+    ) -> Result<YoloResults> {
         let img = image::load_from_memory(image_bytes).context("decode image")?;
-        self.run(&img)
+        self.run(&img, conf_threshold.clamp(0.0, 1.0), iou_threshold.clamp(0.0, 1.0))
     }
 
     #[allow(dead_code)]
-    pub fn detect_file(&self, path: &Path) -> Result<YoloResults> {
+    pub fn detect_file(&self, path: &Path, conf: f32, iou: f32) -> Result<YoloResults> {
         let img = image::open(path).context("open image file")?;
-        self.run(&img)
+        self.run(&img, conf.clamp(0.0, 1.0), iou.clamp(0.0, 1.0))
     }
 
-    fn run(&self, img: &DynamicImage) -> Result<YoloResults> {
+    fn run(&self, img: &DynamicImage, conf_threshold: f32, iou_threshold: f32) -> Result<YoloResults> {
         let t_start = Instant::now();
 
         // ── Preprocess ────────────────────────────────────────────────────────
@@ -160,7 +161,7 @@ impl OrtYoloDetector {
 
             // sigmoid of raw score
             let confidence = 1.0 / (1.0 + (-best_score).exp());
-            if confidence < self.conf_threshold {
+            if confidence < conf_threshold {
                 continue;
             }
 
@@ -197,7 +198,7 @@ impl OrtYoloDetector {
             for j in (i + 1)..boxes.len() {
                 if !kept[j] { continue; }
                 if boxes[i].class_id != boxes[j].class_id { continue; }
-                if Self::iou(&boxes[i], &boxes[j]) > self.iou_threshold {
+                if Self::iou(&boxes[i], &boxes[j]) > iou_threshold {
                     kept[j] = false;
                 }
             }

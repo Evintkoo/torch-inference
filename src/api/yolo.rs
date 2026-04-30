@@ -78,6 +78,12 @@ pub struct YoloModelsResponse {
 
 pub struct YoloState {
     pub models_dir: PathBuf,
+    /// Cached ORT detector. Populated on first successful `/yolo/detect`
+    /// request that finds the model file; subsequent requests share the
+    /// same `Arc<OrtYoloDetector>`. Saves ~140 ms per request (the
+    /// `Session::builder` + EP setup + `commit_from_file` cost) under
+    /// `cargo bench --bench yolo_detector_cache_bench`.
+    pub ort_detector: parking_lot::Mutex<Option<std::sync::Arc<crate::core::ort_yolo::OrtYoloDetector>>>,
 }
 
 /// Detect objects in an uploaded image
@@ -224,20 +230,49 @@ pub async fn detect_objects(
         )));
     }
 
-    let detector =
-        crate::core::ort_yolo::OrtYoloDetector::new(&ort_model_path, class_names, conf_threshold, iou_threshold)
-            .map_err(|e| ApiError::InternalError(format!("YOLO init: {}", e)))?;
+    // Reuse the cached detector if we've already built one. Otherwise
+    // pay the `Session::builder` cost once, lazily, behind the mutex.
+    // Saves ~140 ms per request once warmed (see
+    // benches/yolo_detector_cache_bench.rs).
+    let detector = {
+        let mut guard = state.ort_detector.lock();
+        match &*guard {
+            Some(d) => d.clone(),
+            None => {
+                let det = crate::core::ort_yolo::OrtYoloDetector::new(
+                    &ort_model_path,
+                    class_names,
+                )
+                .map_err(|e| ApiError::InternalError(format!("YOLO init: {}", e)))?;
+                let arc = std::sync::Arc::new(det);
+                *guard = Some(arc.clone());
+                arc
+            }
+        }
+    };
 
     let image_bytes = tokio::fs::read(&temp_file)
         .await
         .map_err(|e| ApiError::InternalError(e.to_string()))?;
-    let (img_w, img_h) = image::image_dimensions(&temp_file).unwrap_or((640, 640));
+    let (img_w, img_h) = image::image_dimensions(&temp_file).map_err(|e| {
+        let path = temp_file.clone();
+        tokio::spawn(async move { let _ = fs::remove_file(path).await; });
+        ApiError::BadRequest(format!("could not read image dimensions: {e}"))
+    })?;
+    if img_w == 0 || img_h == 0 {
+        let _ = fs::remove_file(&temp_file).await;
+        return Err(ApiError::BadRequest(format!(
+            "image has zero dimension: {img_w}x{img_h}"
+        )));
+    }
     let _ = fs::remove_file(&temp_file).await;
 
-    let raw_results = tokio::task::spawn_blocking(move || detector.detect_bytes(&image_bytes))
-        .await
-        .map_err(|e| ApiError::InternalError(format!("task join: {}", e)))?
-        .map_err(|e| ApiError::InternalError(format!("YOLO detect: {}", e)))?;
+    let raw_results = tokio::task::spawn_blocking(move || {
+        detector.detect_bytes(&image_bytes, conf_threshold, iou_threshold)
+    })
+    .await
+    .map_err(|e| ApiError::InternalError(format!("task join: {}", e)))?
+    .map_err(|e| ApiError::InternalError(format!("YOLO detect: {}", e)))?;
 
     let pp = postprocess::yolo::process(raw_results, img_w, img_h, &config.postprocess.yolo);
     let (enriched, pp_steps, pp_warnings) = if !query.skip_postprocess {
@@ -541,7 +576,10 @@ mod tests {
     // ── Handler unit tests (no actix HTTP stack needed) ───────────────────────
 
     fn make_yolo_state(dir: std::path::PathBuf) -> web::Data<YoloState> {
-        web::Data::new(YoloState { models_dir: dir })
+        web::Data::new(YoloState {
+            models_dir: dir,
+            ort_detector: parking_lot::Mutex::new(None),
+        })
     }
 
     // list_models — always succeeds and returns all versions/sizes

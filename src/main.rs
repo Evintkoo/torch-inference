@@ -683,6 +683,7 @@ async fn async_main() -> std::io::Result<()> {
     });
     let yolo_state = web::Data::new(crate::api::yolo::YoloState {
         models_dir: config.models.cache_dir.clone(),
+        ort_detector: parking_lot::Mutex::new(None),
     });
     let nn_state = web::Data::new(crate::api::inference::NeuralNetworkState {
         networks: Arc::new(dashmap::DashMap::new()),
