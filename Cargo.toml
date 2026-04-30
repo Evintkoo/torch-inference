@@ -50,7 +50,7 @@ tch = { version = "0.16", optional = true, features = [] }  # Requires PyTorch 2
 candle-core = { version = "0.8", optional = true }
 candle-nn = { version = "0.8", optional = true }
 candle-transformers = { version = "0.8", optional = true }
-pyo3 = { version = "0.20", features = ["auto-initialize"], optional = true }
+pyo3 = { version = "0.24", features = ["auto-initialize"], optional = true }
 
 # Logging and monitoring
 log = "0.4"
@@ -68,7 +68,7 @@ prometheus = { version = "0.13", optional = true }
 lazy_static = "1.4"
 
 # Security and auth
-jsonwebtoken = "9.3"
+jsonwebtoken = { version = "10.3", default-features = false, features = ["rust_crypto"] }
 bcrypt = "0.15"
 uuid = { version = "1.10", features = ["v4", "serde"] }
 rand = "0.8"
@@ -86,7 +86,7 @@ dotenv = "0.15"
 
 # Caching
 dashmap = "5.5"
-lru = "0.12"
+lru = "0.16"
 parking_lot = "0.12"
 ahash = "0.8"
 
@@ -100,7 +100,7 @@ num_cpus = "1.16"
 sysinfo = "0.31"
 nvml-wrapper = { version = "0.9", optional = true }
 tikv-jemallocator = { version = "0.5", optional = true }
-pprof = { version = "0.13", features = ["flamegraph"], optional = true }
+pprof = { version = "0.14", features = ["flamegraph"], optional = true }
 
 # Progress tracking
 indicatif = "0.17"
