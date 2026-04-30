@@ -213,27 +213,48 @@ pub async fn stream_synthesize(
     // indefinitely. We bound the gap *between* successful chunks, not the
     // total stream length — long-text synthesis can legitimately take a
     // while, but each sentence should arrive within the cap or we close.
-    let chunk_timeout = std::time::Duration::from_secs(config.server.tts_chunk_timeout_secs);
-    let byte_stream = futures_util::stream::unfold(chunk_rx, move |mut rx| async move {
-        match tokio::time::timeout(chunk_timeout, rx.recv()).await {
-            Ok(Some(Ok(chunk))) => {
-                let bytes = Bytes::from(chunk.to_pcm16_le());
-                Some((Ok::<Bytes, actix_web::Error>(bytes), rx))
+    // Two distinct timeouts:
+    //   - first-chunk: cold-start can be slow (model warmup, first phoneme
+    //     pass). Give it more headroom than steady-state.
+    //   - per-chunk: once chunks are flowing, each subsequent sentence
+    //     should arrive within the configured cap.
+    let per_chunk_timeout =
+        std::time::Duration::from_secs(config.server.tts_chunk_timeout_secs);
+    let first_chunk_timeout = per_chunk_timeout.saturating_mul(4);
+
+    // State is `(Option<rx>, is_first)` — once we encounter an error or
+    // timeout we drop the receiver and return `None` on the next poll,
+    // closing the stream cleanly. The previous loop kept polling after
+    // a timeout, so the same error fired in a tight loop until actix
+    // tore the connection down.
+    let byte_stream = futures_util::stream::unfold(
+        (Some(chunk_rx), true),
+        move |(rx_opt, is_first)| async move {
+            let mut rx = rx_opt?;
+            let timeout = if is_first { first_chunk_timeout } else { per_chunk_timeout };
+            match tokio::time::timeout(timeout, rx.recv()).await {
+                Ok(Some(Ok(chunk))) => {
+                    let bytes = Bytes::from(chunk.to_pcm16_le());
+                    Some((Ok::<Bytes, actix_web::Error>(bytes), (Some(rx), false)))
+                }
+                Ok(Some(Err(e))) => Some((
+                    Err(actix_web::error::ErrorInternalServerError(e.to_string())),
+                    (None, false),
+                )),
+                Ok(None) => None, // upstream closed cleanly
+                Err(_) => {
+                    let label = if is_first { "first " } else { "" };
+                    Some((
+                        Err(actix_web::error::ErrorGatewayTimeout(format!(
+                            "TTS {label}chunk timeout after {}s",
+                            timeout.as_secs()
+                        ))),
+                        (None, false),
+                    ))
+                }
             }
-            Ok(Some(Err(e))) => Some((
-                Err(actix_web::error::ErrorInternalServerError(e.to_string())),
-                rx,
-            )),
-            Ok(None) => None, // upstream closed cleanly
-            Err(_) => Some((
-                Err(actix_web::error::ErrorGatewayTimeout(format!(
-                    "TTS chunk timeout after {}s",
-                    chunk_timeout.as_secs()
-                ))),
-                rx,
-            )),
-        }
-    });
+        },
+    );
 
     Ok(HttpResponse::Ok()
         .content_type("audio/pcm")

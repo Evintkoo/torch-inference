@@ -3,12 +3,16 @@ use llama_cpp_2::{
     context::params::LlamaContextParams,
     llama_backend::LlamaBackend,
     llama_batch::LlamaBatch,
-    model::{params::LlamaModelParams, AddBos, LlamaModel, Special},
+    model::{params::LlamaModelParams, AddBos, LlamaModel},
     mtmd::{
         mtmd_default_marker, MtmdBitmap, MtmdContext, MtmdContextParams, MtmdInputText,
     },
     sampling::LlamaSampler,
 };
+// `Special` is deprecated upstream but `token_to_str` (also deprecated)
+// still requires it. Both go away when we migrate to `token_to_piece`.
+#[allow(deprecated)]
+use llama_cpp_2::model::Special;
 use std::ffi::CString;
 use std::num::NonZeroU32;
 use tokio::sync::mpsc;
@@ -175,6 +179,11 @@ impl LlamaEngine {
                 break;
             }
 
+            // `token_to_str` is deprecated upstream in favour of
+            // `token_to_piece`, which requires plumbing in an
+            // encoding_rs::Decoder; we keep the legacy call until the
+            // migration lands.
+            #[allow(deprecated)]
             let token_str = self.model
                 .token_to_str(new_token, Special::Tokenize)
                 .unwrap_or_default();
@@ -296,6 +305,11 @@ impl LlamaEngine {
                 break;
             }
 
+            // `token_to_str` is deprecated upstream in favour of
+            // `token_to_piece`, which requires plumbing in an
+            // encoding_rs::Decoder; we keep the legacy call until the
+            // migration lands.
+            #[allow(deprecated)]
             let token_str = self.model
                 .token_to_str(new_token, Special::Tokenize)
                 .unwrap_or_default();

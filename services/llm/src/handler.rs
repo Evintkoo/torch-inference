@@ -1,7 +1,7 @@
 use actix_web::{web, HttpResponse};
 use base64::Engine as _;
 use bytes::Bytes;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::json;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};

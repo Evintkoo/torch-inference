@@ -799,9 +799,15 @@
   }
 
   /* ── Agentic tool cards ────────────────────────────────── */
+  /* Inline-flex + fit-content keeps the card sized to its content
+     instead of stretching to the full chat width. max-width caps the
+     bound for long results (classification labels, detection lists). */
   .tool-call-card {
+    display: inline-flex; flex-direction: column;
+    width: fit-content; max-width: min(560px, 100%);
     margin: 10px 0 4px; border: 1px solid var(--border);
-    border-left: 3px solid #0D0E0F; background: var(--surface2); padding: 10px 14px;
+    border-left: 3px solid #0D0E0F; background: var(--surface2); padding: 8px 12px;
+    font-size: 12px; line-height: 1.45;
   }
   [data-theme="dark"] .tool-call-card { border-left-color: #fff; }
   .tool-call-header {
