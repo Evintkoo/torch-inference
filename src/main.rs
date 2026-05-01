@@ -349,6 +349,26 @@ async fn async_main() -> std::io::Result<()> {
     // RateLimiter scope: per-IP, 600 requests/min by default. Wired into the
     // App via RateLimitMiddleware below.
     let rate_limiter = Arc::new(RateLimiter::new(600, 60));
+
+    // Evict rate-limit entries whose window has expired. Runs every 60 s on
+    // the Tokio blocking pool so DashMap retain() doesn't block async workers.
+    {
+        let rl = rate_limiter.clone();
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(std::time::Duration::from_secs(60));
+            interval.tick().await; // consume the immediate first tick
+            loop {
+                interval.tick().await;
+                tokio::task::spawn_blocking({
+                    let rl = rl.clone();
+                    move || rl.cleanup_old_entries()
+                })
+                .await
+                .ok();
+            }
+        });
+    }
+
     let circuit_breaker = Arc::new(CircuitBreaker::new(CircuitBreakerConfig::default()));
     let bulkhead = Arc::new(Bulkhead::new(BulkheadConfig::default()));
 

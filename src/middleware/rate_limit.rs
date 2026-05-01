@@ -81,8 +81,7 @@ impl RateLimiter {
     }
 
     /// Evict entries whose window has fully expired.  Intended for periodic
-    /// background maintenance; no production caller yet.
-    #[allow(dead_code)]
+    /// background maintenance; called from background sweep task in main.rs.
     pub fn cleanup_old_entries(&self) {
         let now = coarse_unix_secs();
         self.request_counts
@@ -260,6 +259,24 @@ mod tests {
         let limiter = RateLimiter::new(10, 1);
         let _ = limiter.is_allowed("cleanup_client");
         limiter.cleanup_old_entries(); // must not panic
+    }
+
+    #[test]
+    fn cleanup_does_not_affect_active_entries() {
+        // window_seconds=60: entries are active, cleanup should NOT remove them
+        let limiter = RateLimiter::new(10, 60);
+        let _ = limiter.is_allowed("active_ip");
+        limiter.cleanup_old_entries();
+        // After cleanup, active_ip should still be rate-limited (hit count preserved)
+        // We verify by checking the is_allowed still tracks state (9 more allowed)
+        for _ in 0..9 {
+            assert!(limiter.is_allowed("active_ip").is_ok());
+        }
+        // 10th attempt (total 11, max 10) should be denied
+        assert!(
+            limiter.is_allowed("active_ip").is_err(),
+            "active entry should still be tracked after cleanup"
+        );
     }
 
     // ── RateLimitError ───────────────────────────────────────────────────────
