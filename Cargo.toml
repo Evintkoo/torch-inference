@@ -183,6 +183,10 @@ harness = false
 name = "yolo_detector_cache_bench"
 harness = false
 
+[[bench]]
+name = "cache_bench"
+harness = false
+
 [profile.release]
 opt-level = 3
 lto = "fat"
