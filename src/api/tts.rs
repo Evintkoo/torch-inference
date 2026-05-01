@@ -127,12 +127,13 @@ pub async fn synthesize(
 
     // Post-process samples (silence detection → DC offset → normalize → trim)
     let (pp_steps, pp_warnings) = if !req.skip_postprocess {
+        let audio_mut = Arc::make_mut(&mut audio);
         let result = postprocess::audio::process(
-            std::mem::take(&mut audio.samples),
-            audio.sample_rate,
+            std::mem::take(&mut audio_mut.samples),
+            audio_mut.sample_rate,
             &config.postprocess.audio,
         );
-        audio.samples = result.samples;
+        audio_mut.samples = result.samples;
         (result.steps, result.warnings)
     } else {
         (vec![], vec![])
