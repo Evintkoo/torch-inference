@@ -113,9 +113,18 @@ impl OrtYoloDetector {
         let orig_h = img.height() as f32;
         let size = MODEL_INPUT_SIZE;
 
-        let resized = img.resize_exact(size, size, image::imageops::FilterType::Lanczos3);
-        let rgb = resized.to_rgb8();
-        let input_data = Self::to_chw_f32_norm(&rgb);
+        #[cfg(feature = "simd-image")]
+        let input_data = preprocess_simd_chw_impl(img, size)
+            .unwrap_or_else(|_| {
+                let resized = img.resize_exact(size, size, image::imageops::FilterType::Lanczos3);
+                Self::to_chw_f32_norm(&resized.to_rgb8())
+            });
+
+        #[cfg(not(feature = "simd-image"))]
+        let input_data = {
+            let resized = img.resize_exact(size, size, image::imageops::FilterType::Lanczos3);
+            Self::to_chw_f32_norm(&resized.to_rgb8())
+        };
         let preprocessing_ms = t_pre.elapsed().as_secs_f64() * 1000.0;
 
         // ── Inference ─────────────────────────────────────────────────────────
@@ -274,5 +283,77 @@ impl OrtYoloDetector {
         let area_a = (a.x2 - a.x1) * (a.y2 - a.y1);
         let area_b = (b.x2 - b.x1) * (b.y2 - b.y1);
         inter / (area_a + area_b - inter)
+    }
+}
+
+/// Resize + CHW-normalize using fast_image_resize + bytemuck SIMD.
+/// Only compiled when the `simd-image` feature is enabled.
+#[cfg(feature = "simd-image")]
+fn preprocess_simd_chw_impl(img: &DynamicImage, size: u32) -> anyhow::Result<Vec<f32>> {
+    use crate::core::image_pipeline::resize_hwc;
+
+    let rgb8 = img.to_rgb8();
+    let (src_w, src_h) = rgb8.dimensions();
+    let src_raw = rgb8.into_raw(); // HWC u8
+
+    let (hwc_resized, _, _) = resize_hwc(&src_raw, src_w, src_h, size, size)?;
+    Ok(to_chw_f32_simd_yolo(&hwc_resized, size as usize, size as usize))
+}
+
+/// HWC u8 → CHW f32 ÷255.  Uses bytemuck-aligned wide::f32x8 SIMD for the
+/// division step; scatter step remains scalar (non-contiguous access pattern).
+#[cfg(feature = "simd-image")]
+fn to_chw_f32_simd_yolo(hwc: &[u8], height: usize, width: usize) -> Vec<f32> {
+    use crate::core::image_pipeline::normalize_channel_simd;
+
+    let npix = height * width;
+    let mut chw = vec![0f32; 3 * npix];
+
+    // Step 1: scatter HWC → CHW layout, cast u8 → f32
+    for (i, chunk) in hwc.chunks_exact(3).enumerate() {
+        chw[i]              = chunk[0] as f32;
+        chw[npix + i]       = chunk[1] as f32;
+        chw[2 * npix + i]   = chunk[2] as f32;
+    }
+
+    // Step 2: ÷255 via SIMD on each contiguous channel slice.
+    // mean=0.0, std=255.0 → (x - 0) / 255 = x / 255
+    for c in 0..3 {
+        normalize_channel_simd(&mut chw[c * npix..(c + 1) * npix], 0.0, 255.0);
+    }
+
+    chw
+}
+
+#[cfg(feature = "simd-image")]
+impl OrtYoloDetector {
+    pub(crate) fn preprocess_simd_chw(img: &DynamicImage, size: u32) -> anyhow::Result<Vec<f32>> {
+        preprocess_simd_chw_impl(img, size)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use image::DynamicImage;
+
+    #[test]
+    fn simd_and_scalar_preprocess_agree_within_tolerance() {
+        // 4×4 solid-red image resized to 8×8 (small enough for a unit test).
+        let img = DynamicImage::ImageRgb8(
+            image::ImageBuffer::from_pixel(4, 4, image::Rgb([200u8, 100, 50])),
+        );
+        let scalar = OrtYoloDetector::to_chw_f32_norm(&img.resize_exact(8, 8, image::imageops::FilterType::Lanczos3).to_rgb8());
+        #[cfg(feature = "simd-image")]
+        {
+            let simd = OrtYoloDetector::preprocess_simd_chw(&img, 8).unwrap();
+            assert_eq!(scalar.len(), simd.len(), "CHW length must match");
+            for (s, v) in scalar.iter().zip(simd.iter()) {
+                assert!(
+                    (s - v).abs() < 0.02,
+                    "scalar={s:.4} simd={v:.4} differ by more than 2%"
+                );
+            }
+        }
     }
 }

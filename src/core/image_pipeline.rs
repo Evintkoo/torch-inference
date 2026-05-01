@@ -186,7 +186,7 @@ fn decode_generic(data: &[u8]) -> Result<(Vec<u8>, u32, u32)> {
 /// Uses `fast_image_resize` with CatmullRom filtering — SIMD-accelerated
 /// (SSE4.1 / AVX2 / NEON), ~4× faster than image-rs Lanczos3 for typical
 /// ML model input sizes with visually equivalent quality.
-fn resize_hwc(
+pub(crate) fn resize_hwc(
     src: &[u8],
     src_w: u32,
     src_h: u32,
@@ -274,7 +274,7 @@ fn hwc_u8_to_nchw_f32(
 }
 
 /// Normalise a contiguous f32 slice in-place using `wide::f32x8` (8-wide SIMD).
-fn normalize_channel_simd(channel: &mut [f32], mean: f32, std: f32) {
+pub(crate) fn normalize_channel_simd(channel: &mut [f32], mean: f32, std: f32) {
     use wide::f32x8;
     let mean_v = f32x8::splat(mean);
     let std_v = f32x8::splat(std);
