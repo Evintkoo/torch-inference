@@ -359,12 +359,14 @@ async fn async_main() -> std::io::Result<()> {
             interval.tick().await; // consume the immediate first tick
             loop {
                 interval.tick().await;
-                tokio::task::spawn_blocking({
+                if let Err(e) = tokio::task::spawn_blocking({
                     let rl = rl.clone();
                     move || rl.cleanup_old_entries()
                 })
                 .await
-                .ok();
+                {
+                    tracing::error!(error = %e, "rate-limit cleanup task panicked");
+                }
             }
         });
     }
