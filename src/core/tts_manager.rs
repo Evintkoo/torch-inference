@@ -1005,9 +1005,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_synthesize_cache_grows_up_to_capacity() {
+        // Use capacity 128 (shard_cap = 8) so all 4 entries fit regardless of
+        // which shards they hash to. A capacity of 4 (shard_cap = 1) would evict
+        // any two entries that collide on the same shard.
         let cfg = TTSManagerConfig {
             default_engine: "mock".to_string(),
-            synthesis_cache_capacity: 4,
+            synthesis_cache_capacity: 128,
             ..TTSManagerConfig::default()
         };
         let manager = TTSManager::new(cfg);
