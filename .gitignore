@@ -5,6 +5,9 @@
 /target/
 **/*.rs.bk
 *.pdb
+/doc/
+/rust_out
+/stdin
 
 # Cargo
 # NOTE: Cargo.lock IS committed for this binary crate (reproducible builds).
