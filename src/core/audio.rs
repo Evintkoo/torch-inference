@@ -467,6 +467,8 @@ impl AudioProcessor {
         // Reset the resampler's internal delay line so it starts clean next use,
         // then return it to the pool for reuse.
         resampler.reset();
+        // On error paths above, the resampler is dropped (not released); the pool
+        // self-heals on the next successful construction.
         resampler_pool().release(audio.sample_rate, target_sample_rate, channels, resampler);
 
         Ok(result)
@@ -535,6 +537,7 @@ pub struct ResamplerPool {
 
 impl ResamplerPool {
     pub fn new(max_per_key: usize) -> Self {
+        debug_assert!(max_per_key > 0, "ResamplerPool: max_per_key must be at least 1");
         Self {
             inner: parking_lot::Mutex::new(HashMap::new()),
             max_per_key,

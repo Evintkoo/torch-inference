@@ -247,6 +247,8 @@ fn bench_resampler_pool(c: &mut Criterion) {
     });
 
     group.bench_function("cold_construct", |b| {
+        // Measures FftFixedInOut construction cost in isolation — the overhead
+        // that pooling eliminates. Not a full-throughput comparison to `pooled`.
         b.iter(|| {
             use rubato::{FftFixedInOut, Resampler};
             let mut r = FftFixedInOut::<f32>::new(16000, 24000, 1024, 1).unwrap();
