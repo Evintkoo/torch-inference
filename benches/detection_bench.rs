@@ -262,8 +262,6 @@ fn bench_full_preprocess_pipeline(c: &mut Criterion) {
 }
 
 fn preprocess_comparison(c: &mut Criterion) {
-    use std::time::Duration;
-
     // Build a synthetic 1280×720 PNG image for the bench input.
     let raw_rgb: Vec<u8> = synthetic_rgb(1280, 720);
     let img = image::RgbImage::from_raw(1280, 720, raw_rgb).unwrap();
@@ -276,7 +274,7 @@ fn preprocess_comparison(c: &mut Criterion) {
 
     let mut group = c.benchmark_group("yolo_preprocess_comparison");
     group.measurement_time(Duration::from_secs(10));
-    group.sample_size(30);
+    group.sample_size(50);
 
     group.bench_function("scalar_lanczos3", |b| {
         b.iter(|| {
@@ -293,6 +291,19 @@ fn preprocess_comparison(c: &mut Criterion) {
                 data[2 * h * w + y * w + x]  = px[2] as f32 / 255.0;
             }
             black_box(data)
+        })
+    });
+
+    #[cfg(feature = "simd-image")]
+    group.bench_function("simd_catmullrom", |b| {
+        b.iter(|| {
+            let decoded = image::load_from_memory(black_box(&png_bytes)).unwrap();
+            black_box(
+                torch_inference::core::ort_yolo::OrtYoloDetector::preprocess_simd_chw(
+                    &decoded, 640,
+                )
+                .unwrap(),
+            )
         })
     });
 

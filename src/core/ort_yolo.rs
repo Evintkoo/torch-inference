@@ -115,7 +115,8 @@ impl OrtYoloDetector {
 
         #[cfg(feature = "simd-image")]
         let input_data = preprocess_simd_chw_impl(img, size)
-            .unwrap_or_else(|_| {
+            .unwrap_or_else(|e| {
+                tracing::warn!(error = %e, "SIMD preprocessing failed, falling back to scalar Lanczos3");
                 let resized = img.resize_exact(size, size, image::imageops::FilterType::Lanczos3);
                 Self::to_chw_f32_norm(&resized.to_rgb8())
             });
@@ -284,6 +285,11 @@ impl OrtYoloDetector {
         let area_b = (b.x2 - b.x1) * (b.y2 - b.y1);
         inter / (area_a + area_b - inter)
     }
+
+    #[cfg(feature = "simd-image")]
+    pub fn preprocess_simd_chw(img: &DynamicImage, size: u32) -> anyhow::Result<Vec<f32>> {
+        preprocess_simd_chw_impl(img, size)
+    }
 }
 
 /// Resize + CHW-normalize using fast_image_resize + bytemuck SIMD.
@@ -325,13 +331,6 @@ fn to_chw_f32_simd_yolo(hwc: &[u8], height: usize, width: usize) -> Vec<f32> {
     chw
 }
 
-#[cfg(feature = "simd-image")]
-impl OrtYoloDetector {
-    pub(crate) fn preprocess_simd_chw(img: &DynamicImage, size: u32) -> anyhow::Result<Vec<f32>> {
-        preprocess_simd_chw_impl(img, size)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -339,13 +338,15 @@ mod tests {
 
     #[test]
     fn simd_and_scalar_preprocess_agree_within_tolerance() {
-        // 4×4 solid-red image resized to 8×8 (small enough for a unit test).
-        let img = DynamicImage::ImageRgb8(
-            image::ImageBuffer::from_pixel(4, 4, image::Rgb([200u8, 100, 50])),
-        );
-        let scalar = OrtYoloDetector::to_chw_f32_norm(&img.resize_exact(8, 8, image::imageops::FilterType::Lanczos3).to_rgb8());
         #[cfg(feature = "simd-image")]
         {
+            // 4×4 solid-red image resized to 8×8 (small enough for a unit test).
+            let img = DynamicImage::ImageRgb8(
+                image::ImageBuffer::from_pixel(4, 4, image::Rgb([200u8, 100, 50])),
+            );
+            let scalar = OrtYoloDetector::to_chw_f32_norm(
+                &img.resize_exact(8, 8, image::imageops::FilterType::Lanczos3).to_rgb8(),
+            );
             let simd = OrtYoloDetector::preprocess_simd_chw(&img, 8).unwrap();
             assert_eq!(scalar.len(), simd.len(), "CHW length must match");
             for (s, v) in scalar.iter().zip(simd.iter()) {
