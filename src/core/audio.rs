@@ -366,11 +366,11 @@ impl AudioProcessor {
     /// previous linear-interpolation fallback.  It operates on per-channel
     /// slices so multi-channel audio is handled correctly.
     pub fn resample(&self, audio: &AudioData, target_sample_rate: u32) -> Result<AudioData> {
+        use rubato::{FftFixedInOut, Resampler};
+
         if audio.sample_rate == target_sample_rate {
             return Ok(audio.clone());
         }
-
-        use rubato::{FftFixedInOut, Resampler};
 
         // Reject malformed audio metadata before doing any work. The
         // de-interleave below assumes `samples.len()` is a multiple of
@@ -389,9 +389,14 @@ impl AudioProcessor {
         let out_rate = target_sample_rate as usize;
 
         // Process in chunks of 1024 input frames.
-        let chunk_size = 1024usize;
-        let mut resampler = FftFixedInOut::<f32>::new(in_rate, out_rate, chunk_size, channels)
-            .context("Failed to create FFT resampler")?;
+        const CHUNK_SIZE: usize = 1024;
+        let mut resampler = resampler_pool()
+            .acquire(audio.sample_rate, target_sample_rate, channels)
+            .map(Ok)
+            .unwrap_or_else(|| {
+                FftFixedInOut::<f32>::new(in_rate, out_rate, CHUNK_SIZE, channels)
+                    .context("Failed to create FFT resampler")
+            })?;
 
         // De-interleave: rubato expects [channel][frame] layout.
         let total_frames = audio.samples.len() / channels;
@@ -405,16 +410,16 @@ impl AudioProcessor {
 
         // Pre-allocate output: estimate output frames from rate ratio.
         let expected_out_frames =
-            (total_frames as f64 * out_rate as f64 / in_rate as f64).ceil() as usize + chunk_size;
+            (total_frames as f64 * out_rate as f64 / in_rate as f64).ceil() as usize + CHUNK_SIZE;
         let mut out_channels: Vec<Vec<f32>> = (0..channels)
             .map(|_| Vec::with_capacity(expected_out_frames))
             .collect();
         let mut pos = 0usize;
 
-        while pos + chunk_size <= total_frames {
+        while pos + CHUNK_SIZE <= total_frames {
             let in_chunk: Vec<&[f32]> = channel_bufs
                 .iter()
-                .map(|ch| &ch[pos..pos + chunk_size])
+                .map(|ch| &ch[pos..pos + CHUNK_SIZE])
                 .collect();
             let out = resampler
                 .process(&in_chunk, None)
@@ -422,7 +427,7 @@ impl AudioProcessor {
             for (c, ch_out) in out.iter().enumerate() {
                 out_channels[c].extend_from_slice(ch_out);
             }
-            pos += chunk_size;
+            pos += CHUNK_SIZE;
         }
 
         // Flush remaining samples (zero-padded by rubato internally).
@@ -453,11 +458,18 @@ impl AudioProcessor {
             }
         }
 
-        Ok(AudioData {
+        let result = AudioData {
             samples: resampled,
             sample_rate: target_sample_rate,
             channels: audio.channels,
-        })
+        };
+
+        // Reset the resampler's internal delay line so it starts clean next use,
+        // then return it to the pool for reuse.
+        resampler.reset();
+        resampler_pool().release(audio.sample_rate, target_sample_rate, channels, resampler);
+
+        Ok(result)
     }
 
     /// Save audio as WAV (16-bit PCM for maximum compatibility).
@@ -499,6 +511,66 @@ impl Default for AudioProcessor {
     fn default() -> Self {
         Self::new()
     }
+}
+
+// ---------------------------------------------------------------------------
+// ResamplerPool — amortises rubato::FftFixedInOut construction across calls
+// ---------------------------------------------------------------------------
+
+use std::collections::HashMap;
+use std::sync::OnceLock;
+
+/// Pool of `FftFixedInOut<f32>` resamplers keyed by `(in_rate, out_rate, channels)`.
+///
+/// Building a new `FftFixedInOut` takes 5–15 ms because it runs an FFT over the
+/// sinc filter.  The pool avoids that cost for repeated calls with the same rate
+/// pair (the typical STT hot-path).
+///
+/// Resamplers carry internal state (delay line).  Before returning one to the
+/// pool `release` must be called *after* calling `resampler.reset()`.
+pub struct ResamplerPool {
+    inner: parking_lot::Mutex<HashMap<(u32, u32, usize), Vec<rubato::FftFixedInOut<f32>>>>,
+    max_per_key: usize,
+}
+
+impl ResamplerPool {
+    pub fn new(max_per_key: usize) -> Self {
+        Self {
+            inner: parking_lot::Mutex::new(HashMap::new()),
+            max_per_key,
+        }
+    }
+
+    fn acquire(
+        &self,
+        in_rate: u32,
+        out_rate: u32,
+        channels: usize,
+    ) -> Option<rubato::FftFixedInOut<f32>> {
+        let mut map = self.inner.lock();
+        map.get_mut(&(in_rate, out_rate, channels))
+            .and_then(|v| v.pop())
+    }
+
+    fn release(
+        &self,
+        in_rate: u32,
+        out_rate: u32,
+        channels: usize,
+        resampler: rubato::FftFixedInOut<f32>,
+    ) {
+        let mut map = self.inner.lock();
+        let entry = map.entry((in_rate, out_rate, channels)).or_default();
+        if entry.len() < self.max_per_key {
+            entry.push(resampler);
+        }
+    }
+}
+
+static RESAMPLER_POOL: OnceLock<ResamplerPool> = OnceLock::new();
+
+fn resampler_pool() -> &'static ResamplerPool {
+    RESAMPLER_POOL.get_or_init(|| ResamplerPool::new(8))
 }
 
 #[cfg(test)]
@@ -1349,5 +1421,24 @@ mod tests {
         let result = processor.load_audio(&flac);
         // Either Ok (empty audio) or Err (no frames) — both are acceptable
         let _ = result;
+    }
+
+    // ── ResamplerPool regression guard ────────────────────────────────────
+    #[test]
+    fn resampler_pool_returns_same_capacity_on_second_call() {
+        // Use 16000→24000 (3:2 ratio), which works correctly with chunk_size=1024.
+        let audio = AudioData {
+            samples: vec![0.0f32; 16000],
+            sample_rate: 16000,
+            channels: 1,
+        };
+        let processor = AudioProcessor::new();
+        let r1 = processor.resample(&audio, 24000).unwrap();
+        let r2 = processor.resample(&audio, 24000).unwrap();
+        assert_eq!(
+            r1.samples.len(),
+            r2.samples.len(),
+            "pool must return correct result on second call"
+        );
     }
 }
