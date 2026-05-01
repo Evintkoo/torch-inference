@@ -333,13 +333,12 @@ fn to_chw_f32_simd_yolo(hwc: &[u8], height: usize, width: usize) -> Vec<f32> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use image::DynamicImage;
-
     #[test]
     fn simd_and_scalar_preprocess_agree_within_tolerance() {
         #[cfg(feature = "simd-image")]
         {
+            use super::*;
+            use image::DynamicImage;
             // 4×4 solid-red image resized to 8×8 (small enough for a unit test).
             let img = DynamicImage::ImageRgb8(
                 image::ImageBuffer::from_pixel(4, 4, image::Rgb([200u8, 100, 50])),
