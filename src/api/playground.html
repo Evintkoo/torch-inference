@@ -6251,6 +6251,7 @@ async function sendChat() {
     const reader  = res.body.getReader();
     const decoder = new TextDecoder();
     let buf = '';
+    readLoop:
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -6260,7 +6261,7 @@ async function sendChat() {
       for (const line of lines) {
         if (!line.startsWith('data:')) continue;
         const data = line.slice(5).trim();
-        if (data === '[DONE]') break;
+        if (data === '[DONE]') break readLoop;
         try {
           const chunk = JSON.parse(data);
           const delta = chunk.choices?.[0]?.delta?.content;
