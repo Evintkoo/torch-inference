@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { apiGet, apiPost, ApiError } from "./api-client";
+import { apiGet, apiPost, apiPostStream, ApiError } from "./api-client";
 
 function mockFetchOnce(status: number, body: unknown) {
   vi.stubGlobal(
@@ -65,5 +65,46 @@ describe("apiPost", () => {
     expect(call[1].method).toBe("POST");
     expect(call[1].body).toBe(JSON.stringify({ x: 1 }));
     expect((call[1].headers as Record<string, string>)["Content-Type"]).toBe("application/json");
+  });
+});
+
+describe("apiPostStream", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    localStorage.clear();
+  });
+
+  it("returns the raw Response instead of parsing JSON", async () => {
+    const body = { fake: "readable-stream" };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: true, status: 200, body }),
+    );
+    const res = await apiPostStream("/tts/stream", { text: "hi" });
+    expect(res.body).toBe(body);
+    const call = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(call[1].method).toBe("POST");
+    expect(call[1].body).toBe(JSON.stringify({ text: "hi" }));
+    expect((call[1].headers as Record<string, string>)["Content-Type"]).toBe("application/json");
+  });
+
+  it("forwards an AbortSignal to fetch", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, status: 200, body: null }));
+    const controller = new AbortController();
+    await apiPostStream("/tts/stream", { text: "hi" }, controller.signal);
+    const call = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(call[1].signal).toBe(controller.signal);
+  });
+
+  it("throws ApiError with status and body on non-2xx", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: false, status: 500, json: async () => ({ error: "No TTS engine available" }) }),
+    );
+    await expect(apiPostStream("/tts/stream", { text: "hi" })).rejects.toMatchObject({
+      name: "ApiError",
+      status: 500,
+      body: { error: "No TTS engine available" },
+    } satisfies Partial<ApiError>);
   });
 });

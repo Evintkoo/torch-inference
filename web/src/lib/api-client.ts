@@ -51,3 +51,30 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
   }
   return res.json() as Promise<T>;
 }
+
+/**
+ * POST JSON and return the raw Response for the caller to stream (e.g. via
+ * `res.body.getReader()`) instead of parsing it as JSON — for endpoints like
+ * `/tts/stream` that return a binary body over a chunked HTTP response.
+ * Pass `signal` to make the request abortable (playground.html's TTS panel
+ * uses this to implement its "Stop" behavior via AbortController).
+ */
+export async function apiPostStream(
+  path: string,
+  data: unknown,
+  signal?: AbortSignal,
+): Promise<Response> {
+  const res = await fetch(path, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify(data),
+    signal,
+  });
+  if (!res.ok) {
+    throw new ApiError(`POST ${path} failed with ${res.status}`, res.status, await parseErrorBody(res));
+  }
+  return res;
+}
