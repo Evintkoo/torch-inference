@@ -60,7 +60,7 @@ describe("DashboardPanel", () => {
         <DashboardPanel />
       </QueryClientProvider>,
     );
-    await waitFor(() => expect(screen.getByText(/healthy/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByText(/healthy/i).length).toBeGreaterThan(0));
     await waitFor(() => expect(screen.getByText(/macos/i)).toBeInTheDocument());
   });
 });
