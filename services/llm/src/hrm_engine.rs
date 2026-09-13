@@ -112,7 +112,8 @@ impl HrmEngine {
         let mut out: Vec<i64> = Vec::with_capacity(max_tokens as usize);
 
         for _ in 0..max_tokens {
-            let logits = self.prefill(&ids)?;
+            let mut logits = self.prefill(&ids)?;
+            Self::apply_repetition_penalty(&mut logits, &ids, 1.3);
             // argmax
             let (next_id, _) = logits.iter().enumerate()
                 .fold((0usize, f32::NEG_INFINITY), |acc, (i, &v)| {
@@ -131,6 +132,31 @@ impl HrmEngine {
             out.push(next_id);
         }
         Ok(out)
+    }
+
+    /// Penalize logits for tokens already present in `history` in place.
+    ///
+    /// Root cause of the "completion never finishes" bug (reproduced directly:
+    /// fresh server, simple "hello" prompt, streamed output degenerates into
+    /// "Please enter your name.\nPlease enter your email address.\n..." on
+    /// an endless loop that never emits EOS) — this sampler had zero
+    /// anti-repetition mechanism, so a small model's occasional repetitive
+    /// attractor state never breaks out of it and burns the entire
+    /// `max_generated_tokens` budget (512) every single time, which at this
+    /// model's per-token cost (no KV cache, multi-loop HRM architecture) takes
+    /// several minutes — indistinguishable from "hung" to a user watching a
+    /// blinking cursor. Standard repetition penalty (CTRL/HF-style: divide
+    /// positive logits, multiply negative ones) breaks the loop so generation
+    /// reaches a natural EOS in a normal number of tokens instead.
+    fn apply_repetition_penalty(logits: &mut [f32], history: &[i64], penalty: f32) {
+        if penalty <= 1.0 {
+            return;
+        }
+        for &id in history {
+            if let Some(logit) = logits.get_mut(id as usize) {
+                *logit = if *logit > 0.0 { *logit / penalty } else { *logit * penalty };
+            }
+        }
     }
 
     /// Sample one token from `logits` using top-k, top-p, temperature.
