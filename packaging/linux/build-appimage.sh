@@ -13,6 +13,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 cd "${REPO_ROOT}"
 
 APPDIR="$(mktemp -d)/AppDir"
+trap 'rm -rf "$(dirname "${APPDIR}")"' EXIT
 mkdir -p "${APPDIR}/usr/bin" "${APPDIR}/usr/lib" "${APPDIR}/usr/share/applications" "${APPDIR}/usr/share/icons/hicolor/256x256/apps"
 
 cp target/release/torch-inference-server "${APPDIR}/usr/bin/torch-inference-server"

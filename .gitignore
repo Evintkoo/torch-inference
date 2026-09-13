@@ -138,3 +138,12 @@ logs/
 # Service build artifacts
 services/llm/target/
 services/stt/__pycache__/
+
+# Packaging build outputs (macOS/Linux/Windows installers)
+*.dmg
+*.AppImage
+*.msi
+*.deb
+/stage/
+ort.tgz
+ort.zip

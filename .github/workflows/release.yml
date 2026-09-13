@@ -5,6 +5,9 @@ on:
     tags: ["v*.*.*"]
   workflow_dispatch: {}
 
+permissions:
+  contents: read
+
 env:
   CARGO_TERM_COLOR: always
   ORT_VERSION: "1.18.0"
@@ -105,7 +108,7 @@ jobs:
         run: |
           mkdir -p stage
           cp target/release/torch-inference-server.exe stage/
-          cp target/release/onnxruntime.dll stage/
+          cp "$ORT_DYLIB_PATH" stage/onnxruntime.dll
           cp config.toml stage/
           cp scripts/download_models.sh stage/
           cp packaging/windows/download_models.ps1 stage/
@@ -125,6 +128,8 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [version, build-macos, build-linux, build-windows]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/download-artifact@v4
         with:

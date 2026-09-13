@@ -3,7 +3,10 @@
 # Usage: build-dmg.sh <version>
 # Expects to run from the repo root, with:
 #   target/release/torch-inference-server   (built binary)
-#   target/release/libonnxruntime.dylib     (copied by ort's copy-dylibs feature)
+#   ORT_DYLIB_PATH                          (env var pointing at the
+#                                            libonnxruntime.dylib used for
+#                                            the build; same convention as
+#                                            packaging/linux/build-appimage.sh)
 #   config.toml, scripts/download_models.sh, packaging/README-first-run.txt
 
 set -euo pipefail
@@ -24,8 +27,12 @@ cp packaging/macos/Info.plist "${APP_DIR}/Contents/Info.plist"
 cp target/release/torch-inference-server "${APP_DIR}/Contents/MacOS/torch-inference-server"
 chmod +x "${APP_DIR}/Contents/MacOS/torch-inference-server"
 
-if [[ -f target/release/libonnxruntime.dylib ]]; then
-  cp target/release/libonnxruntime.dylib "${APP_DIR}/Contents/Resources/libonnxruntime.dylib"
+if [[ -n "${ORT_DYLIB_PATH:-}" ]]; then
+  if [[ ! -f "${ORT_DYLIB_PATH}" ]]; then
+    echo "ERROR: ORT_DYLIB_PATH is set to '${ORT_DYLIB_PATH}' but that file does not exist" >&2
+    exit 1
+  fi
+  cp "${ORT_DYLIB_PATH}" "${APP_DIR}/Contents/Resources/libonnxruntime.dylib"
 fi
 
 cp config.toml "${APP_DIR}/Contents/Resources/config.toml"
