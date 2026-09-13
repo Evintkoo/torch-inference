@@ -1,9 +1,7 @@
 const { test, expect } = require('@playwright/test');
 const S = require('../utils/selectors');
 
-// Skipped: this legacy Status panel is superseded by the new React
-// Dashboard panel (see dashboard-react.spec.js), retired at cutover.
-test.describe.skip('Health badge and Status panel', () => {
+test.describe('Health badge and Status panel', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     // Status panel is active by default — no nav click needed

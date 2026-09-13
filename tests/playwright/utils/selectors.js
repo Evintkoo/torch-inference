@@ -220,7 +220,7 @@ module.exports = {
   mdlDlError:        '#mdl-dl-error',
   mdlDlTasksList:    '#mdl-dl-tasks-list',
 
-  // ── New React frontend (web/) — served at / and /playground since cutover ──
+  // ── New React frontend (web/) — served at /preview until cutover ──
   reactNavDashboard:    '[data-testid="panel-nav-dashboard"]',
   reactPanelDashboard:  '[data-testid="panel-content-dashboard"]',
   reactMetricsChart:    '[data-testid="metrics-chart"]',

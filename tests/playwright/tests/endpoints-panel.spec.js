@@ -13,18 +13,14 @@
 const { test, expect } = require('@playwright/test');
 const S = require('../utils/selectors');
 
-// Skipped: the Endpoints/API-reference panel isn't in the new React frontend
-// yet — the legacy playground.html this suite targeted was retired at
-// cutover. Re-enable (rebuilt against the React DOM) when that panel is
-// migrated. Skipping the outer block also skips the nested describes below.
-test.describe.skip('Endpoints panel', () => {
+test.describe('Endpoints panel', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
   });
 
   // ── Navigation ────────────────────────────────────────────────────────────
 
-  test.describe.skip('navigation', () => {
+  test.describe('navigation', () => {
     test('Endpoints nav item becomes active', async ({ page }) => {
       await page.locator(S.navEndpoints).click();
       await expect(page.locator(S.navEndpoints)).toHaveClass(/active/);
@@ -44,7 +40,7 @@ test.describe.skip('Endpoints panel', () => {
 
   // ── OpenAPI spec ─────────────────────────────────────────────────────────
 
-  test.describe.skip('OpenAPI spec', () => {
+  test.describe('OpenAPI spec', () => {
     test('GET /openapi.json responds with a valid spec', async ({ request }) => {
       const resp = await request.get('/openapi.json');
       expect(resp.status()).toBe(200);
@@ -66,7 +62,7 @@ test.describe.skip('Endpoints panel', () => {
 
   // ── Scalar reference embed ──────────────────────────────────────────────
 
-  test.describe.skip('Scalar reference embed', () => {
+  test.describe('Scalar reference embed', () => {
     test('panel has a visible title', async ({ page }) => {
       await page.locator(S.navEndpoints).click();
       await expect(page.locator(`${S.panelEndpoints} .panel-title`)).toBeVisible();

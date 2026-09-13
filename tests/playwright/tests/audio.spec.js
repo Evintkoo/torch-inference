@@ -1,10 +1,7 @@
 const { test, expect } = require('@playwright/test');
 const S = require('../utils/selectors');
 
-// Skipped: the Audio/STT panel isn't in the new React frontend yet — the
-// legacy playground.html this suite targeted was retired at cutover.
-// Re-enable (rebuilt against the React DOM) when that panel is migrated.
-test.describe.skip('Audio Transcription', () => {
+test.describe('Audio Transcription', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.locator(S.navAudio).click();

@@ -5,11 +5,7 @@
 const { test, expect } = require('@playwright/test');
 const S = require('../utils/selectors');
 
-// Skipped (all describe blocks in this file): the Models panel isn't in the
-// new React frontend yet — the legacy playground.html this suite targeted
-// was retired at cutover. Re-enable (rebuilt against the React DOM) when
-// that panel is migrated.
-test.describe.skip('Models panel — navigation', () => {
+test.describe('Models panel — navigation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     if ((await page.locator(S.navModels).count()) === 0) { test.skip(true, 'Models panel not present in this build'); return; }
@@ -38,7 +34,7 @@ test.describe.skip('Models panel — navigation', () => {
   });
 });
 
-test.describe.skip('Models panel — sub-tab structure', () => {
+test.describe('Models panel — sub-tab structure', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     if ((await page.locator(S.navModels).count()) === 0) { test.skip(true, 'Models panel not present in this build'); return; }
@@ -72,7 +68,7 @@ test.describe.skip('Models panel — sub-tab structure', () => {
   });
 });
 
-test.describe.skip('Models panel — Catalog sub-tab', () => {
+test.describe('Models panel — Catalog sub-tab', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     if ((await page.locator(S.navModels).count()) === 0) { test.skip(true, 'Models panel not present in this build'); return; }
@@ -120,7 +116,7 @@ test.describe.skip('Models panel — Catalog sub-tab', () => {
   });
 });
 
-test.describe.skip('Models panel — Downloaded sub-tab', () => {
+test.describe('Models panel — Downloaded sub-tab', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     if ((await page.locator(S.navModels).count()) === 0) { test.skip(true, 'Models panel not present in this build'); return; }
@@ -151,7 +147,7 @@ test.describe.skip('Models panel — Downloaded sub-tab', () => {
   });
 });
 
-test.describe.skip('Models panel — Download form sub-tab', () => {
+test.describe('Models panel — Download form sub-tab', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     if ((await page.locator(S.navModels).count()) === 0) { test.skip(true, 'Models panel not present in this build'); return; }
@@ -225,7 +221,7 @@ test.describe.skip('Models panel — Download form sub-tab', () => {
   });
 });
 
-test.describe.skip('Models panel — sub-tab switching', () => {
+test.describe('Models panel — sub-tab switching', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     if ((await page.locator(S.navModels).count()) === 0) { test.skip(true, 'Models panel not present in this build'); return; }
@@ -263,7 +259,7 @@ test.describe.skip('Models panel — sub-tab switching', () => {
   });
 });
 
-test.describe.skip('Downloaded models — delete', () => {
+test.describe('Downloaded models — delete', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.locator('button.nav-item:has-text("Models")').click();
@@ -302,7 +298,7 @@ test.describe.skip('Downloaded models — delete', () => {
   });
 });
 
-test.describe.skip('SOTA models sub-tab', () => {
+test.describe('SOTA models sub-tab', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.locator('button.nav-item:has-text("Models")').click();
