@@ -1141,12 +1141,6 @@ mod tests {
     #[actix_web::test]
     async fn test_configure_routes_registers_root() {
         // configure_routes registers all routes; verify the "/" route works through it.
-        // `web/dist/` is gitignored build output and may be absent in this
-        // environment (e.g. a fresh clone before `npm run build` has run) —
-        // skip in that case, matching the guard in web_assets.rs's own tests.
-        if crate::api::web_assets::WebDist::get("index.html").is_none() {
-            return;
-        }
         let monitor = make_monitor();
         let engine = make_engine();
         let models = make_model_manager();

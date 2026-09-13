@@ -9,7 +9,7 @@ use std::sync::OnceLock;
 #[derive(RustEmbed)]
 #[folder = "web/dist/"]
 #[allow_missing = true]
-pub(crate) struct WebDist;
+struct WebDist;
 
 static ETAGS: OnceLock<HashMap<String, String>> = OnceLock::new();
 
