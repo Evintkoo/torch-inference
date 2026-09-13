@@ -120,6 +120,18 @@ pub async fn ws_audio_handler(
     audio_state: web::Data<AudioState>,
 ) -> Result<HttpResponse, actix_web::Error> {
     let (response, session, msg_stream) = actix_ws::handle(&req, stream)?;
+    // actix-ws defaults to a 64 KiB max frame. Raw f32 PCM at 16kHz mono is
+    // 64KB/second, so any client-side chunk over ~1s of audio would silently
+    // exceed the default and get dropped with no error reaching the client.
+    // Browsers also fragment sufficiently large single sends into WS
+    // continuation frames at the protocol level, which a plain MessageStream
+    // surfaces as raw, unhandled Continuation items rather than a reassembled
+    // message (see the matching note in ws_infer.rs) — aggregate_continuations
+    // reassembles those before the session loop ever sees them.
+    let msg_stream = msg_stream
+        .max_frame_size(8 * 1024 * 1024)
+        .aggregate_continuations()
+        .max_continuation_size(8 * 1024 * 1024);
 
     let tts_state = tts_state.into_inner();
     let audio_state = audio_state.into_inner();
@@ -136,7 +148,7 @@ pub async fn ws_audio_handler(
 
 async fn run_session(
     mut session: actix_ws::Session,
-    mut msg_stream: actix_ws::MessageStream,
+    mut msg_stream: actix_ws::AggregatedMessageStream,
     tts_state: std::sync::Arc<TTSState>,
     audio_state: std::sync::Arc<AudioState>,
 ) {
@@ -228,14 +240,14 @@ async fn run_session(
 
 /// Returns `false` when the session should be closed.
 async fn handle_incoming(
-    msg: actix_ws::Message,
+    msg: actix_ws::AggregatedMessage,
     session: &mut actix_ws::Session,
     state: &mut SessionState,
     tts_state: &TTSState,
     audio_state: &AudioState,
 ) -> bool {
     match msg {
-        actix_ws::Message::Text(txt) => {
+        actix_ws::AggregatedMessage::Text(txt) => {
             match serde_json::from_str::<ClientMsg>(&txt) {
                 Ok(ClientMsg::Tts { text, voice, speed }) => {
                     start_tts(session, state, tts_state, text, voice, speed).await;
@@ -266,7 +278,7 @@ async fn handle_incoming(
                 }
             }
         }
-        actix_ws::Message::Binary(bin) => {
+        actix_ws::AggregatedMessage::Binary(bin) => {
             // Cap STT buffers at ~30 minutes of 16 kHz mono samples (28.8 M f32 = 115 MiB).
             // A malicious or buggy client could otherwise stream binary frames forever.
             const MAX_STT_SAMPLES: usize = 30 * 60 * 16_000;
@@ -290,12 +302,12 @@ async fn handle_incoming(
             }
             // Binary frames while in TTS state are silently ignored.
         }
-        actix_ws::Message::Ping(data) => {
+        actix_ws::AggregatedMessage::Ping(data) => {
             if session.pong(&data).await.is_err() {
                 return false;
             }
         }
-        actix_ws::Message::Close(_) => return false,
+        actix_ws::AggregatedMessage::Close(_) => return false,
         _ => {}
     }
     true

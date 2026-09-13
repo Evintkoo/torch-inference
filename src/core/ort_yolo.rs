@@ -156,8 +156,18 @@ impl OrtYoloDetector {
                 }
             }
 
-            // sigmoid of raw score
-            let confidence = 1.0 / (1.0 + (-best_score).exp());
+            // This export's classification head already applies sigmoid inside the
+            // ONNX graph (standard for ultralytics' official YOLOv8 export), so
+            // `best_score` is already a 0..1 probability. Applying sigmoid again
+            // here used to squash every score toward 0.5 — e.g. a genuine 0.89
+            // confidence became 0.71, and a background anchor's ~0 became ~0.5 —
+            // so almost every anchor passed any reasonable conf_threshold and NMS
+            // was left to filter thousands of near-threshold boxes on its own.
+            // Verified directly against the raw model output on a real photo
+            // (ultralytics/bus.jpg): best_score peaks at ~0.89 for the correct
+            // person/bus classes and sits near ~0.005 for background anchors —
+            // already a well-separated probability, not a logit.
+            let confidence = best_score.clamp(0.0, 1.0);
             if confidence < conf_threshold {
                 continue;
             }

@@ -146,12 +146,32 @@ impl Default for ClassifyCfg {
 // ── Handlers ─────────────────────────────────────────────────────────────────
 
 /// `GET /ws/detect` — YOLO detection WebSocket.
+// actix-ws defaults to a 64 KiB max WebSocket frame — a single JPEG frame from
+// a live camera easily exceeds that at higher resolutions/quality, and an
+// oversized frame is silently dropped (ProtocolError::Overflow falls into the
+// catch-all match arm below with no error sent to the client, no log, and the
+// stream just goes quiet). 8 MiB comfortably covers a raw JPEG frame at any
+// realistic capture resolution.
+const WS_MAX_FRAME_SIZE: usize = 8 * 1024 * 1024;
+
 pub async fn ws_detect_handler(
     req: HttpRequest,
     stream: web::Payload,
     state: web::Data<YoloState>,
 ) -> Result<HttpResponse, actix_web::Error> {
     let (response, session, msg_stream) = actix_ws::handle(&req, stream)?;
+    // Chrome (and other browsers) fragment sufficiently large single-message
+    // sends into multiple WebSocket continuation frames at the protocol level
+    // — a plain `MessageStream` surfaces those as raw `Message::Continuation`
+    // items rather than a reassembled `Message::Binary`, which the session
+    // loop below doesn't handle, so a fragmented frame was silently ignored
+    // forever (no error, no reply, the stream just goes quiet). Aggregating
+    // reassembles continuations into a single Binary/Text message before the
+    // loop ever sees it.
+    let msg_stream = msg_stream
+        .max_frame_size(WS_MAX_FRAME_SIZE)
+        .aggregate_continuations()
+        .max_continuation_size(WS_MAX_FRAME_SIZE);
     let state = state.into_inner();
     actix_web::rt::spawn(run_detect_session(session, msg_stream, state));
     Ok(response)
@@ -164,6 +184,11 @@ pub async fn ws_classify_handler(
     state: web::Data<ClassifyState>,
 ) -> Result<HttpResponse, actix_web::Error> {
     let (response, session, msg_stream) = actix_ws::handle(&req, stream)?;
+    // See the matching comment in ws_detect_handler above.
+    let msg_stream = msg_stream
+        .max_frame_size(WS_MAX_FRAME_SIZE)
+        .aggregate_continuations()
+        .max_continuation_size(WS_MAX_FRAME_SIZE);
     let state = state.into_inner();
     actix_web::rt::spawn(run_classify_session(session, msg_stream, state));
     Ok(response)
@@ -173,7 +198,7 @@ pub async fn ws_classify_handler(
 
 async fn run_detect_session(
     mut session: actix_ws::Session,
-    mut msg_stream: actix_ws::MessageStream,
+    mut msg_stream: actix_ws::AggregatedMessageStream,
     _state: std::sync::Arc<YoloState>,
 ) {
     let mut cfg = DetectCfg::default();
@@ -200,7 +225,7 @@ async fn run_detect_session(
             }
             msg = msg_stream.next() => {
                 match msg {
-                    Some(Ok(actix_ws::Message::Text(txt))) => {
+                    Some(Ok(actix_ws::AggregatedMessage::Text(txt))) => {
                         if let Ok(ClientMsg::Config { version, size, conf, iou, .. }) =
                             serde_json::from_str::<ClientMsg>(&txt)
                         {
@@ -210,7 +235,7 @@ async fn run_detect_session(
                             cfg.iou  = iou;
                         }
                     }
-                    Some(Ok(actix_ws::Message::Binary(data))) => {
+                    Some(Ok(actix_ws::AggregatedMessage::Binary(data))) => {
                         frame_id += 1;
                         let t = Instant::now();
                         let result = process_detect_frame(
@@ -226,10 +251,10 @@ async fn run_detect_session(
                         };
                         if session.text(msg.to_json()).await.is_err() { break; }
                     }
-                    Some(Ok(actix_ws::Message::Ping(d))) => {
+                    Some(Ok(actix_ws::AggregatedMessage::Ping(d))) => {
                         if session.pong(&d).await.is_err() { break; }
                     }
-                    Some(Ok(actix_ws::Message::Close(_))) | None => break,
+                    Some(Ok(actix_ws::AggregatedMessage::Close(_))) | None => break,
                     _ => {}
                 }
             }
@@ -332,7 +357,7 @@ async fn process_detect_frame(
 
 async fn run_classify_session(
     mut session: actix_ws::Session,
-    mut msg_stream: actix_ws::MessageStream,
+    mut msg_stream: actix_ws::AggregatedMessageStream,
     state: std::sync::Arc<ClassifyState>,
 ) {
     let mut cfg = ClassifyCfg::default();
@@ -352,7 +377,7 @@ async fn run_classify_session(
             }
             msg = msg_stream.next() => {
                 match msg {
-                    Some(Ok(actix_ws::Message::Text(txt))) => {
+                    Some(Ok(actix_ws::AggregatedMessage::Text(txt))) => {
                         if let Ok(ClientMsg::Config { top_k, width, height, .. }) =
                             serde_json::from_str::<ClientMsg>(&txt)
                         {
@@ -361,7 +386,7 @@ async fn run_classify_session(
                             cfg.height = height.clamp(1, 4096);
                         }
                     }
-                    Some(Ok(actix_ws::Message::Binary(data))) => {
+                    Some(Ok(actix_ws::AggregatedMessage::Binary(data))) => {
                         frame_id += 1;
                         let t = Instant::now();
                         let result = process_classify_frame(&data, &cfg, &state).await;
@@ -372,10 +397,10 @@ async fn run_classify_session(
                         };
                         if session.text(msg.to_json()).await.is_err() { break; }
                     }
-                    Some(Ok(actix_ws::Message::Ping(d))) => {
+                    Some(Ok(actix_ws::AggregatedMessage::Ping(d))) => {
                         if session.pong(&d).await.is_err() { break; }
                     }
-                    Some(Ok(actix_ws::Message::Close(_))) | None => break,
+                    Some(Ok(actix_ws::AggregatedMessage::Close(_))) | None => break,
                     _ => {}
                 }
             }
