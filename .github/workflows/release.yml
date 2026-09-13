@@ -1,0 +1,136 @@
+name: release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch: {}
+
+env:
+  CARGO_TERM_COLOR: always
+  ORT_VERSION: "1.18.0"
+
+jobs:
+  version:
+    name: resolve version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - id: v
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=0.0.0-dispatch" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-macos:
+    name: build macOS .dmg
+    needs: version
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: install onnxruntime
+        run: |
+          curl -fsSL "https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/onnxruntime-osx-arm64-${ORT_VERSION}.tgz" -o ort.tgz
+          sudo mkdir -p /usr/local/lib
+          sudo tar -xzf ort.tgz -C /usr/local/lib --strip-components=1
+          echo "ORT_DYLIB_PATH=/usr/local/lib/lib/libonnxruntime.dylib" >> "$GITHUB_ENV"
+      - run: cargo build --release --features production
+      - name: package .dmg
+        run: |
+          chmod +x packaging/macos/build-dmg.sh
+          ./packaging/macos/build-dmg.sh "${{ needs.version.outputs.version }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: torch-inference-server-*-macos-arm64.dmg
+
+  build-linux:
+    name: build Linux .deb + .AppImage
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: install onnxruntime
+        run: |
+          curl -fsSL "https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/onnxruntime-linux-x64-${ORT_VERSION}.tgz" -o ort.tgz
+          sudo tar -xzf ort.tgz -C /usr/local/lib --strip-components=1
+          sudo ldconfig
+          echo "ORT_DYLIB_PATH=/usr/local/lib/lib/libonnxruntime.so" >> "$GITHUB_ENV"
+      - run: cargo build --release --features production
+      - name: build .deb
+        run: |
+          cargo install cargo-deb --locked
+          cargo deb --no-build --no-strip
+          mv target/debian/*.deb "torch-inference-server-${{ needs.version.outputs.version }}-linux-x86_64.deb"
+      - name: build .AppImage
+        run: |
+          curl -fsSL -o /usr/local/bin/linuxdeploy https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          chmod +x /usr/local/bin/linuxdeploy
+          curl -fsSL -o /usr/local/bin/linuxdeploy-plugin-appimage https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/download/continuous/linuxdeploy-plugin-appimage-x86_64.AppImage
+          chmod +x /usr/local/bin/linuxdeploy-plugin-appimage
+          chmod +x packaging/linux/build-appimage.sh
+          ./packaging/linux/build-appimage.sh "${{ needs.version.outputs.version }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: |
+            torch-inference-server-*-linux-x86_64.deb
+            torch-inference-server-*-linux-x86_64.AppImage
+
+  build-windows:
+    name: build Windows .msi
+    needs: version
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: install onnxruntime
+        shell: bash
+        run: |
+          curl -fsSL "https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/onnxruntime-win-x64-${ORT_VERSION}.zip" -o ort.zip
+          unzip -q ort.zip
+          mkdir -p "$RUNNER_TEMP/ort"
+          cp "onnxruntime-win-x64-${ORT_VERSION}/lib/onnxruntime.dll" "$RUNNER_TEMP/ort/"
+          echo "ORT_DYLIB_PATH=$RUNNER_TEMP/ort/onnxruntime.dll" >> "$GITHUB_ENV"
+      - run: cargo build --release --features production
+      - name: stage package contents
+        shell: bash
+        run: |
+          mkdir -p stage
+          cp target/release/torch-inference-server.exe stage/
+          cp target/release/onnxruntime.dll stage/
+          cp config.toml stage/
+          cp scripts/download_models.sh stage/
+          cp packaging/windows/download_models.ps1 stage/
+          cp packaging/README-first-run.txt stage/
+      - name: build .msi
+        shell: pwsh
+        run: |
+          dotnet tool install --global wix
+          wix build packaging/windows/main.wxs -d SourceDir=stage -out "torch-inference-server-${{ needs.version.outputs.version }}-windows-x86_64.msi"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-msi
+          path: torch-inference-server-*-windows-x86_64.msi
+
+  publish:
+    name: publish GitHub release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [version, build-macos, build-linux, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
