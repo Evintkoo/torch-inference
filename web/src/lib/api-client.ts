@@ -68,7 +68,7 @@ export async function apiDelete<T>(path: string): Promise<T> {
  * for endpoints that reply with a streaming body, either textual (SSE chat
  * completions) or binary (`/tts/stream`'s chunked WAV). Defaults `accept` to
  * `text/event-stream` (the SSE case, the original/most common caller) — pass
- * `accept: "*/*"` for a binary stream. Pass `signal` to make the request
+ * a wildcard `accept` override for a binary stream. Pass `signal` to make the request
  * abortable (playground.html's TTS panel uses this for its "Stop" button via
  * AbortController). Still throws `ApiError` on a non-2xx status, same as
  * `apiPost`.
