@@ -4478,6 +4478,20 @@ let detWs = null;
 let detFrameTimer = null;
 let detFpsTracker = { count: 0, last: 0 };
 let detLastBoxes = [];
+// Backpressure gate: true while a sent frame has no reply yet. The send loop
+// skips ticks while this is set so at most one frame is ever in flight —
+// without it, a slow server/model turns the fixed-rate capture timer into an
+// unbounded backlog of unacknowledged frames (growing latency, then a
+// runaway stats panel, then an unresponsive tab). detFrameWatchdog is a
+// safety net that clears the gate if a reply is somehow lost, so the loop
+// can never wedge shut permanently.
+let detFrameInFlight = false;
+let detFrameWatchdog = null;
+
+function detClearFrameGate() {
+  detFrameInFlight = false;
+  if (detFrameWatchdog) { clearTimeout(detFrameWatchdog); detFrameWatchdog = null; }
+}
 
 function detWsStatus(connected) {
   const dot = document.getElementById('det-ws-dot');
@@ -4542,14 +4556,16 @@ function detWsConnect() {
   detWs.binaryType = 'arraybuffer';
   detWs.onopen = () => {
     detWsStatus(true);
+    detClearFrameGate();
     detSendConfig();
   };
-  detWs.onclose  = () => { detWsStatus(false); detStopSource(); };
-  detWs.onerror  = () => detWsStatus(false);
+  detWs.onclose  = () => { detWsStatus(false); detClearFrameGate(); detStopSource(); };
+  detWs.onerror  = () => { detWsStatus(false); detClearFrameGate(); };
   detWs.onmessage = (ev) => {
     if (typeof ev.data !== 'string') return;
     let msg; try { msg = JSON.parse(ev.data); } catch { return; }
     if (msg.type === 'detect') {
+      detClearFrameGate();
       document.getElementById('det-stat-frame').textContent = msg.frame;
       document.getElementById('det-stat-ms').textContent    = msg.ms?.toFixed(1);
       document.getElementById('det-stat-count').textContent = msg.count;
@@ -4561,6 +4577,7 @@ function detWsConnect() {
         detFpsTracker.count = 0; detFpsTracker.last = now;
       }
     } else if (msg.type === 'error') {
+      detClearFrameGate();
       document.getElementById('det-stat-ms').textContent = 'err';
     }
   };
@@ -4616,6 +4633,7 @@ async function detOpenVideo(file) {
 
 function detStopSource() {
   clearInterval(detFrameTimer); detFrameTimer = null;
+  detClearFrameGate();
   const vid = document.getElementById('det-video');
   if (vid.srcObject) { vid.srcObject.getTracks().forEach(t => t.stop()); vid.srcObject = null; }
   vid.src = ''; vid.style.display = 'none';
@@ -4637,6 +4655,9 @@ function detStartFrameLoop() {
   const capCtx = cap.getContext('2d');
   detFrameTimer = setInterval(() => {
     if (!detWs || detWs.readyState !== 1) return;
+    // Backpressure: skip this tick while the previous frame is still
+    // in flight so capture/send never outpaces the server's reply rate.
+    if (detFrameInFlight) return;
     const vid = document.getElementById('det-video');
     if (vid.readyState < 2) return;
     cap.width = vid.videoWidth || 640; cap.height = vid.videoHeight || 480;
@@ -4648,7 +4669,15 @@ function detStartFrameLoop() {
       live.width = cap.width; live.height = cap.height;
     }
     detDrawBoxes(live, detLastBoxes);
-    cap.toBlob(blob => { blob && blob.arrayBuffer().then(buf => detWs.readyState === 1 && detWs.send(buf)); }, 'image/jpeg', 0.80);
+    detFrameInFlight = true;
+    detFrameWatchdog = setTimeout(() => { detFrameWatchdog = null; detFrameInFlight = false; }, 4000);
+    cap.toBlob(blob => {
+      if (!blob || !detWs || detWs.readyState !== 1) { detClearFrameGate(); return; }
+      blob.arrayBuffer().then(buf => {
+        if (detWs && detWs.readyState === 1) { detWs.send(buf); }
+        else { detClearFrameGate(); }
+      });
+    }, 'image/jpeg', 0.80);
   }, Math.round(1000 / fps));
 }
 
