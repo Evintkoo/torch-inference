@@ -95,8 +95,9 @@ export async function apiPostStream(
 }
 
 /**
- * multipart/form-data POST (file uploads) — e.g. `/audio/transcribe`. Deliberately omits
- * Content-Type so the browser sets the multipart boundary itself.
+ * multipart/form-data POST (file uploads) — e.g. `/audio/transcribe`, `/detect`. Deliberately
+ * omits a Content-Type header — the browser sets `multipart/form-data; boundary=...` itself from
+ * the FormData body, and setting it manually drops the boundary.
  */
 export async function apiPostForm<T>(path: string, form: FormData): Promise<T> {
   const res = await fetch(path, {
