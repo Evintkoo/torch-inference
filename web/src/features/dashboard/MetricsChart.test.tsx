@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import App from "./App";
+import { MetricsChart } from "./MetricsChart";
 
 class MockEventSource {
   onopen: (() => void) | null = null;
@@ -10,14 +10,12 @@ class MockEventSource {
   close() {}
 }
 
-describe("App", () => {
-  afterEach(() => vi.unstubAllGlobals());
+afterEach(() => vi.unstubAllGlobals());
 
-  it("renders the Dashboard nav tab by default", () => {
-    // Dashboard renders MetricsChart (Task 7), which opens a real EventSource
-    // against /dashboard/stream; stub it so mounting App doesn't throw.
+describe("MetricsChart", () => {
+  it("shows a waiting state before the first SSE sample arrives", () => {
     vi.stubGlobal("EventSource", MockEventSource);
-    render(<App />);
-    expect(screen.getByTestId("panel-nav-dashboard")).toBeInTheDocument();
+    render(<MetricsChart />);
+    expect(screen.getByText(/waiting for metrics/i)).toBeInTheDocument();
   });
 });

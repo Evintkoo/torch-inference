@@ -32,6 +32,14 @@ const sampleInfo: SystemInfo = {
   },
 };
 
+class MockEventSource {
+  onopen: (() => void) | null = null;
+  onmessage: ((event: { data: string }) => void) | null = null;
+  onerror: (() => void) | null = null;
+  constructor(public url: string) {}
+  close() {}
+}
+
 describe("DashboardPanel", () => {
   afterEach(() => vi.unstubAllGlobals());
 
@@ -43,6 +51,9 @@ describe("DashboardPanel", () => {
         return Promise.resolve({ ok: true, status: 200, json: async () => body });
       }),
     );
+    // MetricsChart (Task 7) opens a real EventSource against /dashboard/stream;
+    // stub it so this composition test doesn't throw when MetricsChart mounts.
+    vi.stubGlobal("EventSource", MockEventSource);
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>

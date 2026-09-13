@@ -1,4 +1,5 @@
 import { HealthBadge } from "./HealthBadge";
+import { MetricsChart } from "./MetricsChart";
 import { SystemInfoCard } from "./SystemInfoCard";
 
 export function DashboardPanel() {
@@ -9,6 +10,7 @@ export function DashboardPanel() {
         <HealthBadge />
       </div>
       <SystemInfoCard />
+      <MetricsChart />
     </div>
   );
 }

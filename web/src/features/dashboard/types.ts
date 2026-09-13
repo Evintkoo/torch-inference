@@ -63,3 +63,38 @@ export interface HealthCheck {
   avg_latency_ms?: number;
   error_rate?: number;
 }
+
+export interface DashboardMetrics {
+  uptime_s: number;
+  active_req: number;
+  total_req: number;
+  avg_latency_ms: number;
+  error_rate: number;
+  throughput_per_s: number;
+  cpu_pct: number;
+  mem_used_mb: number;
+  mem_total_mb: number;
+}
+
+export interface DashboardGpu {
+  name: string;
+  util_pct: number | null;
+  temp_c: number | null;
+  vram_free_mb: number;
+  vram_total_mb: number;
+}
+
+export interface DashboardDownload {
+  id: string;
+  model_name: string;
+  status: string;
+  progress: number;
+  downloaded_mb: number;
+  total_mb: number | null;
+}
+
+export interface DashboardEvent {
+  metrics: DashboardMetrics;
+  gpu: DashboardGpu[];
+  downloads: DashboardDownload[];
+}
