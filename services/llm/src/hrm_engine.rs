@@ -231,7 +231,8 @@ impl HrmEngine {
             .ok_or_else(|| anyhow::anyhow!("infer_text called without a tokenizer"))?;
         let mut ids = tokenizer.encode(&prompt, true)?;
         for _ in 0..max_tokens {
-            let logits = self.prefill(&ids)?;
+            let mut logits = self.prefill(&ids)?;
+            Self::apply_repetition_penalty(&mut logits, &ids, 1.3);
             let next = self.sample(&logits, temperature, 40, 0.95);
             let next_i64 = next as i64;
 
