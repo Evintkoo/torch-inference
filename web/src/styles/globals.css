@@ -5,6 +5,8 @@
   --color-foreground: #121212;
   --color-card: #ffffff;
   --color-card-foreground: #121212;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #121212;
   --color-border: #e2e2e2;
   --color-input: #e2e2e2;
   --color-ring: #121212;
@@ -28,6 +30,8 @@
   --color-foreground: #e8e8e8;
   --color-card: #1a1a1a;
   --color-card-foreground: #e8e8e8;
+  --color-popover: #1a1a1a;
+  --color-popover-foreground: #e8e8e8;
   --color-border: #2a2a2a;
   --color-input: #2a2a2a;
   --color-ring: #e8e8e8;
@@ -50,6 +54,8 @@
   --color-foreground: var(--color-foreground);
   --color-card: var(--color-card);
   --color-card-foreground: var(--color-card-foreground);
+  --color-popover: var(--color-popover);
+  --color-popover-foreground: var(--color-popover-foreground);
   --color-border: var(--color-border);
   --color-input: var(--color-input);
   --color-ring: var(--color-ring);
