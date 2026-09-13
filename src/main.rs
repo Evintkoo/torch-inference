@@ -710,6 +710,17 @@ async fn async_main() -> std::io::Result<()> {
         monitor,
         start_time,
     });
+    // Periodically append a CPU/memory sample to the in-memory rolling
+    // history buffer backing `GET /performance/history`. Runs independently
+    // of any request traffic so the "Performance" dashboard has history to
+    // chart even if nobody polled /performance directly.
+    tokio::spawn(async move {
+        let mut ticker = tokio::time::interval(Duration::from_secs(3));
+        loop {
+            ticker.tick().await;
+            crate::api::performance::record_sample();
+        }
+    });
     let classify_state = web::Data::new(crate::api::classify::ClassifyState {
         backend: {
             let model_path = &config.models.classify_model;

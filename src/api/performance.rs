@@ -4,7 +4,9 @@ use crate::monitor::Monitor;
 /// Performance monitoring and profiling
 use actix_web::{web, HttpResponse, Result};
 use serde::{Deserialize, Serialize};
+use std::collections::VecDeque;
 use std::sync::Arc;
+use std::sync::OnceLock;
 use std::time::Instant;
 use sysinfo::System;
 
@@ -73,6 +75,77 @@ pub struct ProfileRequest {
 pub struct PerformanceState {
     pub monitor: Arc<Monitor>,
     pub start_time: Instant,
+}
+
+/// One point-in-time sample kept in the rolling history buffer, shaped for
+/// direct charting on the frontend (see `GET /performance/history`).
+#[derive(Debug, Serialize, Clone)]
+pub struct PerformanceSnapshot {
+    pub timestamp: String,
+    pub cpu_pct: f32,
+    pub mem_pct: f32,
+    pub process_mem_mb: f64,
+}
+
+/// Cap on the number of samples retained in-memory. At the default 3s
+/// sampling interval this covers ~6 minutes of history. Intentionally not
+/// persisted — history resets on restart.
+const HISTORY_CAPACITY: usize = 120;
+
+static HISTORY: OnceLock<parking_lot::Mutex<VecDeque<PerformanceSnapshot>>> = OnceLock::new();
+
+fn history() -> &'static parking_lot::Mutex<VecDeque<PerformanceSnapshot>> {
+    HISTORY.get_or_init(|| parking_lot::Mutex::new(VecDeque::with_capacity(HISTORY_CAPACITY)))
+}
+
+/// Sample current CPU/memory usage and append it to the rolling history
+/// buffer, evicting the oldest sample once `HISTORY_CAPACITY` is reached.
+///
+/// Cheap enough to call on a periodic background tick (piggybacks on the
+/// same TTL-cached `sysinfo::System` snapshot used by `/performance` and
+/// `/system/info`, so it does not force an extra full refresh).
+pub fn record_sample() {
+    let Ok(pid) = sysinfo::get_current_pid() else {
+        return;
+    };
+
+    let (cpu_pct, mem_pct, process_mem_mb) = crate::api::system::with_cached_system(|system| {
+        let total_memory = system.total_memory();
+        let used_memory = system.used_memory();
+        let cpu_count = system.cpus().len().max(1);
+        let cpu_usage =
+            system.cpus().iter().map(|c| c.cpu_usage()).sum::<f32>() / cpu_count as f32;
+        let mem_pct = if total_memory == 0 {
+            0.0
+        } else {
+            (used_memory as f32 / total_memory as f32) * 100.0
+        };
+        let process_mem_mb = system
+            .process(pid)
+            .map(|p| p.memory() as f64 / 1024.0 / 1024.0)
+            .unwrap_or(0.0);
+
+        (cpu_usage, mem_pct, process_mem_mb)
+    });
+
+    let snapshot = PerformanceSnapshot {
+        timestamp: chrono::Utc::now().to_rfc3339(),
+        cpu_pct,
+        mem_pct,
+        process_mem_mb,
+    };
+
+    let mut buf = history().lock();
+    if buf.len() >= HISTORY_CAPACITY {
+        buf.pop_front();
+    }
+    buf.push_back(snapshot);
+}
+
+/// Get the in-memory rolling history of performance samples.
+pub async fn get_performance_history() -> Result<HttpResponse, ApiError> {
+    let items: Vec<PerformanceSnapshot> = history().lock().iter().cloned().collect();
+    Ok(HttpResponse::Ok().json(items))
 }
 
 /// Get comprehensive performance metrics
