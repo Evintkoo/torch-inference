@@ -57,12 +57,15 @@ test.describe('System tab', () => {
     await expect(page.locator(S.sysOptTips)).toContainText('Increase cache size', { timeout: 5000 });
   });
 
-  test('Config sub-tab renders JSON from /system/config', async ({ page }) => {
+  test('Config sub-tab renders config sections from /system/config', async ({ page }) => {
+    // /system/config returns nested sections (server/inference/cache/...) —
+    // the panel renders one card per section with a row per field, not raw JSON.
     await page.route('/system/config', route => route.fulfill({
       status: 200, contentType: 'application/json',
-      body: JSON.stringify({ workers: 8, port: 8000, log_level: 'info' }),
+      body: JSON.stringify({ server: { host: '0.0.0.0', port: 8000, workers: 8, max_connections: 100 } }),
     }));
     await page.locator(S.sysTabConfig).click();
-    await expect(page.locator(S.sysConfigContent)).toContainText('"workers"', { timeout: 5000 });
+    await expect(page.locator(S.sysConfigContent)).toContainText('Workers', { timeout: 5000 });
+    await expect(page.locator(S.sysConfigContent)).toContainText('8', { timeout: 5000 });
   });
 });

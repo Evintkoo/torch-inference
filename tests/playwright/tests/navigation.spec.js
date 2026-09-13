@@ -66,10 +66,12 @@ test.describe('Navigation', () => {
     await expect(page.locator('.nav-item.active')).toHaveCount(1);
   });
 
-  test('Endpoints panel lists endpoint rows', async ({ page }) => {
+  test('Endpoints panel mounts the Scalar API reference', async ({ page }) => {
     await page.locator(S.navEndpoints).click();
-    await expect(
-      page.locator(S.panelEndpoints).locator('.endpoint-row').first()
-    ).toBeVisible();
+    const mount = page.locator('#scalar-api-reference');
+    await expect(mount).toBeVisible();
+    await expect.poll(async () => (await mount.locator('*').count()) > 5, {
+      timeout: 15000,
+    }).toBe(true);
   });
 });
