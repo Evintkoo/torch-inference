@@ -51,3 +51,26 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
   }
   return res.json() as Promise<T>;
 }
+
+/**
+ * POST that returns the raw, unconsumed `Response` instead of parsing JSON —
+ * for endpoints that reply with a streaming body (e.g. SSE chat completions)
+ * where the caller needs `res.body`'s `ReadableStream` rather than a single
+ * parsed payload. Still throws `ApiError` on a non-2xx status, same as
+ * `apiPost`.
+ */
+export async function apiPostStream(path: string, data: unknown): Promise<Response> {
+  const res = await fetch(path, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "text/event-stream",
+      ...authHeaders(),
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    throw new ApiError(`POST ${path} failed with ${res.status}`, res.status, await parseErrorBody(res));
+  }
+  return res;
+}
