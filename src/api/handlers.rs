@@ -350,6 +350,10 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
             "/performance/optimize",
             web::get().to(crate::api::performance::optimize_performance),
         )
+        .route(
+            "/performance/history",
+            web::get().to(crate::api::performance::get_performance_history),
+        )
         // Logging endpoints
         .route(
             "/logs",
