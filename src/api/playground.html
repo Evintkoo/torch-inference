@@ -1386,7 +1386,9 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
             <div>
               <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">
-                Press <strong>Record</strong> to stream microphone audio to the server for real-time transcription.
+                Press <strong>Record</strong> to start listening. Speech is detected automatically — each phrase is
+                streamed and transcribed on its own, and the panel keeps listening for the next one. Press
+                <strong>Stop</strong> to end the session.
               </div>
               <div style="display:flex;gap:8px;align-items:center">
                 <button class="btn btn-primary" id="ws-stt-btn" onclick="wsSttToggle()">
@@ -3593,7 +3595,11 @@ let wsAnalyserTts = null;     // AnalyserNode for TTS waveform
 let wsAnalyserStt = null;     // AnalyserNode for STT waveform
 let wsMicStream = null;       // MediaStream from getUserMedia
 let wsMicProc = null;         // ScriptProcessorNode
-let wsRecording = false;
+let wsRecording = false;      // continuous VAD session armed (mic open: listening or speaking)
+let wsSpeaking = false;       // true while an utterance is open (stt_begin sent, no stt_end yet)
+let wsSilenceStart = null;    // performance.now() when trailing silence began, or null
+let wsStopPending = false;    // Stop clicked mid-utterance; waiting on the final transcript before teardown
+let wsStopTimer = null;       // fallback timer that forces teardown if the transcript never arrives
 
 function wsStatus(connected) {
   wsSetStatus(connected ? 'connected' : 'disconnected');
@@ -3717,10 +3723,12 @@ function wsOnMessage(ev) {
           const mb = document.getElementById('chat-mic-btn');
           if (mb) mb.classList.remove('recording');
         } else {
-          const box = document.getElementById('ws-stt-result');
-          if (box) { box.textContent = msg.text || '(empty)'; box.className = 'response-box'; }
-          const recLbl = document.getElementById('ws-stt-rec-label');
-          if (recLbl) recLbl.textContent = 'transcript received';
+          wsSttAppendTranscript(msg.text);
+          if (wsStopPending) {
+            wsSttTeardown();
+          } else if (wsRecording) {
+            wsVadSetState('listening…', '#F5A623');
+          }
         }
         break;
       case 'error':
@@ -3728,9 +3736,11 @@ function wsOnMessage(ev) {
         // Also surface the error in the STT panel when waiting for a transcript
         {
           const recLabel = document.getElementById('ws-stt-rec-label');
-          if (recLabel && (recLabel.textContent === 'processing…' || wsRecording)) {
-            recLabel.textContent = 'error';
-            if (wsRecording) { wsRecording = false; }
+          const wasActive = wsRecording || wsStopPending ||
+            (recLabel && (recLabel.textContent === 'processing…' || recLabel.textContent === 'transcribing…'));
+          if (wasActive) {
+            wsSttTeardown();
+            if (recLabel) recLabel.textContent = 'error';
             const sttResult = document.getElementById('ws-stt-result');
             if (sttResult) sttResult.textContent = 'STT error: ' + (msg.msg || 'unknown');
           }
@@ -3800,7 +3810,7 @@ function wsTtsStop() {
 }
 
 async function wsSttToggle() {
-  if (wsRecording) {
+  if (wsRecording || wsStopPending) {
     wsSttStop();
     return;
   }
@@ -3831,6 +3841,14 @@ async function wsSttStart() {
   wsMicStream = stream;
 
   const TARGET_RATE = 16000;
+  // Voice-activity detection thresholds (RMS amplitude, roughly 0..1). An
+  // utterance opens once amplitude clears VAD_SPEECH_RMS and closes once
+  // amplitude has stayed below VAD_SILENCE_RMS for VAD_SILENCE_HOLD_MS
+  // continuously — the panel then auto re-arms and listens for the next one.
+  const VAD_SPEECH_RMS      = 0.018;
+  const VAD_SILENCE_RMS     = 0.012;
+  const VAD_SILENCE_HOLD_MS = 250;
+
   // sampleRate hint helps Chrome; actual rate confirmed via ctx.sampleRate after creation
   const ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: TARGET_RATE });
   const deviceRate = ctx.sampleRate;
@@ -3840,10 +3858,33 @@ async function wsSttStart() {
   wsAnalyserStt.fftSize = 512;
   src.connect(wsAnalyserStt);
 
+  wsSpeaking = false;
+  wsSilenceStart = null;
+
   const proc = ctx.createScriptProcessor(4096, 1, 1);
   proc.onaudioprocess = (e) => {
     if (!wsRecording) return;
     const raw = e.inputBuffer.getChannelData(0); // Float32Array at deviceRate
+
+    let sumSq = 0;
+    for (let i = 0; i < raw.length; i++) sumSq += raw[i] * raw[i];
+    const rms = Math.sqrt(sumSq / raw.length);
+    const now = performance.now();
+
+    if (!wsSpeaking) {
+      if (rms < VAD_SPEECH_RMS) {
+        wsVadSetState('listening…', '#F5A623');
+        return; // stay armed; don't open an utterance or stream audio yet
+      }
+      // Speech onset — open a fresh STT utterance on the existing connection.
+      wsSpeaking = true;
+      wsSilenceStart = null;
+      if (wsAudio && wsAudio.readyState === 1) {
+        wsAudio.send(JSON.stringify({ type: 'stt_begin', sample_rate: TARGET_RATE }));
+      }
+      wsVadSetState('speech detected', '#E74C3C');
+    }
+
     let pcm;
     if (deviceRate === TARGET_RATE) {
       pcm = raw.buffer.slice(0);
@@ -3861,35 +3902,102 @@ async function wsSttStart() {
       }
       pcm = out.buffer;
     }
-    wsAudio.send(pcm);
+    if (wsAudio && wsAudio.readyState === 1) wsAudio.send(pcm);
+
+    if (rms < VAD_SILENCE_RMS) {
+      if (wsSilenceStart === null) {
+        wsSilenceStart = now;
+      } else if (now - wsSilenceStart >= VAD_SILENCE_HOLD_MS) {
+        // Sustained silence — finalize this utterance and re-arm for the next one.
+        if (wsAudio && wsAudio.readyState === 1) {
+          wsAudio.send(JSON.stringify({ type: 'stt_end' }));
+        }
+        wsSpeaking = false;
+        wsSilenceStart = null;
+        wsVadSetState('transcribing…', '#2EA043');
+      }
+    } else {
+      wsSilenceStart = null;
+      wsVadSetState('speech detected', '#E74C3C');
+    }
   };
   src.connect(proc);
   proc.connect(ctx.destination);
   wsMicProc = { proc, ctx };
 
-  wsAudio.send(JSON.stringify({ type: 'stt_begin', sample_rate: TARGET_RATE }));
   wsRecording = true;
 
-  const dot   = document.getElementById('ws-stt-rec-dot');
-  const label = document.getElementById('ws-stt-rec-label');
-  dot.style.background = '#E74C3C';
-  label.textContent    = 'recording…';
+  const box = document.getElementById('ws-stt-result');
+  if (box) { box.textContent = 'Listening…'; box.dataset.empty = 'true'; }
+  wsVadSetState('listening…', '#F5A623');
   const sttBtn = document.getElementById('ws-stt-btn');
-  sttBtn.textContent = '';
-  const stopIcon = document.createElement('i');
-  stopIcon.className = 'ri-stop-circle-line';
-  sttBtn.appendChild(stopIcon);
-  sttBtn.appendChild(document.createTextNode(' Stop'));
+  if (sttBtn) {
+    sttBtn.textContent = '';
+    const stopIcon = document.createElement('i');
+    stopIcon.className = 'ri-stop-circle-line';
+    sttBtn.appendChild(stopIcon);
+    sttBtn.appendChild(document.createTextNode(' Stop'));
+  }
 
   wsDrawLoop('ws-stt-canvas', wsAnalyserStt);
 }
 
-function wsSttStop() {
-  if (!wsRecording) return;
-  wsRecording = false;
-  if (wsAudio && wsAudio.readyState === 1) {
-    wsAudio.send(JSON.stringify({ type: 'stt_end' }));
+/* Update the small live VAD state indicator (dot + label) in the STT panel. */
+function wsVadSetState(label, color) {
+  const dot = document.getElementById('ws-stt-rec-dot');
+  const lbl = document.getElementById('ws-stt-rec-label');
+  if (dot) dot.style.background = color;
+  if (lbl) lbl.textContent = label;
+}
+
+/* Append one finalized utterance's transcript as its own line (continuous
+   listening produces multiple transcripts per session). */
+function wsSttAppendTranscript(text) {
+  const box = document.getElementById('ws-stt-result');
+  if (!box) return;
+  if (box.dataset.empty !== 'false') {
+    box.textContent = '';
+    box.dataset.empty = 'false';
   }
+  const line = document.createElement('div');
+  line.textContent = text || '(empty)';
+  line.style.marginBottom = '4px';
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+/* Toggle-off: ends the whole continuous-listening session. If an utterance
+   is mid-flight, finalize it and wait briefly for its transcript before
+   tearing down the mic + socket, so the last phrase isn't lost. */
+function wsSttStop() {
+  if (!wsRecording && !wsStopPending) return;
+  wsRecording = false;
+  wsSilenceStart = null;
+  const sttBtn = document.getElementById('ws-stt-btn');
+
+  if (wsSpeaking && wsAudio && wsAudio.readyState === 1) {
+    wsSpeaking = false;
+    wsStopPending = true;
+    wsAudio.send(JSON.stringify({ type: 'stt_end' }));
+    wsVadSetState('transcribing…', '#2EA043');
+    if (sttBtn) sttBtn.disabled = true;
+    clearTimeout(wsStopTimer);
+    wsStopTimer = setTimeout(wsSttTeardown, 4000);
+  } else {
+    wsSpeaking = false;
+    wsStopPending = false;
+    wsSttTeardown();
+  }
+}
+
+/* Releases the mic + processor and closes the websocket. Safe to call more
+   than once (e.g. from an unexpected ws close as well as an explicit Stop). */
+function wsSttTeardown() {
+  clearTimeout(wsStopTimer);
+  wsStopTimer = null;
+  wsStopPending = false;
+  wsSpeaking = false;
+  wsSilenceStart = null;
   if (wsMicStream) {
     wsMicStream.getTracks().forEach(t => t.stop());
     wsMicStream = null;
@@ -3899,12 +4007,19 @@ function wsSttStop() {
     wsMicProc.ctx.close().catch(() => {});
     wsMicProc = null;
   }
-  const dot   = document.getElementById('ws-stt-rec-dot');
-  const label = document.getElementById('ws-stt-rec-label');
-  if (dot) dot.style.background = '#2EA043';
-  if (label) label.textContent  = 'processing…';
+  if (wsAudio && wsAudio.readyState < 2) {
+    wsAudio.close();
+  }
+  wsVadSetState('idle', '#aaaaaa');
   const btn = document.getElementById('ws-stt-btn');
-  if (btn) btn.innerHTML = '<i class="ri-mic-line"></i> Record';
+  if (btn) {
+    btn.disabled = !sttModelAvailable;
+    btn.textContent = '';
+    const micIcon = document.createElement('i');
+    micIcon.className = 'ri-mic-line';
+    btn.appendChild(micIcon);
+    btn.appendChild(document.createTextNode(' Record'));
+  }
 }
 
 function wsDrawLoop(canvasId, analyser) {

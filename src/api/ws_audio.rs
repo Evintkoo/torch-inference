@@ -369,15 +369,13 @@ async fn finish_stt(
         channels: 1,
     };
 
-    let result = match audio_state.model_manager.get_stt_model("default") {
-        Some(model) => model.transcribe(&audio, false),
-        None => {
-            let _ = session.text(
-                ServerMsg::Error { msg: "no STT model available".to_string() }.to_json()
-            ).await;
-            return;
-        }
-    };
+    // `transcribe_audio` prefers the Whisper ONNX pipeline (the actual STT
+    // backend loaded at startup) and only falls back to a legacy "default"
+    // STTModel if one was explicitly loaded from disk. Calling
+    // `get_stt_model("default")` directly here skipped the Whisper pipeline
+    // entirely and made every live-WS transcription fail with "no STT model
+    // available" even when `/stt/health` reports a model loaded.
+    let result = audio_state.model_manager.transcribe_audio(&audio, false);
 
     match result {
         Ok(r) => {
