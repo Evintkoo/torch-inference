@@ -946,7 +946,7 @@
       <div class="gpt-topbar">
         <div class="gpt-topbar-left">
           <span id="llm-health-badge" style="display:none;font-size:12px;padding:2px 9px;border-radius:0"></span>
-          <input id="llm-model" type="text" value="minicpm-v-2_6-q2_k" class="gpt-model-sel" placeholder="model name" style="width:220px" title="Model ID" />
+          <input id="llm-model" type="text" value="smolvlm-256m" class="gpt-model-sel" placeholder="model name" style="width:220px" title="Model ID" autocomplete="off" />
         </div>
         <div class="gpt-topbar-right">
           <button class="gpt-pill-btn" id="chat-tts-btn" onclick="toggleChatTts()" title="Auto-speak responses">
@@ -1079,7 +1079,7 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
               <div class="row" style="margin-top:10px">
                 <div class="field">
                   <label>Voice / Engine</label>
-                  <input id="ws-tts-voice" type="text" placeholder="af_heart (or blank for default)" style="width:100%;padding:6px 8px;background:var(--input-bg);border:1px solid var(--border);border-radius:0;color:var(--text);font-size:13px" />
+                  <input id="ws-tts-voice" type="text" placeholder="af_heart (or blank for default)" style="width:100%;padding:6px 8px;background:var(--input-bg);border:1px solid var(--border);border-radius:0;color:var(--text);font-size:13px" autocomplete="off" />
                 </div>
                 <div class="field" style="flex:0 0 100px">
                   <label>Speed</label>
@@ -1534,19 +1534,19 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
               <div>
                 <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px">Config</div>
                 <div class="field"><label>Version</label>
-                  <select id="det-live-version">
+                  <select id="det-live-version" onchange="detSendConfig()">
                     <option value="v8" selected>v8</option><option value="v5">v5</option>
                     <option value="v10">v10</option><option value="v11">v11</option>
                   </select>
                 </div>
                 <div class="field"><label>Size</label>
-                  <select id="det-live-size">
+                  <select id="det-live-size" onchange="detSendConfig()">
                     <option value="n" selected>nano</option><option value="s">small</option>
                     <option value="m">medium</option>
                   </select>
                 </div>
                 <div class="field"><label>Confidence</label>
-                  <input type="number" id="det-live-conf" value="0.50" min="0" max="1" step="0.05" style="width:100%" />
+                  <input type="number" id="det-live-conf" value="0.50" min="0" max="1" step="0.05" style="width:100%" oninput="detSendConfig()" />
                 </div>
               </div>
               <div>
@@ -1571,6 +1571,9 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
       <div class="tab-bar">
         <button class="tab active" id="dash-tab-overview" onclick="switchDashTab('overview')">
           <i class="tab-icon ri-bar-chart-line"></i> Overview
+        </button>
+        <button class="tab" id="dash-tab-playground" onclick="switchDashTab('playground')">
+          <i class="tab-icon ri-play-circle-line"></i> Playground
         </button>
       </div>
 
@@ -1637,11 +1640,11 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
             </div>
             <div class="field">
               <label>Repo ID / URL</label>
-              <input type="text" id="dl-repo" placeholder="e.g. meta-llama/Llama-3.2-1B" />
+              <input type="text" id="dl-repo" placeholder="e.g. meta-llama/Llama-3.2-1B"  autocomplete="off" />
             </div>
             <div class="field slim" id="dl-revision-wrap">
               <label>Revision</label>
-              <input type="text" id="dl-revision" placeholder="main" />
+              <input type="text" id="dl-revision" placeholder="main"  autocomplete="off" />
             </div>
             <div class="field" style="flex:0 0 auto">
               <label>&nbsp;</label>
@@ -1728,7 +1731,7 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
           <div id="pg-chat-history" style="min-height:120px;max-height:320px;overflow-y:auto;border:1px solid var(--border2);border-radius:8px;padding:12px;margin-bottom:12px"></div>
           <div style="display:flex;gap:8px">
             <input type="text" id="pg-chat-input" placeholder="Type a message…" style="flex:1"
-                   onkeydown="if(event.key==='Enter')document.getElementById('pg-chat-btn').click()"/>
+                   onkeydown="if(event.key==='Enter')document.getElementById('pg-chat-btn').click()" autocomplete="off" />
             <button class="btn btn-primary" id="pg-chat-btn" onclick="runPgChat()">Send</button>
           </div>
         </div><!-- /#pg-llm -->
@@ -1786,13 +1789,15 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
       <div class="subtab-bar">
         <button class="subtab active" id="mdl-tab-available" onclick="switchMdlTab('available')"><i class="ri-store-2-line"></i> Catalog</button>
         <button class="subtab"        id="mdl-tab-downloaded" onclick="switchMdlTab('downloaded')"><i class="ri-hard-drive-2-line"></i> Downloaded</button>
+        <button class="subtab"        id="mdl-tab-sota" onclick="switchMdlTab('sota')"><i class="ri-trophy-line"></i> SOTA</button>
+        <button class="subtab"        id="mdl-tab-download" onclick="switchMdlTab('download')"><i class="ri-download-2-line"></i> Download</button>
       </div>
 
       <!-- Catalog sub-tab -->
       <div id="mdl-available">
         <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
           <input type="text" id="mdl-search" placeholder="Filter by name, task, architecture…"
-            style="max-width:320px" oninput="filterModelCatalog()" />
+            style="max-width:320px" oninput="filterModelCatalog()"  autocomplete="off" />
           <select id="mdl-filter-task" style="max-width:180px" onchange="filterModelCatalog()">
             <option value="">All tasks</option>
             <option value="tts">TTS</option>
@@ -1847,11 +1852,11 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
             </div>
             <div class="field">
               <label>Repo ID / URL</label>
-              <input type="text" id="mdl-dl-repo" placeholder="e.g. meta-llama/Llama-3.2-1B" />
+              <input type="text" id="mdl-dl-repo" placeholder="e.g. meta-llama/Llama-3.2-1B"  autocomplete="off" />
             </div>
             <div class="field slim" id="mdl-dl-revision-wrap">
               <label>Revision</label>
-              <input type="text" id="mdl-dl-revision" placeholder="main" />
+              <input type="text" id="mdl-dl-revision" placeholder="main"  autocomplete="off" />
             </div>
             <div class="field" style="flex:0 0 auto">
               <label>&nbsp;</label>
@@ -1893,7 +1898,7 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
         <div class="card" style="padding:12px;min-height:240px">
           <div id="logs-viewer-header" style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-family:var(--mono)">Select a file to view</div>
           <div style="display:flex;gap:8px;margin-bottom:8px">
-            <input type="text" id="log-search" placeholder="Search in log…" style="flex:1" oninput="searchLog()" />
+            <input type="text" id="log-search" placeholder="Search in log…" style="flex:1" oninput="searchLog()"  autocomplete="off" />
             <span id="log-search-count" style="font-size:12px;color:var(--text-dim);align-self:center"></span>
           </div>
           <pre id="logs-viewer-content" style="background:var(--bg);border:1px solid var(--border);border-radius:0;padding:10px;font-size:11px;font-family:var(--mono);max-height:400px;overflow:auto;white-space:pre-wrap;word-break:break-all;color:var(--text)">—</pre>
@@ -2901,7 +2906,7 @@ function buildTtsEngineDropdown(loadedEngines) {
 
   while (panel.firstChild) panel.removeChild(panel.firstChild);
 
-  panel.appendChild(makeCedItem('tts-engine-ced', '', 'default', '', '', currentVal === '', 'tts-voice'));
+  panel.appendChild(makeCedItem('tts-engine', '', 'default', '', '', currentVal === '', 'tts-voice'));
 
   TTS_ENGINE_DEFS.forEach(function(def) {
     var loaded = loadedIds.has(def.id);
@@ -2913,7 +2918,7 @@ function buildTtsEngineDropdown(loadedEngines) {
     } else {
       badgeCls = 'ced-badge-miss'; badgeTxt = 'Not downloaded';
     }
-    panel.appendChild(makeCedItem('tts-engine-ced', def.id, def.name, badgeCls, badgeTxt, currentVal === def.id, 'tts-voice'));
+    panel.appendChild(makeCedItem('tts-engine', def.id, def.name, badgeCls, badgeTxt, currentVal === def.id, 'tts-voice'));
   });
 }
 
@@ -3514,7 +3519,7 @@ async function loadAudioHealth() {
     badge.style.background  = hasModel ? 'var(--green-bg)'     : r.ok ? 'var(--accent-bg)' : 'var(--red-bg)';
     badge.style.color       = hasModel ? 'var(--green-text)'   : r.ok ? 'var(--accent)'    : 'var(--red-text)';
   } catch (_) {
-    badge.textContent = '● STT offline — run: make stt-run';
+    badge.textContent = '● STT unreachable';
     badge.style.background = 'var(--red-bg)'; badge.style.color = 'var(--red-text)';
   }
 }
@@ -5173,7 +5178,7 @@ const API_LANG_LABELS = {curl:'cURL', python:'Python', js:'JavaScript'};
 let apiLangActive = 'curl';
 
 /* Build a DOM element without touching innerHTML */
-function mkEl(tag, attrs, ...kids) {
+function mkElAttrs(tag, attrs, ...kids) {
   const e = document.createElement(tag);
   if (attrs) {
     for (const [k, v] of Object.entries(attrs)) {
@@ -5203,11 +5208,11 @@ function renderApiRef() {
     group.endpoints.forEach(ep => {
       const method = ep.proto === 'ws' ? 'WS' : ep.method;
       const cls = method === 'POST' ? 'post' : method === 'WS' ? 'ws' : 'get';
-      const tr = mkEl('tr', {style:'border-bottom:1px solid var(--border);cursor:pointer'});
-      tr.appendChild(mkEl('td', {style:'padding:6px 10px'},
-        mkEl('span', {class:'method ' + cls, style:'font-size:10px;padding:2px 6px'}, method)));
-      tr.appendChild(mkEl('td', {style:'padding:6px 10px;font-family:var(--mono);font-size:12px;color:var(--accent)', text: ep.path}));
-      tr.appendChild(mkEl('td', {style:'padding:6px 10px;color:var(--text-muted)', text: ep.desc.split('.')[0]}));
+      const tr = mkElAttrs('tr', {style:'border-bottom:1px solid var(--border);cursor:pointer'});
+      tr.appendChild(mkElAttrs('td', {style:'padding:6px 10px'},
+        mkElAttrs('span', {class:'method ' + cls, style:'font-size:10px;padding:2px 6px'}, method)));
+      tr.appendChild(mkElAttrs('td', {style:'padding:6px 10px;font-family:var(--mono);font-size:12px;color:var(--accent)', text: ep.path}));
+      tr.appendChild(mkElAttrs('td', {style:'padding:6px 10px;color:var(--text-muted)', text: ep.desc.split('.')[0]}));
       tr.addEventListener('click', () => {
         const id = 'ep-' + ep.path.replace(/\//g,'_').replace(/[{}]/g,'');
         const t = document.getElementById(id);
@@ -5222,9 +5227,9 @@ function renderApiRef() {
   while (container.firstChild) container.removeChild(container.firstChild);
 
   /* Language switcher */
-  const switcher = mkEl('div', {style:'display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:20px;position:sticky;top:0;background:var(--bg);z-index:10;padding-top:4px'});
+  const switcher = mkElAttrs('div', {style:'display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:20px;position:sticky;top:0;background:var(--bg);z-index:10;padding-top:4px'});
   API_LANGS.forEach(lang => {
-    const btn = mkEl('button', {
+    const btn = mkElAttrs('button', {
       class: 'ws-tab' + (lang === apiLangActive ? ' active-ws-tab' : ''),
       id: 'api-lang-' + lang,
       text: API_LANG_LABELS[lang]
@@ -5243,12 +5248,12 @@ function renderApiRef() {
 
   /* Groups */
   API_REF.forEach(group => {
-    const section = mkEl('div', {style:'margin-bottom:32px'});
+    const section = mkElAttrs('div', {style:'margin-bottom:32px'});
 
     /* Group header */
-    const hdr = mkEl('div', {style:`display:flex;align-items:center;gap:8px;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid ${group.color}33`});
-    const icon = mkEl('i', {class: group.icon, style:`color:${group.color};font-size:18px`});
-    const title = mkEl('span', {style:'font-weight:700;font-size:16px', text: group.group});
+    const hdr = mkElAttrs('div', {style:`display:flex;align-items:center;gap:8px;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid ${group.color}33`});
+    const icon = mkElAttrs('i', {class: group.icon, style:`color:${group.color};font-size:18px`});
+    const title = mkElAttrs('span', {style:'font-weight:700;font-size:16px', text: group.group});
     hdr.appendChild(icon);
     hdr.appendChild(title);
     section.appendChild(hdr);
@@ -5256,52 +5261,52 @@ function renderApiRef() {
     group.endpoints.forEach(ep => {
       const method = ep.proto === 'ws' ? 'WS' : ep.method;
       const cls = method === 'POST' ? 'post' : method === 'WS' ? 'ws' : 'get';
-      const card = mkEl('div', {class:'card', id:'ep-' + ep.path.replace(/\//g,'_').replace(/[{}]/g,''), style:'margin-bottom:16px'});
+      const card = mkElAttrs('div', {class:'card', id:'ep-' + ep.path.replace(/\//g,'_').replace(/[{}]/g,''), style:'margin-bottom:16px'});
 
       /* Method + path */
-      const epRow = mkEl('div', {style:'display:flex;align-items:center;gap:10px;margin-bottom:10px'});
-      epRow.appendChild(mkEl('span', {class:'method ' + cls}, method));
-      const pathEl = mkEl('code', {style:'font-family:var(--mono);font-size:14px;font-weight:600;color:var(--accent)', text: ep.path});
+      const epRow = mkElAttrs('div', {style:'display:flex;align-items:center;gap:10px;margin-bottom:10px'});
+      epRow.appendChild(mkElAttrs('span', {class:'method ' + cls}, method));
+      const pathEl = mkElAttrs('code', {style:'font-family:var(--mono);font-size:14px;font-weight:600;color:var(--accent)', text: ep.path});
       epRow.appendChild(pathEl);
       card.appendChild(epRow);
 
       /* Description */
-      card.appendChild(mkEl('p', {style:'margin-bottom:12px;color:var(--text-muted);font-size:13px', text: ep.desc}));
+      card.appendChild(mkElAttrs('p', {style:'margin-bottom:12px;color:var(--text-muted);font-size:13px', text: ep.desc}));
 
       /* Request schema */
       if (ep.request) {
-        const det = mkEl('details', {style:'margin-bottom:10px'});
-        det.appendChild(mkEl('summary', {style:'cursor:pointer;font-size:12px;font-weight:600;color:var(--text-muted);user-select:none', text:'Request body / params'}));
-        const pre = mkEl('pre', {style:'background:var(--code-bg);border:1px solid var(--border);border-radius:0;padding:12px;font-size:11px;overflow-x:auto;margin-top:8px;color:var(--code-text)'});
-        pre.appendChild(mkEl('code', {text: ep.request}));
+        const det = mkElAttrs('details', {style:'margin-bottom:10px'});
+        det.appendChild(mkElAttrs('summary', {style:'cursor:pointer;font-size:12px;font-weight:600;color:var(--text-muted);user-select:none', text:'Request body / params'}));
+        const pre = mkElAttrs('pre', {style:'background:var(--code-bg);border:1px solid var(--border);border-radius:0;padding:12px;font-size:11px;overflow-x:auto;margin-top:8px;color:var(--code-text)'});
+        pre.appendChild(mkElAttrs('code', {text: ep.request}));
         det.appendChild(pre);
         card.appendChild(det);
       }
 
       /* Response schema */
       if (ep.response) {
-        const det = mkEl('details', {style:'margin-bottom:10px'});
-        det.appendChild(mkEl('summary', {style:'cursor:pointer;font-size:12px;font-weight:600;color:var(--text-muted);user-select:none', text:'Response'}));
-        const pre = mkEl('pre', {style:'background:var(--code-bg);border:1px solid var(--border);border-radius:0;padding:12px;font-size:11px;overflow-x:auto;margin-top:8px;color:var(--code-text)'});
-        pre.appendChild(mkEl('code', {text: ep.response}));
+        const det = mkElAttrs('details', {style:'margin-bottom:10px'});
+        det.appendChild(mkElAttrs('summary', {style:'cursor:pointer;font-size:12px;font-weight:600;color:var(--text-muted);user-select:none', text:'Response'}));
+        const pre = mkElAttrs('pre', {style:'background:var(--code-bg);border:1px solid var(--border);border-radius:0;padding:12px;font-size:11px;overflow-x:auto;margin-top:8px;color:var(--code-text)'});
+        pre.appendChild(mkElAttrs('code', {text: ep.response}));
         det.appendChild(pre);
         card.appendChild(det);
       }
 
       /* Code examples */
-      const examplesWrap = mkEl('div', {style:'margin-top:4px'});
+      const examplesWrap = mkElAttrs('div', {style:'margin-top:4px'});
       API_LANGS.forEach(lang => {
         const snippet = ep[lang] ? ep[lang](base) : null;
         if (!snippet) return;
-        const pane = mkEl('div', {class:'api-code-pane', style: lang === apiLangActive ? '' : 'display:none'});
+        const pane = mkElAttrs('div', {class:'api-code-pane', style: lang === apiLangActive ? '' : 'display:none'});
         pane.setAttribute('data-lang', lang);
-        const wrap = mkEl('div', {style:'position:relative'});
-        const pre = mkEl('pre', {style:'background:var(--code-bg);border:1px solid var(--border);border-radius:0;padding:12px 12px 12px 14px;font-size:11px;overflow-x:auto;color:var(--code-text)'});
-        pre.appendChild(mkEl('code', {text: snippet}));
-        const copyBtn = mkEl('button', {
+        const wrap = mkElAttrs('div', {style:'position:relative'});
+        const pre = mkElAttrs('pre', {style:'background:var(--code-bg);border:1px solid var(--border);border-radius:0;padding:12px 12px 12px 14px;font-size:11px;overflow-x:auto;color:var(--code-text)'});
+        pre.appendChild(mkElAttrs('code', {text: snippet}));
+        const copyBtn = mkElAttrs('button', {
           style:'position:absolute;top:8px;right:8px;background:var(--surface2);border:1px solid var(--border);border-radius:0;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--text-muted)'
         });
-        copyBtn.appendChild(mkEl('i', {class:'ri-clipboard-line'}));
+        copyBtn.appendChild(mkElAttrs('i', {class:'ri-clipboard-line'}));
         const capturedSnippet = snippet;
         copyBtn.addEventListener('click', () => {
           navigator.clipboard.writeText(capturedSnippet).then(() => showCopyFeedback('Copied!'));
@@ -5942,7 +5947,7 @@ async function sendChat() {
   sendBtn.disabled = true;
   llmStreaming = true;
 
-  const model  = document.getElementById('llm-model').value.trim() || 'minicpm-v-2_6-q2_k';
+  const model  = document.getElementById('llm-model').value.trim() || 'smolvlm-256m';
   const temp   = parseFloat(document.getElementById('llm-temp').value)    || 0.7;
   const maxTok = parseInt(document.getElementById('llm-max-tokens').value) || 1024;
 
