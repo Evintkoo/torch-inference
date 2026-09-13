@@ -7,6 +7,23 @@ license = "Apache-2.0"
 authors = ["Genta Dev Team"]
 default-run = "torch-inference-server"
 
+[package.metadata.deb]
+maintainer = "Evint Leovonzko <evint.koo@gmail.com>"
+copyright = "2026, Evint Leovonzko"
+license-file = ["LICENSE", "4"]
+extended-description = """\
+High-performance multimodal inference server (TTS, STT, image \
+classification, object detection, LLM chat) built in Rust."""
+depends = "$auto"
+section = "utility"
+priority = "optional"
+assets = [
+    ["target/release/torch-inference-server", "usr/bin/", "755"],
+    ["config.toml", "usr/share/torch-inference-server/config.toml", "644"],
+    ["scripts/download_models.sh", "usr/share/torch-inference-server/download_models.sh", "755"],
+    ["packaging/README-first-run.txt", "usr/share/doc/torch-inference-server/README-first-run.txt", "644"],
+]
+
 [dependencies]
 # Web framework
 actix-web = "4.8"
