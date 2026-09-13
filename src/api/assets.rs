@@ -4,11 +4,19 @@ use std::sync::OnceLock;
 
 static REMIXICON_CSS: OnceLock<Bytes> = OnceLock::new();
 static REMIXICON_WOFF2: OnceLock<Bytes> = OnceLock::new();
+static SCALAR_JS: OnceLock<Bytes> = OnceLock::new();
 
 pub const REMIXICON_CDN_CSS: &str =
     "https://cdn.jsdelivr.net/npm/remixicon@4.7.0/fonts/remixicon.css";
 const REMIXICON_CDN_WOFF2: &str =
     "https://cdn.jsdelivr.net/npm/remixicon@4.7.0/fonts/remixicon.woff2";
+
+/// Scalar's standalone API-reference bundle (a single self-initializing JS
+/// file — no separate CSS to fetch, it injects its own styles at runtime).
+/// Pinned to an exact version, same reasoning as the `ort` pin in Cargo.toml:
+/// an unpinned `@latest` could change behavior under us between restarts.
+pub const SCALAR_CDN_JS: &str =
+    "https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.68.0/dist/browser/standalone.js";
 
 /// Rewrite the `url(...)` that references remixicon.woff2 in the @font-face block
 /// so it points to our local `/assets/remixicon.woff2` route.
@@ -97,6 +105,67 @@ pub async fn fetch_remixicon() {
         woff2_bytes = REMIXICON_WOFF2.get().map_or(0, |b| b.len()),
         "remixicon assets cached in memory"
     );
+}
+
+/// Fetch the Scalar standalone bundle from jsDelivr once and store it in the
+/// `OnceLock` static. Called once at server startup inside a `tokio::spawn`.
+/// If the fetch fails the static stays empty and the handler falls back to
+/// redirecting to the CDN — the Endpoints panel still renders, offline use
+/// degrades gracefully.
+pub async fn fetch_scalar() {
+    let client = match reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()
+    {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::warn!(error = %e, "scalar: failed to build http client, using CDN fallback");
+            return;
+        }
+    };
+
+    let js_bytes = match client.get(SCALAR_CDN_JS).send().await {
+        Ok(resp) => {
+            if !resp.status().is_success() {
+                tracing::warn!(status = %resp.status(), "scalar: cdn returned non-2xx, using CDN fallback");
+                return;
+            }
+            match resp.bytes().await {
+                Ok(b) => b,
+                Err(e) => {
+                    tracing::warn!(error = %e, "scalar: failed to read js body, using CDN fallback");
+                    return;
+                }
+            }
+        }
+        Err(e) => {
+            tracing::warn!(error = %e, "scalar: failed to fetch standalone bundle, using CDN fallback");
+            return;
+        }
+    };
+
+    // OnceLock::set returns Err if already set — safe to ignore (idempotent on restart).
+    let _ = SCALAR_JS.set(js_bytes);
+    tracing::info!(
+        js_bytes = SCALAR_JS.get().map_or(0, |b| b.len()),
+        "scalar api-reference bundle cached in memory"
+    );
+}
+
+/// Serve the self-hosted Scalar standalone bundle with a 1-year immutable
+/// cache header (it is fetched pinned to an exact version, so it never
+/// changes underneath a given build). Redirects to CDN if the startup fetch
+/// hasn't completed or failed.
+pub async fn serve_scalar_js() -> impl Responder {
+    match SCALAR_JS.get() {
+        Some(js) => HttpResponse::Ok()
+            .content_type("application/javascript; charset=utf-8")
+            .insert_header(("Cache-Control", "public, max-age=31536000, immutable"))
+            .body(js.clone()),
+        None => HttpResponse::TemporaryRedirect()
+            .insert_header(("Location", SCALAR_CDN_JS))
+            .finish(),
+    }
 }
 
 /// Serve the self-hosted Remixicon CSS with a 1-year immutable cache header.
@@ -233,5 +302,37 @@ mod tests {
         let input = "body { color: red; }";
         let output = rewrite_woff2_src(input);
         assert_eq!(output, input);
+    }
+
+    #[actix_web::test]
+    async fn test_scalar_js_returns_200_when_cached() {
+        let _ = SCALAR_JS.set(Bytes::from_static(b"window.Scalar={};"));
+        let app = actix_test::init_service(
+            App::new().route("/assets/scalar.js", web::get().to(serve_scalar_js)),
+        )
+        .await;
+        let req = actix_test::TestRequest::get().uri("/assets/scalar.js").to_request();
+        let resp = actix_test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200, "handler must return 200 when JS is cached");
+        let ct = resp
+            .headers()
+            .get("content-type")
+            .unwrap()
+            .to_str()
+            .unwrap();
+        assert!(ct.contains("javascript"), "must be javascript, got: {}", ct);
+    }
+
+    #[actix_web::test]
+    async fn test_scalar_js_returns_307_when_not_cached() {
+        if SCALAR_JS.get().is_none() {
+            let app = actix_test::init_service(
+                App::new().route("/assets/scalar.js", web::get().to(serve_scalar_js)),
+            )
+            .await;
+            let req = actix_test::TestRequest::get().uri("/assets/scalar.js").to_request();
+            let resp = actix_test::call_service(&app, req).await;
+            assert_eq!(resp.status(), 307, "expected 307 redirect to CDN when js not cached");
+        }
     }
 }
