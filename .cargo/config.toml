@@ -9,3 +9,15 @@
 #   ORT_DYLIB_PATH = { value = "ort-gpu-1.22.0/onnxruntime-win-x64-gpu-1.22.0/lib/onnxruntime.dll", relative = true }
 ORT_DYLIB_PATH = "/opt/homebrew/lib/libonnxruntime.dylib"
 DYLD_LIBRARY_PATH = "/opt/homebrew/lib"
+
+# ── Fast linker (optional, macOS arm64) ───────────────────────────────────────
+# Uncomment ONE of the below and install the corresponding tool for 2-4× faster
+# link times (especially for debug/test incremental builds).
+#
+#   brew install sold       # https://github.com/nicknisi/sold
+#   [target.aarch64-apple-darwin]
+#   linker = "sold"
+#
+# Alternatively, with Xcode 16+, Apple ld64 has a parallel mode — no install needed:
+#   [target.aarch64-apple-darwin]
+#   rustflags = ["-C", "link-arg=-Wl,-ld64_parallel"]

@@ -13,11 +13,21 @@ fn main() {
     println!("cargo:rerun-if-env-changed=LIBTORCH_DIR");
     println!("cargo:rerun-if-env-changed=CUDA_PATH");
     println!("cargo:rerun-if-env-changed=LIBTORCH_USE_PYTORCH");
+    println!("cargo:rerun-if-env-changed=ORT_DYLIB_PATH");
 
     print_header();
 
-    // Detect system configuration
-    let system_info = detect_system();
+    // Detect system configuration — CUDA probing is gated behind the torch
+    // feature to avoid spawning nvidia-smi on every build (macOS laptops don't
+    // have it, and the probe always fails with a noisy process spawn).
+    let system_info = if cfg!(feature = "torch") {
+        detect_system()
+    } else {
+        let os = env::var("CARGO_CFG_TARGET_OS").unwrap_or_else(|_| "unknown".to_string());
+        let arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap_or_else(|_| "unknown".to_string());
+        let has_metal = os == "macos" && (arch == "aarch64" || arch == "arm64");
+        SystemInfo { os, arch, has_cuda: false, has_metal, cuda_version: None }
+    };
     print_system_info(&system_info);
 
     // Check if torch feature is enabled

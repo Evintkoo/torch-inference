@@ -200,6 +200,21 @@ codegen-units = 1
 panic = "abort"
 strip = true
 
+# Fast release profile for local iteration. ~3-4× faster compile than the
+# fat-LTO `release` profile, with ~2-5% runtime regression. Use:
+#   cargo build --profile release-fast
+#   cargo run --profile release-fast --no-default-features
+[profile.release-fast]
+inherits = "release"
+lto = "thin"
+codegen-units = 16
+
+# Bench uses thin LTO so criterion iterations don't pay the 2-min fat-LTO cost.
+[profile.bench]
+inherits = "release"
+lto = "thin"
+codegen-units = 16
+
 [profile.dev]
 opt-level = 0
 incremental = true
