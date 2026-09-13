@@ -1,10 +1,14 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppLayout, type Panel } from "@/app/layout";
 import { DashboardPanel } from "@/features/dashboard/DashboardPanel";
+import { SttPanel } from "@/features/stt/SttPanel";
 
 const queryClient = new QueryClient();
 
-const panels: Panel[] = [{ id: "dashboard", label: "Dashboard", content: <DashboardPanel /> }];
+const panels: Panel[] = [
+  { id: "dashboard", label: "Dashboard", content: <DashboardPanel /> },
+  { id: "stt", label: "STT", content: <SttPanel /> },
+];
 
 export default function App() {
   return (
