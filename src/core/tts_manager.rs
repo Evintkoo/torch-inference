@@ -246,7 +246,7 @@ impl TTSManager {
         // Load Kokoro ONNX TTS as PRIMARY engine (high-quality neural TTS with parametric fallback)
         log::info!("Loading Kokoro ONNX TTS engine...");
         let kokoro_onnx_config = serde_json::json!({
-            "model_dir": "models/tts/kokoro-onnx-int8",
+            "model_dir": "models/kokoro-82m",
             "sample_rate": 24000
         });
         match self
