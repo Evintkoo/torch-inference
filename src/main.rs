@@ -852,6 +852,41 @@ async fn async_main() -> std::io::Result<()> {
             // so it now serves straight from the same in-process handlers.
             .route("/stt/transcribe", web::post().to(crate::api::audio::transcribe_audio))
             .route("/stt/health", web::get().to(crate::api::audio::audio_health))
+            // ── /v1 aliases ──────────────────────────────────────────────────
+            // Every unversioned API-surface route above also answers under
+            // /v1/ — same handlers, so behavior is identical either way. The
+            // unversioned paths keep working; /v1/ is just the new preferred
+            // surface. Ops/infra endpoints (health, metrics, logs, system,
+            // playground) intentionally stay unversioned.
+            .service(
+                web::scope("/v1")
+                    .configure(crate::api::tts::configure_routes)
+                    .configure(crate::api::classify::configure_routes)
+                    .configure(crate::api::yolo::configure)
+                    .configure(crate::api::llm_proxy::configure_routes)
+                    .configure(api::models::configure)
+                    .route(
+                        "/audio/transcribe",
+                        web::post().to(crate::api::audio::transcribe_audio),
+                    )
+                    .route(
+                        "/audio/synthesize",
+                        web::post().to(crate::api::audio::synthesize_speech),
+                    )
+                    .route(
+                        "/audio/validate",
+                        web::post().to(crate::api::audio::validate_audio),
+                    )
+                    .route(
+                        "/audio/health",
+                        web::get().to(crate::api::audio::audio_health),
+                    )
+                    .route(
+                        "/stt/transcribe",
+                        web::post().to(crate::api::audio::transcribe_audio),
+                    )
+                    .route("/stt/health", web::get().to(crate::api::audio::audio_health)),
+            )
     })
     .workers(worker_count)
     .keep_alive(Duration::from_secs(keep_alive))
