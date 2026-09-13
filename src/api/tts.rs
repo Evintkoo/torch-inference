@@ -113,7 +113,7 @@ pub async fn synthesize(
         .manager
         .synthesize(&req.text, req.engine.as_deref(), params)
         .await
-        .map_err(|e| ApiError::InternalError(format!("Synthesis failed: {:?}", e)))?;
+        .map_err(|e| ApiError::InternalError(format!("Synthesis failed: {}", e)))?;
 
     let engine_used = if let Some(engine_id) = req.engine.as_deref() {
         engine_id.to_string()
@@ -236,7 +236,7 @@ pub async fn stream_synthesize(
                     Some((Ok::<Bytes, actix_web::Error>(bytes), (Some(rx), false)))
                 }
                 Ok(Some(Err(e))) => Some((
-                    Err(actix_web::error::ErrorInternalServerError(format!("{:?}", e))),
+                    Err(actix_web::error::ErrorInternalServerError(e.to_string())),
                     (None, false),
                 )),
                 Ok(None) => None, // upstream closed cleanly
