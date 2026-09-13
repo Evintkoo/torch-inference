@@ -13,17 +13,6 @@
 /// Output: `ndarray::Array4<f32>` in NCHW layout, ready for ORT.
 use anyhow::{bail, Result};
 use ndarray::Array4;
-use std::sync::OnceLock;
-
-use crate::tensor_pool::BufferPool;
-
-/// Module-level pool for the mutable source buffer required by fast_image_resize.
-/// Eliminates the per-request `src.to_vec()` allocation (~1.2 MB for 640×640 inputs).
-static RESIZE_SRC_POOL: OnceLock<BufferPool> = OnceLock::new();
-
-fn resize_src_pool() -> &'static BufferPool {
-    RESIZE_SRC_POOL.get_or_init(|| BufferPool::new(8))
-}
 
 // ── Configuration ─────────────────────────────────────────────────────────
 
@@ -204,14 +193,11 @@ pub(crate) fn resize_hwc(
         anyhow::bail!("resize: zero dst dimension");
     }
 
-    // Acquire a pooled buffer large enough for the source pixels.
-    // fast_image_resize requires owning Vec<u8> in 5.x, so we still copy src
-    // into a reusable buffer to avoid allocating a fresh Vec per request.
-    let src_len = src.len();
-    let mut src_buf = resize_src_pool().acquire(src_len);
-    src_buf[..src_len].copy_from_slice(src);
-
-    let src_img = Image::from_vec_u8(src_w, src_h, src_buf[..src_len].to_vec(), PixelType::U8x3)
+    // fast_image_resize requires an owning Vec<u8>. We copy `src` once into that
+    // Vec (unavoidable). The old RESIZE_SRC_POOL added an *extra* copy (src →
+    // pooled buffer) plus a to_vec() for the owning Vec, defeating the pool
+    // entirely. Direct single-copy is simpler and equivalent.
+    let src_img = Image::from_vec_u8(src_w, src_h, src.to_vec(), PixelType::U8x3)
         .map_err(|e| anyhow::anyhow!("fast_image_resize src: {e}"))?;
     let mut dst_img = Image::new(dst_w, dst_h, PixelType::U8x3);
 
@@ -222,9 +208,7 @@ pub(crate) fn resize_hwc(
         .resize(&src_img, &mut dst_img, &opts)
         .map_err(|e| anyhow::anyhow!("fast_image_resize resize: {e}"));
 
-    // Release src_buf before propagating any error.
     drop(src_img);
-    resize_src_pool().release(src_buf);
     resize_result?;
 
     Ok((dst_img.into_vec(), dst_w, dst_h))

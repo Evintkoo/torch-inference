@@ -1,4 +1,10 @@
-#![allow(dead_code)] // TODO: remove once model files (Tasks 3-5) consume this module
+// ModelCache + cache_key are torch-backed inference infrastructure. Their
+// methods/fields are exercised only when the `torch` feature is enabled (the
+// only callers are the cfg(feature="torch") blocks in image_classifier.rs,
+// neural_network.rs and yolo.rs). In lean builds the module still compiles so
+// the type imports resolve, but its bodies are unreachable — hence the allow.
+#![allow(dead_code)]
+
 use anyhow::Result;
 use lru::LruCache;
 use parking_lot::Mutex;
@@ -29,11 +35,9 @@ fn fnv1a(data: &[u8]) -> u64 {
 /// between fields so "ab"+"c" ≠ "a"+"bc".  Zero heap allocation — the
 /// previous implementation built a `Vec<u8>` before hashing.
 pub fn cache_key(model_id: &str, input: &[u8], params: &[u8]) -> u64 {
-    let mut h = FNV_OFFSET;
-    for &b in model_id.as_bytes() {
-        h ^= b as u64;
-        h = h.wrapping_mul(FNV_PRIME);
-    }
+    // Seed with model_id, then fold in each subsequent field prefixed by a NUL
+    // separator. Delegating to fnv1a keeps a single FNV implementation.
+    let mut h = fnv1a(model_id.as_bytes());
     h ^= 0u64; // NUL separator
     h = h.wrapping_mul(FNV_PRIME);
     for &b in input {
