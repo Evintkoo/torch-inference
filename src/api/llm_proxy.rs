@@ -25,8 +25,21 @@ pub async fn proxy(
     config: web::Data<crate::config::Config>,
 ) -> HttpResponse {
     // Build client inside the handler — bound to the current worker's runtime.
+    //
+    // Deliberately no `.timeout()` here. reqwest's client-level timeout covers
+    // the WHOLE exchange — connect, send, AND reading the full response body —
+    // not just "did the server respond". Reproduced directly: a slow chat
+    // completion (HRM-Text has no KV cache, so per-token cost grows with
+    // context) got its SSE body cut off mid-stream by this timeout at almost
+    // exactly `proxy_timeout_secs`, logged as
+    // `reqwest::Error { kind: Decode, source: ... TimedOut }` /
+    // `net::ERR_INCOMPLETE_CHUNKED_ENCODING` in the browser — the response was
+    // actively streaming, not hung, and got killed anyway. `proxy_timeout_secs`
+    // is applied below to just the "did the server even respond" phase instead;
+    // once headers arrive and the body starts streaming, nothing here times it
+    // out — it ends when the LLM does (bounded by max_generated_tokens/EOS).
+    let proxy_timeout = std::time::Duration::from_secs(config.server.proxy_timeout_secs);
     let client = match reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(config.server.proxy_timeout_secs))
         .connect_timeout(std::time::Duration::from_secs(2))
         .no_proxy()
         .build()
@@ -87,7 +100,19 @@ pub async fn proxy(
     let upstream_body = reqwest::Body::wrap_stream(ReceiverStream::new(rx));
     rb = rb.body(upstream_body);
 
-    match rb.send().await {
+    // Timeout only the "does the server even respond" phase — see the client
+    // builder comment above for why the body stream itself must stay unbounded.
+    let sent = match tokio::time::timeout(proxy_timeout, rb.send()).await {
+        Ok(result) => result,
+        Err(_) => {
+            tracing::warn!(url = %url, timeout_secs = proxy_timeout.as_secs(), "LLM proxy timed out waiting for response headers");
+            return HttpResponse::ServiceUnavailable().json(
+                serde_json::json!({"error": "LLM service unavailable — run `make llm-build && make llm-run` to start it"})
+            );
+        }
+    };
+
+    match sent {
         Err(e) if e.is_connect() || e.is_timeout() || e.is_builder() || e.is_request() => {
             tracing::warn!(
                 url = %url,
