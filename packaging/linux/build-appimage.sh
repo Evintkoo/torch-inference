@@ -52,4 +52,10 @@ rm -f "${OUTPUT}"
 OUTPUT="${OUTPUT}" linuxdeploy --appdir "${APPDIR}" --output appimage
 
 mv torch-inference-server*.AppImage "${OUTPUT}" 2>/dev/null || true
+
+if [[ ! -f "${OUTPUT}" ]]; then
+  echo "ERROR: expected AppImage '${OUTPUT}' was not produced (check linuxdeploy-plugin-appimage's output-naming env var, e.g. OUTPUT vs LDAI_OUTPUT)" >&2
+  exit 1
+fi
+
 echo "Built ${OUTPUT}"
