@@ -59,8 +59,17 @@ per_run_bytes          = 65536
 field_trim_above       = 8192
 
 [memory_gate]
-high_water_mb          = 4096
-low_water_mb           = 3072
+# HRM-Text-1B's real steady-state RSS sits around ~6.3GB once the model is
+# loaded and has run at least one inference (weights + ONNX Runtime scratch/
+# activation buffers for the multi-loop slow/fast HRM architecture) -- these
+# thresholds were previously 4096/3072, well below that floor, so the gate
+# tripped on the very first request and then refused every request after
+# forever (RSS can never drop back below a low-water mark that's under the
+# model's own baseline footprint). Raised with headroom above the observed
+# ~6.3GB floor, scaled for a 24GB host; on a smaller host lower both figures
+# but keep them above the model's actual settled RSS.
+high_water_mb          = 12288
+low_water_mb           = 10240
 poll_on_admit_only     = true
 
 [kv_cache]
