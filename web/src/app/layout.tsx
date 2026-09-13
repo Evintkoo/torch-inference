@@ -18,6 +18,7 @@ interface HealthCheck {
 }
 
 const THEME_KEY = "theme";
+const SIDEBAR_KEY = "sidebar-collapsed";
 
 function ThemeToggle() {
   const [theme, setTheme] = useState<"light" | "dark">(() => {
@@ -74,6 +75,15 @@ export function AppLayout({ panels }: { panels: Panel[] }) {
     throw new Error("AppLayout requires at least one panel");
   }
 
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(SIDEBAR_KEY) === "1";
+  });
+
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_KEY, collapsed ? "1" : "0");
+  }, [collapsed]);
+
   const groups: Array<{ label: string; panels: Panel[] }> = [];
   for (const panel of panels) {
     let group = groups.find((g) => g.label === panel.group);
@@ -88,15 +98,29 @@ export function AppLayout({ panels }: { panels: Panel[] }) {
     <Tabs
       defaultValue={panels[0].id}
       orientation="vertical"
-      className="grid h-screen grid-cols-[220px_1fr] grid-rows-[52px_minmax(0,1fr)] gap-0 overflow-hidden"
+      className={`grid h-screen grid-rows-[52px_minmax(0,1fr)] gap-0 overflow-hidden transition-[grid-template-columns] duration-150 ${collapsed ? "grid-cols-[56px_1fr]" : "grid-cols-[220px_1fr]"}`}
     >
       <header className="col-span-2 row-start-1 flex items-center gap-3 border-b border-border bg-card px-5">
+        <button
+          type="button"
+          className="-ml-1 flex h-8 w-8 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+          onClick={() => setCollapsed((c) => !c)}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          data-testid="sidebar-toggle"
+        >
+          <i className="ri-menu-line" aria-hidden="true" />
+        </button>
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center bg-[#0D0E0F] text-[11px] font-bold tracking-wide text-white">
             TIE
           </div>
-          <span className="font-serif text-[15px] font-bold tracking-tight">Torch Inference</span>
-          <span className="text-xs text-muted-foreground">Engine</span>
+          {!collapsed && (
+            <>
+              <span className="font-serif text-[15px] font-bold tracking-tight">Torch Inference</span>
+              <span className="text-xs text-muted-foreground">Engine</span>
+            </>
+          )}
         </div>
         <div className="ml-auto flex items-center gap-2.5">
           <ThemeToggle />
@@ -104,21 +128,26 @@ export function AppLayout({ panels }: { panels: Panel[] }) {
         </div>
       </header>
 
-      <TabsList className="group-data-[orientation=vertical]/tabs:h-full col-start-1 row-start-2 h-full w-full flex-col items-stretch justify-start gap-5 overflow-y-auto rounded-none border-r border-border bg-card p-4 shadow-[2px_0_20px_rgba(0,0,0,0.07)]">
+      <TabsList
+        className={`group-data-[orientation=vertical]/tabs:h-full col-start-1 row-start-2 h-full w-full flex-col items-stretch justify-start gap-5 overflow-y-auto overflow-x-hidden rounded-none border-r border-border bg-card py-4 shadow-[2px_0_20px_rgba(0,0,0,0.07)] ${collapsed ? "px-2" : "px-4"}`}
+      >
         {groups.map((group) => (
           <div key={group.label} className="flex flex-col gap-0.5">
-            <div className="px-2 pb-2 text-[10px] font-semibold tracking-wider text-text-dim uppercase">
-              {group.label}
-            </div>
+            {!collapsed && (
+              <div className="px-2 pb-2 text-[10px] font-semibold tracking-wider text-text-dim uppercase">
+                {group.label}
+              </div>
+            )}
             {group.panels.map((panel) => (
               <TabsTrigger
                 key={panel.id}
                 value={panel.id}
                 data-testid={`panel-nav-${panel.id}`}
-                className="h-auto w-full justify-start gap-[9px] rounded-none border-0 px-2 py-[7px] text-[13px] font-medium text-muted-foreground shadow-none after:hidden data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-none"
+                title={collapsed ? panel.label : undefined}
+                className={`h-auto w-full gap-[9px] rounded-none border-0 py-[7px] text-[13px] font-medium text-muted-foreground shadow-none after:hidden data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-none ${collapsed ? "justify-center px-0" : "justify-start px-2"}`}
               >
                 <i className={`${panel.icon} w-[18px] shrink-0 text-center text-base`} aria-hidden="true" />
-                {panel.label}
+                {!collapsed && panel.label}
               </TabsTrigger>
             ))}
           </div>

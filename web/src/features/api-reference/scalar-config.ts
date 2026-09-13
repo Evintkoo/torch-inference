@@ -92,6 +92,13 @@ export function scalarCustomCss(): string {
       --scalar-header-border-color: var(--color-border);
       height: 100%;
     }
+    /* Hide Scalar's "Developer Tools / Configure / Share / Deploy" toolbar —
+       those are Scalar-cloud-hosted-workspace features that don't apply to a
+       self-hosted reference and only add noise. The sidebar search box lives
+       in a separate element and is unaffected. */
+    #scalar-api-reference .api-reference-toolbar {
+      display: none;
+    }
   `;
 }
 
