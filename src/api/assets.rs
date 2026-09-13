@@ -29,14 +29,41 @@ pub const SCALAR_CDN_JS: &str =
 const FETCH_ATTEMPTS: u32 = 4;
 
 fn http_client() -> reqwest::Result<reqwest::Client> {
+    // This build has none of reqwest's "gzip"/"brotli"/"deflate" features
+    // enabled, so it can't transparently decompress a compressed response —
+    // it would just hand back compressed bytes as-is with no error. That
+    // alone doesn't explain an outright body-read failure, but jsdelivr (a
+    // Cloudflare-fronted CDN) can still choose to compress a response even
+    // without a client Accept-Encoding header, so send an explicit
+    // `identity` to rule that out entirely as a variable rather than guess.
     reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(30))
+        .default_headers({
+            let mut h = reqwest::header::HeaderMap::new();
+            h.insert(reqwest::header::ACCEPT_ENCODING, reqwest::header::HeaderValue::from_static("identity"));
+            h
+        })
         .build()
 }
 
 /// GET `url` and return its body, retrying transient failures (connect
 /// errors, non-2xx, truncated/undecodable bodies) with exponential backoff.
 /// Only gives up after `FETCH_ATTEMPTS` tries.
+/// reqwest::Error's `Display` only prints its own top-level message (e.g.
+/// "error decoding response body") and swallows the actual underlying cause
+/// (hyper/IO/TLS error) that explains *why* — walk the full `source()` chain
+/// instead so retries actually reveal something diagnosable.
+fn describe_err(e: &dyn std::error::Error) -> String {
+    let mut out = e.to_string();
+    let mut src = e.source();
+    while let Some(s) = src {
+        out.push_str(" <- ");
+        out.push_str(&s.to_string());
+        src = s.source();
+    }
+    out
+}
+
 async fn get_bytes_with_retry(client: &reqwest::Client, url: &str) -> Result<Bytes, String> {
     let mut last_err = String::new();
     for attempt in 0..FETCH_ATTEMPTS {
@@ -46,10 +73,10 @@ async fn get_bytes_with_retry(client: &reqwest::Client, url: &str) -> Result<Byt
         match client.get(url).send().await {
             Ok(resp) if resp.status().is_success() => match resp.bytes().await {
                 Ok(b) => return Ok(b),
-                Err(e) => last_err = format!("failed to read body: {e}"),
+                Err(e) => last_err = format!("failed to read body: {}", describe_err(&e)),
             },
             Ok(resp) => last_err = format!("cdn returned {}", resp.status()),
-            Err(e) => last_err = format!("request failed: {e}"),
+            Err(e) => last_err = format!("request failed: {}", describe_err(&e)),
         }
         tracing::warn!(url, attempt = attempt + 1, error = %last_err, "asset fetch attempt failed, will retry");
     }
