@@ -12,14 +12,20 @@ import { ApiReferencePanel } from "@/features/api-reference/ApiReferencePanel";
 const queryClient = new QueryClient();
 
 const panels: Panel[] = [
-  { id: "dashboard", label: "Dashboard", content: <DashboardPanel /> },
-  { id: "logs", label: "Logs", content: <LogsPanel /> },
-  { id: "classify", label: "Classify", content: <ClassifyPanel /> },
-  { id: "chat", label: "Chat", content: <ChatPanel /> },
-  { id: "stt", label: "STT", content: <SttPanel /> },
-  { id: "tts", label: "TTS", content: <TtsPanel /> },
-  { id: "detect", label: "Detect", content: <DetectPanel /> },
-  { id: "api-reference", label: "API Reference", content: <ApiReferencePanel /> },
+  { id: "tts", label: "TTS", icon: "ri-music-2-line", group: "Playground", content: <TtsPanel /> },
+  { id: "classify", label: "Classify", icon: "ri-image-line", group: "Playground", content: <ClassifyPanel /> },
+  { id: "stt", label: "STT", icon: "ri-mic-line", group: "Playground", content: <SttPanel /> },
+  { id: "detect", label: "Detect", icon: "ri-focus-3-line", group: "Playground", content: <DetectPanel /> },
+  { id: "chat", label: "Chat", icon: "ri-robot-2-line", group: "Playground", content: <ChatPanel /> },
+  { id: "dashboard", label: "Dashboard", icon: "ri-dashboard-3-line", group: "Tools", content: <DashboardPanel /> },
+  { id: "logs", label: "Logs", icon: "ri-file-list-3-line", group: "Tools", content: <LogsPanel /> },
+  {
+    id: "api-reference",
+    label: "API Reference",
+    icon: "ri-link-m",
+    group: "Reference",
+    content: <ApiReferencePanel />,
+  },
 ];
 
 export default function App() {

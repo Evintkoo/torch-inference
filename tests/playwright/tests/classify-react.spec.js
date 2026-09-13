@@ -1,4 +1,3 @@
-const path = require('node:path');
 const { test, expect } = require('@playwright/test');
 
 const reactNavClassify = '[data-testid="panel-nav-classify"]';
@@ -7,7 +6,7 @@ const reactPanelClassify = '[data-testid="panel-content-classify"]';
 // A tiny valid 1x1 red PNG, so the real /classify/batch endpoint can decode
 // and preprocess it (a text file with a renamed extension would 400).
 const FIXTURE_PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==',
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC',
   'base64',
 );
 
@@ -31,7 +30,7 @@ test.describe('React Classify panel (/preview)', () => {
     page,
   }) => {
     const panel = page.locator(reactPanelClassify);
-    const fixturePath = path.join(test.info().outputDir, 'classify-fixture.png');
+    const fixturePath = test.info().outputPath('classify-fixture.png');
     require('node:fs').writeFileSync(fixturePath, FIXTURE_PNG);
 
     await panel.getByTestId('classify-file-input').setInputFiles(fixturePath);
