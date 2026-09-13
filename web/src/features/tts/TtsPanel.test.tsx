@@ -30,7 +30,7 @@ describe("TtsPanel", () => {
 
   afterEach(() => vi.unstubAllGlobals());
 
-  it("renders the Live TTS Stream and REST Synthesis cards", () => {
+  it("renders the merged Speak card, auto-connected", () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
@@ -39,9 +39,7 @@ describe("TtsPanel", () => {
     );
 
     expect(screen.getByRole("heading", { name: "TTS" })).toBeInTheDocument();
-    expect(screen.getByText("Live TTS Stream")).toBeInTheDocument();
-    expect(screen.getByText("REST Synthesis")).toBeInTheDocument();
-    expect(screen.getByTestId("tts-synthesize-btn")).toBeInTheDocument();
-    expect(screen.getByTestId("tts-ws-connect-btn")).toBeInTheDocument();
+    expect(screen.getByTestId("tts-ws-speak-btn")).toBeInTheDocument();
+    expect(MockWebSocket.instances).toHaveLength(1);
   });
 });

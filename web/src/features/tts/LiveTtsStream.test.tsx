@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -41,60 +42,61 @@ function connectSocket() {
   return socket;
 }
 
+function renderPanel() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={client}>
+      <LiveTtsStream />
+    </QueryClientProvider>,
+  );
+}
+
 describe("LiveTtsStream", () => {
   beforeEach(() => {
     MockWebSocket.instances = [];
     vi.stubGlobal("WebSocket", MockWebSocket);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ engines: [], voices: [] }) }),
+    );
   });
 
   afterEach(() => vi.unstubAllGlobals());
 
-  it("starts disconnected with the Connect button visible", () => {
-    render(<LiveTtsStream />);
-    expect(screen.getByTestId("tts-ws-status-label")).toHaveTextContent("disconnected");
-    expect(screen.getByTestId("tts-ws-connect-btn")).toHaveTextContent("Connect");
-    expect(MockWebSocket.instances).toHaveLength(0);
-  });
-
-  it("opens a connection to /audio/ws on Connect and flips the status label", async () => {
-    const user = userEvent.setup();
-    render(<LiveTtsStream />);
-
-    await user.click(screen.getByTestId("tts-ws-connect-btn"));
+  it("connects to /audio/ws automatically on mount, no manual Connect step", () => {
+    renderPanel();
+    expect(screen.getByTestId("tts-ws-status-label")).toHaveTextContent("connecting…");
     expect(MockWebSocket.instances).toHaveLength(1);
     expect(MockWebSocket.instances[0].url).toBe(`ws://${location.host}/audio/ws`);
+    expect(screen.queryByTestId("tts-ws-connect-btn")).not.toBeInTheDocument();
+  });
 
+  it("flips the status label to connected once the socket opens", async () => {
+    renderPanel();
     connectSocket();
     await waitFor(() => expect(screen.getByTestId("tts-ws-status-label")).toHaveTextContent("connected"));
-    expect(screen.getByTestId("tts-ws-connect-btn")).toHaveTextContent("Disconnect");
   });
 
   it("disables Speak until connected and text is entered, then sends a tts message", async () => {
     const user = userEvent.setup();
-    render(<LiveTtsStream />);
+    renderPanel();
 
     expect(screen.getByTestId("tts-ws-speak-btn")).toBeDisabled();
 
-    await user.click(screen.getByTestId("tts-ws-connect-btn"));
     const socket = connectSocket();
     await waitFor(() => expect(screen.getByTestId("tts-ws-status-label")).toHaveTextContent("connected"));
 
     expect(screen.getByTestId("tts-ws-speak-btn")).toBeDisabled();
     await user.type(screen.getByTestId("tts-ws-text-input"), "Hello there");
-    await user.type(screen.getByTestId("tts-ws-voice-input"), "af_heart");
     expect(screen.getByTestId("tts-ws-speak-btn")).toBeEnabled();
 
     await user.click(screen.getByTestId("tts-ws-speak-btn"));
-    expect(socket.sent).toEqual([
-      JSON.stringify({ type: "tts", text: "Hello there", voice: "af_heart", speed: 1 }),
-    ]);
+    expect(socket.sent).toEqual([JSON.stringify({ type: "tts", text: "Hello there", speed: 1 })]);
     await waitFor(() => expect(screen.getByTestId("tts-ws-status")).toHaveTextContent("Synthesising…"));
   });
 
   it("reacts to tts_meta / tts_done text frames from the server", async () => {
-    const user = userEvent.setup();
-    render(<LiveTtsStream />);
-    await user.click(screen.getByTestId("tts-ws-connect-btn"));
+    renderPanel();
     const socket = connectSocket();
     await waitFor(() => expect(screen.getByTestId("tts-ws-status-label")).toHaveTextContent("connected"));
 
@@ -109,9 +111,7 @@ describe("LiveTtsStream", () => {
   });
 
   it("surfaces a server error frame in the status text", async () => {
-    const user = userEvent.setup();
-    render(<LiveTtsStream />);
-    await user.click(screen.getByTestId("tts-ws-connect-btn"));
+    renderPanel();
     const socket = connectSocket();
     await waitFor(() => expect(screen.getByTestId("tts-ws-status-label")).toHaveTextContent("connected"));
 
@@ -120,9 +120,7 @@ describe("LiveTtsStream", () => {
   });
 
   it("does not throw on a binary PCM frame when AudioContext is unavailable (jsdom default)", async () => {
-    const user = userEvent.setup();
-    render(<LiveTtsStream />);
-    await user.click(screen.getByTestId("tts-ws-connect-btn"));
+    renderPanel();
     const socket = connectSocket();
     await waitFor(() => expect(screen.getByTestId("tts-ws-status-label")).toHaveTextContent("connected"));
 
@@ -130,15 +128,18 @@ describe("LiveTtsStream", () => {
     expect(() => socket.onmessage?.({ data: frame })).not.toThrow();
   });
 
-  it("Disconnect closes the socket and resets the status label", async () => {
+  it("Stop tears down the audio context and resets speaking state", async () => {
     const user = userEvent.setup();
-    render(<LiveTtsStream />);
-    await user.click(screen.getByTestId("tts-ws-connect-btn"));
-    const socket = connectSocket();
+    renderPanel();
+    connectSocket();
     await waitFor(() => expect(screen.getByTestId("tts-ws-status-label")).toHaveTextContent("connected"));
 
-    await user.click(screen.getByTestId("tts-ws-connect-btn"));
-    expect(socket.closed).toBe(true);
-    await waitFor(() => expect(screen.getByTestId("tts-ws-status-label")).toHaveTextContent("disconnected"));
+    await user.type(screen.getByTestId("tts-ws-text-input"), "Hello");
+    await user.click(screen.getByTestId("tts-ws-speak-btn"));
+    expect(screen.getByTestId("tts-ws-stop-btn")).toBeEnabled();
+
+    await user.click(screen.getByTestId("tts-ws-stop-btn"));
+    await waitFor(() => expect(screen.getByTestId("tts-ws-status")).toHaveTextContent("Stopped"));
+    expect(screen.getByTestId("tts-ws-stop-btn")).toBeDisabled();
   });
 });

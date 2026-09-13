@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useWebSocketStream } from "@/lib/ws-client";
+import { EngineVoiceSelect } from "./EngineVoiceSelect";
 import type { TtsWsMessage } from "./types";
 
 const DEFAULT_SAMPLE_RATE = 24000;
@@ -14,14 +15,18 @@ function getAudioContextCtor(): AudioContextCtor | null {
 }
 
 /**
- * Duplex "Live TTS Stream" panel, ported from playground.html's
- * wsAudioConnect()/wsTtsSpeak() — connects to `GET /audio/ws`, sends
- * `{type:"tts",...}` and schedules the binary PCM f32le frames that come
- * back onto a Web Audio graph as they arrive.
+ * Text-to-speech: one form (engine/voice + text + speed), one Speak button.
+ * Streams low-latency PCM over `GET /audio/ws` and schedules it onto a Web
+ * Audio graph as it arrives — playback starts before the full utterance has
+ * even finished synthesising. The connection is managed automatically (no
+ * manual "Connect" step); this used to be two separate panels (a duplex WS
+ * "Live Stream" card and a REST "one-shot" card offering the same "speak
+ * this text" outcome through two different transports) — merged into one,
+ * keeping the lower-latency streaming path.
  */
 export function LiveTtsStream() {
-  const [enabled, setEnabled] = useState(false);
   const [text, setText] = useState("");
+  const [engine, setEngine] = useState("");
   const [voice, setVoice] = useState("");
   const [speed, setSpeed] = useState(1.0);
   const [status, setStatus] = useState("—");
@@ -59,8 +64,9 @@ export function LiveTtsStream() {
     nextPlayAtRef.current = start + buf.duration;
   };
 
-  const { data, connected, error, send, close } = useWebSocketStream<TtsWsMessage>("/audio/ws", {
-    enabled,
+  // Connects automatically on mount — no manual "Connect" step.
+  const { data, connected, error, send } = useWebSocketStream<TtsWsMessage>("/audio/ws", {
+    enabled: true,
     onBinaryMessage: scheduleChunk,
   });
 
@@ -68,7 +74,7 @@ export function LiveTtsStream() {
     if (!data) return;
     switch (data.type) {
       case "ready":
-        setStatus("Connected — ready");
+        setStatus((s) => (s === "—" ? "Ready" : s));
         break;
       case "tts_meta":
         sampleRateRef.current = data.sample_rate ?? DEFAULT_SAMPLE_RATE;
@@ -102,25 +108,13 @@ export function LiveTtsStream() {
     [],
   );
 
-  function toggleConnection() {
-    if (connected) {
-      close();
-      setEnabled(false);
-      setStatus("Disconnected");
-      setSpeaking(false);
-    } else {
-      setStatus("Connecting…");
-      setEnabled(true);
-    }
-  }
-
   function speak() {
     const trimmed = text.trim();
     if (!trimmed) {
       setStatus("Enter text first");
       return;
     }
-    send(JSON.stringify({ type: "tts", text: trimmed, voice: voice || undefined, speed: speed || 1.0 }));
+    send(JSON.stringify({ type: "tts", text: trimmed, voice: voice || engine || undefined, speed: speed || 1.0 }));
     setStatus("Synthesising…");
     setSpeaking(true);
     setDurationMs(null);
@@ -140,9 +134,9 @@ export function LiveTtsStream() {
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <CardTitle>Live TTS Stream</CardTitle>
+            <CardTitle>Speak</CardTitle>
             <CardDescription>
-              Low-latency duplex audio via <code>GET /audio/ws</code>
+              Low-latency streaming synthesis via <code>GET /audio/ws</code>
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -150,13 +144,11 @@ export function LiveTtsStream() {
               data-testid="tts-ws-status-dot"
               className={`inline-block h-2.5 w-2.5 rounded-full ${connected ? "bg-emerald-500" : "bg-muted-foreground/40"}`}
               aria-hidden="true"
+              title={connected ? "connected" : "connecting…"}
             />
             <span data-testid="tts-ws-status-label" className="text-xs text-muted-foreground">
-              {connected ? "connected" : "disconnected"}
+              {connected ? "connected" : "connecting…"}
             </span>
-            <Button size="sm" variant="outline" data-testid="tts-ws-connect-btn" onClick={toggleConnection}>
-              {connected ? "Disconnect" : "Connect"}
-            </Button>
           </div>
         </div>
       </CardHeader>
@@ -176,20 +168,9 @@ export function LiveTtsStream() {
               onChange={(e) => setText(e.target.value)}
             />
           </div>
-          <div className="flex gap-3">
-            <div className="flex-1 space-y-1">
-              <label htmlFor="ws-tts-voice" className="text-xs font-medium text-muted-foreground">
-                Voice / Engine
-              </label>
-              <input
-                id="ws-tts-voice"
-                data-testid="tts-ws-voice-input"
-                type="text"
-                placeholder="af_heart (or blank for default)"
-                className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm"
-                value={voice}
-                onChange={(e) => setVoice(e.target.value)}
-              />
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="min-w-[240px] flex-1">
+              <EngineVoiceSelect engine={engine} voice={voice} onEngineChange={setEngine} onVoiceChange={setVoice} />
             </div>
             <div className="w-24 space-y-1">
               <label htmlFor="ws-tts-speed" className="text-xs font-medium text-muted-foreground">

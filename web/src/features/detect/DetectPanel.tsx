@@ -1,12 +1,19 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { DetectFileUpload } from "./DetectFileUpload";
 import { DetectLiveStream } from "./DetectLiveStream";
 
+type Mode = "file" | "live";
+
 /**
- * Object Detection panel — parity with playground.html's `#panel-detect`: a File sub-tab
- * (`POST /yolo/detect`) and a Live Stream sub-tab (`GET /ws/detect`).
+ * Object Detection panel — a File mode (`POST /yolo/detect`) and a Live
+ * Stream mode (`GET /ws/detect`), switched with the same compact toggle used
+ * by the Chat/TTS/STT panels rather than a full shadcn Tabs bar, so only one
+ * input method is ever on screen.
  */
 export function DetectPanel() {
+  const [mode, setMode] = useState<Mode>("file");
+
   return (
     <div className="space-y-4">
       <div>
@@ -16,22 +23,41 @@ export function DetectPanel() {
           <code>GET /ws/detect</code>.
         </p>
       </div>
-      <Tabs defaultValue="file">
-        <TabsList>
-          <TabsTrigger value="file" id="det-tab-file" data-testid="det-tab-file">
-            File
-          </TabsTrigger>
-          <TabsTrigger value="live" id="det-tab-live" data-testid="det-tab-live">
-            Live Stream
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="file" data-testid="det-pane-file">
+
+      <div className="inline-flex w-fit gap-1 border border-border bg-card p-1" data-testid="det-mode-toggle">
+        <button
+          type="button"
+          data-testid="det-tab-file"
+          onClick={() => setMode("file")}
+          className={cn(
+            "px-3 py-1 text-sm font-medium transition-colors",
+            mode === "file" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          File
+        </button>
+        <button
+          type="button"
+          data-testid="det-tab-live"
+          onClick={() => setMode("live")}
+          className={cn(
+            "px-3 py-1 text-sm font-medium transition-colors",
+            mode === "live" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          Live Stream
+        </button>
+      </div>
+
+      {mode === "file" ? (
+        <div data-testid="det-pane-file">
           <DetectFileUpload />
-        </TabsContent>
-        <TabsContent value="live" data-testid="det-pane-live">
+        </div>
+      ) : (
+        <div data-testid="det-pane-live">
           <DetectLiveStream />
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
     </div>
   );
 }

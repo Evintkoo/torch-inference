@@ -8,6 +8,8 @@ const panelStt = '[data-testid="panel-content-stt"]';
 const healthBadge = '[data-testid="stt-health-badge"]';
 const uploadCard = '[data-testid="upload-transcribe-card"]';
 const liveStream = '[data-testid="live-stt-stream"]';
+const modeUploadBtn = '[data-testid="stt-mode-upload-btn"]';
+const modeLiveBtn = '[data-testid="stt-mode-live-btn"]';
 const modelStatus = '[data-testid="stt-model-status"]';
 const recordButton = '[data-testid="stt-record-button"]';
 const vadLabel = '[data-testid="stt-vad-label"]';
@@ -22,22 +24,35 @@ test.describe('React STT panel (/preview)', () => {
     await page.goto('/preview');
   });
 
-  test('navigates to the STT tab', async ({ page }) => {
+  test('navigates to the STT tab, showing the Upload card by default', async ({ page }) => {
     await page.locator(navStt).click();
     await expect(page.locator(panelStt)).toBeVisible();
     await expect(page.locator(healthBadge)).toBeVisible({ timeout: 10000 });
     await expect(page.locator(uploadCard)).toBeVisible();
+    await expect(page.locator(liveStream)).not.toBeVisible();
+  });
+
+  test('the mode toggle switches between Upload and Live, one visible at a time', async ({ page }) => {
+    await page.locator(navStt).click();
+    await page.locator(modeLiveBtn).click();
     await expect(page.locator(liveStream)).toBeVisible();
+    await expect(page.locator(uploadCard)).not.toBeVisible();
+
+    await page.locator(modeUploadBtn).click();
+    await expect(page.locator(uploadCard)).toBeVisible();
+    await expect(page.locator(liveStream)).not.toBeVisible();
   });
 
   test('reports the live STT model status from /stt/health', async ({ page }) => {
     await page.locator(navStt).click();
+    await page.locator(modeLiveBtn).click();
     // Resolves to either a loaded/not-loaded/unreachable label once /stt/health responds.
     await expect(page.locator(modelStatus)).not.toHaveText(/checking/i, { timeout: 10000 });
   });
 
   test('Record starts idle with an empty transcript and no VAD activity', async ({ page }) => {
     await page.locator(navStt).click();
+    await page.locator(modeLiveBtn).click();
     await expect(page.locator(vadLabel)).toHaveText('idle');
     await expect(page.locator(transcriptBox)).toContainText(/transcript appears here/i);
   });
@@ -67,6 +82,7 @@ test.describe('React STT panel (/preview)', () => {
 
   test('Record button reflects STT model availability from /stt/health', async ({ page }) => {
     await page.locator(navStt).click();
+    await page.locator(modeLiveBtn).click();
     await expect(page.locator(modelStatus)).not.toHaveText(/checking/i, { timeout: 10000 });
     const label = await page.locator(modelStatus).textContent();
     if (/loaded ✓/.test(label || '')) {

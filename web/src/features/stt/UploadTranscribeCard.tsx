@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from "react";
-import { FileMusic, Mic2, Square, UploadCloud } from "lucide-react";
+import { useCallback, useState } from "react";
+import { FileMusic, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -29,10 +29,6 @@ export function UploadTranscribeCard() {
   const [result, setResult] = useState<TranscribeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
-  const [recording, setRecording] = useState(false);
-
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
 
   const transcribe = useCallback(async (toTranscribe: File, withTimestamps: boolean) => {
     setTranscribing(true);
@@ -75,38 +71,6 @@ export function UploadTranscribeCard() {
     if (!file) return;
     void transcribe(file, timestamps);
   }, [file, timestamps, transcribe]);
-
-  const toggleRecord = useCallback(async () => {
-    if (recorderRef.current && recorderRef.current.state === "recording") {
-      recorderRef.current.stop();
-      return;
-    }
-    if (!window.isSecureContext || !navigator.mediaDevices) {
-      setError("Microphone access requires a secure context (https:// or localhost).");
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      chunksRef.current = [];
-      const recorder = new MediaRecorder(stream);
-      recorder.ondataavailable = (e) => {
-        if (e.data.size) chunksRef.current.push(e.data);
-      };
-      recorder.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
-        setRecording(false);
-        const blob = new Blob(chunksRef.current, { type: chunksRef.current[0]?.type || "audio/webm" });
-        const recorded = new File([blob], "recording.webm", { type: blob.type });
-        handleFile(recorded);
-        void transcribe(recorded, timestamps);
-      };
-      recorder.start(200);
-      recorderRef.current = recorder;
-      setRecording(true);
-    } catch (err) {
-      setError(`Microphone error: ${(err as Error).message}`);
-    }
-  }, [handleFile, transcribe, timestamps]);
 
   return (
     <Card data-testid="upload-transcribe-card">
@@ -155,28 +119,15 @@ export function UploadTranscribeCard() {
           Include timestamps
         </label>
 
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            data-testid="audio-transcribe-button"
-            disabled={!file || transcribing}
-            onClick={runTranscribe}
-          >
-            <FileMusic className="size-4" aria-hidden="true" />
-            {transcribing ? "Transcribing…" : "Transcribe"}
-          </Button>
-          <Button type="button" variant="ghost" data-testid="audio-record-button" onClick={() => void toggleRecord()}>
-            {recording ? (
-              <>
-                <Square className="size-4" aria-hidden="true" /> Stop
-              </>
-            ) : (
-              <>
-                <Mic2 className="size-4" aria-hidden="true" /> Record
-              </>
-            )}
-          </Button>
-        </div>
+        <Button
+          type="button"
+          data-testid="audio-transcribe-button"
+          disabled={!file || transcribing}
+          onClick={runTranscribe}
+        >
+          <FileMusic className="size-4" aria-hidden="true" />
+          {transcribing ? "Transcribing…" : "Transcribe"}
+        </Button>
 
         <div className="min-h-[80px] rounded-md border bg-muted/30 p-2 text-sm" data-testid="audio-result-text">
           {error ? (

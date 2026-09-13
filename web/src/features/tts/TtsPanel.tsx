@@ -1,5 +1,4 @@
 import { LiveTtsStream } from "./LiveTtsStream";
-import { RestSynthesis } from "./RestSynthesis";
 
 export function TtsPanel() {
   return (
@@ -11,7 +10,6 @@ export function TtsPanel() {
         </p>
       </div>
       <LiveTtsStream />
-      <RestSynthesis />
     </div>
   );
 }
