@@ -46,7 +46,7 @@ pub fn init_structured_logging(log_dir: Option<&str>, json_output: bool) {
         }
     } else {
         // Human-readable output for development
-        let fmt_layer = fmt::layer()
+        let stdout_layer = fmt::layer()
             .with_target(true)
             .with_file(true)
             .with_line_number(true)
@@ -54,8 +54,30 @@ pub fn init_structured_logging(log_dir: Option<&str>, json_output: bool) {
             .with_span_events(FmtSpan::CLOSE)
             .pretty();
 
-        let subscriber = registry.with(fmt_layer);
-        tracing::subscriber::set_global_default(subscriber).expect("Failed to set subscriber");
+        if let Some(dir) = log_dir {
+            // Also write plain (non-ANSI) logs to a rolling file so tools like
+            // the playground's Logs panel (GET /logs) have something to read —
+            // previously `log_dir` was only honored in the json_output branch.
+            let file_appender =
+                RollingFileAppender::new(Rotation::DAILY, dir, "torch-inference.log");
+            let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+            std::mem::forget(_guard);
+
+            let file_layer = fmt::layer()
+                .with_target(true)
+                .with_file(true)
+                .with_line_number(true)
+                .with_thread_ids(true)
+                .with_span_events(FmtSpan::CLOSE)
+                .with_ansi(false)
+                .with_writer(non_blocking);
+
+            let subscriber = registry.with(stdout_layer).with(file_layer);
+            tracing::subscriber::set_global_default(subscriber).expect("Failed to set subscriber");
+        } else {
+            let subscriber = registry.with(stdout_layer);
+            tracing::subscriber::set_global_default(subscriber).expect("Failed to set subscriber");
+        }
     }
 
     tracing::info!("Structured logging initialized (json={})", json_output);

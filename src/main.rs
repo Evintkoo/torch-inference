@@ -227,7 +227,13 @@ async fn async_main() -> std::io::Result<()> {
 
     // Initialize structured logging
     let use_json = std::env::var("LOG_JSON").unwrap_or_else(|_| "false".to_string()) == "true";
-    let log_dir = std::env::var("LOG_DIR").ok();
+    // Default to "logs" so the playground's Logs panel (GET /logs) has files to
+    // show out of the box; set LOG_DIR="" to disable file logging entirely.
+    let log_dir = match std::env::var("LOG_DIR") {
+        Ok(v) if v.is_empty() => None,
+        Ok(v) => Some(v),
+        Err(_) => Some("logs".to_string()),
+    };
     init_structured_logging(log_dir.as_deref(), use_json);
     #[cfg(feature = "profiling")]
     tracing::info!("pprof profiling active at 100 Hz; flamegraph.svg written on shutdown");

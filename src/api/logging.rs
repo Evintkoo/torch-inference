@@ -63,7 +63,13 @@ pub async fn get_logging_info() -> Result<HttpResponse, ApiError> {
             for entry in entries.flatten() {
                 let path = entry.path();
 
-                if path.extension().and_then(|s| s.to_str()) == Some("log") {
+                // Daily-rotated files are named "<base>.log.YYYY-MM-DD", so
+                // `.log` is not the final extension — match anywhere in the name.
+                let is_log_file = path
+                    .file_name()
+                    .and_then(|s| s.to_str())
+                    .is_some_and(|s| s.contains(".log"));
+                if is_log_file {
                     if let Ok(metadata) = fs::metadata(&path) {
                         let size = metadata.len();
                         total_size += size;
@@ -224,7 +230,9 @@ pub struct LogFileQuery {
 
 /// Validate log filename to prevent directory traversal
 fn is_valid_log_filename(filename: &str) -> bool {
-    filename.ends_with(".log")
+    // Daily-rotated files are named "<base>.log.YYYY-MM-DD", so accept ".log"
+    // anywhere in the name, not just as the final suffix.
+    filename.contains(".log")
         && !filename.contains('/')
         && !filename.contains('\\')
         && !filename.contains("..")
