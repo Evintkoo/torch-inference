@@ -47,6 +47,18 @@ fn mel_filters() -> &'static [f32] {
     MEL_FILTERS.get_or_init(|| build_mel_filterbank(SAMPLE_RATE, N_FFT, N_MELS))
 }
 
+// Hann window depends only on the constant N_FFT; cache it like the mel
+// filterbank instead of recomputing (400 `cos` calls + an alloc) per call.
+static HANN_WINDOW: OnceLock<Vec<f32>> = OnceLock::new();
+
+fn hann_window() -> &'static [f32] {
+    HANN_WINDOW.get_or_init(|| {
+        (0..N_FFT)
+            .map(|n| 0.5 * (1.0 - (2.0 * std::f32::consts::PI * n as f32 / N_FFT as f32).cos()))
+            .collect()
+    })
+}
+
 fn hz_to_mel(hz: f64) -> f64 {
     2595.0 * (1.0 + hz / 700.0).log10()
 }
@@ -101,11 +113,7 @@ fn log_mel_spectrogram(samples: &[f32]) -> Vec<f32> {
 
     let n_freqs = N_FFT / 2 + 1;
     let n_frames = MEL_FRAMES;
-
-    // Hann window
-    let hann: Vec<f32> = (0..N_FFT)
-        .map(|n| 0.5 * (1.0 - (2.0 * std::f32::consts::PI * n as f32 / N_FFT as f32).cos()))
-        .collect();
+    let hann = hann_window();
 
     let mut planner: FftPlanner<f32> = FftPlanner::new();
     let fft = planner.plan_fft_forward(N_FFT);
@@ -146,13 +154,22 @@ fn log_mel_spectrogram(samples: &[f32]) -> Vec<f32> {
         }
     }
 
-    // Log compression + Whisper normalisation
-    let log_mel: Vec<f32> = mel.iter().map(|&v| (v.max(1e-10)).log10()).collect();
-    let max_val = log_mel.iter().cloned().fold(f32::NEG_INFINITY, f32::max);
-    log_mel
-        .into_iter()
-        .map(|v| (v.max(max_val - 8.0) + 4.0) / 4.0)
-        .collect()
+    // Log compression + Whisper normalisation in a single in-place pass over
+    // `mel`, avoiding the intermediate 240K-float `log_mel` buffer + a second
+    // full sweep. We need the max first, so it's log10 in place, then fold.
+    let max_val = mel
+        .iter_mut()
+        .map(|v| {
+            let l = (*v).max(1e-10).log10();
+            *v = l;
+            l
+        })
+        .fold(f32::NEG_INFINITY, f32::max);
+
+    for v in mel.iter_mut() {
+        *v = ((*v).max(max_val - 8.0) + 4.0) / 4.0;
+    }
+    mel
 }
 
 // ── BPE byte-level vocab decoder ─────────────────────────────────────────────
@@ -178,11 +195,28 @@ fn bytes_to_unicode() -> [char; 256] {
     table
 }
 
+// Reverse-lookup table built once per process: maps char codepoint (all byte
+// mapping chars land in [0, 512)) → the originating byte, or -1 if the char is
+// not a byte-mapping char. Replaces a per-`transcribe()` 256-entry HashMap.
+static U2B: OnceLock<[i8; 512]> = OnceLock::new();
+
+fn u2b_table() -> &'static [i8; 512] {
+    U2B.get_or_init(|| {
+        let mut table = [-1i8; 512];
+        let b2u = bytes_to_unicode();
+        for (b, &c) in b2u.iter().enumerate() {
+            let cu = c as usize;
+            if cu < table.len() {
+                table[cu] = b as i8;
+            }
+        }
+        table
+    })
+}
+
 /// Decode a sequence of Whisper token IDs to UTF-8 text.
 fn decode_tokens(token_ids: &[i64], vocab: &HashMap<i64, String>) -> String {
-    // Build reverse byte table once
-    let b2u = bytes_to_unicode();
-    let u2b: HashMap<char, u8> = b2u.iter().enumerate().map(|(b, &c)| (c, b as u8)).collect();
+    let u2b = u2b_table();
 
     let mut bytes: Vec<u8> = Vec::new();
     for &id in token_ids {
@@ -191,8 +225,9 @@ fn decode_tokens(token_ids: &[i64], vocab: &HashMap<i64, String>) -> String {
         }
         if let Some(s) = vocab.get(&id) {
             for ch in s.chars() {
-                if let Some(&b) = u2b.get(&ch) {
-                    bytes.push(b);
+                let cu = ch as usize;
+                if cu < u2b.len() && u2b[cu] >= 0 {
+                    bytes.push(u2b[cu] as u8);
                 } else {
                     // Multi-byte char that isn't in the byte table — encode as UTF-8
                     let mut buf = [0u8; 4];
@@ -275,20 +310,24 @@ impl WhisperOnnxPipeline {
         audio: &AudioData,
         return_timestamps: bool,
     ) -> Result<TranscriptionResult> {
-        // 1. Resample to 16 kHz mono
-        let audio = if audio.sample_rate != SAMPLE_RATE {
-            self.processor.resample(audio, SAMPLE_RATE)?
+        // 1. Resample to 16 kHz + downmix to mono. The common STT case (already
+        //    16 kHz mono) previously cloned the full AudioData here AND the
+        //    samples vec — produce `mono` directly so the no-resample/mono path
+        //    does exactly one copy.
+        let resampled;
+        let src = if audio.sample_rate != SAMPLE_RATE {
+            resampled = self.processor.resample(audio, SAMPLE_RATE)?;
+            &resampled
         } else {
-            audio.clone()
-        };
-        let mono: Vec<f32> = if audio.channels > 1 {
             audio
-                .samples
-                .chunks(audio.channels as usize)
+        };
+        let mono: Vec<f32> = if src.channels > 1 {
+            src.samples
+                .chunks(src.channels as usize)
                 .map(|ch| ch.iter().sum::<f32>() / ch.len() as f32)
                 .collect()
         } else {
-            audio.samples.clone()
+            src.samples.clone()
         };
 
         // 2. Log-mel spectrogram → [1, 80, 3000]
@@ -297,8 +336,14 @@ impl WhisperOnnxPipeline {
             Tensor::<f32>::from_array(([1usize, N_MELS, MEL_FRAMES], mel))
                 .context("building mel tensor")?;
 
-        // 3. Encoder forward — lock, run, extract to owned Vec, drop lock
-        let (enc_vec, enc_seq, enc_dim) = {
+        // 3. Encoder forward — lock, run, materialise the encoder hidden states
+        //    into a single owned Vec, and build the encoder tensor ONCE. The
+        //    decoder reuses this tensor by reference on every iteration below
+        //    (via SessionInputValue::View), avoiding a ~3 MB (1500×512 f32)
+        //    clone per token — previously up to ~670 MB of memcpy/transcription.
+        let mut dec = self.decoder.lock();
+        let enc_seq = 1500usize;
+        let enc_tensor = {
             let mut enc = self.encoder.lock();
             let enc_outputs = enc
                 .run(ort::inputs!["input_features" => mel_tensor])
@@ -306,56 +351,58 @@ impl WhisperOnnxPipeline {
             let (_enc_shape, enc_data) = enc_outputs["last_hidden_state"]
                 .try_extract_tensor::<f32>()
                 .context("extract encoder output")?;
+            // enc_data is a borrowed view into the session output; copy once
+            // into an owning Vec, then build the encoder tensor a single time.
             let v: Vec<f32> = enc_data.iter().copied().collect();
-            let seq = 1500usize;
-            let dim = v.len() / seq; // 512
-            (v, seq, dim)
+            let dim = v.len() / enc_seq; // 512
+            Tensor::<f32>::from_array(([1usize, enc_seq, dim], v))
+                .context("building encoder_hidden_states tensor")?
         };
 
-        // 4. Greedy decode
+        // 4. Greedy decode. `input_ids` must be rebuilt each step (it grows),
+        // but the encoder tensor is fed by reference — no per-iteration clone.
+        // The decoder lock is held once for the whole loop (no await inside),
+        // and dropped at the end of this block so later `&self` use is sound.
         let forced_prefix: Vec<i64> = vec![SOT, LANG_EN, TASK_TRANSCRIBE, NO_TIMESTAMPS];
         let mut tokens: Vec<i64> = forced_prefix.clone();
 
-        for _ in 0..MAX_NEW_TOKENS {
-            let seq_len = tokens.len();
+        {
+            for _ in 0..MAX_NEW_TOKENS {
+                let seq_len = tokens.len();
 
-            let ids_tensor = Tensor::<i64>::from_array(([1usize, seq_len], tokens.clone()))
-                .context("building decoder input_ids tensor")?;
-            let enc_tensor =
-                Tensor::<f32>::from_array(([1usize, enc_seq, enc_dim], enc_vec.clone()))
-                    .context("building encoder_hidden_states tensor")?;
+                let ids_tensor = Tensor::<i64>::from_array(([1usize, seq_len], tokens.clone()))
+                    .context("building decoder input_ids tensor")?;
 
-            // Lock decoder, run, extract logits to owned Vec, drop lock
-            let logits: Vec<f32> = {
-                let mut dec = self.decoder.lock();
+                // Lock is already held (dec). Run, extract logits to owned Vec.
                 let dec_outputs = dec
                     .run(ort::inputs![
                         "input_ids"              => ids_tensor,
-                        "encoder_hidden_states"  => enc_tensor
+                        "encoder_hidden_states"  => &enc_tensor
                     ])
                     .context("decoder run")?;
                 let (_logit_shape, logit_data) = dec_outputs["logits"]
                     .try_extract_tensor::<f32>()
                     .context("extract logits")?;
-                logit_data.iter().copied().collect()
-            };
+                let logits: Vec<f32> = logit_data.iter().copied().collect();
 
-            // argmax over last token position: logits[0, seq_len-1, :]
-            let vocab_size = logits.len() / seq_len;
-            let offset = (seq_len - 1) * vocab_size;
-            let last_logits = &logits[offset..offset + vocab_size];
+                // argmax over last token position: logits[0, seq_len-1, :]
+                let vocab_size = logits.len() / seq_len;
+                let offset = (seq_len - 1) * vocab_size;
+                let last_logits = &logits[offset..offset + vocab_size];
 
-            let next_token = last_logits
-                .iter()
-                .enumerate()
-                .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
-                .map(|(i, _)| i as i64)
-                .unwrap_or(EOT);
+                let next_token = last_logits
+                    .iter()
+                    .enumerate()
+                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+                    .map(|(i, _)| i as i64)
+                    .unwrap_or(EOT);
 
-            if next_token == EOT {
-                break;
+                if next_token == EOT {
+                    break;
+                }
+                tokens.push(next_token);
             }
-            tokens.push(next_token);
+            drop(dec);
         }
 
         // 5. Decode tokens (skip forced prefix)
