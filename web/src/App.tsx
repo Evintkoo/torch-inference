@@ -7,6 +7,7 @@ import { ChatPanel } from "@/features/chat/ChatPanel";
 import { SttPanel } from "@/features/stt/SttPanel";
 import { TtsPanel } from "@/features/tts/TtsPanel";
 import { DetectPanel } from "@/features/detect/DetectPanel";
+import { ApiReferencePanel } from "@/features/api-reference/ApiReferencePanel";
 
 const queryClient = new QueryClient();
 
@@ -18,6 +19,7 @@ const panels: Panel[] = [
   { id: "stt", label: "STT", content: <SttPanel /> },
   { id: "tts", label: "TTS", content: <TtsPanel /> },
   { id: "detect", label: "Detect", content: <DetectPanel /> },
+  { id: "api-reference", label: "API Reference", content: <ApiReferencePanel /> },
 ];
 
 export default function App() {
