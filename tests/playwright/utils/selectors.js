@@ -224,4 +224,19 @@ module.exports = {
   reactNavDashboard:    '[data-testid="panel-nav-dashboard"]',
   reactPanelDashboard:  '[data-testid="panel-content-dashboard"]',
   reactMetricsChart:    '[data-testid="metrics-chart"]',
+
+  // ── React Detect panel ───────────────────────────────────
+  reactNavDetect:       '[data-testid="panel-nav-detect"]',
+  reactPanelDetect:     '[data-testid="panel-content-detect"]',
+  reactDetectTabFile:   '[data-testid="det-tab-file"]',
+  reactDetectTabLive:   '[data-testid="det-tab-live"]',
+  reactDetectPaneFile:  '[data-testid="det-pane-file"]',
+  reactDetectPaneLive:  '[data-testid="det-pane-live"]',
+  reactDetectFileInput: '#detect-file',
+  reactDetectBtn:       '[data-testid="detect-btn"]',
+  reactDetectCanvas:    '[data-testid="detect-canvas"]',
+  reactDetectOut:       '[data-testid="detect-out"]',
+  reactDetectWsBtn:     '[data-testid="det-ws-btn"]',
+  reactDetectWsLabel:   '[data-testid="det-ws-label"]',
+  reactDetectModelLabel:'[data-testid="det-model-label"]',
 };

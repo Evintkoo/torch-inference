@@ -51,3 +51,20 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
   }
   return res.json() as Promise<T>;
 }
+
+/**
+ * POST a `multipart/form-data` body (file uploads). Deliberately omits a Content-Type header —
+ * the browser sets `multipart/form-data; boundary=...` itself from the FormData body, and
+ * setting it manually drops the boundary.
+ */
+export async function apiPostForm<T>(path: string, form: FormData): Promise<T> {
+  const res = await fetch(path, {
+    method: "POST",
+    headers: { Accept: "application/json", ...authHeaders() },
+    body: form,
+  });
+  if (!res.ok) {
+    throw new ApiError(`POST ${path} failed with ${res.status}`, res.status, await parseErrorBody(res));
+  }
+  return res.json() as Promise<T>;
+}
