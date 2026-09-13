@@ -1,7 +1,7 @@
 # Makefile for torch-inference
 # Provides convenient commands for building and running
 
-.PHONY: help build run dev test coverage clean install doctor flamegraph prod
+.PHONY: help build web run dev test coverage clean install doctor flamegraph prod
 
 # Default target
 .DEFAULT_GOAL := help
@@ -22,6 +22,11 @@ build: ## Build release binary (recommended)
 	$(CARGO) build --release --no-default-features --features production
 	@echo ""
 	@echo "✅ Build complete: ./target/release/torch-inference-server"
+
+web: ## Build the React frontend (required before `cargo build` picks up web/dist/)
+	@echo "Building frontend..."
+	cd web && npm ci && npm run build
+	@echo "✅ Frontend build complete: ./web/dist/"
 
 run: ## Run server in release mode
 	@echo "Starting server (release mode)..."
