@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Torch Inference Engine</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><rect width='32' height='32' rx='0' fill='%230D0E0F'/><text x='4' y='23' font-family='sans-serif' font-size='16' font-weight='700' fill='white'>KI</text></svg>" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><rect width='32' height='32' rx='0' fill='%230D0E0F'/><text x='5' y='21' font-family='sans-serif' font-size='11' font-weight='700' letter-spacing='0.5' fill='white'>TIE</text></svg>" />
 <link href="/assets/remixicon.css" rel="stylesheet" />
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1019,7 +1019,7 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
       <div id="llm-chat-box" class="gpt-thread" role="log" aria-live="polite" aria-relevant="additions" aria-label="Assistant conversation">
         <!-- Welcome screen shown when no messages -->
         <div id="chat-welcome" class="gpt-welcome">
-          <div class="gpt-welcome-avatar">N</div>
+          <div class="gpt-welcome-avatar">T</div>
           <h2>What can I help with?</h2>
           <div class="gpt-cap-grid">
             <button class="gpt-cap-card" onclick="chatCapability('tts')">
@@ -5595,7 +5595,7 @@ function buildWelcomeEl() {
 
   const av = document.createElement('div');
   av.className = 'gpt-welcome-avatar';
-  av.textContent = 'N';
+  av.textContent = 'T';
 
   const h2 = document.createElement('h2');
   h2.textContent = 'What can I help with?';
@@ -5850,7 +5850,7 @@ function appendAsstRow() {
   const header = document.createElement('div');
   header.className = 'chat-asst-header';
   const av = document.createElement('div');
-  av.className = 'chat-asst-avatar'; av.textContent = 'N';
+  av.className = 'chat-asst-avatar'; av.textContent = 'T';
   const nm = document.createElement('div');
   nm.className = 'chat-asst-name'; nm.textContent = 'Assistant';
   header.appendChild(av); header.appendChild(nm);
