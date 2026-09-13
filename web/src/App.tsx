@@ -5,6 +5,7 @@ import { LogsPanel } from "@/features/logs/LogsPanel";
 import { ClassifyPanel } from "@/features/classify/ClassifyPanel";
 import { ChatPanel } from "@/features/chat/ChatPanel";
 import { SttPanel } from "@/features/stt/SttPanel";
+import { TtsPanel } from "@/features/tts/TtsPanel";
 
 const queryClient = new QueryClient();
 
@@ -14,6 +15,7 @@ const panels: Panel[] = [
   { id: "classify", label: "Classify", content: <ClassifyPanel /> },
   { id: "chat", label: "Chat", content: <ChatPanel /> },
   { id: "stt", label: "STT", content: <SttPanel /> },
+  { id: "tts", label: "TTS", content: <TtsPanel /> },
 ];
 
 export default function App() {

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { apiGet, apiPost, apiPostForm, ApiError } from "./api-client";
+import { apiGet, apiPost, apiPostForm, apiPostStream, ApiError } from "./api-client";
 
 function mockFetchOnce(status: number, body: unknown) {
   vi.stubGlobal(
@@ -92,6 +92,55 @@ describe("apiPostForm", () => {
       name: "ApiError",
       status: 400,
       body: { error: "bad audio" },
+    } satisfies Partial<ApiError>);
+  });
+});
+
+describe("apiPostStream", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    localStorage.clear();
+  });
+
+  it("returns the raw Response instead of parsing JSON, defaulting to text/event-stream Accept", async () => {
+    const body = { fake: "readable-stream" };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: true, status: 200, body }),
+    );
+    const res = await apiPostStream("/tts/stream", { text: "hi" });
+    expect(res.body).toBe(body);
+    const call = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(call[1].method).toBe("POST");
+    expect(call[1].body).toBe(JSON.stringify({ text: "hi" }));
+    expect((call[1].headers as Record<string, string>)["Content-Type"]).toBe("application/json");
+    expect((call[1].headers as Record<string, string>).Accept).toBe("text/event-stream");
+  });
+
+  it("honors an overridden Accept header for a binary stream", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, status: 200, body: null }));
+    await apiPostStream("/tts/stream", { text: "hi" }, { accept: "*/*" });
+    const call = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect((call[1].headers as Record<string, string>).Accept).toBe("*/*");
+  });
+
+  it("forwards an AbortSignal to fetch", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, status: 200, body: null }));
+    const controller = new AbortController();
+    await apiPostStream("/tts/stream", { text: "hi" }, { signal: controller.signal });
+    const call = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(call[1].signal).toBe(controller.signal);
+  });
+
+  it("throws ApiError with status and body on non-2xx", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: false, status: 500, json: async () => ({ error: "No TTS engine available" }) }),
+    );
+    await expect(apiPostStream("/tts/stream", { text: "hi" })).rejects.toMatchObject({
+      name: "ApiError",
+      status: 500,
+      body: { error: "No TTS engine available" },
     } satisfies Partial<ApiError>);
   });
 });

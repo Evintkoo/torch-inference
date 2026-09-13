@@ -64,21 +64,29 @@ export async function apiDelete<T>(path: string): Promise<T> {
 }
 
 /**
- * POST that returns the raw, unconsumed `Response` instead of parsing JSON —
- * for endpoints that reply with a streaming body (e.g. SSE chat completions)
- * where the caller needs `res.body`'s `ReadableStream` rather than a single
- * parsed payload. Still throws `ApiError` on a non-2xx status, same as
+ * POST JSON and return the raw, unconsumed `Response` instead of parsing it —
+ * for endpoints that reply with a streaming body, either textual (SSE chat
+ * completions) or binary (`/tts/stream`'s chunked WAV). Defaults `accept` to
+ * `text/event-stream` (the SSE case, the original/most common caller) — pass
+ * `accept: "*/*"` for a binary stream. Pass `signal` to make the request
+ * abortable (playground.html's TTS panel uses this for its "Stop" button via
+ * AbortController). Still throws `ApiError` on a non-2xx status, same as
  * `apiPost`.
  */
-export async function apiPostStream(path: string, data: unknown): Promise<Response> {
+export async function apiPostStream(
+  path: string,
+  data: unknown,
+  options?: { signal?: AbortSignal; accept?: string },
+): Promise<Response> {
   const res = await fetch(path, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Accept: "text/event-stream",
+      Accept: options?.accept ?? "text/event-stream",
       ...authHeaders(),
     },
     body: JSON.stringify(data),
+    signal: options?.signal,
   });
   if (!res.ok) {
     throw new ApiError(`POST ${path} failed with ${res.status}`, res.status, await parseErrorBody(res));
