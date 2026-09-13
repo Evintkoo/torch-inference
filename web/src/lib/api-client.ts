@@ -85,3 +85,19 @@ export async function apiPostStream(path: string, data: unknown): Promise<Respon
   }
   return res;
 }
+
+/**
+ * multipart/form-data POST (file uploads) — e.g. `/audio/transcribe`. Deliberately omits
+ * Content-Type so the browser sets the multipart boundary itself.
+ */
+export async function apiPostForm<T>(path: string, form: FormData): Promise<T> {
+  const res = await fetch(path, {
+    method: "POST",
+    headers: { Accept: "application/json", ...authHeaders() },
+    body: form,
+  });
+  if (!res.ok) {
+    throw new ApiError(`POST ${path} failed with ${res.status}`, res.status, await parseErrorBody(res));
+  }
+  return res.json() as Promise<T>;
+}

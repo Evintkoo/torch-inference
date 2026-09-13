@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { apiGet, apiPost, ApiError } from "./api-client";
+import { apiGet, apiPost, apiPostForm, ApiError } from "./api-client";
 
 function mockFetchOnce(status: number, body: unknown) {
   vi.stubGlobal(
@@ -65,5 +65,33 @@ describe("apiPost", () => {
     expect(call[1].method).toBe("POST");
     expect(call[1].body).toBe(JSON.stringify({ x: 1 }));
     expect((call[1].headers as Record<string, string>)["Content-Type"]).toBe("application/json");
+  });
+});
+
+describe("apiPostForm", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    localStorage.clear();
+  });
+
+  it("sends the FormData body as-is without a Content-Type header", async () => {
+    mockFetchOnce(200, { text: "hi" });
+    const form = new FormData();
+    form.append("audio", new Blob(["x"]), "clip.wav");
+    const result = await apiPostForm<{ text: string }>("/audio/transcribe", form);
+    expect(result).toEqual({ text: "hi" });
+    const call = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(call[1].method).toBe("POST");
+    expect(call[1].body).toBe(form);
+    expect((call[1].headers as Record<string, string>)["Content-Type"]).toBeUndefined();
+  });
+
+  it("throws ApiError with status and body on non-2xx", async () => {
+    mockFetchOnce(400, { error: "bad audio" });
+    await expect(apiPostForm("/audio/transcribe", new FormData())).rejects.toMatchObject({
+      name: "ApiError",
+      status: 400,
+      body: { error: "bad audio" },
+    } satisfies Partial<ApiError>);
   });
 });
