@@ -434,6 +434,24 @@
   .dl-status-badge.completed   { background: #F3FBF4; color: #2E9632; }
   .dl-status-badge.failed      { background: #FFF3F3; color: #CC2727; }
   .dl-status-badge.pending     { background: #FFFAF3; color: #CC8727; }
+  .log-table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: var(--mono); }
+  .log-table thead th {
+    position: sticky; top: 0; background: var(--surface2); text-align: left;
+    font-family: var(--font); font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .02em; color: var(--text-dim); padding: 6px 8px; border-bottom: 1px solid var(--border);
+  }
+  .log-table tbody td { padding: 4px 8px; border-bottom: 1px solid var(--border2); vertical-align: top; }
+  .log-table tbody tr:hover td { background: var(--surface2); }
+  .log-td-time  { white-space: nowrap; color: var(--text-dim); }
+  .log-td-level { white-space: nowrap; }
+  .log-td-msg   { word-break: break-word; white-space: pre-wrap; color: var(--text); }
+  .log-level-badge {
+    display: inline-block; font-family: var(--font); font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .02em; padding: 2px 7px; border-radius: 0;
+  }
+  .log-level-badge.level-error { background: var(--red-bg);    color: var(--red-text); }
+  .log-level-badge.level-warn  { background: var(--yellow-bg); color: var(--yellow-text); }
+  .log-level-badge.level-info  { background: #ebebeb; color: #444444; }
   .dl-progress-track { height: 5px; background: var(--border2); border-radius:0; overflow: hidden; margin-bottom: 5px; }
   .dl-progress-fill  { height: 100%; border-radius:0; background: var(--accent); transition: width .4s ease; }
   .dl-progress-fill.done   { background: var(--green); }
@@ -1897,11 +1915,25 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
         </div>
         <div class="card" style="padding:12px;min-height:240px">
           <div id="logs-viewer-header" style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-family:var(--mono)">Select a file to view</div>
-          <div style="display:flex;gap:8px;margin-bottom:8px">
-            <input type="text" id="log-search" placeholder="Search in log…" style="flex:1" oninput="searchLog()"  autocomplete="off" />
+          <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+            <input type="text" id="log-search" placeholder="Filter rows (time, level, message)…" style="flex:1;min-width:160px" oninput="searchLog()" autocomplete="off" />
+            <select id="log-lines-select" style="font-size:12px" onchange="if (currentLogFile) viewLog(currentLogFile)">
+              <option value="100">Last 100 lines</option>
+              <option value="500">Last 500 lines</option>
+              <option value="2000">Last 2000 lines</option>
+            </select>
             <span id="log-search-count" style="font-size:12px;color:var(--text-dim);align-self:center"></span>
           </div>
-          <pre id="logs-viewer-content" style="background:var(--bg);border:1px solid var(--border);border-radius:0;padding:10px;font-size:11px;font-family:var(--mono);max-height:400px;overflow:auto;white-space:pre-wrap;word-break:break-all;color:var(--text)">—</pre>
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:0;max-height:400px;overflow:auto">
+            <table class="log-table">
+              <thead>
+                <tr><th style="width:100px">Time</th><th style="width:70px">Level</th><th>Message</th></tr>
+              </thead>
+              <tbody id="logs-table-body">
+                <tr><td colspan="3" class="mdl-empty">Select a file to view</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </section>
@@ -3947,7 +3979,116 @@ function wsDrawLoop(canvasId, analyser) {
 }
 
 /* ── Logs tab ───────────────────────────────────────────── */
-let currentLogText = '';
+let currentLogFile = '';
+let currentLogRows = [];
+
+// Log lines look like:
+//   2026-09-13T09:39:19.512653Z  INFO ThreadId(02) target::path: src/file.rs:32: key=val key2="val 2"
+// Capture the RFC3339 timestamp and level; everything else (span name, target,
+// source location, and the space-separated fields) is kept together as the
+// message so nothing is lost even though it isn't broken out field-by-field.
+const LOG_LINE_RE = /^(\S+)\s+(TRACE|DEBUG|INFO|WARN|ERROR)\s+(?:ThreadId\(\d+\)\s+)?(.*)$/;
+
+function parseLogLines(text) {
+  const rows = [];
+  text.split('\n').forEach(raw => {
+    if (raw === '') return; // trailing newline from split
+    const m = raw.match(LOG_LINE_RE);
+    if (m) {
+      rows.push({ time: m[1], level: m[2], message: m[3], raw });
+    } else if (rows.length) {
+      // Continuation of the previous entry (e.g. a wrapped/multi-line value).
+      const prev = rows[rows.length - 1];
+      prev.message += '\n' + raw;
+      prev.raw += '\n' + raw;
+    } else {
+      rows.push({ time: '', level: '', message: raw, raw });
+    }
+  });
+  return rows;
+}
+
+function logLevelClass(level) {
+  if (level === 'ERROR') return 'level-error';
+  if (level === 'WARN') return 'level-warn';
+  return 'level-info'; // INFO, DEBUG, TRACE, or unparsed lines all read as neutral
+}
+
+function formatLogTime(iso) {
+  if (!iso) return '—';
+  const t = iso.indexOf('T');
+  if (t === -1) return iso;
+  let timePart = iso.slice(t + 1).replace(/Z$/, '');
+  const dot = timePart.indexOf('.');
+  if (dot !== -1) timePart = timePart.slice(0, dot + 4); // trim to milliseconds
+  return timePart;
+}
+
+function logTableMessage(message, term) {
+  const td = document.createElement('td');
+  td.className = 'log-td-msg';
+  if (!term) { td.textContent = message; return td; }
+  const lower = message.toLowerCase();
+  const termLower = term.toLowerCase();
+  if (lower.indexOf(termLower) === -1) { td.textContent = message; return td; }
+  let i = 0;
+  while (i < message.length) {
+    const idx = lower.indexOf(termLower, i);
+    if (idx === -1) { td.appendChild(document.createTextNode(message.slice(i))); break; }
+    if (idx > i) td.appendChild(document.createTextNode(message.slice(i, idx)));
+    const mark = document.createElement('mark');
+    mark.style.cssText = 'background:var(--yellow-bg);color:var(--yellow-text);border-radius:0';
+    mark.textContent = message.slice(idx, idx + term.length);
+    td.appendChild(mark);
+    i = idx + term.length;
+  }
+  return td;
+}
+
+function logTableMessageRow(text) {
+  const tr = document.createElement('tr');
+  const td = document.createElement('td');
+  td.colSpan = 3;
+  td.className = 'mdl-empty';
+  td.textContent = text;
+  tr.appendChild(td);
+  return tr;
+}
+
+function renderLogTable(rows, term) {
+  const tbody = document.getElementById('logs-table-body');
+  const countEl = document.getElementById('log-search-count');
+  if (!tbody) return;
+  clearEl(tbody);
+  const termTrimmed = (term || '').trim();
+  const filtered = termTrimmed
+    ? rows.filter(r => r.raw.toLowerCase().includes(termTrimmed.toLowerCase()))
+    : rows;
+  if (countEl) countEl.textContent = termTrimmed ? (filtered.length + ' / ' + rows.length + ' rows') : '';
+  if (!filtered.length) {
+    tbody.appendChild(logTableMessageRow(rows.length ? 'No rows match filter.' : 'No log lines.'));
+    return;
+  }
+  const frag = document.createDocumentFragment();
+  filtered.forEach(row => {
+    const tr = document.createElement('tr');
+    const tdTime = document.createElement('td');
+    tdTime.className = 'log-td-time';
+    tdTime.textContent = formatLogTime(row.time);
+    tdTime.title = row.time || '(unparsed line)';
+    const tdLevel = document.createElement('td');
+    tdLevel.className = 'log-td-level';
+    const badge = document.createElement('span');
+    badge.className = 'log-level-badge ' + logLevelClass(row.level);
+    badge.textContent = row.level || '—';
+    tdLevel.appendChild(badge);
+    tr.appendChild(tdTime);
+    tr.appendChild(tdLevel);
+    tr.appendChild(logTableMessage(row.message, termTrimmed));
+    frag.appendChild(tr);
+  });
+  tbody.appendChild(frag);
+}
 
 async function loadLogs() {
   const list  = document.getElementById('logs-file-list');
@@ -3992,61 +4133,44 @@ async function loadLogs() {
 }
 
 async function viewLog(name) {
+  currentLogFile = name;
   const hdr = document.getElementById('logs-viewer-header');
-  const pre = document.getElementById('logs-viewer-content');
+  const tbody = document.getElementById('logs-table-body');
   const searchInput = document.getElementById('log-search');
-  if (!pre) return;
-  pre.textContent = 'Loading…';
+  const linesSel = document.getElementById('log-lines-select');
+  if (!tbody) return;
+  clearEl(tbody);
+  tbody.appendChild(logTableMessageRow('Loading…'));
   if (hdr) hdr.textContent = name;
-  currentLogText = '';
+  currentLogRows = [];
   if (searchInput) searchInput.value = '';
   const countEl = document.getElementById('log-search-count');
   if (countEl) countEl.textContent = '';
+  const lines = linesSel ? linesSel.value : '100';
   try {
-    const r = await fetch('/logs/' + encodeURIComponent(name));
-    if (!r.ok) { pre.textContent = 'Failed: ' + r.status; return; }
+    const r = await fetch('/logs/' + encodeURIComponent(name) + '?lines=' + encodeURIComponent(lines));
+    if (!r.ok) { clearEl(tbody); tbody.appendChild(logTableMessageRow('Failed: ' + r.status)); return; }
     const data = await safeJson(r);
-    const rawText = data.content || '';
-    currentLogText = rawText.replace(/\x1b\[[0-9;]*m/g, '');
-    pre.textContent = currentLogText;
-    if (hdr && data.total_lines != null) hdr.textContent = name + ' (' + data.total_lines.toLocaleString() + ' lines)';
-    pre.scrollTop   = pre.scrollHeight;
-  } catch (e) { pre.textContent = 'Error: ' + e.message; }
+    const rawText = (data.content || '').replace(/\x1b\[[0-9;]*m/g, '');
+    currentLogRows = parseLogLines(rawText);
+    if (hdr) {
+      hdr.textContent = data.total_lines != null
+        ? name + ' (showing ' + currentLogRows.length.toLocaleString() + ' of ' + data.total_lines.toLocaleString() + ' lines)'
+        : name;
+    }
+    renderLogTable(currentLogRows, '');
+    const wrap = tbody.closest('div');
+    if (wrap) wrap.scrollTop = wrap.scrollHeight;
+  } catch (e) {
+    clearEl(tbody);
+    tbody.appendChild(logTableMessageRow('Error: ' + e.message));
+  }
 }
 
 function searchLog() {
-  const pre   = document.getElementById('logs-viewer-content');
   const input = document.getElementById('log-search');
-  const count = document.getElementById('log-search-count');
-  if (!pre || !input) return;
-  const term = input.value.trim();
-  if (!term || !currentLogText) {
-    pre.textContent = currentLogText || '—';
-    if (count) count.textContent = '';
-    return;
-  }
-  const lines = currentLogText.split('\n');
-  let matchCount = 0;
-  const termLower = term.toLowerCase();
-  const highlighted = lines.map(line => {
-    if (!line.toLowerCase().includes(termLower)) return escHtml(line);
-    matchCount++;
-    let result = '';
-    let i = 0;
-    const lineLower = line.toLowerCase();
-    while (i < line.length) {
-      const idx = lineLower.indexOf(termLower, i);
-      if (idx === -1) { result += escHtml(line.slice(i)); break; }
-      result += escHtml(line.slice(i, idx));
-      result += '<mark style="background:var(--yellow-bg);color:var(--yellow-text);border-radius:0">' + escHtml(line.slice(idx, idx + term.length)) + '</mark>';
-      i = idx + term.length;
-    }
-    return result;
-  }).join('\n');
-  pre.innerHTML = highlighted;
-  if (count) count.textContent = matchCount + ' match' + (matchCount !== 1 ? 'es' : '');
-  const firstMark = pre.querySelector('mark');
-  if (firstMark) firstMark.scrollIntoView({ block: 'center' });
+  if (!input) return;
+  renderLogTable(currentLogRows, input.value);
 }
 
 async function clearLog(name) {
@@ -4056,8 +4180,12 @@ async function clearLog(name) {
     if (!r.ok) { alert('Clear failed: ' + r.status); return; }
     loadLogs();
     const hdr = document.getElementById('logs-viewer-header');
-    const pre = document.getElementById('logs-viewer-content');
-    if (hdr && hdr.textContent === name) { pre.textContent = '—'; hdr.textContent = 'Select a file to view'; }
+    const tbody = document.getElementById('logs-table-body');
+    if (currentLogFile === name) {
+      currentLogRows = [];
+      if (tbody) { clearEl(tbody); tbody.appendChild(logTableMessageRow('No log lines.')); }
+      if (hdr) hdr.textContent = 'Select a file to view';
+    }
   } catch (e) { alert('Error: ' + e.message); }
 }
 
