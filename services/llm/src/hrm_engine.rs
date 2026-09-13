@@ -316,11 +316,37 @@ impl HrmEngine {
         let threads = cfg.n_threads.unwrap_or(4).max(1);
         let builder = Session::builder()?
             .with_optimization_level(GraphOptimizationLevel::Level3)?
-            .with_intra_threads(threads as usize)?;
-        // EP selection per cfg.ep_preference. "auto" -> platform default.
-        // Concrete EP wiring is omitted here; ort 2.0.0-rc.10 picks CPU by default.
-        // Additional EPs (CoreML/CUDA) are a follow-up perf spec.
+            .with_intra_threads(threads as usize)?
+            .with_execution_providers(Self::build_eps(&cfg.ep_preference))?;
         Ok(builder.commit_from_file(onnx_path)?)
+    }
+
+    /// GPU-first EP chain, mirroring the main server's `core::ort_eps::build_eps`
+    /// (same priority: CoreML on macOS / CUDA elsewhere → CPU). `ep_preference =
+    /// "cpu"` opts out for tests/fixtures that don't want GPU EP probing.
+    /// ORT silently skips any EP whose native runtime is absent, so listing
+    /// CoreML/CUDA ahead of CPU is safe even on a machine without them.
+    fn build_eps(ep_preference: &str) -> Vec<ort::execution_providers::ExecutionProviderDispatch> {
+        let mut eps: Vec<ort::execution_providers::ExecutionProviderDispatch> = Vec::new();
+
+        if ep_preference != "cpu" {
+            #[cfg(target_os = "macos")]
+            {
+                eps.push(
+                    ort::execution_providers::CoreMLExecutionProvider::default()
+                        .with_subgraphs(true)
+                        .with_compute_units(ort::execution_providers::coreml::CoreMLComputeUnits::All)
+                        .build(),
+                );
+            }
+            #[cfg(not(target_os = "macos"))]
+            {
+                eps.push(ort::execution_providers::CUDAExecutionProvider::default().build());
+            }
+        }
+
+        eps.push(ort::execution_providers::CPUExecutionProvider::default().build());
+        eps
     }
 }
 

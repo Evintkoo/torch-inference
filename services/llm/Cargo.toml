@@ -40,7 +40,16 @@ libc = "0.2"
 
 # ONNX runtime — same version as the workspace root uses.
 # "half" feature gates Tensor<half::f16> extract, required for HRM-Text fp16 logits.
-ort         = { version = "=2.0.0-rc.10", features = ["half"] }
+# default-features disabled to match the main server's ort_eps.rs setup: without
+# "load-dynamic" this crate statically links a downloaded, CPU-only ONNX Runtime
+# and never touches ORT_DYLIB_PATH or the CoreML EP, regardless of ep_preference —
+# this was the root cause of "GPU config does nothing" (ep_preference is otherwise
+# unused too; see build_session below). "load-dynamic" makes it load the same
+# libonnxruntime.dylib the main server already resolves via ORT_DYLIB_PATH
+# (inherited from the parent process — see main.rs auto_detect_backends(), which
+# runs before this service is spawned), and "coreml" compiles in the EP so it can
+# actually be registered.
+ort         = { version = "=2.0.0-rc.10", default-features = false, features = ["load-dynamic", "half", "copy-dylibs", "coreml", "cuda", "directml", "ndarray"] }
 tokenizers  = "0.20"
 ndarray     = "0.16"
 half        = "2"      # f16 <-> f32 conversion of HRM-Text logits
