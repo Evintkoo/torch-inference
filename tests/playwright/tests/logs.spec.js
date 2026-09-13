@@ -33,13 +33,18 @@ test.describe('Logs', () => {
         { name: 'server.log', size_mb: 0.1, line_count: 3, modified: '2026-04-05 10:00:00' },
       ], log_directory: 'logs', log_level: 'info', total_log_size_mb: 0.1 }),
     }));
-    await page.route('/logs/server.log', route => route.fulfill({
-      status: 200, contentType: 'text/plain', body: '[INFO] server started\n[INFO] listening on :8000',
+    await page.route('/logs/server.log*', route => route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({
+        file_name: 'server.log',
+        content: '2026-04-05T10:00:00Z INFO server started\n2026-04-05T10:00:01Z INFO listening on :8000',
+        total_lines: 2,
+      }),
     }));
     await page.reload();
     await page.locator(S.navLogs).click();
     await page.locator(S.logsFileList + ' button:has-text("View")').first().click();
-    await expect(page.locator(S.logsViewerContent)).toContainText('server started', { timeout: 5000 });
+    await expect(page.locator(S.logsTableBody)).toContainText('server started', { timeout: 5000 });
   });
 
   test('Clear button calls DELETE /logs/{file} after confirmation', async ({ page }) => {

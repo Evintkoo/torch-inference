@@ -154,7 +154,7 @@ module.exports = {
   panelLogs:         '#panel-logs',
   logsFileList:      '#logs-file-list',
   logsViewerHeader:  '#logs-viewer-header',
-  logsViewerContent: '#logs-viewer-content',
+  logsTableBody:     '#logs-table-body',
 
   // ── System panel ─────────────────────────────────────────
   navSystem:        'button.nav-item:has-text("System")',
