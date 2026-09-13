@@ -1225,6 +1225,7 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
           <div style="display:flex;gap:8px;margin-top:8px">
             <button class="btn btn-primary" id="cls-btn" onclick="runClassify()" disabled><i class="ri-image-line"></i> Classify</button>
             <button class="btn btn-ghost" id="cls-stream-btn" onclick="runClassifyStream()" disabled><i class="ri-broadcast-line"></i> Stream</button>
+            <button class="btn btn-ghost" id="cls-stream-stop-btn" onclick="stopClassifyStream()" style="display:none">Stop</button>
           </div>
           <div style="display:flex;gap:8px;margin-top:8px">
             <button class="btn btn-ghost" onclick="copyCurl('cls')" title="Copy as cURL"><i class="ri-terminal-line"></i> cURL</button>
@@ -1762,6 +1763,7 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
             <input type="text" id="pg-chat-input" placeholder="Type a message…" style="flex:1"
                    onkeydown="if(event.key==='Enter')document.getElementById('pg-chat-btn').click()" autocomplete="off" />
             <button class="btn btn-primary" id="pg-chat-btn" onclick="runPgChat()">Send</button>
+            <button class="btn btn-ghost" id="pg-chat-stop-btn" onclick="stopPgChat()" style="display:none">Stop</button>
           </div>
         </div><!-- /#pg-llm -->
 
@@ -1801,6 +1803,7 @@ Rules: use tts when asked to "say", "speak", or "read aloud". Image analysis res
         <div id="pg-completion" style="display:none">
           <textarea id="pg-cmp-prompt" rows="6" style="width:100%;margin-bottom:8px" placeholder="Enter a prompt…"></textarea>
           <button class="btn btn-primary" id="pg-cmp-btn" onclick="runPgCompletion()">Complete</button>
+          <button class="btn btn-ghost" id="pg-cmp-stop-btn" onclick="stopPgCompletion()" style="display:none;margin-left:6px">Stop</button>
           <div class="status-box" id="pg-cmp-out" style="margin-top:8px">waiting…</div>
         </div><!-- /#pg-completion -->
 
@@ -2688,11 +2691,15 @@ async function runPgChat() {
   history.scrollTop = history.scrollHeight;
   input.value = '';
   const btn = document.getElementById('pg-chat-btn');
+  const stopBtn = document.getElementById('pg-chat-stop-btn');
   btn.disabled = true;
+  stopBtn.style.display = '';
+  pgChatAbort = new AbortController();
   try {
     const res = await fetch('/llm/v1/chat/completions', {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({messages:[{role:'user',content:msg}]})
+      body: JSON.stringify({messages:[{role:'user',content:msg}]}),
+      signal: pgChatAbort.signal,
     });
     const data = await safeJson(res);
     const reply = data?.choices?.[0]?.message?.content ?? data?.error ?? JSON.stringify(data);
@@ -2704,29 +2711,40 @@ async function runPgChat() {
   } catch(e) {
     const eDiv = document.createElement('div');
     eDiv.className = 'msg asst';
-    eDiv.textContent = 'Error: ' + e.message;
+    eDiv.textContent = e.name === 'AbortError' ? 'Stopped.' : 'Error: ' + e.message;
     history.appendChild(eDiv);
-  } finally { btn.disabled = false; }
+  } finally { btn.disabled = false; stopBtn.style.display = 'none'; pgChatAbort = null; }
 }
+
+let pgChatAbort = null;
+function stopPgChat() { if (pgChatAbort) pgChatAbort.abort(); }
 
 /* ── Playground Completion ───────────────────────────── */
 async function runPgCompletion() {
   const prompt = document.getElementById('pg-cmp-prompt').value.trim();
   if (!prompt) return;
   const btn    = document.getElementById('pg-cmp-btn');
+  const stopBtn = document.getElementById('pg-cmp-stop-btn');
   btn.disabled = true;
+  stopBtn.style.display = '';
+  pgCmpAbort = new AbortController();
   setBox('pg-cmp-out', 'Generating…', 'stream');
   try {
     const res = await fetch('/llm/v1/chat/completions', {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({messages:[{role:'user',content:prompt}], max_tokens: 512})
+      body: JSON.stringify({messages:[{role:'user',content:prompt}], max_tokens: 512}),
+      signal: pgCmpAbort.signal,
     });
     const data = await safeJson(res);
     const text = data?.choices?.[0]?.message?.content ?? data?.error ?? JSON.stringify(data);
     setBox('pg-cmp-out', text || '(empty response)', 'ok');
-  } catch(e) { setBox('pg-cmp-out', 'Error: ' + e.message, 'error'); }
-  finally { btn.disabled = false; }
+  } catch(e) {
+    setBox('pg-cmp-out', e.name === 'AbortError' ? 'Stopped.' : 'Error: ' + e.message, 'error');
+  } finally { btn.disabled = false; stopBtn.style.display = 'none'; pgCmpAbort = null; }
 }
+
+let pgCmpAbort = null;
+function stopPgCompletion() { if (pgCmpAbort) pgCmpAbort.abort(); }
 
 /* ── Playground TTS ─────────────────────────────────────── */
 let pgTtsController = null;
@@ -5278,7 +5296,10 @@ async function runClassifyStream() {
   const height = parseInt(document.getElementById('cls-h').value)     || 224;
 
   const btn = document.getElementById('cls-stream-btn');
+  const stopBtn = document.getElementById('cls-stream-stop-btn');
   btn.disabled = true;
+  stopBtn.style.display = '';
+  clsStreamAbort = new AbortController();
   setBox('cls-out', `Streaming ${files.length} image(s)…`, 'stream');
   const t0 = performance.now();
 
@@ -5295,6 +5316,7 @@ async function runClassifyStream() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ images, top_k, model_width: width, model_height: height }),
+      signal: clsStreamAbort.signal,
     });
     if (!res.ok) { throw new Error('HTTP ' + res.status + ': ' + await res.text()); }
     if (!res.body) { throw new Error('Streaming not supported by this browser'); }
@@ -5326,9 +5348,12 @@ async function runClassifyStream() {
         }
       }
     }
-  } catch (e) { setBox('cls-out', 'Error: ' + e.message, 'error'); }
-  finally { btn.disabled = false; }
+  } catch (e) {
+    setBox('cls-out', e.name === 'AbortError' ? 'Stopped.' : 'Error: ' + e.message, 'error');
+  } finally { btn.disabled = false; stopBtn.style.display = 'none'; clsStreamAbort = null; }
 }
+let clsStreamAbort = null;
+function stopClassifyStream() { if (clsStreamAbort) clsStreamAbort.abort(); }
 let pgAudioFile = null;
 let pgAudioAbort = null;
 
@@ -5517,6 +5542,7 @@ function updateScalarTheme() {
 /* ── Assistant / ChatGPT-style ──────────────────────────── */
 let llmMessages   = [];
 let llmStreaming  = false;
+let llmAbort      = null;
 let chatAutoTts   = false;
 let chatMicActive = false;
 let chatAttachB64  = null;
@@ -6089,8 +6115,46 @@ async function processAgenticTools(rawText, bubble, attachB64) {
 }
 
 /* ---- Main send ---- */
+/* Aborts the in-flight chat request/stream, if any. */
+function stopChat() {
+  if (llmAbort) llmAbort.abort();
+}
+
+/* setTimeout that rejects with AbortError immediately if `signal` fires,
+   instead of waiting out the full delay — used for the 503-retry backoff
+   so clicking Stop during "LLM loading..." doesn't keep waiting. */
+function sleepAbortable(ms, signal) {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) { reject(new DOMException('Aborted', 'AbortError')); return; }
+    const t = setTimeout(resolve, ms);
+    signal.addEventListener('abort', () => {
+      clearTimeout(t);
+      reject(new DOMException('Aborted', 'AbortError'));
+    }, { once: true });
+  });
+}
+
+/* Swap the send button between its normal "send" icon/action and a "stop"
+   icon/action while a response is streaming — same composer slot, same
+   pattern used by most chat UIs, so there's always a one-click way to
+   cancel a request instead of waiting out however long the model takes. */
+function setChatSendBtnStreaming(streaming) {
+  const sendBtn = document.getElementById('llm-send-btn');
+  const icon = sendBtn.querySelector('i');
+  sendBtn.disabled = false;
+  if (streaming) {
+    icon.className = 'ri-stop-circle-fill';
+    sendBtn.title = 'Stop generating';
+    sendBtn.setAttribute('aria-label', 'Stop generating');
+  } else {
+    icon.className = 'ri-arrow-up-line';
+    sendBtn.title = 'Send (Enter)';
+    sendBtn.setAttribute('aria-label', 'Send message');
+  }
+}
+
 async function sendChat() {
-  if (llmStreaming) return;
+  if (llmStreaming) { stopChat(); return; }
   const input      = document.getElementById('llm-input');
   const rawText    = input.value.trim();
   const hasAttach  = !!chatAttachB64;
@@ -6127,9 +6191,9 @@ async function sendChat() {
   messages.push(...llmMessages);
 
   const { bubble, cursor, actions } = appendAsstRow();
-  const sendBtn = document.getElementById('llm-send-btn');
-  sendBtn.disabled = true;
+  llmAbort = new AbortController();
   llmStreaming = true;
+  setChatSendBtnStreaming(true);
 
   const model  = document.getElementById('llm-model').value.trim() || 'smolvlm-256m';
   const temp   = parseFloat(document.getElementById('llm-temp').value)    || 0.7;
@@ -6146,6 +6210,7 @@ async function sendChat() {
         method:  'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
         body:    payload,
+        signal:  llmAbort.signal,
       });
       if (res.status !== 503) break;
       if (attempt >= MAX_RETRIES) break;
@@ -6156,7 +6221,7 @@ async function sendChat() {
       loadingSpan.style.cssText = 'color:var(--text-muted,#8b949e)';
       loadingSpan.textContent = '⏳ LLM loading… retrying in ' + waitSec + 's (' + (attempt + 1) + '/' + MAX_RETRIES + ')';
       bubble.appendChild(loadingSpan);
-      await new Promise(function(r) { setTimeout(r, waitSec * 1000); });
+      await sleepAbortable(waitSec * 1000, llmAbort.signal);
       while (bubble.firstChild) bubble.removeChild(bubble.firstChild);
     }
 
@@ -6231,13 +6296,27 @@ async function sendChat() {
 
   } catch (e) {
     cursor.remove();
-    bubble.textContent = 'Error: ' + e.message;
-    bubble.style.color = '#f85149';
-    llmMessages.push({ role: 'assistant', content: '' });
-    trimLlmHistory();
+    if (e.name === 'AbortError') {
+      // User clicked Stop — keep whatever partial text streamed in so far,
+      // same as ChatGPT-style "stopped" behavior, instead of discarding it.
+      const shown = stripAgenticTags(accumulated) || accumulated;
+      if (shown) renderMarkdown(bubble, shown); else bubble.textContent = '(stopped)';
+      const note = document.createElement('div');
+      note.style.cssText = 'font-size:11px;color:var(--text-dim);margin-top:4px';
+      note.textContent = 'Stopped.';
+      bubble.appendChild(note);
+      llmMessages.push({ role: 'assistant', content: shown });
+      trimLlmHistory();
+    } else {
+      bubble.textContent = 'Error: ' + e.message;
+      bubble.style.color = '#f85149';
+      llmMessages.push({ role: 'assistant', content: '' });
+      trimLlmHistory();
+    }
   } finally {
     llmStreaming = false;
-    sendBtn.disabled = false;
+    llmAbort = null;
+    setChatSendBtnStreaming(false);
     input.focus();
   }
 }
