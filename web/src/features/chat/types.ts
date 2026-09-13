@@ -19,8 +19,10 @@ export interface ChatCompletionChunk {
 }
 
 export const DEFAULT_CHAT_SETTINGS: ChatSettings = {
-  model: "smolvlm-256m",
+  model: "hrm-text-1b",
   temperature: 0.7,
   maxTokens: 1024,
-  systemPrompt: "",
+  systemPrompt:
+    "You are a helpful, knowledgeable assistant. Answer clearly and concisely, " +
+    "get straight to the point, and ask a clarifying question when the request is ambiguous.",
 };

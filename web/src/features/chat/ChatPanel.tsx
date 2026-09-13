@@ -35,7 +35,9 @@ export function ChatPanel() {
         </div>
       </div>
 
-      {settingsOpen && <ChatSettingsPanel settings={settings} onChange={setSettings} />}
+      {settingsOpen && (
+        <ChatSettingsPanel settings={settings} onChange={setSettings} onClose={() => setSettingsOpen(false)} />
+      )}
 
       {error && (
         <p className="text-sm text-destructive" role="alert" data-testid="chat-error">
