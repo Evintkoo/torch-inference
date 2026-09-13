@@ -34,7 +34,11 @@ export function useEventSource<T>(path: string, enabled = true): SseState<T> {
     };
 
     source.onerror = () => {
-      setState((prev) => ({ ...prev, connected: false }));
+      setState((prev) => ({
+        ...prev,
+        connected: false,
+        error: source.readyState === EventSource.CLOSED ? "connection closed" : prev.error,
+      }));
     };
 
     return () => {

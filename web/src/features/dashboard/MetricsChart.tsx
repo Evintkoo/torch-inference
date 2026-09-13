@@ -6,7 +6,7 @@ import { createMetricsBuffer, pushMetricSample, type MetricsBuffer } from "./met
 import type { DashboardEvent } from "./types";
 
 export function MetricsChart() {
-  const { data } = useEventSource<DashboardEvent>("/dashboard/stream");
+  const { data, error } = useEventSource<DashboardEvent>("/dashboard/stream");
   const [buffer, setBuffer] = useState<MetricsBuffer>(createMetricsBuffer());
   const containerRef = useRef<HTMLDivElement>(null);
   const plotRef = useRef<uPlot | null>(null);
@@ -23,11 +23,17 @@ export function MetricsChart() {
     }
 
     if (!plotRef.current) {
+      // Canvas 2D can't resolve CSS custom properties directly, so resolve
+      // the computed color before handing it to uPlot.
+      const primaryColor =
+        getComputedStyle(containerRef.current).getPropertyValue("--color-primary").trim() ||
+        "#000000";
       plotRef.current = new uPlot(
         {
           width: containerRef.current.clientWidth,
           height: 200,
-          series: [{}, { label: "CPU %", stroke: "var(--color-primary)" }],
+          scales: { x: { time: false } },
+          series: [{}, { label: "CPU %", stroke: primaryColor }],
         },
         [buffer.timestamps, buffer.cpuPct],
         containerRef.current,
@@ -45,6 +51,9 @@ export function MetricsChart() {
   }, []);
 
   if (buffer.timestamps.length === 0) {
+    if (error) {
+      return <p className="text-muted-foreground text-sm">Unable to load live metrics</p>;
+    }
     return <p className="text-muted-foreground text-sm">Waiting for metrics…</p>;
   }
 

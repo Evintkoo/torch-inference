@@ -124,7 +124,7 @@ impl AuthMiddleware {
 /// Paths that bypass auth even when enabled. Keep this list small — every
 /// route here is reachable unauthenticated from the network.
 fn is_public(path: &str, method: &actix_web::http::Method) -> bool {
-    if path == "/" || path == "/playground" {
+    if path == "/" || path == "/playground" || path == "/preview" {
         return true;
     }
     if path.starts_with("/health") {
@@ -229,5 +229,15 @@ where
                 Ok(req.into_response(resp).map_into_right_body())
             })
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_preview_is_public() {
+        assert!(is_public("/preview", &actix_web::http::Method::GET));
     }
 }
