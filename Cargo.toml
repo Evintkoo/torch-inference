@@ -3,6 +3,7 @@ name = "torch_inference"
 version = "1.0.0"
 edition = "2021"
 description = "High-performance PyTorch inference framework in Rust"
+license = "Apache-2.0"
 authors = ["Genta Dev Team"]
 default-run = "torch-inference-server"
 
@@ -97,7 +98,6 @@ sysinfo = "0.31"
 # POSIX _exit to bypass onnxruntime's macOS static-destructor SIGABRT at exit.
 libc = "0.2"
 nvml-wrapper = { version = "0.9", optional = true }
-tikv-jemallocator = { version = "0.5", optional = true }
 pprof = { version = "0.14", features = ["flamegraph"], optional = true }
 
 # Progress tracking
@@ -122,6 +122,14 @@ bytemuck = { version = "1.14", features = ["derive"] }               # zero-copy
 crossbeam-queue = "0.3"                                              # lock-free queues
 core_affinity = "0.8"                                                # CPU core pinning
 rayon = "1.10"                                                       # data-parallel CPU ops (ndarray, image preprocessing)
+
+# jemalloc does not build on MSVC — excluded from the dependency graph
+# entirely on that target so `cargo build --features production` succeeds
+# on Windows. src/main.rs already gates *use* of the allocator with the
+# matching `not(target_env = "msvc")` cfg; this just keeps Cargo from ever
+# trying to compile the crate there.
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+tikv-jemallocator = { version = "0.5", optional = true }
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
