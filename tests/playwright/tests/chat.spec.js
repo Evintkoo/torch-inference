@@ -1,7 +1,10 @@
 const { test, expect } = require('@playwright/test');
 const S = require('../utils/selectors');
 
-test.describe('LLM Chat', () => {
+// Skipped: the Chat/LLM panel isn't in the new React frontend yet — the
+// legacy playground.html this suite targeted was retired at cutover.
+// Re-enable (rebuilt against the React DOM) when that panel is migrated.
+test.describe.skip('LLM Chat', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.locator(S.navLLM).click();

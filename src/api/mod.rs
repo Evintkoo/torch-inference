@@ -25,4 +25,5 @@ pub mod ws_infer; // WebSocket streaming inference (detect + classify)
 
 pub mod llm_proxy; // Thin reverse proxy → LLM microservice on :8001
 pub mod assets;
+pub mod web_assets;
 pub mod openapi; // GET /openapi.json — spec backing the Scalar reference embed

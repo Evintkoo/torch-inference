@@ -1,7 +1,9 @@
 const { test, expect } = require('@playwright/test');
 const S = require('../utils/selectors');
 
-test.describe('Model Download Manager', () => {
+// Skipped: this legacy Dashboard-overview download manager is retired at
+// cutover — the new React Dashboard panel doesn't have this sub-feature yet.
+test.describe.skip('Model Download Manager', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.locator(S.navDashboard).click();

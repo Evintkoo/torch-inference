@@ -10,34 +10,6 @@ use crate::middleware::RateLimiter;
 use crate::models::manager::ModelManager;
 use crate::monitor::Monitor;
 
-const PLAYGROUND_HTML: &str = include_str!("playground.html");
-static PLAYGROUND_ETAG: std::sync::OnceLock<String> = std::sync::OnceLock::new();
-
-fn playground_etag() -> &'static str {
-    PLAYGROUND_ETAG.get_or_init(|| {
-        use sha2::Digest;
-        let hash = sha2::Sha256::digest(PLAYGROUND_HTML.as_bytes());
-        let hex: String = hash.iter().map(|b| format!("{:02x}", b)).collect();
-        format!("\"{}\"", hex)
-    })
-}
-
-pub async fn root(req: HttpRequest) -> impl Responder {
-    let etag = playground_etag();
-    if let Some(inm) = req.headers().get("if-none-match") {
-        if inm.to_str().unwrap_or("") == etag {
-            return HttpResponse::NotModified()
-                .insert_header(("ETag", etag))
-                .finish();
-        }
-    }
-    HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .insert_header(("ETag", etag))
-        .insert_header(("Cache-Control", "no-cache"))
-        .body(PLAYGROUND_HTML)
-}
-
 #[allow(dead_code)] // superseded by api::health::health (registered at App level)
 pub async fn health_check(
     engine: web::Data<std::sync::Arc<InferenceEngine>>,
@@ -248,8 +220,11 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
     // Note: /health is registered at the App level in main.rs (canonical).
     // /audio/transcribe and /audio/synthesize are also canonical at the App
     // level — duplicates here would shadow them silently.
-    cfg.route("/", web::get().to(root))
-        .route("/playground", web::get().to(root))
+    cfg.route("/", web::get().to(crate::api::web_assets::serve_index))
+        .route(
+            "/playground",
+            web::get().to(crate::api::web_assets::serve_index),
+        )
         .route("/predict", web::post().to(predict))
         .route("/synthesize", web::post().to(synthesize_tts))
         .route("/models", web::get().to(list_models))
@@ -434,55 +409,6 @@ mod tests {
 
     fn make_deduplicator() -> web::Data<Arc<RequestDeduplicator>> {
         web::Data::new(Arc::new(RequestDeduplicator::new(1000)))
-    }
-
-    // ── root ─────────────────────────────────────────────────────────────────
-
-    #[actix_web::test]
-    async fn test_root_returns_200() {
-        let app = test::init_service(App::new().route("/", web::get().to(root))).await;
-        let req = test::TestRequest::get().uri("/").to_request();
-        let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), 200);
-    }
-
-    #[actix_web::test]
-    async fn test_root_response_is_html() {
-        let app = test::init_service(App::new().route("/", web::get().to(root))).await;
-        let req = test::TestRequest::get().uri("/").to_request();
-        let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), 200);
-        let ct = resp
-            .headers()
-            .get("content-type")
-            .unwrap()
-            .to_str()
-            .unwrap();
-        assert!(
-            ct.contains("text/html"),
-            "root should return HTML, got: {}",
-            ct
-        );
-    }
-
-    #[actix_web::test]
-    async fn test_root_response_body_is_non_empty() {
-        let app = test::init_service(App::new().route("/", web::get().to(root))).await;
-        let req = test::TestRequest::get().uri("/").to_request();
-        let body = test::call_and_read_body(&app, req).await;
-        assert!(!body.is_empty(), "root response body should not be empty");
-    }
-
-    #[actix_web::test]
-    async fn test_root_response_contains_html_tag() {
-        let app = test::init_service(App::new().route("/", web::get().to(root))).await;
-        let req = test::TestRequest::get().uri("/").to_request();
-        let body = test::call_and_read_body(&app, req).await;
-        let body_str = std::str::from_utf8(&body).unwrap_or("");
-        assert!(
-            body_str.contains("<html") || body_str.contains("<!DOCTYPE"),
-            "root response should contain HTML"
-        );
     }
 
     // ── get_endpoint_stats ───────────────────────────────────────────────────
@@ -1208,65 +1134,6 @@ mod tests {
         assert!(resp_body["audio_data"].is_string());
         assert!(resp_body["processing_time"].is_number());
         assert_eq!(resp_body["sample_rate"], 16000);
-    }
-
-    // ── ETag / Cache-Control on root ──────────────────────────────────────────
-
-    #[actix_web::test]
-    async fn test_root_etag_header_present() {
-        let app = test::init_service(App::new().route("/", web::get().to(root))).await;
-        let req = test::TestRequest::get().uri("/").to_request();
-        let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), 200);
-        let etag = resp.headers().get("etag");
-        assert!(etag.is_some(), "ETag header must be present on 200 response");
-    }
-
-    #[actix_web::test]
-    async fn test_root_cache_control_is_no_cache() {
-        let app = test::init_service(App::new().route("/", web::get().to(root))).await;
-        let req = test::TestRequest::get().uri("/").to_request();
-        let resp = test::call_service(&app, req).await;
-        let cc = resp
-            .headers()
-            .get("cache-control")
-            .expect("Cache-Control header must be present")
-            .to_str()
-            .unwrap();
-        assert_eq!(cc, "no-cache");
-    }
-
-    #[actix_web::test]
-    async fn test_root_304_on_matching_if_none_match() {
-        let app = test::init_service(App::new().route("/", web::get().to(root))).await;
-        // First request — learn the ETag
-        let req1 = test::TestRequest::get().uri("/").to_request();
-        let resp1 = test::call_service(&app, req1).await;
-        let etag = resp1
-            .headers()
-            .get("etag")
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_owned();
-        // Second request — send matching ETag, expect 304
-        let req2 = test::TestRequest::get()
-            .uri("/")
-            .insert_header(("if-none-match", etag.as_str()))
-            .to_request();
-        let resp2 = test::call_service(&app, req2).await;
-        assert_eq!(resp2.status(), 304);
-    }
-
-    #[actix_web::test]
-    async fn test_root_200_on_mismatched_if_none_match() {
-        let app = test::init_service(App::new().route("/", web::get().to(root))).await;
-        let req = test::TestRequest::get()
-            .uri("/")
-            .insert_header(("if-none-match", "\"stale-00000000\""))
-            .to_request();
-        let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), 200);
     }
 
     // ── configure_routes ─────────────────────────────────────────────────────

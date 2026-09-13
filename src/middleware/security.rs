@@ -231,3 +231,14 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_root_and_playground_are_public() {
+        assert!(is_public("/", &actix_web::http::Method::GET));
+        assert!(is_public("/playground", &actix_web::http::Method::GET));
+    }
+}

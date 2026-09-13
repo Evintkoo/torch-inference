@@ -112,6 +112,9 @@ walkdir = "2.4"
 tempfile = "3.8"
 bytes = "1.5"
 
+# Frontend embedding — the built web/dist/ SPA bundle, embedded into the binary
+rust-embed = "8"
+
 # Performance — SIMD, zero-copy
 wide = "0.7"                                                         # AVX2/NEON SIMD via safe API
 zune-jpeg = "0.4"                                                    # 2× faster JPEG decode (SIMD)
