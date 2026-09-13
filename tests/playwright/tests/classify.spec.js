@@ -9,7 +9,10 @@ const PNG_B64 =
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8' +
   'z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg==';
 
-test.describe('Image Classification', () => {
+// Skipped: the Classify panel isn't in the new React frontend yet — the
+// legacy playground.html this suite targeted was retired at cutover.
+// Re-enable (rebuilt against the React DOM) when that panel is migrated.
+test.describe.skip('Image Classification', () => {
   let pngPath;
 
   test.beforeAll(async () => {

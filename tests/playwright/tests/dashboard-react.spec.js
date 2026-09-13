@@ -1,9 +1,9 @@
 const { test, expect } = require('@playwright/test');
 const selectors = require('../utils/selectors');
 
-test.describe('React Dashboard panel (/preview)', () => {
+test.describe('React Dashboard panel (/)', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/preview');
+    await page.goto('/');
   });
 
   test('shows the Dashboard tab selected by default', async ({ page }) => {

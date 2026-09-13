@@ -1,7 +1,10 @@
 const { test, expect } = require('@playwright/test');
 const S = require('../utils/selectors');
 
-test.describe('System tab', () => {
+// Skipped: this legacy System sub-tab is superseded by the new React
+// Dashboard panel's SystemInfoCard (see dashboard-react.spec.js), retired
+// at cutover.
+test.describe.skip('System tab', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.locator(S.navSystem).click();

@@ -9,7 +9,11 @@ const PNG_B64 =
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8' +
   'z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg==';
 
-test.describe('Dashboard Playground tab', () => {
+// Skipped (all describe blocks in this file): the legacy Playground tab and
+// its sub-tabs (TTS, Classify, LLM Chat, Completion) were retired at
+// cutover — none are in the new React frontend yet. Re-enable (rebuilt
+// against the React DOM) as each panel is migrated.
+test.describe.skip('Dashboard Playground tab', () => {
   let pngPath;
 
   test.beforeAll(async () => {
@@ -30,7 +34,7 @@ test.describe('Dashboard Playground tab', () => {
   });
 
   // ── TTS sub-tab ────────────────────────────────────────
-  test.describe('TTS sub-tab', () => {
+  test.describe.skip('TTS sub-tab', () => {
     test('TTS sub-tab is active by default in playground', async ({ page }) => {
       await expect(page.locator(S.pgTabTTS)).toHaveClass(/active/);
       await expect(page.locator(S.pgTTS)).toBeVisible();
@@ -66,7 +70,7 @@ test.describe('Dashboard Playground tab', () => {
   });
 
   // ── Classify sub-tab ──────────────────────────────────
-  test.describe('Classify sub-tab', () => {
+  test.describe.skip('Classify sub-tab', () => {
     test.beforeEach(async ({ page }) => {
       await page.locator(S.pgTabClassify).click();
       await expect(page.locator(S.pgClassify)).toBeVisible();
@@ -98,7 +102,7 @@ test.describe('Dashboard Playground tab', () => {
   });
 
   // ── LLM Chat sub-tab ──────────────────────────────────
-  test.describe('LLM Chat sub-tab', () => {
+  test.describe.skip('LLM Chat sub-tab', () => {
     test.beforeEach(async ({ page }) => {
       await page.locator(S.pgTabLLM).click();
       await expect(page.locator(S.pgLLM)).toBeVisible();
@@ -129,7 +133,7 @@ test.describe('Dashboard Playground tab', () => {
   });
 
   // ── Completion sub-tab ────────────────────────────────
-  test.describe('Completion sub-tab', () => {
+  test.describe.skip('Completion sub-tab', () => {
     test.beforeEach(async ({ page }) => {
       await page.locator(S.pgTabCompletion).click();
       await expect(page.locator(S.pgCompletion)).toBeVisible();

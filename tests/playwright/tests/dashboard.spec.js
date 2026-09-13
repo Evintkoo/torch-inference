@@ -1,7 +1,9 @@
 const { test, expect } = require('@playwright/test');
 const S = require('../utils/selectors');
 
-test.describe('Dashboard', () => {
+// Skipped: this is the legacy playground.html Dashboard panel, retired at
+// cutover — its React replacement is covered by dashboard-react.spec.js.
+test.describe.skip('Dashboard', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.locator(S.navDashboard).click();

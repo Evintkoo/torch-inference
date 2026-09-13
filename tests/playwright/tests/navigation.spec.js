@@ -1,7 +1,11 @@
 const { test, expect } = require('@playwright/test');
 const S = require('../utils/selectors');
 
-test.describe('Navigation', () => {
+// Skipped: this tests the legacy playground.html's sidebar navigation
+// (multi-panel nav), retired at cutover — the new React frontend currently
+// has only one panel (Dashboard), so this nav-switching suite doesn't apply
+// until more panels exist to navigate between.
+test.describe.skip('Navigation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
   });
