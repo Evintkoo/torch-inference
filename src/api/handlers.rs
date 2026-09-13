@@ -366,7 +366,6 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
         // OpenAI-compatible v1 endpoints
         .route("/v1/models", web::get().to(v1_list_models))
         .configure(crate::api::llm_proxy::configure_routes)
-        .configure(crate::api::stt_proxy::configure_routes)
         // Self-hosted static assets (fonts, icons)
         .route(
             "/assets/remixicon.css",

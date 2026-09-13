@@ -183,12 +183,6 @@ flamegraph: ## Generate CPU flamegraph (requires: cargo install flamegraph)
 	cargo flamegraph --features profiling --bin torch-inference-server -- --config config.toml
 	@echo "Flamegraph written to flamegraph.svg"
 
-# ── STT Microservice ──────────────────────────────────────────────────────────
-.PHONY: stt-run
-
-stt-run: ## Run faster-whisper STT service on port 8002
-	python3 services/stt/server.py
-
 # ── Production ────────────────────────────────────────────────────────────────
 .PHONY: prod
 
@@ -197,14 +191,10 @@ prod: ## Build everything and launch main server + all microservices
 	$(CARGO) build --release --no-default-features --features production
 	@echo "Building LLM service..."
 	cd services/llm && cargo build --release
-	@echo "Stopping any prior STT/LLM microservices on 8001/8002..."
+	@echo "Stopping any prior LLM microservice on 8001..."
 	@-lsof -ti :8001 | xargs -r kill -TERM 2>/dev/null || true
-	@-lsof -ti :8002 | xargs -r kill -TERM 2>/dev/null || true
 	@sleep 1
 	@-lsof -ti :8001 | xargs -r kill -KILL 2>/dev/null || true
-	@-lsof -ti :8002 | xargs -r kill -KILL 2>/dev/null || true
-	@echo "Starting STT service..."
-	python3 services/stt/server.py &
 	@echo "Starting LLM service..."
 	cd services/llm && ./target/release/llm-service &
 	@echo "Starting main server..."

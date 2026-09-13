@@ -145,9 +145,6 @@ impl Default for ServerConfig {
 fn default_microservice_host() -> String {
     "127.0.0.1".to_string()
 }
-fn default_stt_port() -> u16 {
-    8002
-}
 fn default_llm_port() -> u16 {
     8001
 }
@@ -163,12 +160,6 @@ fn default_classify_item_timeout_secs() -> u64 { 30 }
 /// processes and proxies requests to them.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MicroservicesConfig {
-    /// Host for the STT microservice. Default: "127.0.0.1".
-    #[serde(default = "default_microservice_host")]
-    pub stt_host: String,
-    /// Port for the STT microservice. Default: 8002.
-    #[serde(default = "default_stt_port")]
-    pub stt_port: u16,
     /// Host for the LLM microservice. Default: "127.0.0.1".
     #[serde(default = "default_microservice_host")]
     pub llm_host: String,
@@ -180,8 +171,6 @@ pub struct MicroservicesConfig {
 impl Default for MicroservicesConfig {
     fn default() -> Self {
         Self {
-            stt_host: default_microservice_host(),
-            stt_port: default_stt_port(),
             llm_host: default_microservice_host(),
             llm_port: default_llm_port(),
         }
@@ -189,11 +178,6 @@ impl Default for MicroservicesConfig {
 }
 
 impl MicroservicesConfig {
-    /// Base URL for the STT microservice proxy.
-    pub fn stt_base_url(&self) -> String {
-        format!("http://{}:{}", self.stt_host, self.stt_port)
-    }
-
     /// Base URL for the LLM microservice proxy.
     pub fn llm_base_url(&self) -> String {
         format!("http://{}:{}", self.llm_host, self.llm_port)
@@ -650,8 +634,6 @@ impl Default for Config {
                 yolo_iou_threshold: 0.45,
             },
             microservices: MicroservicesConfig {
-                stt_host: "127.0.0.1".to_string(),
-                stt_port: 8002,
                 llm_host: "127.0.0.1".to_string(),
                 llm_port: 8001,
             },

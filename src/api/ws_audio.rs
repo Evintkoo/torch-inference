@@ -369,17 +369,7 @@ async fn finish_stt(
         channels: 1,
     };
 
-    let result = match audio_state.model_manager.get_stt_model("default") {
-        Some(model) => model.transcribe(&audio, false),
-        None => {
-            let _ = session.text(
-                ServerMsg::Error { msg: "no STT model available".to_string() }.to_json()
-            ).await;
-            return;
-        }
-    };
-
-    match result {
+    match audio_state.model_manager.transcribe_audio(&audio, false) {
         Ok(r) => {
             let msg = ServerMsg::Transcript {
                 text: r.text,

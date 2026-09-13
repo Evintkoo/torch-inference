@@ -481,6 +481,12 @@ impl AudioModelManager {
     }
 
     pub fn list_stt_models(&self) -> Vec<String> {
+        // `transcribe_audio()` prefers the Whisper ONNX pipeline over the legacy
+        // `stt_models` map — reflect that here too, or health/listing endpoints
+        // report "no model loaded" even while transcription works fine.
+        if self.whisper.read().is_some() {
+            return vec!["whisper-onnx".to_string()];
+        }
         self.stt_models.iter().map(|e| e.key().clone()).collect()
     }
 
