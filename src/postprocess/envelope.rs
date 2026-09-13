@@ -16,8 +16,42 @@ pub struct ResponseMeta {
 }
 
 impl<T> Envelope<T> {
+    /// Low-level constructor. Prefer [`Envelope::from_inference`] in handlers;
+    /// this remains for direct/construction-from-custom-meta callers and tests.
+    #[allow(dead_code)]
     pub fn new(data: T, meta: ResponseMeta) -> Self {
         Self { data, meta }
+    }
+
+    /// Build an envelope from a request's measured latency and the result of
+    /// the (possibly skipped) postprocess step.
+    ///
+    /// Centralises the response-meta construction that was previously hand
+    /// inlined at six handler call sites (classify/yolo/tts/audio). `version`
+    /// is always the crate version; `postprocessing_applied` is derived as
+    /// "postprocess ran AND produced steps".
+    pub fn from_inference(
+        data: T,
+        latency: std::time::Duration,
+        model_id: impl Into<String>,
+        skip_postprocess: bool,
+        postprocess_steps: Vec<String>,
+        warnings: Vec<String>,
+        request_id: impl Into<String>,
+    ) -> Self {
+        let postprocessing_applied = !skip_postprocess && !postprocess_steps.is_empty();
+        Self {
+            data,
+            meta: ResponseMeta {
+                latency_ms: latency.as_secs_f64() * 1000.0,
+                model_id: model_id.into(),
+                postprocessing_applied,
+                postprocess_steps,
+                warnings,
+                version: env!("CARGO_PKG_VERSION"),
+                request_id: request_id.into(),
+            },
+        }
     }
 }
 

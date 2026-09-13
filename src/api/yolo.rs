@@ -15,7 +15,7 @@ use crate::core::yolo::{load_coco_names, YoloResults, YoloSize, YoloVersion};
 use crate::error::ApiError;
 use crate::middleware::correlation_id::get_correlation_id;
 use crate::postprocess::yolo::EnrichedYoloResults;
-use crate::postprocess::{self, envelope::ResponseMeta, Envelope};
+use crate::postprocess::{self, Envelope};
 
 /// Read the (width, height) header of an in-memory image without decoding
 /// pixels. Returns an `anyhow::Result` so the caller can format the error.
@@ -124,7 +124,7 @@ pub async fn detect_objects(
     // needs a temp file because `YoloDetector::detect` takes a path; the ORT
     // path takes bytes directly.
     let max_bytes = config.server.multipart_image_limit_mb.saturating_mul(1024 * 1024);
-    let mut image_bytes: Vec<u8> = Vec::new();
+    let mut image_bytes: Vec<u8> = Vec::with_capacity(64 * 1024);
     while let Some(Ok(mut field)) = payload.next().await {
         while let Some(chunk) = field.next().await {
             let data = chunk.map_err(|e| ApiError::InternalError(e.to_string()))?;
@@ -216,17 +216,14 @@ pub async fn detect_objects(
             error: None,
         };
 
-        return Ok(HttpResponse::Ok().json(Envelope::new(
+        return Ok(HttpResponse::Ok().json(Envelope::from_inference(
             data,
-            ResponseMeta {
-                latency_ms: start.elapsed().as_secs_f64() * 1000.0,
-                model_id: model_name,
-                postprocessing_applied: !query.skip_postprocess && !pp_steps.is_empty(),
-                postprocess_steps: pp_steps,
-                warnings: pp_warnings,
-                version: env!("CARGO_PKG_VERSION"),
-                request_id: get_correlation_id(&http_req).as_str().to_string(),
-            },
+            start.elapsed(),
+            model_name,
+            query.skip_postprocess,
+            pp_steps,
+            pp_warnings,
+            get_correlation_id(&http_req).as_str(),
         )));
     }
 
@@ -288,17 +285,14 @@ pub async fn detect_objects(
         error: None,
     };
 
-    Ok(HttpResponse::Ok().json(Envelope::new(
+    Ok(HttpResponse::Ok().json(Envelope::from_inference(
         data,
-        ResponseMeta {
-            latency_ms: start.elapsed().as_secs_f64() * 1000.0,
-            model_id: format!("yolov8n-ort/{}", model_name),
-            postprocessing_applied: !query.skip_postprocess && !pp_steps.is_empty(),
-            postprocess_steps: pp_steps,
-            warnings: pp_warnings,
-            version: env!("CARGO_PKG_VERSION"),
-            request_id: get_correlation_id(&http_req).as_str().to_string(),
-        },
+        start.elapsed(),
+        format!("yolov8n-ort/{}", model_name),
+        query.skip_postprocess,
+        pp_steps,
+        pp_warnings,
+        get_correlation_id(&http_req).as_str(),
     )))
 }
 

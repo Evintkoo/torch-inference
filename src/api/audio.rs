@@ -4,7 +4,7 @@ use crate::core::audio::AudioProcessor;
 use crate::core::audio_models::{AudioModelManager, TTSParameters};
 use crate::error::ApiError;
 use crate::middleware::correlation_id::get_correlation_id;
-use crate::postprocess::{self, envelope::ResponseMeta, Envelope};
+use crate::postprocess::{self, Envelope};
 use crate::security::sanitizer::Sanitizer;
 use actix_multipart::Multipart;
 use actix_web::{web, HttpRequest, HttpResponse, Result};
@@ -158,17 +158,14 @@ pub async fn synthesize_speech(
         format: "wav".to_string(),
     };
 
-    let envelope = Envelope::new(
+    let envelope = Envelope::from_inference(
         data,
-        ResponseMeta {
-            latency_ms: start.elapsed().as_secs_f64() * 1000.0,
-            model_id: model_name,
-            postprocessing_applied: !req.skip_postprocess && !pp_steps.is_empty(),
-            postprocess_steps: pp_steps,
-            warnings: pp_warnings,
-            version: env!("CARGO_PKG_VERSION"),
-            request_id: get_correlation_id(&http_req).as_str().to_string(),
-        },
+        start.elapsed(),
+        &model_name,
+        req.skip_postprocess,
+        pp_steps,
+        pp_warnings,
+        get_correlation_id(&http_req).as_str(),
     );
 
     Ok(HttpResponse::Ok().json(envelope))
@@ -182,7 +179,7 @@ pub async fn transcribe_audio(
     let max_bytes = config.server.multipart_audio_limit_mb.saturating_mul(1024 * 1024);
     let max_duration_secs = config.server.audio_max_duration_secs;
 
-    let mut audio_data: Vec<u8> = Vec::new();
+    let mut audio_data: Vec<u8> = Vec::with_capacity(64 * 1024);
     let mut return_timestamps = false;
 
     // Extract audio file and parameters from multipart, bailing as soon as the

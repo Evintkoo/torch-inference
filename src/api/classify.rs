@@ -17,7 +17,7 @@ use crate::config::Config;
 use crate::core::image_pipeline::{ImagePipeline, PreprocessConfig};
 use crate::error::ApiError;
 use crate::middleware::correlation_id::get_correlation_id;
-use crate::postprocess::{self, envelope::ResponseMeta, Envelope};
+use crate::postprocess::{self, Envelope};
 
 // ── Request / response types ──────────────────────────────────────────────
 
@@ -141,15 +141,18 @@ pub async fn batch_classify(
         }
     }
 
-    // Decode base64 → raw bytes.
+    // Decode base64 → raw bytes. Take ownership of `req` via into_inner so each
+    // base64 string is dropped after its image is decoded, preventing peak
+    // memory from holding both representations for the whole batch.
     use base64::Engine as _;
-    let raw_images: Vec<Vec<u8>> = req
+    let req_data = req.into_inner();
+    let raw_images: Vec<Vec<u8>> = req_data
         .images
-        .iter()
+        .into_iter()
         .enumerate()
         .map(|(i, b64)| {
             base64::engine::general_purpose::STANDARD
-                .decode(b64)
+                .decode(&b64)
                 .map_err(|e| ApiError::BadRequest(format!("image[{}]: {}", i, e)))
         })
         .collect::<Result<_, _>>()?;
@@ -157,9 +160,13 @@ pub async fn batch_classify(
     // Preprocess and inference are CPU-bound; offload to a blocking task so
     // the actix reactor stays free to serve other requests. We move owned
     // data + a backend Arc into the closure.
-    let cfg = PreprocessConfig::imagenet(req.model_width, req.model_height);
+    let cfg = PreprocessConfig::imagenet(req_data.model_width, req_data.model_height);
     let backend = state.backend.clone();
-    let top_k = req.top_k;
+    let top_k = req_data.top_k;
+
+    // Preprocess and inference are CPU-bound; offload to a blocking task so
+    // the actix reactor stays free to serve other requests. We move owned
+    // data + a backend Arc into the closure.
     let results = tokio::task::spawn_blocking(move || -> anyhow::Result<_> {
         let pipeline = ImagePipeline::new(cfg);
         let batch = pipeline.preprocess_batch(&raw_images)?;
@@ -170,7 +177,7 @@ pub async fn batch_classify(
     .map_err(|e| ApiError::BadRequest(format!("classify failed: {}", e)))?;
 
     // Post-process
-    let (results, pp_steps, pp_warnings) = if !req.skip_postprocess {
+    let (results, pp_steps, pp_warnings) = if !req_data.skip_postprocess {
         let pp = postprocess::classify::process(results, &config.postprocess.classify);
         (pp.predictions, pp.steps, pp.warnings)
     } else {
@@ -182,17 +189,14 @@ pub async fn batch_classify(
         results,
     };
 
-    let envelope = Envelope::new(
+    let envelope = Envelope::from_inference(
         data,
-        ResponseMeta {
-            latency_ms: start.elapsed().as_secs_f64() * 1000.0,
-            model_id: "classification-backend".to_string(),
-            postprocessing_applied: !req.skip_postprocess && !pp_steps.is_empty(),
-            postprocess_steps: pp_steps,
-            warnings: pp_warnings,
-            version: env!("CARGO_PKG_VERSION"),
-            request_id: get_correlation_id(&http_req).as_str().to_string(),
-        },
+        start.elapsed(),
+        "classification-backend",
+        req_data.skip_postprocess,
+        pp_steps,
+        pp_warnings,
+        get_correlation_id(&http_req).as_str(),
     );
 
     Ok(HttpResponse::Ok().json(envelope))

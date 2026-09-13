@@ -12,7 +12,7 @@ use crate::core::tts_manager::{TTSManager, TTSManagerStats};
 use crate::core::tts_pipeline::StreamingTtsPipeline;
 use crate::error::ApiError;
 use crate::middleware::correlation_id::get_correlation_id;
-use crate::postprocess::{self, envelope::ResponseMeta, Envelope};
+use crate::postprocess::{self, Envelope};
 
 /// API State
 pub struct TTSState {
@@ -113,7 +113,7 @@ pub async fn synthesize(
         .manager
         .synthesize(&req.text, req.engine.as_deref(), params)
         .await
-        .map_err(|e| ApiError::InternalError(format!("Synthesis failed: {}", e)))?;
+        .map_err(|e| ApiError::InternalError(format!("Synthesis failed: {:?}", e)))?;
 
     let engine_used = if let Some(engine_id) = req.engine.as_deref() {
         engine_id.to_string()
@@ -155,17 +155,14 @@ pub async fn synthesize(
         engine_used: engine_used.clone(),
     };
 
-    let envelope = Envelope::new(
+    let envelope = Envelope::from_inference(
         data,
-        ResponseMeta {
-            latency_ms: start.elapsed().as_secs_f64() * 1000.0,
-            model_id: engine_used,
-            postprocessing_applied: !req.skip_postprocess && !pp_steps.is_empty(),
-            postprocess_steps: pp_steps,
-            warnings: pp_warnings,
-            version: env!("CARGO_PKG_VERSION"),
-            request_id: get_correlation_id(&http_req).as_str().to_string(),
-        },
+        start.elapsed(),
+        &engine_used,
+        req.skip_postprocess,
+        pp_steps,
+        pp_warnings,
+        get_correlation_id(&http_req).as_str(),
     );
 
     Ok(HttpResponse::Ok().json(envelope))
@@ -239,7 +236,7 @@ pub async fn stream_synthesize(
                     Some((Ok::<Bytes, actix_web::Error>(bytes), (Some(rx), false)))
                 }
                 Ok(Some(Err(e))) => Some((
-                    Err(actix_web::error::ErrorInternalServerError(e.to_string())),
+                    Err(actix_web::error::ErrorInternalServerError(format!("{:?}", e))),
                     (None, false),
                 )),
                 Ok(None) => None, // upstream closed cleanly
