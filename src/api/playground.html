@@ -4186,6 +4186,8 @@ async function getOptimizationTips() {
   }
 }
 
+let sysConfigData = null;
+
 const CFG_META = {
   server:    { icon:'ri-server-line',      label:'Server',      fields:{ host:{label:'Bind Host',label2:'Network interface'},port:{label:'Port',label2:'HTTP listening port'},workers:{label:'Workers',label2:'Async thread count'},max_connections:{label:'Max Connections',label2:'Concurrent connection cap'} } },
   inference: { icon:'ri-cpu-line',         label:'Inference',   fields:{ default_batch_size:{label:'Default Batch',label2:'Batch size when unspecified'},max_batch_size:{label:'Max Batch',label2:'Hard limit per request'},timeout_secs:{label:'Timeout',label2:'Seconds before cancellation',fmt:v=>v+'s'},device:{label:'Device',label2:'Compute device — cpu / cuda / mps'} } },
@@ -4204,6 +4206,7 @@ async function loadConfig() {
     if (!r.ok) { clearEl(container); const e = mkEl('span', null, 'Failed: ' + r.status); e.style.color = 'var(--red)'; container.appendChild(e); return; }
     data = await safeJson(r);
   } catch (e) { clearEl(container); const el = mkEl('span', null, 'Error: ' + e.message); el.style.color = 'var(--red)'; container.appendChild(el); return; }
+  sysConfigData = data;
   clearEl(container);
   const grid = mkEl('div', null); grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px';
   Object.entries(data).forEach(([sKey, sVal]) => {
@@ -4231,10 +4234,38 @@ async function loadConfig() {
 }
 
 function copyConfig() {
-  if (!navigator.clipboard) return;
-  fetch('/system/config').then(r => r.json()).then(d => {
-    navigator.clipboard.writeText(JSON.stringify(d, null, 2)).then(() => alert('Config copied to clipboard.'));
-  }).catch(() => alert('Copy failed.'));
+  if (!sysConfigData) { alert('Config has not finished loading yet — please try again in a moment.'); return; }
+  copyTextToClipboard(JSON.stringify(sysConfigData, null, 2));
+}
+
+// Copies text to the clipboard, falling back to the legacy execCommand path
+// (needed when the async Clipboard API is unavailable/blocked, e.g. a
+// non-secure origin or a document that isn't focused), and finally to a
+// visible "select the text and copy manually" prompt if both fail.
+function copyTextToClipboard(text) {
+  const onSuccess = () => showCopyFeedback('Config copied to clipboard.');
+  const onFailure = () => { window.prompt('Clipboard copy is unavailable here. Select the JSON below and press Ctrl/Cmd+C:', text); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(onSuccess).catch(() => execCommandCopy(text, onSuccess, onFailure));
+  } else {
+    execCommandCopy(text, onSuccess, onFailure);
+  }
+}
+
+function execCommandCopy(text, onSuccess, onFailure) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (ok) onSuccess(); else onFailure();
+  } catch (e) {
+    onFailure();
+  }
 }
 
 function formatBytes(b) {
