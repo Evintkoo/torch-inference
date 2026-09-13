@@ -1,99 +1,115 @@
 /**
- * Endpoints panel UI tests — covers the "API Reference" panel
- * that lists all server routes grouped by category card.
+ * Endpoints panel UI tests — the "API Reference" panel now embeds Scalar
+ * (github.com/scalar/scalar), the open-source OpenAPI reference UI, reading
+ * the spec from GET /openapi.json and the standalone bundle from the
+ * self-hosted GET /assets/scalar.js (see src/api/assets.rs::fetch_scalar()).
+ *
+ * Scalar owns its own internal DOM (mounted into #scalar-api-reference), so
+ * these tests check observable outcomes rather than any specific internal
+ * markup: the panel activates, /openapi.json is fetched successfully, the
+ * mount point ends up non-empty, and no console errors are thrown while it
+ * loads.
  */
 const { test, expect } = require('@playwright/test');
 const S = require('../utils/selectors');
 
-// Single shared beforeEach for the entire panel — all three describe blocks
-// previously duplicated this navigation setup.
 test.describe('Endpoints panel', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await page.locator(S.navEndpoints).click();
-    await expect(page.locator(S.panelEndpoints)).toHaveClass(/active/);
   });
 
   // ── Navigation ────────────────────────────────────────────────────────────
 
   test.describe('navigation', () => {
     test('Endpoints nav item becomes active', async ({ page }) => {
+      await page.locator(S.navEndpoints).click();
       await expect(page.locator(S.navEndpoints)).toHaveClass(/active/);
     });
 
     test('only one panel is active', async ({ page }) => {
+      await page.locator(S.navEndpoints).click();
       await expect(page.locator('.panel.active')).toHaveCount(1);
     });
 
     test('switching away hides Endpoints panel', async ({ page }) => {
+      await page.locator(S.navEndpoints).click();
       await page.locator(S.navStatus).click();
       await expect(page.locator(S.panelEndpoints)).not.toHaveClass(/active/);
     });
   });
 
-  // ── Category cards ────────────────────────────────────────────────────────
+  // ── OpenAPI spec ─────────────────────────────────────────────────────────
 
-  test.describe('category cards', () => {
+  test.describe('OpenAPI spec', () => {
+    test('GET /openapi.json responds with a valid spec', async ({ request }) => {
+      const resp = await request.get('/openapi.json');
+      expect(resp.status()).toBe(200);
+      expect(resp.headers()['content-type']).toContain('application/json');
+      const body = await resp.json();
+      expect(body.openapi).toMatch(/^3\./);
+      expect(Object.keys(body.paths).length).toBeGreaterThanOrEqual(10);
+    });
+
+    test('visiting the panel triggers a successful /openapi.json request', async ({ page }) => {
+      const specRequest = page.waitForResponse(
+        (resp) => resp.url().includes('/openapi.json') && resp.status() === 200
+      );
+      await page.locator(S.navEndpoints).click();
+      const resp = await specRequest;
+      expect(resp.ok()).toBeTruthy();
+    });
+  });
+
+  // ── Scalar reference embed ──────────────────────────────────────────────
+
+  test.describe('Scalar reference embed', () => {
     test('panel has a visible title', async ({ page }) => {
+      await page.locator(S.navEndpoints).click();
       await expect(page.locator(`${S.panelEndpoints} .panel-title`)).toBeVisible();
     });
 
-    test('panel contains at least one .card', async ({ page }) => {
-      expect(await page.locator(`${S.panelEndpoints} .card`).count()).toBeGreaterThanOrEqual(1);
-    });
-
-    for (const title of ['TTS', 'Classification', 'LLM', 'System']) {
-      test(`${title} card is present`, async ({ page }) => {
-        await expect(
-          page.locator(`${S.panelEndpoints} .card-title:has-text("${title}")`)
-        ).toBeVisible();
+    test('Scalar bundle loads and exposes window.Scalar', async ({ page }) => {
+      await page.locator(S.navEndpoints).click();
+      await page.waitForFunction(() => !!(window.Scalar && window.Scalar.createApiReference), null, {
+        timeout: 15000,
       });
-    }
-  });
-
-  // ── Endpoint rows ─────────────────────────────────────────────────────────
-
-  test.describe('endpoint rows', () => {
-    test('at least one .endpoint-row is visible', async ({ page }) => {
-      await expect(page.locator(`${S.panelEndpoints} .endpoint-row`).first()).toBeVisible();
+      const hasScalar = await page.evaluate(() => typeof window.Scalar?.createApiReference === 'function');
+      expect(hasScalar).toBe(true);
     });
 
-    test('endpoint rows display HTTP method badges', async ({ page }) => {
-      await expect(
-        page.locator(`${S.panelEndpoints} .endpoint-row .method`).first()
-      ).toBeVisible();
+    test('mount point is populated with the rendered reference', async ({ page }) => {
+      await page.locator(S.navEndpoints).click();
+      const mount = page.locator('#scalar-api-reference');
+      await expect(mount).toBeVisible();
+      // Scalar mounts a non-trivial subtree once the spec has loaded — an
+      // empty div means the embed silently failed.
+      await expect
+        .poll(async () => (await mount.locator('*').count()) > 5, { timeout: 15000 })
+        .toBe(true);
     });
 
-    test('endpoint rows display path starting with /', async ({ page }) => {
-      const text = await page.locator(`${S.panelEndpoints} .endpoint-row .ep-path`).first().textContent();
-      expect(text).toMatch(/^\//);
+    test('at least one known route path from the spec is rendered somewhere in the panel', async ({ page }) => {
+      await page.locator(S.navEndpoints).click();
+      await expect
+        .poll(async () => page.locator(`${S.panelEndpoints}:has-text("/tts/stream")`).count(), {
+          timeout: 15000,
+        })
+        .toBeGreaterThan(0);
     });
 
-    test('endpoint rows include non-empty description', async ({ page }) => {
-      const text = await page.locator(`${S.panelEndpoints} .endpoint-row .ep-desc`).first().textContent();
-      expect(text?.length).toBeGreaterThan(0);
-    });
-
-    for (const method of ['get', 'post']) {
-      test(`${method.toUpperCase()} badges are present`, async ({ page }) => {
-        await expect(
-          page.locator(`${S.panelEndpoints} .endpoint-row .method.${method}`).first()
-        ).toBeVisible();
+    test('no console errors while the panel loads', async ({ page }) => {
+      const errors = [];
+      page.on('console', (msg) => {
+        if (msg.type() === 'error') errors.push(msg.text());
       });
-    }
-
-    for (const route of ['/health', '/tts/synthesize', '/v1/models', '/classify/batch', '/stats']) {
-      test(`${route} row is listed`, async ({ page }) => {
-        await expect(
-          page.locator(`${S.panelEndpoints} .ep-path`).filter({ hasText: new RegExp(`^${route.replace(/\//g, '\\/')}$`) })
-        ).toBeVisible();
-      });
-    }
-
-    test('total endpoint row count is at least 10', async ({ page }) => {
-      expect(
-        await page.locator(`${S.panelEndpoints} .endpoint-row`).count()
-      ).toBeGreaterThanOrEqual(10);
+      page.on('pageerror', (err) => errors.push(err.message));
+      await page.locator(S.navEndpoints).click();
+      await expect
+        .poll(async () => (await page.locator('#scalar-api-reference *').count()) > 5, {
+          timeout: 15000,
+        })
+        .toBe(true);
+      expect(errors, `console/page errors: ${JSON.stringify(errors)}`).toEqual([]);
     });
   });
 });

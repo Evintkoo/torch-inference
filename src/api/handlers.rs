@@ -370,7 +370,7 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
         // OpenAI-compatible v1 endpoints
         .route("/v1/models", web::get().to(v1_list_models))
         .configure(crate::api::llm_proxy::configure_routes)
-        // Self-hosted static assets (fonts, icons)
+        // Self-hosted static assets (fonts, icons, Scalar API-reference bundle)
         .route(
             "/assets/remixicon.css",
             web::get().to(crate::api::assets::serve_remixicon_css),
@@ -378,7 +378,13 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
         .route(
             "/assets/remixicon.woff2",
             web::get().to(crate::api::assets::serve_remixicon_woff2),
-        );
+        )
+        .route(
+            "/assets/scalar.js",
+            web::get().to(crate::api::assets::serve_scalar_js),
+        )
+        // OpenAPI spec backing the Endpoints panel's Scalar embed
+        .route("/openapi.json", web::get().to(crate::api::openapi::serve_openapi));
 }
 
 async fn v1_list_models() -> impl Responder {

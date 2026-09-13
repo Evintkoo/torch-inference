@@ -1,0 +1,571 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Torch Inference Engine API",
+    "description": "High-performance multimodal inference server: TTS synthesis, audio/STT transcription, image classification, YOLO object detection, and LLM chat completion over HTTP and WebSocket. This spec is hand-derived from the server's route registrations and is a living document — some lower-traffic routes are summarized rather than fully typed.",
+    "version": "1.0.0",
+    "license": { "name": "Proprietary" }
+  },
+  "servers": [
+    { "url": "/", "description": "This server" }
+  ],
+  "tags": [
+    { "name": "TTS", "description": "Text-to-speech synthesis" },
+    { "name": "Audio", "description": "Speech-to-text transcription and audio utilities" },
+    { "name": "Classification", "description": "Image classification (ONNX Runtime)" },
+    { "name": "Detection", "description": "YOLO object detection" },
+    { "name": "Dashboard & System", "description": "Health, metrics, and system introspection" },
+    { "name": "Models", "description": "Model registry, download, and management" },
+    { "name": "Performance", "description": "Latency and throughput metrics" },
+    { "name": "Logs", "description": "Server log inspection" },
+    { "name": "Assistant", "description": "OpenAI-compatible LLM chat completion (proxied to the LLM microservice)" }
+  ],
+  "paths": {
+    "/tts/stream": {
+      "post": {
+        "tags": ["TTS"],
+        "summary": "Sentence-level streaming synthesis",
+        "description": "Sentence-level streaming synthesis. Returns raw PCM-16LE audio (24 kHz, mono) as a chunked HTTP response. First chunk arrives after ~1 sentence.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TtsRequest" },
+              "example": { "text": "Hello world", "engine": "kokoro", "voice": "af_heart", "speed": 1.0, "pitch": 1.0 }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Raw PCM-16LE stream, 24000 Hz, mono, 16-bit little-endian. Wrap in a 44-byte WAV header to save or play locally.",
+            "content": { "audio/pcm": { "schema": { "type": "string", "format": "binary" } } }
+          }
+        }
+      }
+    },
+    "/tts/synthesize": {
+      "post": {
+        "tags": ["TTS"],
+        "summary": "Full synthesis (WAV)",
+        "description": "Full synthesis — waits for all audio, returns a single WAV file.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TtsRequest" },
+              "example": { "text": "Hello world", "engine": "kokoro", "voice": "af_heart", "speed": 1.0 }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "WAV file",
+            "content": { "audio/wav": { "schema": { "type": "string", "format": "binary" } } }
+          }
+        }
+      }
+    },
+    "/tts/engines": {
+      "get": {
+        "tags": ["TTS"],
+        "summary": "List loaded TTS engines",
+        "description": "List all loaded TTS engines and the default engine name.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "engines": { "type": "array", "items": { "type": "string" } },
+                    "default": { "type": "string" }
+                  }
+                },
+                "example": { "engines": ["kokoro", "bark", "xtts"], "default": "kokoro" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tts/engines/{engine}/voices": {
+      "get": {
+        "tags": ["TTS"],
+        "summary": "List voices for an engine",
+        "description": "List available voices for a specific engine.",
+        "parameters": [
+          { "name": "engine", "in": "path", "required": true, "schema": { "type": "string" }, "example": "kokoro" }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "properties": { "voices": { "type": "array", "items": { "type": "string" } } } },
+                "example": { "voices": ["af_heart", "af_bella", "af_sky"] }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tts/health": {
+      "get": {
+        "tags": ["TTS"],
+        "summary": "TTS subsystem health",
+        "description": "TTS subsystem health — returns engine count and load status.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" },
+                "example": { "status": "healthy", "engines_loaded": 7, "timestamp": "2026-09-13T00:00:00Z" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tts/stats": {
+      "get": {
+        "tags": ["TTS"],
+        "summary": "TTS synthesis cache/usage stats",
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/audio/transcribe": {
+      "post": {
+        "tags": ["Audio"],
+        "summary": "Transcribe an uploaded audio file",
+        "description": "Transcribe an uploaded audio file (WAV, MP3, OGG, FLAC, M4A) using Whisper.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "audio": { "type": "string", "format": "binary", "description": "audio file (required)" },
+                  "model": { "type": "string", "description": "\"default\" or model name" },
+                  "timestamps": { "type": "string", "enum": ["true", "false"] }
+                },
+                "required": ["audio"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "text": { "type": "string" },
+                    "language": { "type": "string" },
+                    "duration_ms": { "type": "integer" },
+                    "segments": { "type": "array", "items": { "type": "object" }, "description": "included when timestamps=true" }
+                  }
+                },
+                "example": { "text": "Hello world", "language": "en", "duration_ms": 1240 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/audio/synthesize": {
+      "post": {
+        "tags": ["Audio"],
+        "summary": "Synthesize speech (canonical audio route)",
+        "description": "App-level alias of the TTS full-synthesis path, registered directly on the audio router.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TtsRequest" } } }
+        },
+        "responses": { "200": { "description": "WAV file", "content": { "audio/wav": { "schema": { "type": "string", "format": "binary" } } } } }
+      }
+    },
+    "/audio/validate": {
+      "post": {
+        "tags": ["Audio"],
+        "summary": "Validate an audio file without transcribing",
+        "requestBody": { "content": { "multipart/form-data": { "schema": { "type": "object", "properties": { "audio": { "type": "string", "format": "binary" } } } } } },
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/audio/health": {
+      "get": {
+        "tags": ["Audio"],
+        "summary": "Audio subsystem health",
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/audio/ws": {
+      "get": {
+        "tags": ["Audio"],
+        "summary": "Bidirectional TTS/STT WebSocket",
+        "description": "Bidirectional WebSocket for live TTS (binary PCM-f32le chunks) and real-time STT (stream raw PCM samples). Upgrade this HTTP GET to a WebSocket connection.\n\nTTS — send text JSON frame: {\"type\":\"tts\",\"text\":\"Hello\",\"voice\":\"af_heart\",\"speed\":1.0}\nSTT begin: {\"type\":\"stt_begin\",\"sample_rate\":16000} then binary f32-LE PCM frames, then {\"type\":\"stt_end\"}\n\nServer sends: {\"type\":\"ready\"}, {\"type\":\"tts_meta\",...}, binary PCM chunks, {\"type\":\"tts_done\",...}, {\"type\":\"transcript\",...}.",
+        "responses": { "101": { "description": "Switching Protocols — WebSocket upgrade" } }
+      }
+    },
+    "/classify/batch": {
+      "post": {
+        "tags": ["Classification"],
+        "summary": "Batch image classification",
+        "description": "Classify a batch of base64-encoded images using ONNX Runtime. Returns top-K predictions for each.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["images"],
+                "properties": {
+                  "images": { "type": "array", "items": { "type": "string", "format": "byte" }, "description": "base64 JPEG/PNG" },
+                  "top_k": { "type": "integer", "default": 5 },
+                  "model_width": { "type": "integer", "default": 224 },
+                  "model_height": { "type": "integer", "default": 224 }
+                }
+              },
+              "example": { "images": ["<base64>"], "top_k": 5, "model_width": 224, "model_height": 224 }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" },
+                "example": { "data": { "results": [ { "predictions": [ { "label": "cat", "confidence": 0.95, "class_id": 281 } ] } ], "batch_ms": 47.2 } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/classify/stream": {
+      "post": {
+        "tags": ["Classification"],
+        "summary": "SSE progressive classification",
+        "description": "SSE stream — classifies images one by one, emitting a JSON event per image progressively.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["images"],
+                "properties": {
+                  "images": { "type": "array", "items": { "type": "string", "format": "byte" } },
+                  "top_k": { "type": "integer", "default": 5 },
+                  "model_width": { "type": "integer", "default": 224 },
+                  "model_height": { "type": "integer", "default": 224 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "text/event-stream — one `data: {...}` line per image, then a final `data: {\"type\":\"done\",...}`.",
+            "content": { "text/event-stream": { "schema": { "type": "string" } } }
+          }
+        }
+      }
+    },
+    "/ws/classify": {
+      "get": {
+        "tags": ["Classification"],
+        "summary": "Live classification WebSocket",
+        "description": "Send a config JSON frame once ({\"type\":\"config\",\"top_k\":5,\"width\":224,\"height\":224}), then stream JPEG binary frames at your desired FPS. Server replies with {\"type\":\"classify\",...} per frame.",
+        "responses": { "101": { "description": "Switching Protocols — WebSocket upgrade" } }
+      }
+    },
+    "/yolo/detect": {
+      "post": {
+        "tags": ["Detection"],
+        "summary": "Detect objects in an uploaded image",
+        "description": "Detect objects in an uploaded image. Auto-selects the best available ONNX model (v8–v12). Returns bounding boxes, labels, and confidence scores.",
+        "parameters": [
+          { "name": "model_version", "in": "query", "schema": { "type": "string", "enum": ["v8", "v10", "v11", "v12"], "default": "v8" } },
+          { "name": "model_size", "in": "query", "schema": { "type": "string", "enum": ["n", "s", "m", "l", "x"], "default": "n" } },
+          { "name": "conf_threshold", "in": "query", "schema": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.25 } },
+          { "name": "iou_threshold", "in": "query", "schema": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.45 } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "multipart/form-data": { "schema": { "type": "object", "required": ["image"], "properties": { "image": { "type": "string", "format": "binary" } } } } }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" },
+                "example": { "data": { "success": true, "results": { "detections": [ { "class_name": "person", "confidence": 0.87, "bbox": { "x1": 50, "y1": 30, "x2": 200, "y2": 400 } } ], "count": 1, "inference_ms": 14.2 } } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/yolo/info": {
+      "get": { "tags": ["Detection"], "summary": "Loaded YOLO model info", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } } }
+    },
+    "/yolo/models": {
+      "get": { "tags": ["Detection"], "summary": "List available YOLO models", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } } }
+    },
+    "/yolo/download": {
+      "post": { "tags": ["Detection"], "summary": "Download a YOLO model", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } } }
+    },
+    "/ws/detect": {
+      "get": {
+        "tags": ["Detection"],
+        "summary": "Live YOLO detection WebSocket",
+        "description": "Send a config JSON frame ({\"type\":\"config\",\"version\":\"v8\",\"size\":\"n\",\"conf\":0.25,\"iou\":0.45}), then stream JPEG binary frames. Server replies with bounding-box JSON per frame.",
+        "responses": { "101": { "description": "Switching Protocols — WebSocket upgrade" } }
+      }
+    },
+    "/dashboard/stream": {
+      "get": {
+        "tags": ["Dashboard & System"],
+        "summary": "Live dashboard metrics (SSE)",
+        "description": "Server-Sent Events pushing live metrics every 3s: request stats, CPU/RAM, GPU utilisation, active downloads.",
+        "responses": {
+          "200": {
+            "description": "text/event-stream",
+            "content": {
+              "text/event-stream": {
+                "schema": { "type": "string" },
+                "example": "data: {\"metrics\":{\"uptime_s\":3600,\"active_req\":2,\"total_req\":150,\"avg_latency_ms\":12.4,\"error_rate\":0.0,\"throughput_per_s\":1.2,\"cpu_pct\":18.5,\"mem_used_mb\":2048,\"mem_total_mb\":16384},\"gpu\":[],\"downloads\":[]}"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": ["Dashboard & System"],
+        "summary": "Full health check",
+        "description": "Full health check with subsystem status, uptime, and active request count.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" },
+                "example": { "status": "healthy", "version": "1.0.0", "uptime_seconds": 289365, "checks": { "error_rate": { "status": "up", "message": "0.00%" }, "performance": { "status": "up", "message": "0.00ms avg latency" }, "monitor": { "status": "up", "message": "15 total requests" }, "capacity": { "status": "up", "message": "0 active requests" } } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/live": {
+      "get": { "tags": ["Dashboard & System"], "summary": "Liveness probe", "responses": { "200": { "description": "OK" } } }
+    },
+    "/health/ready": {
+      "get": { "tags": ["Dashboard & System"], "summary": "Readiness probe", "responses": { "200": { "description": "OK" } } }
+    },
+    "/system/info": {
+      "get": {
+        "tags": ["Dashboard & System"],
+        "summary": "Hardware info",
+        "description": "Hardware info: CPU model, core count, RAM, GPU devices with VRAM.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" },
+                "example": { "cpu": { "model": "Apple M4", "cores": 10 }, "memory": { "total_mb": 16384, "used_mb": 2048 }, "gpu": [ { "name": "Apple M4", "vram_total_mb": 16384, "vram_free_mb": 12800 } ] }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/system/config": {
+      "get": { "tags": ["Dashboard & System"], "summary": "Effective server configuration", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } } }
+    },
+    "/system/gpu/stats": {
+      "get": { "tags": ["Dashboard & System"], "summary": "GPU utilisation stats", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } } }
+    },
+    "/performance": {
+      "get": {
+        "tags": ["Performance"],
+        "summary": "Throughput and latency percentiles",
+        "description": "Throughput, latency percentiles, and request rate over sliding windows.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" }, "example": { "requests_per_second": 1.2, "avg_latency_ms": 12.4, "p95_latency_ms": 45.0 } } }
+          }
+        }
+      }
+    },
+    "/performance/profile": {
+      "post": { "tags": ["Performance"], "summary": "Profile a single inference call", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } } }
+    },
+    "/performance/optimize": {
+      "get": { "tags": ["Performance"], "summary": "Runtime optimisation suggestions", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } } }
+    },
+    "/metrics": {
+      "get": {
+        "tags": ["Dashboard & System"],
+        "summary": "Prometheus scrape endpoint",
+        "description": "Prometheus-compatible scrape endpoint.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "text/plain": { "schema": { "type": "string" }, "example": "# HELP http_requests_total Total HTTP requests\nhttp_requests_total{method=\"POST\",path=\"/tts/stream\"} 42" } }
+          }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "tags": ["Dashboard & System"],
+        "summary": "This OpenAPI specification",
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/models": {
+      "get": { "tags": ["Models"], "summary": "List models known to this server", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } } }
+    },
+    "/models/available": {
+      "get": { "tags": ["Models"], "summary": "List downloadable models by catalog", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } } }
+    },
+    "/models/managed": {
+      "get": { "tags": ["Models"], "summary": "List locally-managed downloaded models", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } } }
+    },
+    "/models/download": {
+      "post": {
+        "tags": ["Models"],
+        "summary": "Download a model by name",
+        "requestBody": { "content": { "application/json": { "schema": { "type": "object", "properties": { "name": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/models/download/list": {
+      "get": { "tags": ["Models"], "summary": "List in-progress/completed downloads", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } } }
+    },
+    "/models/download/status/{id}": {
+      "get": {
+        "tags": ["Models"], "summary": "Download job status",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } ],
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/models/cache/info": {
+      "get": { "tags": ["Models"], "summary": "Model cache disk usage", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } } }
+    },
+    "/models/sota": {
+      "get": { "tags": ["Models"], "summary": "List state-of-the-art model catalog entries", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } } }
+    },
+    "/models/sota/{model_id}": {
+      "post": {
+        "tags": ["Models"], "summary": "Download a SOTA catalog model",
+        "parameters": [ { "name": "model_id", "in": "path", "required": true, "schema": { "type": "string" } } ],
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/api/models": {
+      "get": { "tags": ["Models"], "summary": "Model registry listing (registry API)", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } } }
+    },
+    "/api/models/{model_id}": {
+      "get": {
+        "tags": ["Models"], "summary": "Model registry entry (registry API)",
+        "parameters": [ { "name": "model_id", "in": "path", "required": true, "schema": { "type": "string" } } ],
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/logs": {
+      "get": { "tags": ["Logs"], "summary": "List available log files", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } } }
+    },
+    "/logs/{log_file}": {
+      "get": {
+        "tags": ["Logs"], "summary": "Read a log file",
+        "parameters": [ { "name": "log_file", "in": "path", "required": true, "schema": { "type": "string" } } ],
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      },
+      "delete": {
+        "tags": ["Logs"], "summary": "Clear a log file",
+        "parameters": [ { "name": "log_file", "in": "path", "required": true, "schema": { "type": "string" } } ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/v1/models": {
+      "get": {
+        "tags": ["Assistant"],
+        "summary": "OpenAI-compatible model list",
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" }, "example": { "object": "list", "data": [] } } } }
+        }
+      }
+    },
+    "/llm/{tail}": {
+      "get": {
+        "tags": ["Assistant"],
+        "summary": "LLM microservice reverse proxy",
+        "description": "Thin reverse proxy to the LLM microservice on :8001 — forwards any method/path under /llm/* verbatim, including the OpenAI-compatible `/llm/v1/chat/completions` (supports streaming SSE) used by the built-in Assistant panel.",
+        "parameters": [ { "name": "tail", "in": "path", "required": true, "schema": { "type": "string" }, "example": "v1/chat/completions" } ],
+        "responses": { "200": { "description": "OK — response shape depends on the proxied path" } }
+      },
+      "post": {
+        "tags": ["Assistant"],
+        "summary": "LLM microservice reverse proxy (POST)",
+        "description": "e.g. POST /llm/v1/chat/completions — OpenAI-compatible chat completion, `stream: true` returns Server-Sent Events.",
+        "parameters": [ { "name": "tail", "in": "path", "required": true, "schema": { "type": "string" }, "example": "v1/chat/completions" } ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "type": "object" },
+              "example": { "model": "hrm-text-1b", "messages": [ { "role": "user", "content": "Hello" } ], "stream": true }
+            }
+          }
+        },
+        "responses": { "200": { "description": "OK — JSON completion, or text/event-stream when stream:true" } }
+      }
+    },
+    "/stt/{tail}": {
+      "get": {
+        "tags": ["Audio"],
+        "summary": "STT microservice reverse proxy",
+        "description": "Thin reverse proxy to the optional faster-whisper STT microservice on :8002 (Python, only started if services/stt/server.py and a python3 interpreter are present). The built-in Whisper ONNX pipeline at /audio/transcribe does not require this.",
+        "parameters": [ { "name": "tail", "in": "path", "required": true, "schema": { "type": "string" } } ],
+        "responses": { "200": { "description": "OK — response shape depends on the proxied path" } }
+      }
+    },
+    "/predict": {
+      "post": { "tags": ["Models"], "summary": "Generic model prediction (legacy)", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } } }
+    },
+    "/stats": {
+      "get": { "tags": ["Dashboard & System"], "summary": "Aggregate server stats", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } } }
+    },
+    "/endpoints": {
+      "get": { "tags": ["Dashboard & System"], "summary": "Per-endpoint request stats", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object" } } } } } }
+    }
+  },
+  "components": {
+    "schemas": {
+      "TtsRequest": {
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "text": { "type": "string", "example": "Hello world" },
+          "engine": { "type": "string", "description": "omit for default", "example": "kokoro" },
+          "voice": { "type": "string", "description": "omit for default", "example": "af_heart" },
+          "speed": { "type": "number", "minimum": 0.25, "maximum": 4.0, "default": 1.0 },
+          "pitch": { "type": "number", "minimum": 0.5, "maximum": 2.0, "default": 1.0 }
+        }
+      }
+    }
+  }
+}
