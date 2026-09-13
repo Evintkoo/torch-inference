@@ -1545,7 +1545,6 @@ git commit -m "web: add live CPU metrics chart via uPlot + /dashboard/stream SSE
 - Modify: `Cargo.toml`
 - Create: `src/api/web_assets.rs`
 - Modify: `src/api/mod.rs`
-- Modify: `src/api/handlers.rs`
 - Modify: `src/main.rs`
 
 **Interfaces:**
