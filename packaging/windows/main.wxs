@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="Torch Inference Server"
+           Manufacturer="Evint Leovonzko"
+           Version="1.0.0"
+           UpgradeCode="8f2b1e6c-9c1a-4a1e-9b5a-6f2c4a2e8b1d">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Torch Inference Server is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Torch Inference Server">
+        <Component Id="ServerBinary" Guid="*">
+          <File Id="ServerExe" Source="$(var.SourceDir)\torch-inference-server.exe" KeyPath="yes" />
+        </Component>
+        <Component Id="OrtDll" Guid="*">
+          <File Id="OnnxRuntimeDll" Source="$(var.SourceDir)\onnxruntime.dll" KeyPath="yes" />
+        </Component>
+        <Component Id="ConfigFile" Guid="*">
+          <File Id="ConfigToml" Source="$(var.SourceDir)\config.toml" KeyPath="yes" />
+        </Component>
+        <Component Id="DownloadScriptSh" Guid="*">
+          <File Id="DownloadModelsSh" Source="$(var.SourceDir)\download_models.sh" KeyPath="yes" />
+        </Component>
+        <Component Id="DownloadScriptPs1" Guid="*">
+          <File Id="DownloadModelsPs1" Source="$(var.SourceDir)\download_models.ps1" KeyPath="yes" />
+        </Component>
+        <Component Id="ReadmeFirstRun" Guid="*">
+          <File Id="ReadmeFirstRunTxt" Source="$(var.SourceDir)\README-first-run.txt" KeyPath="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Component Id="StartMenuShortcut" Guid="*">
+        <Shortcut Id="ServerShortcut"
+                  Name="Torch Inference Server"
+                  Target="[INSTALLFOLDER]torch-inference-server.exe"
+                  WorkingDirectory="INSTALLFOLDER" />
+        <RemoveFolder Id="RemoveStartMenuShortcut" On="uninstall" />
+        <RegistryValue Root="HKCU"
+                        Key="Software\TorchInferenceServer"
+                        Name="installed"
+                        Type="integer"
+                        Value="1"
+                        KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+
+    <Feature Id="MainFeature" Title="Torch Inference Server" Level="1">
+      <ComponentRef Id="ServerBinary" />
+      <ComponentRef Id="OrtDll" />
+      <ComponentRef Id="ConfigFile" />
+      <ComponentRef Id="DownloadScriptSh" />
+      <ComponentRef Id="DownloadScriptPs1" />
+      <ComponentRef Id="ReadmeFirstRun" />
+      <ComponentRef Id="StartMenuShortcut" />
+    </Feature>
+  </Package>
+</Wix>
