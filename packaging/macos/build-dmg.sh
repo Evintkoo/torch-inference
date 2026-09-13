@@ -15,6 +15,7 @@ cd "${REPO_ROOT}"
 
 APP_NAME="Torch Inference Server.app"
 STAGE_DIR="$(mktemp -d)"
+trap 'rm -rf "${STAGE_DIR}"' EXIT
 APP_DIR="${STAGE_DIR}/${APP_NAME}"
 
 mkdir -p "${APP_DIR}/Contents/MacOS" "${APP_DIR}/Contents/Resources"
@@ -39,5 +40,4 @@ hdiutil create -volname "Torch Inference Server" \
   -ov -format UDZO \
   "${OUTPUT}"
 
-rm -rf "${STAGE_DIR}"
 echo "Built ${OUTPUT}"
