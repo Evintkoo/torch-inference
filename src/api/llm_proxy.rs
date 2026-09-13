@@ -147,6 +147,18 @@ pub async fn proxy(
                 }
             }
 
+            // Opt this response out of the app-wide Compress middleware. Compress
+            // sees no Content-Encoding header (llm-service sends none) and, when the
+            // client advertises `Accept-Encoding: br` (every browser does; curl
+            // without --compressed does not — why this only reproduced in-browser),
+            // negotiates brotli and wraps the streamed body in its own encoder. That
+            // encoder buffers internally waiting to fill a compression window before
+            // emitting output, so for an SSE stream sent as many tiny chunks the
+            // browser sees zero bytes until the whole (multi-second-to-minutes)
+            // generation finishes — indistinguishable from a hang. Compress respects
+            // a Content-Encoding the handler already set and skips re-encoding.
+            resp.insert_header(("Content-Encoding", "identity"));
+
             // Stream the upstream body without buffering — critical for SSE.
             let stream = upstream
                 .bytes_stream()
