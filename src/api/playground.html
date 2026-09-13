@@ -2353,6 +2353,7 @@ function escHtml(str) {
 
 /* ── Dashboard ─────────────────────────────────────────── */
 let dashES      = null;
+const openDlEventSources = new Set();
 const sparkData = new Array(60).fill(0);
 let   sparkCtx  = null;
 
@@ -2396,6 +2397,8 @@ function closeDashboardStream() {
 // resources until OS-level TCP timeout.
 window.addEventListener('pagehide', () => {
   closeDashboardStream();
+  openDlEventSources.forEach((es) => { try { es.close(); } catch (_) {} });
+  openDlEventSources.clear();
   try { if (typeof detWs !== 'undefined' && detWs) detWs.close(); } catch (_) {}
   try { if (typeof clsWs !== 'undefined' && clsWs) clsWs.close(); } catch (_) {}
   try { if (typeof wsAudio !== 'undefined' && wsAudio) wsAudio.close(); } catch (_) {}
@@ -3410,32 +3413,33 @@ function pollMdlDownload(taskId, name, listId = 'mdl-dl-tasks-list') {
     list.prepend(row);
   }
   let pct = 5;
-  const iv = setInterval(async () => {
-    try {
-      const r = await fetch('/models/download/status/' + taskId);
-      if (!r.ok) { clearInterval(iv); return; }
-      const d     = await safeJson(r);
-      const done  = d.status === 'Completed' || d.status === 'Failed';
-      const badge = document.getElementById(rowId + '-badge');
-      const bar   = document.getElementById(rowId + '-bar');
-      const bl    = document.getElementById(rowId + '-bytes');
-      const pr    = document.getElementById(rowId + '-pct');
-      if (d.progress != null) pct = Math.min(99, d.progress);
-      else if (!done) pct = Math.min(pct + 3, 90);
-      if (bar) {
-        bar.style.width = (done && d.status !== 'Failed' ? 100 : pct) + '%';
-        if (d.status === 'Completed') bar.classList.add('done');
-        if (d.status === 'Failed')    bar.classList.add('failed');
-      }
-      if (badge) { badge.textContent = d.status; badge.className = 'dl-status-badge ' + (d.status || 'Downloading').toLowerCase(); }
-      if (bl) bl.textContent = d.downloaded_size ? formatBytes(d.downloaded_size) + ' downloaded' : (d.error || '');
-      if (pr) pr.textContent = (d.status === 'Failed' || d.error) ? '' : (d.progress != null ? Math.round(d.progress) + '%' : '');
-      if (done) {
-        clearInterval(iv);
-        if (d.status === 'Completed') { refreshModelSelects(); loadDownloadedModels(); }
-      }
-    } catch (_) { clearInterval(iv); }
-  }, 1500);
+  const es = new EventSource('/models/download/' + encodeURIComponent(taskId) + '/events');
+  openDlEventSources.add(es);
+  es.onmessage = (ev) => {
+    let d;
+    try { d = JSON.parse(ev.data); } catch (_) { return; }
+    const done  = d.status === 'Completed' || d.status === 'Failed';
+    const badge = document.getElementById(rowId + '-badge');
+    const bar   = document.getElementById(rowId + '-bar');
+    const bl    = document.getElementById(rowId + '-bytes');
+    const pr    = document.getElementById(rowId + '-pct');
+    if (d.progress != null) pct = Math.min(99, d.progress);
+    else if (!done) pct = Math.min(pct + 3, 90);
+    if (bar) {
+      bar.style.width = (done && d.status !== 'Failed' ? 100 : pct) + '%';
+      if (d.status === 'Completed') bar.classList.add('done');
+      if (d.status === 'Failed')    bar.classList.add('failed');
+    }
+    if (badge) { badge.textContent = d.status; badge.className = 'dl-status-badge ' + (d.status || 'Downloading').toLowerCase(); }
+    if (bl) bl.textContent = d.downloaded_size ? formatBytes(d.downloaded_size) + ' downloaded' : (d.error || '');
+    if (pr) pr.textContent = (d.status === 'Failed' || d.error) ? '' : (d.progress != null ? Math.round(d.progress) + '%' : '');
+    if (done) {
+      es.close();
+      openDlEventSources.delete(es);
+      if (d.status === 'Completed') { refreshModelSelects(); loadDownloadedModels(); }
+    }
+  };
+  es.onerror = () => { es.close(); openDlEventSources.delete(es); };
 }
 
 async function deleteModel(name) {

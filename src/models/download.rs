@@ -7,7 +7,7 @@ use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
-use tokio::sync::Semaphore;
+use tokio::sync::{watch, Semaphore};
 use uuid::Uuid;
 
 /// True when `p` is a relative path containing only Normal components — no
@@ -110,6 +110,9 @@ pub struct ModelDownloadManager {
     download_semaphore: Arc<Semaphore>,
     /// Shared HTTP client — reuses the connection pool across all downloads.
     client: Arc<reqwest::Client>,
+    /// Per-task progress channels, created lazily on first `subscribe_task`
+    /// call. Lets SSE handlers push updates instead of polling `tasks`.
+    task_channels: Arc<DashMap<String, watch::Sender<DownloadTask>>>,
 }
 
 impl ModelDownloadManager {
@@ -131,6 +134,7 @@ impl ModelDownloadManager {
             max_concurrent_downloads,
             download_semaphore: Arc::new(Semaphore::new(max_concurrent_downloads)),
             client: Arc::new(client),
+            task_channels: Arc::new(DashMap::new()),
         })
     }
 
@@ -524,11 +528,15 @@ impl ModelDownloadManager {
     }
 
     fn update_task_status(&self, task_id: &str, status: DownloadStatus) {
-        if let Some(mut task) = self.tasks.get_mut(task_id) {
+        let updated = self.tasks.get_mut(task_id).map(|mut task| {
             task.status = status.clone();
             if status == DownloadStatus::Completed {
                 task.completed_at = Some(chrono::Utc::now());
             }
+            task.clone()
+        });
+        if let Some(task) = updated {
+            self.notify_task_subscribers(task);
         }
     }
 
@@ -539,23 +547,53 @@ impl ModelDownloadManager {
         downloaded: u64,
         total: Option<u64>,
     ) {
-        if let Some(mut task) = self.tasks.get_mut(task_id) {
+        let updated = self.tasks.get_mut(task_id).map(|mut task| {
             task.progress = progress;
             task.downloaded_size = downloaded;
             task.total_size = total;
+            task.clone()
+        });
+        if let Some(task) = updated {
+            self.notify_task_subscribers(task);
         }
     }
 
     fn update_task_error(&self, task_id: &str, error: &str) {
-        if let Some(mut task) = self.tasks.get_mut(task_id) {
+        let updated = self.tasks.get_mut(task_id).map(|mut task| {
             task.status = DownloadStatus::Failed;
             task.error = Some(error.to_string());
             task.completed_at = Some(chrono::Utc::now());
+            task.clone()
+        });
+        if let Some(task) = updated {
+            self.notify_task_subscribers(task);
+        }
+    }
+
+    /// Pushes `task`'s new state to its progress channel, if anyone has ever
+    /// subscribed to it. A no-op when there's no subscriber — `watch::Sender`
+    /// only errors when every receiver has been dropped.
+    fn notify_task_subscribers(&self, task: DownloadTask) {
+        if let Some(sender) = self.task_channels.get(&task.id) {
+            let _ = sender.send(task);
         }
     }
 
     pub fn get_task_status(&self, task_id: &str) -> Option<DownloadTask> {
         self.tasks.get(task_id).map(|t| t.clone())
+    }
+
+    /// Subscribes to live progress updates for `task_id`. Returns `None` if
+    /// no task with that id exists. The channel is created lazily so tasks
+    /// nobody watches never pay for one.
+    pub fn subscribe_task(&self, task_id: &str) -> Option<watch::Receiver<DownloadTask>> {
+        if let Some(sender) = self.task_channels.get(task_id) {
+            return Some(sender.subscribe());
+        }
+        let task = self.tasks.get(task_id)?.clone();
+        let (tx, rx) = watch::channel(task);
+        self.task_channels.insert(task_id.to_string(), tx);
+        Some(rx)
     }
 
     pub fn list_tasks(&self) -> Vec<DownloadTask> {
@@ -605,6 +643,7 @@ impl Clone for ModelDownloadManager {
             max_concurrent_downloads: self.max_concurrent_downloads,
             download_semaphore: Arc::clone(&self.download_semaphore),
             client: Arc::clone(&self.client),
+            task_channels: Arc::clone(&self.task_channels),
         }
     }
 }
@@ -1324,6 +1363,103 @@ mod tests {
         manager.update_task_progress("ghost", 50.0, 500, Some(1000));
         manager.update_task_error("ghost", "some error");
         assert!(manager.get_task_status("ghost").is_none());
+    }
+
+    // ===== Task subscription (SSE progress push) Tests =====
+
+    fn make_task(id: &str, status: DownloadStatus, progress: f32) -> DownloadTask {
+        DownloadTask {
+            id: id.to_string(),
+            model_name: "model".to_string(),
+            source: ModelSource::Local {
+                path: "/tmp".to_string(),
+            },
+            status,
+            progress,
+            total_size: None,
+            downloaded_size: 0,
+            error: None,
+            started_at: chrono::Utc::now(),
+            completed_at: None,
+        }
+    }
+
+    #[test]
+    fn test_subscribe_task_returns_none_for_unknown_task() {
+        let manager = ModelDownloadManager::new("/tmp/cache_subscribe_missing").unwrap();
+        assert!(manager.subscribe_task("ghost").is_none());
+    }
+
+    #[test]
+    fn test_subscribe_task_yields_current_state() {
+        let manager = ModelDownloadManager::new("/tmp/cache_subscribe_current").unwrap();
+        manager.tasks.insert(
+            "sub-task".to_string(),
+            make_task("sub-task", DownloadStatus::Downloading, 42.0),
+        );
+
+        let rx = manager.subscribe_task("sub-task").unwrap();
+        assert_eq!(rx.borrow().progress, 42.0);
+    }
+
+    #[tokio::test]
+    async fn test_subscribe_task_receives_progress_updates() {
+        let manager = ModelDownloadManager::new("/tmp/cache_subscribe_progress").unwrap();
+        manager.tasks.insert(
+            "live-task".to_string(),
+            make_task("live-task", DownloadStatus::Downloading, 0.0),
+        );
+
+        let mut rx = manager.subscribe_task("live-task").unwrap();
+        manager.update_task_progress("live-task", 55.0, 550, Some(1000));
+
+        rx.changed().await.unwrap();
+        assert_eq!(rx.borrow().progress, 55.0);
+        assert_eq!(rx.borrow().downloaded_size, 550);
+    }
+
+    #[tokio::test]
+    async fn test_subscribe_task_receives_terminal_completed_status() {
+        let manager = ModelDownloadManager::new("/tmp/cache_subscribe_completed").unwrap();
+        manager.tasks.insert(
+            "done-task".to_string(),
+            make_task("done-task", DownloadStatus::Downloading, 99.0),
+        );
+
+        let mut rx = manager.subscribe_task("done-task").unwrap();
+        manager.update_task_status("done-task", DownloadStatus::Completed);
+
+        rx.changed().await.unwrap();
+        assert_eq!(rx.borrow().status, DownloadStatus::Completed);
+    }
+
+    #[tokio::test]
+    async fn test_subscribe_task_receives_error() {
+        let manager = ModelDownloadManager::new("/tmp/cache_subscribe_error").unwrap();
+        manager.tasks.insert(
+            "fail-task".to_string(),
+            make_task("fail-task", DownloadStatus::Downloading, 10.0),
+        );
+
+        let mut rx = manager.subscribe_task("fail-task").unwrap();
+        manager.update_task_error("fail-task", "disk full");
+
+        rx.changed().await.unwrap();
+        let snapshot = rx.borrow();
+        assert_eq!(snapshot.status, DownloadStatus::Failed);
+        assert_eq!(snapshot.error.as_deref(), Some("disk full"));
+    }
+
+    #[test]
+    fn test_update_notifies_do_not_panic_without_subscriber() {
+        let manager = ModelDownloadManager::new("/tmp/cache_subscribe_no_sub").unwrap();
+        manager.tasks.insert(
+            "unwatched-task".to_string(),
+            make_task("unwatched-task", DownloadStatus::Downloading, 0.0),
+        );
+        // No subscriber ever attached — updates must still be a plain no-op, not a panic.
+        manager.update_task_progress("unwatched-task", 20.0, 200, Some(1000));
+        manager.update_task_status("unwatched-task", DownloadStatus::Completed);
     }
 
     #[test]

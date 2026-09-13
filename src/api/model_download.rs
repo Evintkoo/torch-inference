@@ -1,11 +1,14 @@
 use crate::error::ApiError;
-use crate::models::download::{ModelDownloadManager, ModelSource};
+use crate::models::download::{DownloadStatus, DownloadTask, ModelDownloadManager, ModelSource};
+use actix_web::web::Bytes;
 use actix_web::{web, HttpResponse, Result};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use tokio::sync::mpsc;
+use tokio_stream::wrappers::ReceiverStream;
 use tracing::warn;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct DownloadModelRequest {
     pub model_name: String,
     pub source_type: String,
@@ -111,6 +114,55 @@ pub async fn get_download_status(
         .ok_or_else(|| ApiError::NotFound(format!("Task {} not found", task_id)))?;
 
     Ok(HttpResponse::Ok().json(task))
+}
+
+/// SSE stream of a single download's progress. Emits the task's current
+/// state immediately, then a new event on every change, closing once the
+/// task reaches a terminal status (Completed/Failed/Cancelled) — no
+/// reconnect needed, callers just consume until the stream ends.
+pub async fn get_download_events(
+    task_id: web::Path<String>,
+    state: web::Data<ModelDownloadState>,
+) -> Result<HttpResponse, ApiError> {
+    let mut rx = state
+        .manager
+        .subscribe_task(&task_id)
+        .ok_or_else(|| ApiError::NotFound(format!("Task {} not found", task_id)))?;
+
+    let (tx, body_rx) = mpsc::channel::<std::result::Result<Bytes, std::io::Error>>(4);
+
+    crate::spawn_safe::spawn_logged("model_download_sse_writer", async move {
+        loop {
+            let task: DownloadTask = rx.borrow().clone();
+            let is_terminal = matches!(
+                task.status,
+                DownloadStatus::Completed | DownloadStatus::Failed | DownloadStatus::Cancelled
+            );
+
+            let json = match serde_json::to_string(&task) {
+                Ok(j) => j,
+                Err(e) => {
+                    warn!("[model_download] SSE serialization error: {e}");
+                    break;
+                }
+            };
+            if tx.send(Ok(Bytes::from(format!("data: {json}\n\n")))).await.is_err() {
+                break; // client disconnected
+            }
+            if is_terminal {
+                break;
+            }
+            if rx.changed().await.is_err() {
+                break; // sender dropped (shouldn't happen; manager outlives requests)
+            }
+        }
+    });
+
+    Ok(HttpResponse::Ok()
+        .content_type("text/event-stream")
+        .insert_header(("Cache-Control", "no-cache"))
+        .insert_header(("X-Accel-Buffering", "no"))
+        .streaming(ReceiverStream::new(body_rx)))
 }
 
 pub async fn list_downloads(
@@ -590,6 +642,25 @@ fn format_bytes(bytes: u64) -> String {
     format!("{:.2} {}", size, UNITS[unit_idx])
 }
 
+/// Routes the playground's "download by repo/URL" panel already expects
+/// (`/models/download`, `/models/download/status/{task_id}`,
+/// `/models/download/{name}` for delete) plus the new SSE subscribe path.
+pub fn configure(cfg: &mut web::ServiceConfig) {
+    cfg.service(
+        web::scope("/models")
+            .route("/download", web::post().to(download_model))
+            .route(
+                "/download/status/{task_id}",
+                web::get().to(get_download_status),
+            )
+            .route(
+                "/download/{task_id}/events",
+                web::get().to(get_download_events),
+            )
+            .route("/download/{name}", web::delete().to(delete_model)),
+    );
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -911,6 +982,113 @@ mod tests {
         assert!(result.is_ok());
         let resp = result.unwrap();
         assert_eq!(resp.status(), actix_web::http::StatusCode::OK);
+    }
+
+    // ── get_download_events (SSE progress subscribe) ──────────────────────────
+
+    #[actix_web::test]
+    async fn test_get_download_events_task_not_found() {
+        let state = make_download_state();
+        let result = get_download_events(web::Path::from("no-such-task".to_string()), state).await;
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            crate::error::ApiError::NotFound(_)
+        ));
+    }
+
+    #[actix_web::test]
+    async fn test_get_download_events_streams_until_terminal() {
+        let state = make_download_state();
+
+        // example.com is not in the download host allowlist, so this task
+        // fails fast without touching the network — deterministic terminal
+        // state for the SSE loop to close on.
+        let req = web::Json(DownloadModelRequest {
+            model_name: "sse-test-model".to_string(),
+            source_type: "url".to_string(),
+            repo_id: None,
+            revision: None,
+            url: Some("https://example.com/model.bin".to_string()),
+        });
+        let download_resp = download_model(req, state.clone()).await.unwrap();
+        let body_bytes = actix_web::body::to_bytes(download_resp.into_body())
+            .await
+            .unwrap();
+        let body: serde_json::Value = serde_json::from_slice(&body_bytes).unwrap();
+        let task_id = body["task_id"].as_str().unwrap().to_string();
+
+        let events_result = get_download_events(web::Path::from(task_id), state).await;
+        assert!(events_result.is_ok());
+        let resp = events_result.unwrap();
+        assert_eq!(resp.status(), actix_web::http::StatusCode::OK);
+        assert_eq!(
+            resp.headers().get("content-type").unwrap(),
+            "text/event-stream"
+        );
+
+        let body_bytes = actix_web::body::to_bytes(resp.into_body()).await.unwrap();
+        let text = String::from_utf8(body_bytes.to_vec()).unwrap();
+        assert!(text.starts_with("data: "), "unexpected frame: {text}");
+        assert!(text.contains("\"Failed\""), "missing terminal status: {text}");
+        assert!(text.ends_with("\n\n"));
+    }
+
+    // ── configure() route wiring ───────────────────────────────────────────────
+
+    #[actix_web::test]
+    async fn test_configure_wires_playground_paths() {
+        let state = make_download_state();
+        let app = actix_web::test::init_service(
+            actix_web::App::new()
+                .app_data(state.clone())
+                .configure(configure),
+        )
+        .await;
+
+        let post_req = actix_web::test::TestRequest::post()
+            .uri("/models/download")
+            .set_json(&DownloadModelRequest {
+                model_name: "route-test-model".to_string(),
+                source_type: "url".to_string(),
+                repo_id: None,
+                revision: None,
+                url: Some("https://example.com/route-test.bin".to_string()),
+            })
+            .to_request();
+        let post_resp = actix_web::test::call_service(&app, post_req).await;
+        assert_eq!(post_resp.status(), actix_web::http::StatusCode::OK);
+        let body: serde_json::Value = actix_web::test::read_body_json(post_resp).await;
+        let task_id = body["task_id"].as_str().unwrap().to_string();
+
+        let status_req = actix_web::test::TestRequest::get()
+            .uri(&format!("/models/download/status/{task_id}"))
+            .to_request();
+        let status_resp = actix_web::test::call_service(&app, status_req).await;
+        assert_eq!(status_resp.status(), actix_web::http::StatusCode::OK);
+
+        let events_req = actix_web::test::TestRequest::get()
+            .uri(&format!("/models/download/{task_id}/events"))
+            .to_request();
+        let events_resp = actix_web::test::call_service(&app, events_req).await;
+        assert_eq!(events_resp.status(), actix_web::http::StatusCode::OK);
+    }
+
+    #[actix_web::test]
+    async fn test_configure_wires_delete_route() {
+        let state = make_download_state_with_model("route-delete-model").await;
+        let app = actix_web::test::init_service(
+            actix_web::App::new()
+                .app_data(state.clone())
+                .configure(configure),
+        )
+        .await;
+
+        let del_req = actix_web::test::TestRequest::delete()
+            .uri("/models/download/route-delete-model")
+            .to_request();
+        let del_resp = actix_web::test::call_service(&app, del_req).await;
+        assert_eq!(del_resp.status(), actix_web::http::StatusCode::OK);
     }
 
     // list_available_models — no registry file falls back to hardcoded list
