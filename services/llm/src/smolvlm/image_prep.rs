@@ -10,6 +10,7 @@ use image::{imageops::FilterType, GenericImageView};
 
 pub const CANVAS: u32 = 512;
 
+#[derive(Debug)]
 pub struct PreppedImage {
     /// Row-major `[1, 1, 3, 512, 512]` f32, channel-first (CHW), values in
     /// `[-1, 1]`.
