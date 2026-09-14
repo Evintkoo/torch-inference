@@ -123,6 +123,10 @@ tests/e2e/playwright-report/
 services/llm/models/*
 !services/llm/models/.gitkeep
 
+# LLM service vendored runtime libs (e.g. a newer libonnxruntime.dylib
+# downloaded for local ORT-version testing) — never commit, per-machine only.
+services/llm/vendor/
+
 # Coverage reports
 coverage/
 lcov.info

@@ -5,6 +5,17 @@ set -euo pipefail
 # directly from Hugging Face — HuggingFaceTB publishes onnx/*_int8.onnx
 # (and other quantizations) in the model repo itself, so no local
 # optimum/Python export pipeline is needed.
+#
+# NOTE: running the LLM service with `[engine] kind = "smolvlm"` requires
+# ONNX Runtime >= 1.25 (the decoder graph uses GroupQueryAttention's
+# "softcap" attribute, added in ORT 1.25.0). If the system/Homebrew ORT is
+# older, you'll hit an opaque "Unrecognized attribute: softcap" error at
+# load time. To use a newer ORT without touching the system install,
+# download a prebuilt release (e.g. the onnxruntime-osx-arm64-<version>.tgz
+# asset for macOS ARM64 from https://github.com/microsoft/onnxruntime/releases)
+# into a local directory (e.g. services/llm/vendor/, which is gitignored)
+# and set ORT_DYLIB_PATH=/path/to/libonnxruntime.dylib when launching
+# llm-service.
 
 OUT_DIR="services/llm/models/smolvlm-256m"
 BASE="https://huggingface.co/HuggingFaceTB/SmolVLM-256M-Instruct/resolve/main"

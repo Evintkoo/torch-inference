@@ -1,9 +1,21 @@
 port = 8001
 
+[engine]
+kind = "hrm"
+
 [hrm]
 model_dir      = "models/hrm-text-1b"
 ep_preference  = "auto"
 use_quantized  = false
+n_threads      = 4
+
+# Requires ONNX Runtime >= 1.25 (GroupQueryAttention's "softcap" attribute,
+# added in ORT 1.25.0) — the system/Homebrew ORT may be older; see
+# scripts/download_smolvlm_artifacts.sh for how to point at a newer one via
+# ORT_DYLIB_PATH.
+[smolvlm]
+model_dir      = "models/smolvlm-256m"
+ep_preference  = "auto"
 n_threads      = 4
 
 [vision_bridge]
