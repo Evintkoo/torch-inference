@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
-use ort::session::{builder::GraphOptimizationLevel, Session};
+use ort::session::Session;
 use serde::Deserialize;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use crate::config::HrmConfig;
@@ -77,8 +77,9 @@ impl HrmEngine {
 
         tracing::info!(path = %onnx_path.display(), "Loading HRM-Text ONNX...");
 
-        let session = Self::build_session(&onnx_path, cfg)
-            .context("build ort session")?;
+        let session = crate::ort_session::build_session(
+            &onnx_path, &cfg.ep_preference, cfg.n_threads.unwrap_or(4),
+        ).context("build ort session")?;
 
         let tokenizer = HrmTokenizer::load(&model_dir)
             .context("load HrmTokenizer")?;
@@ -134,9 +135,8 @@ impl HrmEngine {
         Ok(out)
     }
 
-    /// Drop-in replacement for the old LlamaEngine::infer_text. Streams
-    /// decoded token strings into `tx`. Blocking — wrap in spawn_blocking.
-    pub fn infer_text(
+    /// Raw text-in/text-out generation. Blocking — wrap in spawn_blocking.
+    pub fn complete(
         self: std::sync::Arc<Self>,
         prompt: String,
         max_tokens: u32,
@@ -175,6 +175,33 @@ impl HrmEngine {
             ids.push(next_i64);
         }
         Ok(())
+    }
+
+    /// Build a ChatML-formatted prompt. Moved here from `handler.rs` — HRM's
+    /// chat format is engine-specific, same as SmolVLM's is its own.
+    fn build_chatml_prompt(messages: &[(String, String)]) -> String {
+        let mut buf = String::new();
+        for (role, content) in messages {
+            buf.push_str(&format!("<|im_start|>{role}\n{content}<|im_end|>\n"));
+        }
+        buf.push_str("<|im_start|>assistant\n");
+        buf
+    }
+
+    /// Chat-completion path. `image` is ignored — HRM has no native vision;
+    /// `handler.rs` routes images through the classify/detect caption bridge
+    /// before calling `chat`, so by the time `messages` arrives here any image
+    /// description is already text inside it.
+    pub fn chat(
+        self: std::sync::Arc<Self>,
+        messages: Vec<(String, String)>,
+        _image: Option<Vec<u8>>,
+        max_tokens: u32,
+        temperature: f32,
+        tx: tokio::sync::mpsc::Sender<String>,
+    ) -> Result<()> {
+        let prompt = Self::build_chatml_prompt(&messages);
+        self.complete(prompt, max_tokens, temperature, tx)
     }
 
     /// Run a prefill pass on `input_ids` and return the next-token logits
@@ -242,42 +269,36 @@ impl HrmEngine {
             .map(|h| h.to_f32())
             .collect())
     }
+}
 
-    fn build_session(onnx_path: &Path, cfg: &HrmConfig) -> Result<Session> {
-        let threads = cfg.n_threads.unwrap_or(4).max(1);
-        let builder = Session::builder()?
-            .with_optimization_level(GraphOptimizationLevel::Level3)?
-            .with_intra_threads(threads as usize)?
-            .with_execution_providers(Self::build_eps(&cfg.ep_preference))?;
-        Ok(builder.commit_from_file(onnx_path)?)
+impl crate::engine::LlmEngine for HrmEngine {
+    fn chat(
+        self: std::sync::Arc<Self>,
+        messages: Vec<(String, String)>,
+        image: Option<Vec<u8>>,
+        max_tokens: u32,
+        temperature: f32,
+        tx: tokio::sync::mpsc::Sender<String>,
+    ) -> Result<()> {
+        HrmEngine::chat(self, messages, image, max_tokens, temperature, tx)
     }
 
-    /// GPU-first EP chain, mirroring the main server's `core::ort_eps::build_eps`
-    /// (same priority: CoreML on macOS / CUDA elsewhere → CPU). `ep_preference =
-    /// "cpu"` opts out for tests/fixtures that don't want GPU EP probing.
-    /// ORT silently skips any EP whose native runtime is absent, so listing
-    /// CoreML/CUDA ahead of CPU is safe even on a machine without them.
-    fn build_eps(ep_preference: &str) -> Vec<ort::execution_providers::ExecutionProviderDispatch> {
-        let mut eps: Vec<ort::execution_providers::ExecutionProviderDispatch> = Vec::new();
+    fn complete(
+        self: std::sync::Arc<Self>,
+        prompt: String,
+        max_tokens: u32,
+        temperature: f32,
+        tx: tokio::sync::mpsc::Sender<String>,
+    ) -> Result<()> {
+        HrmEngine::complete(self, prompt, max_tokens, temperature, tx)
+    }
 
-        if ep_preference != "cpu" {
-            #[cfg(target_os = "macos")]
-            {
-                eps.push(
-                    ort::execution_providers::CoreMLExecutionProvider::default()
-                        .with_subgraphs(true)
-                        .with_compute_units(ort::execution_providers::coreml::CoreMLComputeUnits::All)
-                        .build(),
-                );
-            }
-            #[cfg(not(target_os = "macos"))]
-            {
-                eps.push(ort::execution_providers::CUDAExecutionProvider::default().build());
-            }
-        }
+    fn supports_vision(&self) -> bool {
+        false
+    }
 
-        eps.push(ort::execution_providers::CPUExecutionProvider::default().build());
-        eps
+    fn model_id(&self) -> &str {
+        "hrm-text-1b"
     }
 }
 
@@ -381,7 +402,7 @@ mod tests {
 
         let eng2 = eng.clone();
         let h = tokio::task::spawn_blocking(move || {
-            eng2.infer_text("Hello,".to_string(), 8, 0.0, tx)
+            eng2.complete("Hello,".to_string(), 8, 0.0, tx)
         });
 
         let mut received = Vec::new();
@@ -420,7 +441,7 @@ mod tests {
 
         let eng2 = eng.clone();
         let h = tokio::task::spawn_blocking(move || {
-            eng2.infer_text("Hello there, are you working?".to_string(), 16, 0.0, tx)
+            eng2.complete("Hello there, are you working?".to_string(), 16, 0.0, tx)
         });
 
         let mut received = String::new();
@@ -438,7 +459,7 @@ mod tests {
 
         let eng2 = eng.clone();
         let h = tokio::task::spawn_blocking(move || {
-            eng2.infer_text("Count the words in this prompt".to_string(), 1, 0.0, tx)
+            eng2.complete("Count the words in this prompt".to_string(), 1, 0.0, tx)
         });
 
         let mut chunks = 0usize;

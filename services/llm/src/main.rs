@@ -1,9 +1,11 @@
 mod agent;
 mod config;
+mod engine;
 mod engine_lease;
 mod handler;
 mod hrm_engine;
 mod memory_gate;
+mod ort_session;
 mod sampling;
 mod tokenizer;
 mod vision_bridge;

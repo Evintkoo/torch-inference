@@ -276,17 +276,6 @@ pub async fn chat_completions(
     }
 }
 
-/// Build a ChatML-formatted prompt. Same shape as the legacy LlamaEngine::build_prompt
-/// minus the multimodal marker.
-fn build_prompt(messages: &[(String, String)]) -> String {
-    let mut buf = String::new();
-    for (role, content) in messages {
-        buf.push_str(&format!("<|im_start|>{role}\n{content}<|im_end|>\n"));
-    }
-    buf.push_str("<|im_start|>assistant\n");
-    buf
-}
-
 /// `GET /v1/models`
 pub async fn list_models(state: web::Data<AppState>) -> HttpResponse {
     let _ = state;
