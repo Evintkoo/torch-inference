@@ -113,7 +113,7 @@ impl HrmEngine {
 
         for _ in 0..max_tokens {
             let mut logits = self.prefill(&ids)?;
-            Self::apply_repetition_penalty(&mut logits, &ids, 1.3);
+            crate::sampling::apply_repetition_penalty(&mut logits, &ids, 1.3);
             // argmax
             let (next_id, _) = logits.iter().enumerate()
                 .fold((0usize, f32::NEG_INFINITY), |acc, (i, &v)| {
@@ -132,75 +132,6 @@ impl HrmEngine {
             out.push(next_id);
         }
         Ok(out)
-    }
-
-    /// Penalize logits for tokens already present in `history` in place.
-    ///
-    /// Root cause of the "completion never finishes" bug (reproduced directly:
-    /// fresh server, simple "hello" prompt, streamed output degenerates into
-    /// "Please enter your name.\nPlease enter your email address.\n..." on
-    /// an endless loop that never emits EOS) — this sampler had zero
-    /// anti-repetition mechanism, so a small model's occasional repetitive
-    /// attractor state never breaks out of it and burns the entire
-    /// `max_generated_tokens` budget (512) every single time, which at this
-    /// model's per-token cost (no KV cache, multi-loop HRM architecture) takes
-    /// several minutes — indistinguishable from "hung" to a user watching a
-    /// blinking cursor. Standard repetition penalty (CTRL/HF-style: divide
-    /// positive logits, multiply negative ones) breaks the loop so generation
-    /// reaches a natural EOS in a normal number of tokens instead.
-    fn apply_repetition_penalty(logits: &mut [f32], history: &[i64], penalty: f32) {
-        if penalty <= 1.0 {
-            return;
-        }
-        for &id in history {
-            if let Some(logit) = logits.get_mut(id as usize) {
-                *logit = if *logit > 0.0 { *logit / penalty } else { *logit * penalty };
-            }
-        }
-    }
-
-    /// Sample one token from `logits` using top-k, top-p, temperature.
-    /// temperature <= 0 -> greedy argmax.
-    fn sample(&self, logits: &[f32], temperature: f32, top_k: usize, top_p: f32) -> usize {
-        if temperature <= 0.0 {
-            return logits.iter().enumerate()
-                .fold((0usize, f32::NEG_INFINITY), |acc, (i, &v)|
-                    if v > acc.1 { (i, v) } else { acc }).0;
-        }
-        let t = temperature.clamp(0.01, 2.0);
-
-        // top-k
-        let mut indexed: Vec<(usize, f32)> = logits.iter().enumerate().map(|(i,&v)| (i, v/t)).collect();
-        indexed.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
-        indexed.truncate(top_k.max(1));
-
-        // softmax
-        let max = indexed[0].1;
-        let mut probs: Vec<f32> = indexed.iter().map(|(_, l)| (l - max).exp()).collect();
-        let sum: f32 = probs.iter().sum();
-        for p in &mut probs { *p /= sum; }
-
-        // top-p (nucleus): keep smallest prefix with cumulative prob >= top_p
-        let mut cum = 0.0_f32;
-        let mut keep = probs.len();
-        for (i, &p) in probs.iter().enumerate() {
-            cum += p;
-            if cum >= top_p { keep = i + 1; break; }
-        }
-        probs.truncate(keep);
-        let renorm: f32 = probs.iter().sum();
-        for p in &mut probs { *p /= renorm; }
-
-        // weighted choice
-        use rand::Rng;
-        let mut rng = rand::thread_rng();
-        let r: f32 = rng.gen();
-        let mut acc = 0.0_f32;
-        for (i, &p) in probs.iter().enumerate() {
-            acc += p;
-            if r <= acc { return indexed[i].0; }
-        }
-        indexed.last().unwrap().0
     }
 
     /// Drop-in replacement for the old LlamaEngine::infer_text. Streams
@@ -232,8 +163,8 @@ impl HrmEngine {
         let mut ids = tokenizer.encode(&prompt, true)?;
         for _ in 0..max_tokens {
             let mut logits = self.prefill(&ids)?;
-            Self::apply_repetition_penalty(&mut logits, &ids, 1.3);
-            let next = self.sample(&logits, temperature, 40, 0.95);
+            crate::sampling::apply_repetition_penalty(&mut logits, &ids, 1.3);
+            let next = crate::sampling::sample(&logits, temperature, 40, 0.95);
             let next_i64 = next as i64;
 
             if next as u32 == self.runtime.eos_token_id { break; }
