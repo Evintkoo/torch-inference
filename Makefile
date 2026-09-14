@@ -28,7 +28,19 @@ web: ## Build the React frontend (required before `cargo build` picks up web/dis
 	cd web && npm ci && npm run build
 	@echo "✅ Frontend build complete: ./web/dist/"
 
-run: ## Run server in release mode
+web-dev: ## Run the React frontend in Vite dev mode (hot reload, proxies all API routes to :8000; override with BACKEND_URL=http://host:port)
+	@echo "Starting frontend dev server (http://localhost:5173/assets/app/)..."
+	cd web && npm install && npm run dev
+
+run: ## Run server in release mode (also builds + starts the LLM microservice on :8001, needed for /llm/* and Chat)
+	@echo "Building LLM service..."
+	@cd services/llm && $(CARGO) build --release
+	@echo "Stopping any prior LLM microservice on 8001..."
+	@-lsof -ti :8001 | xargs -r kill -TERM 2>/dev/null || true
+	@sleep 1
+	@-lsof -ti :8001 | xargs -r kill -KILL 2>/dev/null || true
+	@echo "Starting LLM service..."
+	@cd services/llm && ./target/release/llm-service &
 	@echo "Starting server (release mode)..."
 	$(CARGO) run --release --no-default-features --features production
 
@@ -206,10 +218,13 @@ prod: ## Build everything and launch main server + all microservices
 	./target/release/torch-inference-server
 
 # ── LLM Microservice ──────────────────────────────────────────────────────────
-.PHONY: llm-build llm-run llm-download hrm-export hrm-download
+.PHONY: llm-build llm-run llm-download hrm-export hrm-download smolvlm-download
 
 hrm-download: ## Download pre-exported HRM-Text-1B ONNX artifacts
 	bash scripts/download_hrm_text_artifacts.sh
+
+smolvlm-download: ## Download pre-exported SmolVLM-256M-Instruct ONNX artifacts (for testing)
+	bash scripts/download_smolvlm_artifacts.sh
 
 hrm-export: ## Re-export HRM-Text-1B -> ONNX from upstream (slow, offline). Requires Python 3.10+.
 	uv venv --python 3.12 .hrm-export-venv
