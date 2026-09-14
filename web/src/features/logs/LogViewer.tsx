@@ -14,7 +14,7 @@ export interface LogViewerProps {
 
 const badgeVariantClass: Record<string, string> = {
   destructive: "",
-  warning: "bg-[#fef3c7] text-[#92400e] dark:bg-[#78350f]/40 dark:text-[#fbbf24]",
+  warning: "bg-yellow-bg text-yellow-text",
   neutral: "bg-muted text-muted-foreground",
 };
 
