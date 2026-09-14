@@ -169,6 +169,238 @@ impl SmolVlmEngine {
             }
         }
     }
+
+    /// Run one decoder forward pass. `seq_len` is the number of NEW
+    /// positions in `embeds` (full prompt on the first/prefill call, 1 on
+    /// every subsequent decode call); `past_len`/`past_k`/`past_v` carry the
+    /// accumulated KV cache. Returns (last-position logits, updated
+    /// per-layer key cache, updated per-layer value cache).
+    fn decode_step(
+        &self,
+        embeds: &[f32],
+        seq_len: usize,
+        past_len: usize,
+        past_k: &[Vec<f32>],
+        past_v: &[Vec<f32>],
+    ) -> Result<(Vec<f32>, Vec<Vec<f32>>, Vec<Vec<f32>>)> {
+        use ort::session::SessionInputValue;
+        use ort::value::Tensor;
+
+        let total_len = past_len + seq_len;
+
+        let embeds_tensor = Tensor::<f32>::from_array(([1usize, seq_len, HIDDEN_SIZE], embeds.to_vec()))
+            .context("build inputs_embeds tensor")?;
+        let attn_tensor = Tensor::<i64>::from_array(([1usize, total_len], vec![1i64; total_len]))
+            .context("build attention_mask tensor")?;
+        let position_ids: Vec<i64> = (past_len as i64..total_len as i64).collect();
+        let pos_tensor = Tensor::<i64>::from_array(([1usize, seq_len], position_ids))
+            .context("build position_ids tensor")?;
+
+        let mut inputs: Vec<(String, SessionInputValue)> = Vec::with_capacity(3 + NUM_LAYERS * 2);
+        inputs.push(("inputs_embeds".to_string(), embeds_tensor.into()));
+        inputs.push(("attention_mask".to_string(), attn_tensor.into()));
+        inputs.push(("position_ids".to_string(), pos_tensor.into()));
+
+        for l in 0..NUM_LAYERS {
+            let k_tensor = Tensor::<f32>::from_array((
+                [1usize, NUM_KV_HEADS, past_len, HEAD_DIM],
+                past_k[l].clone(),
+            )).with_context(|| format!("build past_key_values.{l}.key tensor"))?;
+            let v_tensor = Tensor::<f32>::from_array((
+                [1usize, NUM_KV_HEADS, past_len, HEAD_DIM],
+                past_v[l].clone(),
+            )).with_context(|| format!("build past_key_values.{l}.value tensor"))?;
+            inputs.push((format!("past_key_values.{l}.key"), k_tensor.into()));
+            inputs.push((format!("past_key_values.{l}.value"), v_tensor.into()));
+        }
+
+        let session_arc = self.decoder_session.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("decode_step called on stub engine"))?;
+        let mut session = session_arc.lock()
+            .map_err(|e| anyhow::anyhow!("decoder session lock poisoned: {e}"))?;
+        let outputs = session.run(inputs).context("ort run decoder_model_merged")?;
+
+        let (logit_shape, logit_data) = outputs["logits"].try_extract_tensor::<f32>()
+            .context("extract logits")?;
+        let ldims = logit_shape.as_ref();
+        if ldims.len() != 3 {
+            anyhow::bail!("unexpected logits shape: {:?}", ldims);
+        }
+        let vocab = ldims[2] as usize;
+        let last_pos = (ldims[1] as usize) - 1;
+        let row_start = last_pos * vocab;
+        let last_logits = logit_data[row_start..row_start + vocab].to_vec();
+
+        let mut new_past_k = Vec::with_capacity(NUM_LAYERS);
+        let mut new_past_v = Vec::with_capacity(NUM_LAYERS);
+        for l in 0..NUM_LAYERS {
+            let (_, kdata) = outputs[format!("present.{l}.key")].try_extract_tensor::<f32>()
+                .with_context(|| format!("extract present.{l}.key"))?;
+            let (_, vdata) = outputs[format!("present.{l}.value")].try_extract_tensor::<f32>()
+                .with_context(|| format!("extract present.{l}.value"))?;
+            new_past_k.push(kdata.to_vec());
+            new_past_v.push(vdata.to_vec());
+        }
+
+        Ok((last_logits, new_past_k, new_past_v))
+    }
+
+    /// Shared generation core for both `chat` and `complete`. `ids` is the
+    /// already-tokenized prompt (with image placeholder tokens already
+    /// present if `image` is `Some`). Streams decoded token strings into
+    /// `tx`. Blocking — callers wrap in `spawn_blocking`.
+    fn generate(
+        &self,
+        ids: Vec<i64>,
+        image: Option<&[u8]>,
+        max_tokens: u32,
+        temperature: f32,
+        tx: &tokio::sync::mpsc::Sender<String>,
+    ) -> Result<()> {
+        let tokenizer = self.tokenizer.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("generate called on stub engine"))?;
+
+        let mut embeds = self.embed_tokens(&ids)?;
+        if let Some(img_bytes) = image {
+            let prepped = image_prep::preprocess(img_bytes)?;
+            let image_features = self.vision_encode(&prepped)?;
+            Self::splice_image_embeds(&mut embeds, &ids, &image_features, self.image_token_id);
+        }
+
+        let mut past_k: Vec<Vec<f32>> = vec![Vec::new(); NUM_LAYERS];
+        let mut past_v: Vec<Vec<f32>> = vec![Vec::new(); NUM_LAYERS];
+        let mut past_len = 0usize;
+        let mut cur_embeds = embeds;
+        let mut cur_seq_len = ids.len();
+        let mut history = ids.clone();
+
+        for _ in 0..max_tokens {
+            let (mut logits, new_past_k, new_past_v) =
+                self.decode_step(&cur_embeds, cur_seq_len, past_len, &past_k, &past_v)?;
+            past_k = new_past_k;
+            past_v = new_past_v;
+            past_len += cur_seq_len;
+
+            crate::sampling::apply_repetition_penalty(&mut logits, &history, 1.3);
+            let next = crate::sampling::sample(&logits, temperature, 40, 0.95);
+            let next_u32 = next as u32;
+            if next_u32 == self.eos_token_id {
+                break;
+            }
+
+            let piece = tokenizer.decode_single(next_u32).unwrap_or_default();
+            if tx.blocking_send(piece).is_err() {
+                break;
+            }
+
+            history.push(next as i64);
+            cur_embeds = self.embed_tokens(&[next as i64])?;
+            cur_seq_len = 1;
+        }
+        Ok(())
+    }
+
+    /// Chat-completion path. Splices the image expansion block into the
+    /// LAST user-role message's content (same insertion point `handler.rs`
+    /// uses for the caption-bridge path on non-vision engines), builds
+    /// SmolVLM's own chat-template prompt, tokenizes, and generates with
+    /// the image bytes threaded through for native vision fusion.
+    pub fn chat(
+        self: Arc<Self>,
+        mut messages: Vec<(String, String)>,
+        image: Option<Vec<u8>>,
+        max_tokens: u32,
+        temperature: f32,
+        tx: tokio::sync::mpsc::Sender<String>,
+    ) -> Result<()> {
+        if self.stub {
+            return self.stub_reply(&format!(
+                "chat with {} message(s), image={}",
+                messages.len(), image.is_some()
+            ), max_tokens, &tx);
+        }
+
+        if image.is_some() {
+            let block = prompt::image_expansion_block();
+            if let Some((_role, content)) = messages.iter_mut().rev().find(|(r, _)| r == "user") {
+                *content = format!("{block}\n{content}");
+            } else {
+                messages.push(("user".to_string(), block));
+            }
+        }
+
+        let prompt_text = prompt::build_prompt(&messages);
+        let tokenizer = self.tokenizer.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("chat called without a tokenizer"))?;
+        let ids = tokenizer.encode(&prompt_text, true)?;
+
+        self.generate(ids, image.as_deref(), max_tokens, temperature, &tx)
+    }
+
+    /// Raw text-in/text-out path — no chat template, no image. Used by the
+    /// agent planner.
+    pub fn complete(
+        self: Arc<Self>,
+        prompt_text: String,
+        max_tokens: u32,
+        temperature: f32,
+        tx: tokio::sync::mpsc::Sender<String>,
+    ) -> Result<()> {
+        if self.stub {
+            return self.stub_reply(&prompt_text, max_tokens, &tx);
+        }
+
+        let tokenizer = self.tokenizer.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("complete called without a tokenizer"))?;
+        let ids = tokenizer.encode(&prompt_text, true)?;
+        self.generate(ids, None, max_tokens, temperature, &tx)
+    }
+
+    /// Stub mode: stream a canned, deterministic reply capped by
+    /// `max_tokens`, matching `HrmEngine`'s stub behavior exactly (same
+    /// escape hatch for testing the HTTP/agent plumbing without weights).
+    fn stub_reply(&self, context: &str, max_tokens: u32, tx: &tokio::sync::mpsc::Sender<String>) -> Result<()> {
+        let reply = format!(
+            "[stub-llm] SmolVLM-256M stub engine active — no weights loaded. \
+             Received: {context}."
+        );
+        for (i, word) in reply.split_inclusive(' ').enumerate() {
+            if i as u32 >= max_tokens { break; }
+            if tx.blocking_send(word.to_string()).is_err() { break; }
+        }
+        Ok(())
+    }
+}
+
+impl crate::engine::LlmEngine for SmolVlmEngine {
+    fn chat(
+        self: Arc<Self>,
+        messages: Vec<(String, String)>,
+        image: Option<Vec<u8>>,
+        max_tokens: u32,
+        temperature: f32,
+        tx: tokio::sync::mpsc::Sender<String>,
+    ) -> Result<()> {
+        SmolVlmEngine::chat(self, messages, image, max_tokens, temperature, tx)
+    }
+
+    fn complete(
+        self: Arc<Self>,
+        prompt: String,
+        max_tokens: u32,
+        temperature: f32,
+        tx: tokio::sync::mpsc::Sender<String>,
+    ) -> Result<()> {
+        SmolVlmEngine::complete(self, prompt, max_tokens, temperature, tx)
+    }
+
+    fn supports_vision(&self) -> bool {
+        true
+    }
+
+    fn model_id(&self) -> &str {
+        "smolvlm-256m"
+    }
 }
 
 #[cfg(test)]
@@ -264,5 +496,90 @@ mod tests {
         // non-image positions untouched (still zero)
         assert!(embeds[0 * HIDDEN_SIZE..1 * HIDDEN_SIZE].iter().all(|&v| v == 0.0));
         assert!(embeds[2 * HIDDEN_SIZE..3 * HIDDEN_SIZE].iter().all(|&v| v == 0.0));
+    }
+
+    #[tokio::test]
+    async fn stub_chat_streams_nonempty_output() {
+        let eng = Arc::new(SmolVlmEngine::load(&stub_cfg()).unwrap());
+        let (tx, mut rx) = tokio::sync::mpsc::channel::<String>(64);
+        let eng2 = eng.clone();
+        let h = tokio::task::spawn_blocking(move || {
+            eng2.chat(vec![("user".to_string(), "hi".to_string())], None, 16, 0.0, tx)
+        });
+        let mut received = String::new();
+        while let Some(s) = rx.recv().await { received.push_str(&s); }
+        h.await.unwrap().unwrap();
+        assert!(!received.is_empty());
+    }
+
+    #[tokio::test]
+    async fn stub_complete_respects_max_tokens() {
+        let eng = Arc::new(SmolVlmEngine::load(&stub_cfg()).unwrap());
+        let (tx, mut rx) = tokio::sync::mpsc::channel::<String>(64);
+        let eng2 = eng.clone();
+        let h = tokio::task::spawn_blocking(move || {
+            eng2.complete("count words in this prompt".to_string(), 1, 0.0, tx)
+        });
+        let mut chunks = 0usize;
+        while rx.recv().await.is_some() { chunks += 1; }
+        h.await.unwrap().unwrap();
+        assert!(chunks >= 1);
+        assert!(chunks <= 1, "max_tokens=1 must cap the stub to one chunk, got {chunks}");
+    }
+
+    #[test]
+    fn model_id_and_supports_vision_are_correct() {
+        use crate::engine::LlmEngine;
+        let eng: Arc<dyn LlmEngine> = Arc::new(SmolVlmEngine::load(&stub_cfg()).unwrap());
+        assert_eq!(eng.model_id(), "smolvlm-256m");
+        assert!(eng.supports_vision());
+    }
+
+    #[tokio::test]
+    #[ignore = "loads real ONNX model; run with --ignored after make smolvlm-download"]
+    async fn complete_generates_real_tokens_for_text_prompt() {
+        if skip_if_no_model() {
+            eprintln!("skipping");
+            return;
+        }
+        let eng = Arc::new(SmolVlmEngine::load(&fixture_cfg()).unwrap());
+        let (tx, mut rx) = tokio::sync::mpsc::channel::<String>(64);
+        let eng2 = eng.clone();
+        let h = tokio::task::spawn_blocking(move || {
+            eng2.complete("The capital of France is".to_string(), 8, 0.0, tx)
+        });
+        let mut received = String::new();
+        while let Some(s) = rx.recv().await { received.push_str(&s); }
+        h.await.unwrap().unwrap();
+        assert!(!received.is_empty(), "no tokens generated for a real prompt");
+    }
+
+    #[tokio::test]
+    #[ignore = "loads real ONNX model; run with --ignored after make smolvlm-download"]
+    async fn chat_with_image_generates_real_tokens() {
+        if skip_if_no_model() {
+            eprintln!("skipping");
+            return;
+        }
+        let eng = Arc::new(SmolVlmEngine::load(&fixture_cfg()).unwrap());
+        let img = image::DynamicImage::ImageRgb8(
+            image::ImageBuffer::from_pixel(64, 64, image::Rgb([10u8, 200, 10])),
+        );
+        let mut bytes = Vec::new();
+        img.write_to(&mut std::io::Cursor::new(&mut bytes), image::ImageFormat::Png).unwrap();
+
+        let (tx, mut rx) = tokio::sync::mpsc::channel::<String>(64);
+        let eng2 = eng.clone();
+        let h = tokio::task::spawn_blocking(move || {
+            eng2.chat(
+                vec![("user".to_string(), "What color is this image?".to_string())],
+                Some(bytes),
+                16, 0.0, tx,
+            )
+        });
+        let mut received = String::new();
+        while let Some(s) = rx.recv().await { received.push_str(&s); }
+        h.await.unwrap().unwrap();
+        assert!(!received.is_empty(), "no tokens generated for an image chat prompt");
     }
 }
