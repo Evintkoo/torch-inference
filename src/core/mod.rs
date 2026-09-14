@@ -42,6 +42,9 @@ pub mod image_pipeline;
 // Shared ORT execution-provider builder (CUDA → DirectML → CPU / CoreML → CPU)
 pub mod ort_eps;
 
+// Process-wide ORT environment + shared global thread pool
+pub mod ort_runtime;
+
 // CPU core-affinity utilities for P-core worker pinning
 pub mod affinity;
 

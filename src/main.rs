@@ -235,6 +235,14 @@ async fn async_main() -> std::io::Result<()> {
         Err(_) => Some("logs".to_string()),
     };
     init_structured_logging(log_dir.as_deref(), use_json);
+
+    // Commit ORT's shared global thread pool before any engine builds a
+    // session — see core::ort_runtime for why every engine sharing one pool
+    // beats each engine building its own full-core pool. Must run after
+    // logging is initialized (its own log lines use `tracing`) but before
+    // TTSManager/classifier/YOLO/Whisper construction further down.
+    crate::core::ort_runtime::init_shared_environment();
+
     #[cfg(feature = "profiling")]
     tracing::info!("pprof profiling active at 100 Hz; flamegraph.svg written on shutdown");
 

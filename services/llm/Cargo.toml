@@ -42,6 +42,9 @@ bytes = "1.5"
 # Memory gate: process RSS via mach (macOS) / procfs (Linux)
 libc = "0.2"
 
+# Physical core count for ORT's shared global thread pool (ort_runtime.rs)
+num_cpus = "1.16"
+
 # ONNX runtime — same version as the workspace root uses.
 # "half" feature gates Tensor<half::f16> extract, required for HRM-Text fp16 logits.
 # default-features disabled to match the main server's ort_eps.rs setup: without

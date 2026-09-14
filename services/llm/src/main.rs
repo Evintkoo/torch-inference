@@ -5,6 +5,7 @@ mod engine_lease;
 mod handler;
 mod hrm_engine;
 mod memory_gate;
+mod ort_runtime;
 mod ort_session;
 mod sampling;
 mod smolvlm;
@@ -47,6 +48,11 @@ async fn main() -> std::io::Result<()> {
                 .add_directive("llm_service=info".parse().unwrap()),
         )
         .init();
+
+    // Commit ORT's shared global thread pool before either engine builds a
+    // session — see ort_runtime for why sharing one pool beats each session
+    // building its own.
+    ort_runtime::init_shared_environment();
 
     let llm_config = LlmConfig::load().unwrap_or_else(|e| {
         eprintln!("Config error: {e}");
