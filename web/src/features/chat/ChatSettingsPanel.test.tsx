@@ -1,9 +1,16 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
 import { useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ChatSettingsPanel } from "./ChatSettingsPanel";
 import { DEFAULT_CHAT_SETTINGS, type ChatSettings } from "./types";
+
+function renderWithClient(ui: ReactElement) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+}
 
 // A stateful harness — ChatSettingsPanel is a controlled component, so
 // exercising real typing needs a parent that actually applies onChange,
@@ -23,9 +30,24 @@ function StatefulPanel({ onSettled }: { onSettled?: (settings: ChatSettings) => 
 }
 
 describe("ChatSettingsPanel", () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ data: [{ id: "hrm-text-1b" }, { id: "other-model" }] }),
+      }),
+    );
+  });
+
+  afterEach(() => vi.unstubAllGlobals());
+
   it("renders the current settings values", () => {
-    render(<ChatSettingsPanel settings={DEFAULT_CHAT_SETTINGS} onChange={() => {}} onClose={() => {}} />);
-    expect(screen.getByTestId("chat-model-input")).toHaveValue(DEFAULT_CHAT_SETTINGS.model);
+    renderWithClient(
+      <ChatSettingsPanel settings={DEFAULT_CHAT_SETTINGS} onChange={() => {}} onClose={() => {}} />,
+    );
+    expect(screen.getByTestId("chat-model-input")).toHaveTextContent(DEFAULT_CHAT_SETTINGS.model);
     expect(screen.getByTestId("chat-temperature-input")).toHaveValue(
       DEFAULT_CHAT_SETTINGS.temperature,
     );
@@ -37,23 +59,28 @@ describe("ChatSettingsPanel", () => {
   it("calls onClose when the backdrop is clicked", async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<ChatSettingsPanel settings={DEFAULT_CHAT_SETTINGS} onChange={() => {}} onClose={onClose} />);
+    renderWithClient(
+      <ChatSettingsPanel settings={DEFAULT_CHAT_SETTINGS} onChange={() => {}} onClose={onClose} />,
+    );
     await user.click(screen.getByTestId("chat-settings-backdrop"));
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("calls onChange with an updated model as the user types", async () => {
+  it("calls onChange with the picked model from the live /llm/v1/models list", async () => {
     const user = userEvent.setup();
     let latest: ChatSettings | undefined;
-    render(<StatefulPanel onSettled={(s) => (latest = s)} />);
-    await user.type(screen.getByTestId("chat-model-input"), "x");
-    expect(latest?.model).toBe(`${DEFAULT_CHAT_SETTINGS.model}x`);
+    renderWithClient(<StatefulPanel onSettled={(s) => (latest = s)} />);
+
+    await user.click(screen.getByTestId("chat-model-input"));
+    const option = await screen.findByRole("option", { name: "other-model" });
+    await user.click(option);
+    expect(latest?.model).toBe("other-model");
   });
 
   it("calls onChange with a numeric temperature as the user types", async () => {
     const user = userEvent.setup();
     let latest: ChatSettings | undefined;
-    render(<StatefulPanel onSettled={(s) => (latest = s)} />);
+    renderWithClient(<StatefulPanel onSettled={(s) => (latest = s)} />);
     const input = screen.getByTestId("chat-temperature-input");
     await user.clear(input);
     await user.type(input, "1.5");
@@ -63,7 +90,7 @@ describe("ChatSettingsPanel", () => {
   it("updates the system prompt field as free text", async () => {
     const user = userEvent.setup();
     let latest: ChatSettings | undefined;
-    render(<StatefulPanel onSettled={(s) => (latest = s)} />);
+    renderWithClient(<StatefulPanel onSettled={(s) => (latest = s)} />);
     const input = screen.getByTestId("chat-system-prompt-input");
     await user.clear(input);
     await user.type(input, "Be terse.");

@@ -19,6 +19,7 @@ interface HealthCheck {
 
 const THEME_KEY = "theme";
 const SIDEBAR_KEY = "sidebar-collapsed";
+const GROUPS_KEY = "sidebar-collapsed-groups";
 
 function ThemeToggle() {
   const [theme, setTheme] = useState<"light" | "dark">(() => {
@@ -84,6 +85,25 @@ export function AppLayout({ panels }: { panels: Panel[] }) {
     localStorage.setItem(SIDEBAR_KEY, collapsed ? "1" : "0");
   }, [collapsed]);
 
+  // Per-group expand/collapse ("sidebar dropdown") — independent of the
+  // whole-sidebar icon-only collapse above.
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      return JSON.parse(localStorage.getItem(GROUPS_KEY) ?? "{}");
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem(GROUPS_KEY, JSON.stringify(collapsedGroups));
+  }, [collapsedGroups]);
+
+  function toggleGroup(label: string) {
+    setCollapsedGroups((prev) => ({ ...prev, [label]: !prev[label] }));
+  }
+
   const groups: Array<{ label: string; panels: Panel[] }> = [];
   for (const panel of panels) {
     let group = groups.find((g) => g.label === panel.group);
@@ -131,27 +151,41 @@ export function AppLayout({ panels }: { panels: Panel[] }) {
       <TabsList
         className={`group-data-[orientation=vertical]/tabs:h-full col-start-1 row-start-2 h-full w-full flex-col items-stretch justify-start gap-5 overflow-y-auto overflow-x-hidden rounded-none border-r border-border bg-card py-4 shadow-[2px_0_20px_rgba(0,0,0,0.07)] ${collapsed ? "px-2" : "px-4"}`}
       >
-        {groups.map((group) => (
-          <div key={group.label} className="flex flex-col gap-0.5">
-            {!collapsed && (
-              <div className="px-2 pb-2 text-[10px] font-semibold tracking-wider text-text-dim uppercase">
-                {group.label}
-              </div>
-            )}
-            {group.panels.map((panel) => (
-              <TabsTrigger
-                key={panel.id}
-                value={panel.id}
-                data-testid={`panel-nav-${panel.id}`}
-                title={collapsed ? panel.label : undefined}
-                className={`h-auto w-full gap-[9px] rounded-none border-0 py-[7px] text-[13px] font-medium text-muted-foreground shadow-none after:hidden data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-none ${collapsed ? "justify-center px-0" : "justify-start px-2"}`}
-              >
-                <i className={`${panel.icon} w-[18px] shrink-0 text-center text-base`} aria-hidden="true" />
-                {!collapsed && panel.label}
-              </TabsTrigger>
-            ))}
-          </div>
-        ))}
+        {groups.map((group) => {
+          const groupCollapsed = !collapsed && collapsedGroups[group.label];
+          return (
+            <div key={group.label} className="flex flex-col gap-0.5">
+              {!collapsed && (
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.label)}
+                  data-testid={`sidebar-group-toggle-${group.label.toLowerCase()}`}
+                  aria-expanded={!groupCollapsed}
+                  className="flex w-full items-center justify-between px-2 pb-2 text-[10px] font-semibold tracking-wider text-text-dim uppercase hover:text-foreground"
+                >
+                  {group.label}
+                  <i
+                    className={groupCollapsed ? "ri-arrow-right-s-line" : "ri-arrow-down-s-line"}
+                    aria-hidden="true"
+                  />
+                </button>
+              )}
+              {!groupCollapsed &&
+                group.panels.map((panel) => (
+                  <TabsTrigger
+                    key={panel.id}
+                    value={panel.id}
+                    data-testid={`panel-nav-${panel.id}`}
+                    title={collapsed ? panel.label : undefined}
+                    className={`h-auto w-full gap-[9px] rounded-none border-0 py-[7px] text-[13px] font-medium text-muted-foreground shadow-none after:hidden data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-none ${collapsed ? "justify-center px-0" : "justify-start px-2"}`}
+                  >
+                    <i className={`${panel.icon} w-[18px] shrink-0 text-center text-base`} aria-hidden="true" />
+                    {!collapsed && panel.label}
+                  </TabsTrigger>
+                ))}
+            </div>
+          );
+        })}
       </TabsList>
 
       <main className="col-start-2 row-start-2 flex min-h-0 flex-col overflow-y-auto p-7">

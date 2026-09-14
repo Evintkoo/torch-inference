@@ -1,7 +1,14 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ChatPanel } from "./ChatPanel";
+
+function renderWithClient(ui: ReactElement) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+}
 
 function sseStream(chunks: string[]): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
@@ -22,7 +29,7 @@ describe("ChatPanel", () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it("shows the welcome state before any message is sent", () => {
-    render(<ChatPanel />);
+    renderWithClient(<ChatPanel />);
     expect(screen.getByTestId("chat-welcome")).toBeInTheDocument();
   });
 
@@ -40,7 +47,7 @@ describe("ChatPanel", () => {
       }),
     );
 
-    render(<ChatPanel />);
+    renderWithClient(<ChatPanel />);
     await user.type(screen.getByTestId("chat-input"), "what is the answer?{Enter}");
 
     expect(screen.getByTestId("chat-message-user")).toHaveTextContent("what is the answer?");
@@ -49,7 +56,7 @@ describe("ChatPanel", () => {
 
   it("toggles the settings panel via the Settings button", async () => {
     const user = userEvent.setup();
-    render(<ChatPanel />);
+    renderWithClient(<ChatPanel />);
     expect(screen.queryByTestId("chat-settings-panel")).not.toBeInTheDocument();
     await user.click(screen.getByTestId("chat-settings-toggle"));
     expect(screen.getByTestId("chat-settings-panel")).toBeInTheDocument();
@@ -63,7 +70,7 @@ describe("ChatPanel", () => {
       "fetch",
       vi.fn().mockResolvedValue({ ok: true, status: 200, body: sseStream(["data: [DONE]\n\n"]) }),
     );
-    render(<ChatPanel />);
+    renderWithClient(<ChatPanel />);
     await user.type(screen.getByTestId("chat-input"), "hi{Enter}");
     await waitFor(() => expect(screen.getByTestId("chat-new-btn")).toBeEnabled());
 
@@ -77,7 +84,7 @@ describe("ChatPanel", () => {
       "fetch",
       vi.fn().mockResolvedValue({ ok: false, status: 500, json: async () => ({ error: "boom" }) }),
     );
-    render(<ChatPanel />);
+    renderWithClient(<ChatPanel />);
     await user.type(screen.getByTestId("chat-input"), "hi{Enter}");
     await waitFor(() => expect(screen.getByTestId("chat-error")).toBeInTheDocument());
   });

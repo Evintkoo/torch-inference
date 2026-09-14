@@ -1,19 +1,12 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import { apiGet } from "@/lib/api-client";
-import { LiveSttStream } from "./LiveSttStream";
 import { UploadTranscribeCard } from "./UploadTranscribeCard";
 import type { AudioHealthResponse } from "./types";
 
-type Mode = "upload" | "live";
-
-/** Top-level "STT" panel. Upload and Live were two always-visible, largely
- * redundant cards (both end in "audio in, transcript out") — merged into one
- * section with a mode toggle so only one is on screen at a time. */
+/** Top-level "STT" panel: upload a file or record from the mic, both feeding
+ * the same `POST /audio/transcribe` flow — no separate Live tab to switch to. */
 export function SttPanel() {
-  const [mode, setMode] = useState<Mode>("upload");
   const { data, isError } = useQuery({
     queryKey: ["stt-health-badge"],
     queryFn: () => apiGet<AudioHealthResponse>("/stt/health"),
@@ -31,36 +24,11 @@ export function SttPanel() {
         </Badge>
       </div>
       <p className="text-sm text-muted-foreground">
-        Transcribe an uploaded file via <code className="text-xs">POST /audio/transcribe</code>, or transcribe live
-        via <code className="text-xs">GET /audio/ws</code>.
+        Transcribe an uploaded file or a microphone recording via{" "}
+        <code className="text-xs">POST /audio/transcribe</code>.
       </p>
 
-      <div className="inline-flex w-fit gap-1 border border-border bg-card p-1" data-testid="stt-mode-toggle">
-        <button
-          type="button"
-          data-testid="stt-mode-upload-btn"
-          onClick={() => setMode("upload")}
-          className={cn(
-            "px-3 py-1 text-sm font-medium transition-colors",
-            mode === "upload" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          Upload
-        </button>
-        <button
-          type="button"
-          data-testid="stt-mode-live-btn"
-          onClick={() => setMode("live")}
-          className={cn(
-            "px-3 py-1 text-sm font-medium transition-colors",
-            mode === "live" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          Live
-        </button>
-      </div>
-
-      {mode === "upload" ? <UploadTranscribeCard /> : <LiveSttStream />}
+      <UploadTranscribeCard />
     </div>
   );
 }

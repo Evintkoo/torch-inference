@@ -10,34 +10,6 @@ use crate::middleware::RateLimiter;
 use crate::models::manager::ModelManager;
 use crate::monitor::Monitor;
 
-const PLAYGROUND_HTML: &str = include_str!("playground.html");
-static PLAYGROUND_ETAG: std::sync::OnceLock<String> = std::sync::OnceLock::new();
-
-fn playground_etag() -> &'static str {
-    PLAYGROUND_ETAG.get_or_init(|| {
-        use sha2::Digest;
-        let hash = sha2::Sha256::digest(PLAYGROUND_HTML.as_bytes());
-        let hex: String = hash.iter().map(|b| format!("{:02x}", b)).collect();
-        format!("\"{}\"", hex)
-    })
-}
-
-pub async fn root(req: HttpRequest) -> impl Responder {
-    let etag = playground_etag();
-    if let Some(inm) = req.headers().get("if-none-match") {
-        if inm.to_str().unwrap_or("") == etag {
-            return HttpResponse::NotModified()
-                .insert_header(("ETag", etag))
-                .finish();
-        }
-    }
-    HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .insert_header(("ETag", etag))
-        .insert_header(("Cache-Control", "no-cache"))
-        .body(PLAYGROUND_HTML)
-}
-
 #[allow(dead_code)] // superseded by api::health::health (registered at App level)
 pub async fn health_check(
     engine: web::Data<std::sync::Arc<InferenceEngine>>,
@@ -69,7 +41,6 @@ pub async fn predict(
     req: web::Json<InferenceRequest>,
     engine: web::Data<std::sync::Arc<InferenceEngine>>,
     rate_limiter: web::Data<std::sync::Arc<RateLimiter>>,
-    monitor: web::Data<std::sync::Arc<Monitor>>,
     deduplicator: web::Data<std::sync::Arc<RequestDeduplicator>>,
     http_req: HttpRequest,
 ) -> impl Responder {
@@ -78,7 +49,6 @@ pub async fn predict(
         let ci = http_req.connection_info();
         let client_ip = ci.peer_addr().unwrap_or("unknown");
         if let Err(e) = rate_limiter.is_allowed(client_ip) {
-            monitor.record_request_end(0, "/predict", false);
             return actix_web::error::ErrorTooManyRequests(e.message).error_response();
         }
     }
@@ -86,9 +56,6 @@ pub async fn predict(
     // Check for duplicate request — cache returns Arc<Value>: O(1) clone, no data copy.
     let dedup_key = deduplicator.generate_key(&req.model_name, &req.inputs);
     if let Some(cached_result) = deduplicator.get(&dedup_key) {
-        monitor.record_request_start(); // Record start to balance metrics
-        monitor.record_request_end(0, "/predict", true); // 0ms latency for cache hit
-
         return HttpResponse::Ok().json(InferenceResponse {
             success: true,
             result: Some((*cached_result).clone()),
@@ -98,13 +65,11 @@ pub async fn predict(
         });
     }
 
-    monitor.record_request_start();
     let start = std::time::Instant::now();
 
     match engine.infer(&req.model_name, &req.inputs).await {
         Ok(result) => {
             let latency_ms = start.elapsed().as_millis() as u64;
-            monitor.record_request_end(latency_ms, "/predict", true);
 
             // Cache result for deduplication (TTL 10s)
             deduplicator.set(dedup_key, result.clone(), 10);
@@ -119,7 +84,6 @@ pub async fn predict(
         }
         Err(e) => {
             let latency_ms = start.elapsed().as_millis() as u64;
-            monitor.record_request_end(latency_ms, "/predict", false);
 
             let body = InferenceResponse {
                 success: false,
@@ -143,15 +107,12 @@ pub async fn predict(
 pub async fn synthesize_tts(
     req: web::Json<TTSRequest>,
     engine: web::Data<std::sync::Arc<InferenceEngine>>,
-    monitor: web::Data<std::sync::Arc<Monitor>>,
 ) -> impl Responder {
-    monitor.record_request_start();
     let start = std::time::Instant::now();
 
     match engine.tts_synthesize(&req.model_name, &req.text).await {
         Ok(audio_data) => {
             let latency_ms = start.elapsed().as_millis() as u64;
-            monitor.record_request_end(latency_ms, "/synthesize", true);
 
             HttpResponse::Ok().json(TTSResponse {
                 success: true,
@@ -165,7 +126,6 @@ pub async fn synthesize_tts(
         }
         Err(e) => {
             let latency_ms = start.elapsed().as_millis() as u64;
-            monitor.record_request_end(latency_ms, "/synthesize", false);
 
             let body = TTSResponse {
                 success: false,
@@ -186,16 +146,8 @@ pub async fn synthesize_tts(
     }
 }
 
-pub async fn list_models(
-    models: web::Data<std::sync::Arc<ModelManager>>,
-    monitor: web::Data<std::sync::Arc<Monitor>>,
-) -> impl Responder {
-    monitor.record_request_start();
-    let start = std::time::Instant::now();
-
+pub async fn list_models(models: web::Data<std::sync::Arc<ModelManager>>) -> impl Responder {
     let model_list = models.list_available();
-    let latency_ms = start.elapsed().as_millis() as u64;
-    monitor.record_request_end(latency_ms, "/models", true);
 
     HttpResponse::Ok().json(json!({
         "models": model_list,
@@ -207,13 +159,7 @@ pub async fn get_stats(
     _engine: web::Data<std::sync::Arc<InferenceEngine>>,
     monitor: web::Data<std::sync::Arc<Monitor>>,
 ) -> impl Responder {
-    monitor.record_request_start();
-    let start = std::time::Instant::now();
-
     let stats = monitor.get_metrics();
-    let latency_ms = start.elapsed().as_millis() as u64;
-    monitor.record_request_end(latency_ms, "/stats", true);
-
     HttpResponse::Ok().json(stats)
 }
 
@@ -248,9 +194,7 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
     // Note: /health is registered at the App level in main.rs (canonical).
     // /audio/transcribe and /audio/synthesize are also canonical at the App
     // level — duplicates here would shadow them silently.
-    cfg.route("/", web::get().to(root))
-        .route("/playground", web::get().to(root))
-        .route("/predict", web::post().to(predict))
+    cfg.route("/predict", web::post().to(predict))
         .route("/synthesize", web::post().to(synthesize_tts))
         .route("/models", web::get().to(list_models))
         .route("/stats", web::get().to(get_stats))
@@ -437,53 +381,6 @@ mod tests {
     }
 
     // ── root ─────────────────────────────────────────────────────────────────
-
-    #[actix_web::test]
-    async fn test_root_returns_200() {
-        let app = test::init_service(App::new().route("/", web::get().to(root))).await;
-        let req = test::TestRequest::get().uri("/").to_request();
-        let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), 200);
-    }
-
-    #[actix_web::test]
-    async fn test_root_response_is_html() {
-        let app = test::init_service(App::new().route("/", web::get().to(root))).await;
-        let req = test::TestRequest::get().uri("/").to_request();
-        let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), 200);
-        let ct = resp
-            .headers()
-            .get("content-type")
-            .unwrap()
-            .to_str()
-            .unwrap();
-        assert!(
-            ct.contains("text/html"),
-            "root should return HTML, got: {}",
-            ct
-        );
-    }
-
-    #[actix_web::test]
-    async fn test_root_response_body_is_non_empty() {
-        let app = test::init_service(App::new().route("/", web::get().to(root))).await;
-        let req = test::TestRequest::get().uri("/").to_request();
-        let body = test::call_and_read_body(&app, req).await;
-        assert!(!body.is_empty(), "root response body should not be empty");
-    }
-
-    #[actix_web::test]
-    async fn test_root_response_contains_html_tag() {
-        let app = test::init_service(App::new().route("/", web::get().to(root))).await;
-        let req = test::TestRequest::get().uri("/").to_request();
-        let body = test::call_and_read_body(&app, req).await;
-        let body_str = std::str::from_utf8(&body).unwrap_or("");
-        assert!(
-            body_str.contains("<html") || body_str.contains("<!DOCTYPE"),
-            "root response should contain HTML"
-        );
-    }
 
     // ── get_endpoint_stats ───────────────────────────────────────────────────
 
@@ -1208,94 +1105,6 @@ mod tests {
         assert!(resp_body["audio_data"].is_string());
         assert!(resp_body["processing_time"].is_number());
         assert_eq!(resp_body["sample_rate"], 16000);
-    }
-
-    // ── ETag / Cache-Control on root ──────────────────────────────────────────
-
-    #[actix_web::test]
-    async fn test_root_etag_header_present() {
-        let app = test::init_service(App::new().route("/", web::get().to(root))).await;
-        let req = test::TestRequest::get().uri("/").to_request();
-        let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), 200);
-        let etag = resp.headers().get("etag");
-        assert!(etag.is_some(), "ETag header must be present on 200 response");
-    }
-
-    #[actix_web::test]
-    async fn test_root_cache_control_is_no_cache() {
-        let app = test::init_service(App::new().route("/", web::get().to(root))).await;
-        let req = test::TestRequest::get().uri("/").to_request();
-        let resp = test::call_service(&app, req).await;
-        let cc = resp
-            .headers()
-            .get("cache-control")
-            .expect("Cache-Control header must be present")
-            .to_str()
-            .unwrap();
-        assert_eq!(cc, "no-cache");
-    }
-
-    #[actix_web::test]
-    async fn test_root_304_on_matching_if_none_match() {
-        let app = test::init_service(App::new().route("/", web::get().to(root))).await;
-        // First request — learn the ETag
-        let req1 = test::TestRequest::get().uri("/").to_request();
-        let resp1 = test::call_service(&app, req1).await;
-        let etag = resp1
-            .headers()
-            .get("etag")
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_owned();
-        // Second request — send matching ETag, expect 304
-        let req2 = test::TestRequest::get()
-            .uri("/")
-            .insert_header(("if-none-match", etag.as_str()))
-            .to_request();
-        let resp2 = test::call_service(&app, req2).await;
-        assert_eq!(resp2.status(), 304);
-    }
-
-    #[actix_web::test]
-    async fn test_root_200_on_mismatched_if_none_match() {
-        let app = test::init_service(App::new().route("/", web::get().to(root))).await;
-        let req = test::TestRequest::get()
-            .uri("/")
-            .insert_header(("if-none-match", "\"stale-00000000\""))
-            .to_request();
-        let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), 200);
-    }
-
-    // ── configure_routes ─────────────────────────────────────────────────────
-
-    #[actix_web::test]
-    async fn test_configure_routes_registers_root() {
-        // configure_routes registers all routes; verify the "/" route works through it.
-        let monitor = make_monitor();
-        let engine = make_engine();
-        let models = make_model_manager();
-        let rate_limiter = make_rate_limiter();
-        let deduplicator = make_deduplicator();
-        let config = make_config();
-
-        let app = test::init_service(
-            App::new()
-                .app_data(monitor.clone())
-                .app_data(engine.clone())
-                .app_data(models.clone())
-                .app_data(rate_limiter.clone())
-                .app_data(deduplicator.clone())
-                .app_data(config.clone())
-                .configure(configure_routes),
-        )
-        .await;
-
-        let req = test::TestRequest::get().uri("/").to_request();
-        let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), 200);
     }
 
     #[actix_web::test]

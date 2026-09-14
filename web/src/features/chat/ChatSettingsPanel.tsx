@@ -1,6 +1,14 @@
+import { useQuery } from "@tanstack/react-query";
+import { SearchableSelect, type SearchableSelectOption } from "@/components/ui/searchable-select";
+import { apiGet } from "@/lib/api-client";
 import type { ChatSettings } from "./types";
 
-const fieldClass = "rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground";
+interface LlmModelsResponse {
+  data?: Array<{ id: string; multimodal?: boolean }>;
+}
+
+const fieldClass =
+  "rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50";
 
 export function ChatSettingsPanel({
   settings,
@@ -11,6 +19,32 @@ export function ChatSettingsPanel({
   onChange: (next: ChatSettings) => void;
   onClose: () => void;
 }) {
+  // Sourced from the LLM microservice itself (proxied) rather than hardcoded,
+  // so the picker never drifts from what's actually loaded server-side.
+  const modelsQuery = useQuery({
+    queryKey: ["llm-models"],
+    queryFn: () => apiGet<LlmModelsResponse>("/llm/v1/models"),
+    staleTime: 60_000,
+  });
+  const availableModels = modelsQuery.data?.data ?? [];
+  // Keep whatever is currently selected in the list even if the live model
+  // list hasn't loaded yet (or no longer includes it) so the trigger never
+  // renders blank.
+  const modelOptions: SearchableSelectOption[] = availableModels.some((m) => m.id === settings.model)
+    ? availableModels.map((m) => ({
+        value: m.id,
+        label: m.id,
+        badge: m.multimodal ? "multimodal" : undefined,
+      }))
+    : [
+        { value: settings.model, label: settings.model },
+        ...availableModels.map((m) => ({
+          value: m.id,
+          label: m.id,
+          badge: m.multimodal ? "multimodal" : undefined,
+        })),
+      ];
+
   return (
     <>
       {/* Backdrop — click to dismiss, matches the drawer pattern used elsewhere. */}
@@ -41,13 +75,13 @@ export function ChatSettingsPanel({
 
         <label className="flex flex-col gap-1 text-xs">
           <span className="text-muted-foreground">Model</span>
-          <input
-            type="text"
+          <SearchableSelect
             value={settings.model}
-            onChange={(e) => onChange({ ...settings, model: e.target.value })}
-            placeholder="model name"
-            className={fieldClass}
-            data-testid="chat-model-input"
+            onValueChange={(model) => onChange({ ...settings, model })}
+            options={modelOptions}
+            triggerTestId="chat-model-input"
+            searchPlaceholder="Search models…"
+            emptyText="No models found."
           />
         </label>
         <div className="flex gap-3">

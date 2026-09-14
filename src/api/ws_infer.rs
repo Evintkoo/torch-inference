@@ -32,7 +32,10 @@
 /// {"type":"detect","frame":1,"ms":14.2,"count":3,
 ///  "detections":[{"label":"person","conf":0.87,"bbox":[x1,y1,x2,y2]},...]}
 /// {"type":"classify","frame":1,"ms":9.1,
-///  "predictions":[{"label":"cat","conf":0.95,"class_id":281},...]}
+///  "predictions":[{"label":"cat","confidence":0.95,"class_id":281},...]}
+/// // Note: `predictions` reuses api::classify::Prediction verbatim, whose
+/// // field is `confidence` — unlike `detections` above, whose `conf` field
+/// // belongs to a struct defined in this file.
 /// {"type":"error","frame":1,"msg":"model not loaded"}
 /// ```
 use crate::api::classify::{ClassifyState, Prediction};

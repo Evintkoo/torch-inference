@@ -165,7 +165,10 @@ pub async fn chat_completions(
             .json(json!({"error": e.to_string()}));
     }
 
-    let model_name = req.model.clone().unwrap_or_else(|| "hrm-text-1b".to_string());
+    let model_name = req
+        .model
+        .clone()
+        .unwrap_or_else(|| state.engine.model_id().to_string());
     let temperature = req.temperature;
     let streaming = req.stream;
     let id = new_completion_id();

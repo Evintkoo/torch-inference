@@ -28,7 +28,8 @@ function mockFetchRouter(routes: Record<string, unknown>) {
 describe("EngineVoiceSelect", () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it("populates the engine select from GET /tts/engines", async () => {
+  it("populates the engine dropdown from GET /tts/engines", async () => {
+    const user = userEvent.setup();
     mockFetchRouter({
       "/tts/engines/": { voices: [] },
       "/tts/engines": { engines: [{ id: "kokoro", name: "Kokoro" }, { id: "bark", name: "Bark" }] },
@@ -36,20 +37,24 @@ describe("EngineVoiceSelect", () => {
     renderWithClient(
       <EngineVoiceSelect engine="" voice="" onEngineChange={vi.fn()} onVoiceChange={vi.fn()} />,
     );
+    await user.click(screen.getByTestId("tts-engine-select"));
     await waitFor(() => expect(screen.getByRole("option", { name: "Kokoro" })).toBeInTheDocument());
     expect(screen.getByRole("option", { name: "Bark" })).toBeInTheDocument();
-    expect(screen.getAllByRole("option", { name: "default" })).toHaveLength(2);
+    expect(screen.getByRole("option", { name: "default" })).toBeInTheDocument();
   });
 
   it("accepts a bare string array response from /tts/engines", async () => {
+    const user = userEvent.setup();
     mockFetchRouter({ "/tts/engines/": { voices: [] }, "/tts/engines": ["kokoro"] });
     renderWithClient(
       <EngineVoiceSelect engine="" voice="" onEngineChange={vi.fn()} onVoiceChange={vi.fn()} />,
     );
+    await user.click(screen.getByTestId("tts-engine-select"));
     await waitFor(() => expect(screen.getByRole("option", { name: "kokoro" })).toBeInTheDocument());
   });
 
   it("fetches voices for the first engine even while the engine select is on default", async () => {
+    const user = userEvent.setup();
     mockFetchRouter({
       "/tts/engines/kokoro/voices": { voices: [{ id: "af_heart", name: "af_heart", language: "en-US" }] },
       "/tts/engines": { engines: [{ id: "kokoro", name: "Kokoro" }] },
@@ -57,6 +62,7 @@ describe("EngineVoiceSelect", () => {
     renderWithClient(
       <EngineVoiceSelect engine="" voice="" onEngineChange={vi.fn()} onVoiceChange={vi.fn()} />,
     );
+    await user.click(screen.getByTestId("tts-voice-select"));
     await waitFor(() =>
       expect(screen.getByRole("option", { name: "af_heart (en-US)" })).toBeInTheDocument(),
     );
@@ -72,8 +78,9 @@ describe("EngineVoiceSelect", () => {
     renderWithClient(
       <EngineVoiceSelect engine="" voice="" onEngineChange={onEngineChange} onVoiceChange={vi.fn()} />,
     );
-    await waitFor(() => expect(screen.getByRole("option", { name: "Bark" })).toBeInTheDocument());
-    await user.selectOptions(screen.getByTestId("tts-engine-select"), "bark");
+    await user.click(screen.getByTestId("tts-engine-select"));
+    const option = await screen.findByRole("option", { name: "Bark" });
+    await user.click(option);
     expect(onEngineChange).toHaveBeenCalledWith("bark");
   });
 });

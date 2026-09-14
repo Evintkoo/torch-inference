@@ -1,57 +1,41 @@
 const { test, expect } = require('@playwright/test');
 
-test.describe('React Logs panel (/preview)', () => {
+test.describe('React Logs panel (/)', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/preview');
+    await page.goto('/');
   });
 
-  test('navigates to the Logs tab and shows the file list panel', async ({ page }) => {
+  test('navigates to the Logs tab and shows a live tail — no file browser', async ({ page }) => {
     await page.locator('[data-testid="panel-nav-logs"]').click();
     await expect(page.locator('[data-testid="panel-content-logs"]')).toBeVisible();
-    await expect(page.locator('[data-testid="logs-file-list"]')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Server Logs' })).toBeVisible();
+    await expect(page.locator('[data-testid="logs-file-list"]')).toHaveCount(0);
   });
 
-  test('renders log files (or the empty state) fetched from GET /logs', async ({ page }) => {
+  test('auto-loads the current log file with no manual selection', async ({ page }) => {
     await page.locator('[data-testid="panel-nav-logs"]').click();
-    const fileList = page.locator('[data-testid="logs-file-list"]');
-    // Either at least one row of file metadata, or the explicit empty state —
-    // both prove the /logs fetch completed and rendered instead of hanging.
-    await expect(fileList).toContainText(/No log files found\.|MB/i, { timeout: 10000 });
-  });
-
-  test('viewer shows the placeholder state until a file is selected', async ({ page }) => {
-    await page.locator('[data-testid="panel-nav-logs"]').click();
-    await expect(page.locator('[data-testid="logs-viewer-header"]')).toHaveText('Select a file to view');
-  });
-
-  test('selecting a file loads its content into the log table', async ({ page }) => {
-    await page.locator('[data-testid="panel-nav-logs"]').click();
-    const fileList = page.locator('[data-testid="logs-file-list"]');
-    const viewButton = fileList.getByRole('button', { name: 'View' }).first();
-
-    // Only proceed if the server actually has a log file to view — a bare
-    // "no log files found" environment has nothing to assert here.
-    const hasFiles = (await viewButton.count()) > 0;
-    test.skip(!hasFiles, 'No log files present on this server to select.');
-
-    await viewButton.click();
+    // Starts on "Loading current log…" and resolves to the actual file name
+    // once GET /logs + GET /logs/{file} both complete — never requires a click.
     await expect(page.locator('[data-testid="logs-viewer-header"]')).not.toHaveText(
-      'Select a file to view',
+      'Loading current log…',
       { timeout: 10000 },
     );
     await expect(page.locator('[data-testid="logs-viewer"] table')).toBeVisible();
   });
 
+  test('the Live toggle is on by default', async ({ page }) => {
+    await page.locator('[data-testid="panel-nav-logs"]').click();
+    await expect(page.locator('[data-testid="logs-viewer-header"]')).not.toHaveText(
+      'Loading current log…',
+      { timeout: 10000 },
+    );
+    await expect(page.locator('[data-testid="logs-live-toggle"]')).toHaveAttribute('aria-pressed', 'true');
+  });
+
   test('the search box filters rendered rows', async ({ page }) => {
     await page.locator('[data-testid="panel-nav-logs"]').click();
-    const fileList = page.locator('[data-testid="logs-file-list"]');
-    const viewButton = fileList.getByRole('button', { name: 'View' }).first();
-    const hasFiles = (await viewButton.count()) > 0;
-    test.skip(!hasFiles, 'No log files present on this server to select.');
-
-    await viewButton.click();
     await expect(page.locator('[data-testid="logs-viewer-header"]')).not.toHaveText(
-      'Select a file to view',
+      'Loading current log…',
       { timeout: 10000 },
     );
 

@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DashboardPanel } from "./DashboardPanel";
+import { StatusPanel } from "./StatusPanel";
 import type { HealthCheck, SystemInfo } from "./types";
 
 const healthyResponse: HealthCheck = {
@@ -32,18 +32,10 @@ const sampleInfo: SystemInfo = {
   },
 };
 
-class MockEventSource {
-  onopen: (() => void) | null = null;
-  onmessage: ((event: { data: string }) => void) | null = null;
-  onerror: (() => void) | null = null;
-  constructor(public url: string) {}
-  close() {}
-}
-
-describe("DashboardPanel", () => {
+describe("StatusPanel", () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it("renders the health badge and system info card together", async () => {
+  it("renders the health stat grid and system info card together", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn((path: string) => {
@@ -51,13 +43,10 @@ describe("DashboardPanel", () => {
         return Promise.resolve({ ok: true, status: 200, json: async () => body });
       }),
     );
-    // MetricsChart (Task 7) opens a real EventSource against /dashboard/stream;
-    // stub it so this composition test doesn't throw when MetricsChart mounts.
-    vi.stubGlobal("EventSource", MockEventSource);
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
-        <DashboardPanel />
+        <StatusPanel />
       </QueryClientProvider>,
     );
     await waitFor(() => expect(screen.getAllByText(/healthy/i).length).toBeGreaterThan(0));

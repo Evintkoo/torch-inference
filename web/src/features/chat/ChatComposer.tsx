@@ -37,7 +37,7 @@ export function ChatComposer({
         placeholder="Message Assistant…"
         aria-label="Chat message"
         disabled={disabled}
-        className="max-h-32 min-h-[40px] flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground disabled:opacity-60"
+        className="max-h-32 min-h-[40px] flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-60"
         data-testid="chat-input"
       />
       <Button

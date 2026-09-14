@@ -61,22 +61,6 @@ export function ApiReferencePanel() {
 
   return (
     <div className="space-y-4">
-      <div className="space-y-1">
-        <h2 className="text-base font-medium">API Reference</h2>
-        <p className="text-sm text-muted-foreground">
-          Interactive OpenAPI reference — every route this server exposes, with request/response
-          schemas and copy-ready examples. Powered by{" "}
-          <a
-            href="https://github.com/scalar/scalar"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary underline underline-offset-2"
-          >
-            Scalar
-          </a>
-          , served from <code className="font-mono">/openapi.json</code>.
-        </p>
-      </div>
       {error && (
         <p className="text-sm text-muted-foreground" data-testid="api-reference-error">
           Could not load the API reference (offline, and no self-hosted copy cached yet): {error}

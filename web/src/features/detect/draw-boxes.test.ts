@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { colorForLabel, drawEnrichedBoxes, drawLiveBoxes, type Ctx2DLike } from "./draw-boxes";
-import type { EnrichedDetection, LiveDetection } from "./types";
+import { colorForLabel, drawEnrichedBoxes, type Ctx2DLike } from "./draw-boxes";
+import type { EnrichedDetection } from "./types";
 
 function mockCtx(): Ctx2DLike {
   return {
@@ -25,41 +25,6 @@ describe("colorForLabel", () => {
     const palette = ["#111111", "#222222"];
     expect(palette).toContain(colorForLabel("cat", palette));
     expect(palette).toContain(colorForLabel("a very different label", palette));
-  });
-});
-
-describe("drawLiveBoxes", () => {
-  const detections: LiveDetection[] = [{ label: "person", conf: 0.87, bbox: [10, 20, 110, 220] }];
-
-  it("clears the canvas before drawing", () => {
-    const ctx = mockCtx();
-    drawLiveBoxes(ctx, 320, 240, detections);
-    expect(ctx.clearRect).toHaveBeenCalledWith(0, 0, 320, 240);
-  });
-
-  it("draws a stroked box sized from the bbox", () => {
-    const ctx = mockCtx();
-    drawLiveBoxes(ctx, 320, 240, detections);
-    expect(ctx.strokeRect).toHaveBeenCalledWith(10, 20, 100, 200);
-  });
-
-  it("draws nothing but the clear when there are no detections", () => {
-    const ctx = mockCtx();
-    drawLiveBoxes(ctx, 320, 240, []);
-    expect(ctx.strokeRect).not.toHaveBeenCalled();
-    expect(ctx.fillText).not.toHaveBeenCalled();
-  });
-
-  it("skips a degenerate (zero-area) box", () => {
-    const ctx = mockCtx();
-    drawLiveBoxes(ctx, 320, 240, [{ label: "x", conf: 0.5, bbox: [10, 10, 10, 50] }]);
-    expect(ctx.strokeRect).not.toHaveBeenCalled();
-  });
-
-  it("labels the box with the class name and rounded confidence percentage", () => {
-    const ctx = mockCtx();
-    drawLiveBoxes(ctx, 320, 240, detections);
-    expect(ctx.fillText).toHaveBeenCalledWith("person 87%", 14, expect.any(Number));
   });
 });
 

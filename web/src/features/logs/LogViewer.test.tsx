@@ -28,9 +28,32 @@ describe("LogViewer", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
     renderWithClient(<LogViewer fileName={null} />);
-    expect(screen.getByTestId("logs-viewer-header")).toHaveTextContent("Select a file to view");
-    expect(screen.getAllByText("Select a file to view")).toHaveLength(2);
+    expect(screen.getByTestId("logs-viewer-header")).toHaveTextContent("Loading current log…");
+    expect(screen.getAllByText("Loading current log…")).toHaveLength(2);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("tails the file automatically (Live by default) and can be paused", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => sampleContent });
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    renderWithClient(<LogViewer fileName="server.log" />);
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const liveToggle = screen.getByTestId("logs-live-toggle");
+    expect(liveToggle).toHaveAttribute("aria-pressed", "true");
+
+    await vi.advanceTimersByTimeAsync(3_000);
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+
+    await user.click(liveToggle);
+    expect(liveToggle).toHaveAttribute("aria-pressed", "false");
+    const callsAfterPause = fetchMock.mock.calls.length;
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(fetchMock).toHaveBeenCalledTimes(callsAfterPause);
+
+    vi.useRealTimers();
   });
 
   it("fetches and renders parsed rows for the selected file", async () => {
@@ -72,7 +95,8 @@ describe("LogViewer", () => {
     renderWithClient(<LogViewer fileName="server.log" />);
     await waitFor(() => expect(screen.getByText("request served")).toBeInTheDocument());
 
-    await user.selectOptions(screen.getByTestId("logs-lines-select"), "500");
+    await user.click(screen.getByTestId("logs-lines-select"));
+    await user.click(await screen.findByRole("option", { name: "Last 500 lines" }));
 
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(

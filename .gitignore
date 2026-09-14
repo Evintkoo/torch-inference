@@ -1,6 +1,11 @@
 # Worktrees
 .worktrees/
 
+# Local secrets — never commit tokens/credentials
+.env
+.env.local
+.env.*.local
+
 # Rust
 /target/
 **/*.rs.bk

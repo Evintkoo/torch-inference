@@ -1,6 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppLayout, type Panel } from "@/app/layout";
-import { DashboardPanel } from "@/features/dashboard/DashboardPanel";
+import { StatusPanel } from "@/features/dashboard/StatusPanel";
+import { MetricsPanel } from "@/features/dashboard/MetricsPanel";
+import { MetricsStreamProvider } from "@/features/dashboard/MetricsStreamContext";
+import { ConfigPanel } from "@/features/dashboard/ConfigPanel";
 import { LogsPanel } from "@/features/logs/LogsPanel";
 import { ClassifyPanel } from "@/features/classify/ClassifyPanel";
 import { ChatPanel } from "@/features/chat/ChatPanel";
@@ -17,8 +20,10 @@ const panels: Panel[] = [
   { id: "stt", label: "STT", icon: "ri-mic-line", group: "Playground", content: <SttPanel /> },
   { id: "detect", label: "Detect", icon: "ri-focus-3-line", group: "Playground", content: <DetectPanel /> },
   { id: "chat", label: "Chat", icon: "ri-robot-2-line", group: "Playground", content: <ChatPanel /> },
-  { id: "dashboard", label: "Dashboard", icon: "ri-dashboard-3-line", group: "Tools", content: <DashboardPanel /> },
-  { id: "logs", label: "Logs", icon: "ri-file-list-3-line", group: "Tools", content: <LogsPanel /> },
+  { id: "system-status", label: "Status", icon: "ri-dashboard-3-line", group: "System", content: <StatusPanel /> },
+  { id: "system-metrics", label: "Metrics", icon: "ri-line-chart-line", group: "System", content: <MetricsPanel /> },
+  { id: "logs", label: "Logs", icon: "ri-file-list-3-line", group: "System", content: <LogsPanel /> },
+  { id: "system-config", label: "Config", icon: "ri-code-s-slash-line", group: "System", content: <ConfigPanel /> },
   {
     id: "api-reference",
     label: "API Reference",
@@ -31,7 +36,9 @@ const panels: Panel[] = [
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppLayout panels={panels} />
+      <MetricsStreamProvider>
+        <AppLayout panels={panels} />
+      </MetricsStreamProvider>
     </QueryClientProvider>
   );
 }

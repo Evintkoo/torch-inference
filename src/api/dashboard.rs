@@ -23,6 +23,12 @@ pub struct DashboardMetrics {
     pub cpu_pct: f32,
     pub mem_used_mb: u64,
     pub mem_total_mb: u64,
+    /// This server process's own RSS — distinct from `mem_used_mb`, which is
+    /// whole-system memory in use (every other process included).
+    pub process_mem_mb: f64,
+    /// This server process's own CPU% — distinct from `cpu_pct`, which is
+    /// averaged across all cores for the whole system.
+    pub process_cpu_pct: f32,
 }
 
 #[derive(Debug, Serialize)]
@@ -59,9 +65,13 @@ pub async fn dashboard_stream(
     let (tx, rx) = mpsc::channel::<Result<Bytes, std::io::Error>>(4);
 
     crate::spawn_safe::spawn_logged("dashboard_sse_writer", async move {
-        let mut ticker = interval(Duration::from_secs(3));
+        // 1s cadence — a 3s tick made the Metrics chart look stepped/jumpy
+        // rather than live (only ~2 points visible across a typical chart
+        // width right after opening the panel).
+        let mut ticker = interval(Duration::from_secs(1));
         // Construct System once; only refresh on each tick.
         let mut sys = sysinfo::System::new_all();
+        let pid = sysinfo::get_current_pid().ok();
         loop {
             ticker.tick().await;
 
@@ -81,6 +91,19 @@ pub async fn dashboard_stream(
                 / sys.cpus().len().max(1) as f32;
             let mem_used_mb = sys.used_memory() / 1024 / 1024;
             let mem_total_mb = sys.total_memory() / 1024 / 1024;
+
+            // This server process's own RSS/CPU — same pattern as
+            // `performance.rs`'s `get_performance_metrics`/`record_sample`,
+            // but refreshing only this one PID (not the whole process table)
+            // since that's all this stream needs.
+            let (process_mem_mb, process_cpu_pct) = if let Some(pid) = pid {
+                sys.refresh_processes(sysinfo::ProcessesToUpdate::Some(&[pid]));
+                sys.process(pid)
+                    .map(|p| (p.memory() as f64 / 1024.0 / 1024.0, p.cpu_usage()))
+                    .unwrap_or((0.0, 0.0))
+            } else {
+                (0.0, 0.0)
+            };
 
             // GPU from GpuManager
             let gpu = match system_state.gpu_manager.get_info() {
@@ -127,6 +150,8 @@ pub async fn dashboard_stream(
                     cpu_pct,
                     mem_used_mb,
                     mem_total_mb,
+                    process_mem_mb,
+                    process_cpu_pct,
                 },
                 gpu,
                 downloads,
@@ -151,6 +176,14 @@ pub async fn dashboard_stream(
         .content_type("text/event-stream")
         .insert_header(("Cache-Control", "no-cache"))
         .insert_header(("X-Accel-Buffering", "no"))
+        // Opt out of the app-wide Compress middleware — same fix as the LLM
+        // chat-completions proxy (llm_proxy.rs): without this, Compress sees
+        // no Content-Encoding on this streamed body and negotiates brotli
+        // with the browser, whose encoder buffers waiting to fill a window
+        // before emitting anything. For a 1s-interval SSE tick that means the
+        // client never sees a byte, indistinguishable from the metrics chart
+        // just being stuck on "Waiting for metrics…".
+        .insert_header(("Content-Encoding", "identity"))
         .streaming(ReceiverStream::new(rx))
 }
 
@@ -174,6 +207,8 @@ mod tests {
             cpu_pct: 45.0,
             mem_used_mb: 1024,
             mem_total_mb: 8192,
+            process_mem_mb: 96.5,
+            process_cpu_pct: 3.2,
         }
     }
 
@@ -345,6 +380,14 @@ mod tests {
         assert!(json.contains("\"avg_latency_ms\""));
         assert!(json.contains("\"mem_used_mb\""));
         assert!(json.contains("\"mem_total_mb\""));
+    }
+
+    #[test]
+    fn process_mem_and_cpu_fields_present() {
+        let m = make_metrics(1000, 2);
+        let json = serde_json::to_string(&m).unwrap();
+        assert!(json.contains("\"process_mem_mb\":96.5"));
+        assert!(json.contains("\"process_cpu_pct\":3.2"));
     }
 
     #[test]

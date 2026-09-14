@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { ApiError, apiPostStream } from "@/lib/api-client";
+import { executeToolCalls, hasToolCall, stripToolTags } from "./agentic-tools";
 import { streamChatCompletion } from "./chat-stream";
 import { DEFAULT_CHAT_SETTINGS, type ChatMessage, type ChatSettings } from "./types";
 
@@ -76,6 +77,14 @@ export function useChatCompletion(): UseChatCompletion {
           const snapshot = accumulated;
           setMessages((prev) =>
             prev.map((m) => (m.id === assistantId ? { ...m, content: snapshot } : m)),
+          );
+        }
+
+        if (hasToolCall(accumulated)) {
+          const toolResults = await executeToolCalls(accumulated);
+          const displayed = stripToolTags(accumulated);
+          setMessages((prev) =>
+            prev.map((m) => (m.id === assistantId ? { ...m, content: displayed, toolResults } : m)),
           );
         }
       } catch (e) {

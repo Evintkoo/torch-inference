@@ -65,7 +65,7 @@ impl crate::api::classify::ClassificationBackend for NoOpClassificationBackend {
         _batch: ndarray::Array4<f32>,
         _top_k: usize,
     ) -> anyhow::Result<Vec<Vec<crate::api::classify::Prediction>>> {
-        anyhow::bail!("no classification model loaded — place efficientnet-lite4-11.onnx in models/classify/")
+        anyhow::bail!("no classification model loaded — place efficientnet-lite4-11-int8.onnx in models/classify/")
     }
 }
 
@@ -722,7 +722,7 @@ async fn async_main() -> std::io::Result<()> {
         manager: tts_manager,
     });
     let performance_state = web::Data::new(crate::api::performance::PerformanceState {
-        monitor,
+        monitor: monitor.clone(),
         start_time,
     });
     // Periodically append a CPU/memory sample to the in-memory rolling
@@ -833,7 +833,7 @@ async fn async_main() -> std::io::Result<()> {
             // Wraps run outermost-first, so the order here is the order
             // requests traverse top-down.
             .wrap(CorrelationIdMiddleware)
-            .wrap(RequestLogger)
+            .wrap(RequestLogger::new(monitor.clone()))
             .wrap(AuthMiddleware::new(auth_enabled, &auth_secret))
             .wrap(RateLimitMiddleware::new(rate_limit_mw_limiter.clone()))
             .wrap(SecurityHeaders)

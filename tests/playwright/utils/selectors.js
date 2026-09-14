@@ -220,23 +220,26 @@ module.exports = {
   mdlDlError:        '#mdl-dl-error',
   mdlDlTasksList:    '#mdl-dl-tasks-list',
 
-  // ── New React frontend (web/) — served at /preview until cutover ──
-  reactNavDashboard:    '[data-testid="panel-nav-dashboard"]',
-  reactPanelDashboard:  '[data-testid="panel-content-dashboard"]',
+  // ── React frontend (web/) — served at / and /playground ──
+  // "Dashboard" was split into a "System" sidebar group with separate
+  // Status/Metrics/Logs tabs — see AppLayout's per-group collapse.
+  reactNavStatus:       '[data-testid="panel-nav-system-status"]',
+  reactPanelStatus:     '[data-testid="panel-content-system-status"]',
+  reactNavMetrics:      '[data-testid="panel-nav-system-metrics"]',
+  reactPanelMetrics:    '[data-testid="panel-content-system-metrics"]',
   reactMetricsChart:    '[data-testid="metrics-chart"]',
 
   // ── React Detect panel ───────────────────────────────────
   reactNavDetect:       '[data-testid="panel-nav-detect"]',
   reactPanelDetect:     '[data-testid="panel-content-detect"]',
-  reactDetectTabFile:   '[data-testid="det-tab-file"]',
-  reactDetectTabLive:   '[data-testid="det-tab-live"]',
-  reactDetectPaneFile:  '[data-testid="det-pane-file"]',
-  reactDetectPaneLive:  '[data-testid="det-pane-live"]',
-  reactDetectFileInput: '#detect-file',
+  // The File/Live Stream tab toggle was removed — Detect is a single view
+  // now (upload or camera-capture), matching STT/Classify. The camera itself
+  // offers two upfront entry points (Take Photo / Live Cam) rather than a
+  // single Camera button with an in-camera mode toggle.
+  reactDetectFileInput:    '#detect-file',
+  reactDetectCameraPhoto:  '[data-testid="detect-camera-photo-btn"]',
+  reactDetectCameraLive:   '[data-testid="detect-camera-live-btn"]',
   reactDetectBtn:       '[data-testid="detect-btn"]',
   reactDetectCanvas:    '[data-testid="detect-canvas"]',
   reactDetectOut:       '[data-testid="detect-out"]',
-  reactDetectWsBtn:     '[data-testid="det-ws-btn"]',
-  reactDetectWsLabel:   '[data-testid="det-ws-label"]',
-  reactDetectModelLabel:'[data-testid="det-model-label"]',
 };

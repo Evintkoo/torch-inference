@@ -7,9 +7,9 @@ const { test, expect } = require('@playwright/test');
 const navTts = '[data-testid="panel-nav-tts"]';
 const panelTts = '[data-testid="panel-content-tts"]';
 
-test.describe('React TTS panel (/preview)', () => {
+test.describe('React TTS panel (/)', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/preview');
+    await page.goto('/');
     await page.locator(navTts).click();
   });
 

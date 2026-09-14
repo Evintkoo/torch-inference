@@ -48,32 +48,16 @@ export interface YoloDetectResponse {
 export type ModelVersion = "v5" | "v8" | "v10" | "v11" | "v12";
 export type ModelSize = "n" | "s" | "m" | "l" | "x";
 
-/** One detection as emitted per-frame over `GET /ws/detect` — a leaner shape than the REST response. */
-export interface LiveDetection {
+// ── GET /ws/detect (see src/api/ws_infer.rs for the full protocol) ──────────
+
+export interface WsDetection {
   label: string;
   conf: number;
-  /** [x1, y1, x2, y2] in pixels, original frame coordinates. */
+  /** [x1, y1, x2, y2] in pixels, original image coordinates. */
   bbox: [number, number, number, number];
 }
 
-export interface DetectConfig {
-  version: string;
-  size: string;
-  conf: number;
-  iou: number;
-}
-
-export type ServerMessage =
+export type DetectWsMessage =
   | { type: "ready"; task: string; frame: number }
-  | { type: "detect"; frame: number; ms: number; count: number; detections: LiveDetection[] }
+  | { type: "detect"; frame: number; ms: number; count: number; detections: WsDetection[] }
   | { type: "error"; frame: number; msg: string };
-
-export interface DetectStats {
-  frame: number;
-  /** Latency of the last processed frame in ms; "err" mirrors the server's error reply; null before the first reply. */
-  ms: number | "err" | null;
-  count: number;
-  fps: number;
-}
-
-export type ModelStatus = "checking" | "loaded" | "missing" | "unknown" | "unreachable";

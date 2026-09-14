@@ -60,3 +60,34 @@ export function filterLogRows(rows: LogRow[], term: string): LogRow[] {
   if (!trimmed) return rows;
   return rows.filter((row) => row.raw.toLowerCase().includes(trimmed));
 }
+
+// Request-logger lines look like:
+//   torch_inference_server::middleware::request_logger: src/middleware/request_logger.rs:115: correlation_id=abc method=GET path=/health status=200 duration_ms=0 event="request_completed"
+// Split off the `target: src/file.rs:LINE:` prefix, then parse the
+// remaining space-separated `key=value` / `key="quoted value"` pairs.
+const PREFIX_RE = /^([\w:]+):\s+(?:\S+\.rs:\d+:\s+)?(.*)$/s;
+const KV_RE = /(\w+)=(?:"([^"]*)"|(\S*))/g;
+
+export interface ParsedLogFields {
+  target: string;
+  fields: Record<string, string>;
+  /** Freeform remainder for lines that don't parse as target + key=value pairs. */
+  text: string;
+}
+
+/** Break a log row's message into its structured `key=value` fields, for
+ * rendering as table columns instead of one long text blob. */
+export function parseLogFields(message: string): ParsedLogFields {
+  const m = message.match(PREFIX_RE);
+  const target = m ? m[1] : "";
+  const rest = m ? m[2] : message;
+
+  const fields: Record<string, string> = {};
+  KV_RE.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = KV_RE.exec(rest)) !== null) {
+    fields[match[1]] = match[2] !== undefined ? match[2] : (match[3] ?? "");
+  }
+
+  return { target, fields, text: Object.keys(fields).length === 0 ? rest.trim() : "" };
+}

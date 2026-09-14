@@ -128,6 +128,55 @@ describe("LiveTtsStream", () => {
     expect(() => socket.onmessage?.({ data: frame })).not.toThrow();
   });
 
+  it("shows a waveform + play button once audio has streamed in, and Play starts replay", async () => {
+    const sources: Array<{ start: () => void; stop: () => void }> = [];
+    class FakeBufferSource {
+      buffer: unknown = null;
+      onended: (() => void) | null = null;
+      connect = vi.fn();
+      start = vi.fn();
+      stop = vi.fn(() => this.onended?.());
+      constructor() {
+        sources.push(this);
+      }
+    }
+    class FakeAudioContext {
+      currentTime = 0;
+      destination = {};
+      state = "running";
+      createBuffer = vi.fn(() => ({ duration: 1, copyToChannel: vi.fn() }));
+      createBufferSource = vi.fn(() => new FakeBufferSource());
+      close = vi.fn().mockResolvedValue(undefined);
+    }
+    vi.stubGlobal("AudioContext", FakeAudioContext);
+    vi.stubGlobal("requestAnimationFrame", vi.fn(() => 0));
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+
+    const user = userEvent.setup();
+    renderPanel();
+    const socket = connectSocket();
+    await waitFor(() => expect(screen.getByTestId("tts-ws-status-label")).toHaveTextContent("connected"));
+
+    await user.type(screen.getByTestId("tts-ws-text-input"), "Hello");
+    await user.click(screen.getByTestId("tts-ws-speak-btn"));
+
+    const frame = new Float32Array([0.1, -0.2, 0.3]).buffer;
+    socket.onmessage?.({ data: frame });
+    await waitFor(() => expect(screen.getByTestId("tts-waveform")).toBeInTheDocument());
+    // The play button is disabled while still speaking — finish the utterance first.
+    socket.onmessage?.({ data: JSON.stringify({ type: "tts_done", duration_ms: 100 }) });
+    await waitFor(() => expect(screen.getByTestId("tts-waveform-play-btn")).toBeEnabled());
+
+    const playBtn = screen.getByTestId("tts-waveform-play-btn");
+    expect(playBtn).toHaveAccessibleName("Play");
+    const sourcesBeforeClick = sources.length;
+
+    await user.click(playBtn);
+
+    await waitFor(() => expect(sources.length).toBe(sourcesBeforeClick + 1));
+    expect(sources[sources.length - 1].start).toHaveBeenCalled();
+  });
+
   it("Stop tears down the audio context and resets speaking state", async () => {
     const user = userEvent.setup();
     renderPanel();

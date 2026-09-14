@@ -26,16 +26,6 @@ describe("ApiReferencePanel", () => {
     document.documentElement.removeAttribute("data-theme");
   });
 
-  it("describes the panel and its data source", () => {
-    render(<ApiReferencePanel />);
-    expect(screen.getByRole("heading", { name: "API Reference" })).toBeInTheDocument();
-    expect(screen.getByText(/openapi.json/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Scalar" })).toHaveAttribute(
-      "href",
-      "https://github.com/scalar/scalar",
-    );
-  });
-
   it("injects the self-hosted Scalar bundle and mounts it into the ref'd div", async () => {
     const createApiReference = vi.fn().mockReturnValue({ updateConfiguration: vi.fn() });
     render(<ApiReferencePanel />);

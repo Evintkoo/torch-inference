@@ -1,7 +1,7 @@
 port = 8001
 
 [engine]
-kind = "hrm"
+kind = "smolvlm"
 
 [hrm]
 model_dir      = "models/hrm-text-1b"
@@ -10,9 +10,10 @@ use_quantized  = false
 n_threads      = 4
 
 # Requires ONNX Runtime >= 1.25 (GroupQueryAttention's "softcap" attribute,
-# added in ORT 1.25.0) — the system/Homebrew ORT may be older; see
-# scripts/download_smolvlm_artifacts.sh for how to point at a newer one via
-# ORT_DYLIB_PATH.
+# added in ORT 1.25.0) — the system/Homebrew ORT may be older. The service
+# auto-detects a vendored newer build at startup (services/llm/vendor/, see
+# scripts/download_smolvlm_artifacts.sh) and points ORT_DYLIB_PATH at it
+# automatically; set ORT_DYLIB_PATH yourself to override that detection.
 [smolvlm]
 model_dir      = "models/smolvlm-256m"
 ep_preference  = "auto"

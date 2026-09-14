@@ -1,8 +1,8 @@
 const { test, expect } = require('@playwright/test');
 
-test.describe('React Chat panel (/preview)', () => {
+test.describe('React Chat panel (/)', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/preview');
+    await page.goto('/');
     await page.locator('[data-testid="panel-nav-chat"]').click();
   });
 

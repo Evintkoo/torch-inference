@@ -1,6 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
 import { apiGet } from "@/lib/api-client";
-import type { HealthCheck } from "./types";
+import type { ComponentHealth, HealthCheck } from "./types";
+
+function CheckStatusBadge({ status }: { status: string }) {
+  const normalized = status.toLowerCase();
+  const variant = normalized === "up" ? "outline" : normalized === "degraded" ? "secondary" : "destructive";
+  return (
+    <Badge variant={variant} className={normalized === "up" ? "border-success text-success" : undefined}>
+      {status}
+    </Badge>
+  );
+}
 
 function formatUptime(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -8,7 +19,7 @@ function formatUptime(seconds: number): string {
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+export function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="border border-border2 bg-card px-4 py-3.5">
       <div className="mb-1 text-[11px] tracking-wide text-text-dim uppercase">{label}</div>
@@ -48,14 +59,37 @@ export function StatusStatGrid() {
 
       <div className="border border-border2 bg-card p-5">
         <div className="mb-3.5 text-[13px] font-semibold tracking-wide text-muted-foreground uppercase">
-          Raw Health JSON
+          Health Checks
         </div>
-        <pre
-          className="max-h-[340px] overflow-y-auto border border-border2 bg-[#F1F3F4] p-3.5 font-mono text-[12.5px] leading-[1.7] whitespace-pre-wrap text-foreground dark:bg-[#1a1a1a]"
-          data-testid="health-raw"
-        >
-          {data ? JSON.stringify(data, null, 2) : isError ? "failed to fetch" : "fetching…"}
-        </pre>
+        {!data && !isError && (
+          <p className="text-sm text-muted-foreground" data-testid="health-checks-empty">
+            fetching…
+          </p>
+        )}
+        {isError && (
+          <p className="text-sm text-destructive" data-testid="health-checks-error">
+            failed to fetch
+          </p>
+        )}
+        {data && (
+          <div className="divide-y divide-border2 border border-border2" data-testid="health-checks">
+            {Object.entries(data.checks ?? {}).map(([name, check]: [string, ComponentHealth]) => (
+              <div key={name} className="flex items-center gap-3 px-3.5 py-2.5 text-sm">
+                <CheckStatusBadge status={check.status} />
+                <span className="font-medium">{name}</span>
+                {check.message && (
+                  <span className="flex-1 truncate text-muted-foreground">{check.message}</span>
+                )}
+                <span className="ml-auto shrink-0 font-mono text-xs text-text-dim">
+                  {check.latency_ms}ms
+                </span>
+              </div>
+            ))}
+            {Object.keys(data.checks ?? {}).length === 0 && (
+              <p className="px-3.5 py-2.5 text-sm text-muted-foreground">No component checks reported.</p>
+            )}
+          </div>
+        )}
       </div>
 
       <button

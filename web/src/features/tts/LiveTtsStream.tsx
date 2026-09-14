@@ -3,7 +3,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useWebSocketStream } from "@/lib/ws-client";
 import { EngineVoiceSelect } from "./EngineVoiceSelect";
+import { TtsWaveform } from "./TtsWaveform";
 import type { TtsWsMessage } from "./types";
+
+function concatFloat32(chunks: Float32Array[]): Float32Array {
+  const total = chunks.reduce((sum, c) => sum + c.length, 0);
+  const out = new Float32Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return out;
+}
 
 const DEFAULT_SAMPLE_RATE = 24000;
 
@@ -32,10 +44,16 @@ export function LiveTtsStream() {
   const [status, setStatus] = useState("—");
   const [speaking, setSpeaking] = useState(false);
   const [durationMs, setDurationMs] = useState<number | null>(null);
+  const [samples, setSamples] = useState<Float32Array | null>(null);
+  const [replaying, setReplaying] = useState(false);
+  const [replayProgress, setReplayProgress] = useState(0);
 
   const sampleRateRef = useRef(DEFAULT_SAMPLE_RATE);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const nextPlayAtRef = useRef(0);
+  const chunksRef = useRef<Float32Array[]>([]);
+  const replaySourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const replayRafRef = useRef<number | null>(null);
 
   const ensureAudioCtx = () => {
     const Ctor = getAudioContextCtor();
@@ -53,6 +71,8 @@ export function LiveTtsStream() {
     if (!ctx) return;
     const f32 = new Float32Array(payload);
     if (!f32.length) return;
+    chunksRef.current.push(f32);
+    setSamples(concatFloat32(chunksRef.current));
     const buf = ctx.createBuffer(1, f32.length, sampleRateRef.current);
     buf.copyToChannel(f32, 0);
     const src = ctx.createBufferSource();
@@ -100,10 +120,25 @@ export function LiveTtsStream() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
+  function stopReplay() {
+    if (replayRafRef.current != null) {
+      cancelAnimationFrame(replayRafRef.current);
+      replayRafRef.current = null;
+    }
+    try {
+      replaySourceRef.current?.stop();
+    } catch {
+      // already stopped/ended — fine to ignore
+    }
+    replaySourceRef.current = null;
+    setReplaying(false);
+  }
+
   useEffect(
     () => () => {
       audioCtxRef.current?.close().catch(() => {});
       audioCtxRef.current = null;
+      stopReplay();
     },
     [],
   );
@@ -114,6 +149,10 @@ export function LiveTtsStream() {
       setStatus("Enter text first");
       return;
     }
+    stopReplay();
+    chunksRef.current = [];
+    setSamples(null);
+    setReplayProgress(0);
     send(JSON.stringify({ type: "tts", text: trimmed, voice: voice || engine || undefined, speed: speed || 1.0 }));
     setStatus("Synthesising…");
     setSpeaking(true);
@@ -127,6 +166,41 @@ export function LiveTtsStream() {
     audioCtxRef.current = null;
     setStatus("Stopped");
     setSpeaking(false);
+  }
+
+  function togglePlay() {
+    if (replaying) {
+      stopReplay();
+      return;
+    }
+    if (!samples || samples.length === 0) return;
+    const Ctor = getAudioContextCtor();
+    if (!Ctor) return;
+    const ctx = new Ctor();
+    const buf = ctx.createBuffer(1, samples.length, sampleRateRef.current);
+    buf.copyToChannel(samples as Float32Array<ArrayBuffer>, 0);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    const startedAt = ctx.currentTime;
+    const duration = buf.duration;
+    src.onended = () => {
+      void ctx.close();
+      stopReplay();
+      setReplayProgress(1);
+    };
+    replaySourceRef.current = src;
+    src.start();
+    setReplaying(true);
+
+    const tick = () => {
+      const elapsed = ctx.currentTime - startedAt;
+      setReplayProgress(Math.min(1, duration > 0 ? elapsed / duration : 1));
+      if (elapsed < duration) {
+        replayRafRef.current = requestAnimationFrame(tick);
+      }
+    };
+    replayRafRef.current = requestAnimationFrame(tick);
   }
 
   return (
@@ -208,6 +282,15 @@ export function LiveTtsStream() {
             <p data-testid="tts-ws-duration" className="text-xs text-muted-foreground">
               Duration: {durationMs} ms
             </p>
+          )}
+          {samples && samples.length > 0 && (
+            <TtsWaveform
+              samples={samples}
+              progress={replaying ? replayProgress : 0}
+              playing={replaying}
+              onTogglePlay={togglePlay}
+              disabled={speaking}
+            />
           )}
         </div>
       </CardContent>

@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LogsPanel } from "./LogsPanel";
 import type { LogFileContent, LoggingInfo } from "./types";
@@ -8,15 +7,30 @@ import type { LogFileContent, LoggingInfo } from "./types";
 const sampleInfo: LoggingInfo = {
   log_directory: "logs",
   log_level: "info",
-  total_log_size_mb: 0.01,
+  total_log_size_mb: 5.71,
   available_log_files: [
-    { name: "server.log", path: "logs/server.log", size_bytes: 100, size_mb: 0.01, line_count: 1, modified: "2026-09-13 00:00:00" },
+    {
+      name: "torch-inference.log.2026-09-13",
+      path: "logs/torch-inference.log.2026-09-13",
+      size_bytes: 5_000_000,
+      size_mb: 4.99,
+      line_count: 15_357,
+      modified: "2026-09-13T23:59:00Z",
+    },
+    {
+      name: "torch-inference.log.2026-09-14",
+      path: "logs/torch-inference.log.2026-09-14",
+      size_bytes: 750_000,
+      size_mb: 0.72,
+      line_count: 2_698,
+      modified: "2026-09-14T09:00:00Z",
+    },
   ],
 };
 
 const sampleContent: LogFileContent = {
-  file_name: "server.log",
-  content: "2026-09-13T00:00:00Z INFO hello from the server\n",
+  file_name: "torch-inference.log.2026-09-14",
+  content: "2026-09-14T09:00:00Z INFO hello from the server\n",
   line_count: 1,
   total_lines: 1,
   from_end: true,
@@ -34,7 +48,7 @@ function renderPanel() {
 describe("LogsPanel", () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it("selects a file from the list and shows its parsed content in the viewer", async () => {
+  it("has no file browser — it auto-tails whichever log file was modified most recently, with no manual selection", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn((path: string) => {
@@ -42,13 +56,15 @@ describe("LogsPanel", () => {
         return Promise.resolve({ ok: true, status: 200, json: async () => body });
       }),
     );
-    const user = userEvent.setup();
     renderPanel();
 
-    await waitFor(() => expect(screen.getByText("server.log")).toBeInTheDocument());
-    await user.click(screen.getByTestId("logs-view-server.log"));
+    expect(screen.getByRole("heading", { name: "Server Logs" })).toBeInTheDocument();
+    expect(screen.queryByTestId("logs-file-list")).not.toBeInTheDocument();
+    expect(screen.queryByText(/torch-inference\.log\.2026-09-13/)).not.toBeInTheDocument();
 
     await waitFor(() => expect(screen.getByText("hello from the server")).toBeInTheDocument());
-    expect(screen.getByTestId("logs-viewer-header")).toHaveTextContent("server.log");
+    // The 09-14 file has the later `modified` timestamp — it's "current",
+    // not the larger/older 09-13 file.
+    expect(screen.getByTestId("logs-viewer-header")).toHaveTextContent("torch-inference.log.2026-09-14");
   });
 });

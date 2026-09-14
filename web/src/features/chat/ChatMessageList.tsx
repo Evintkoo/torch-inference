@@ -43,7 +43,7 @@ export function ChatMessageList({
               className={cn(
                 "max-w-[80%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm",
                 message.role === "user"
-                  ? "bg-primary text-primary-foreground"
+                  ? "border border-foreground bg-transparent text-foreground"
                   : "border border-border bg-card text-card-foreground",
               )}
             >
@@ -54,6 +54,29 @@ export function ChatMessageList({
               ) : (
                 message.content
               )}
+              {message.toolResults?.map((result, i) => (
+                <div
+                  key={i}
+                  data-testid={`chat-tool-result-${result.name}`}
+                  className={cn(
+                    "mt-2 border px-2.5 py-2 text-xs",
+                    result.status === "error"
+                      ? "border-destructive/40 text-destructive"
+                      : "border-border bg-background/50",
+                  )}
+                >
+                  <div className="font-medium">
+                    <i
+                      className={result.name === "tts" ? "ri-volume-up-line" : "ri-search-line"}
+                      aria-hidden="true"
+                    />{" "}
+                    {result.summary}
+                  </div>
+                  {result.audioUrl && (
+                    <audio controls autoPlay src={result.audioUrl} className="mt-1.5 w-full" />
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         );

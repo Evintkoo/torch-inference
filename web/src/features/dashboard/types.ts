@@ -74,6 +74,10 @@ export interface DashboardMetrics {
   cpu_pct: number;
   mem_used_mb: number;
   mem_total_mb: number;
+  /** This server process's own RSS — distinct from mem_used_mb (whole-system). */
+  process_mem_mb: number;
+  /** This server process's own CPU% — distinct from cpu_pct (whole-system average). */
+  process_cpu_pct: number;
 }
 
 export interface DashboardGpu {

@@ -40,7 +40,8 @@ src/
   config.rs         — Config struct; reads config.toml
   lib.rs            — crate root, re-exports all modules
   api/
-    handlers.rs     — playground.html embedded via include_str!
+    handlers.rs     — /predict, /synthesize, /models, /stats, etc.
+    web_assets.rs   — serves the React/Vite SPA (web/dist/) at / and /playground
     tts.rs          — POST /tts/stream (sentence-level streaming WAV)
     audio.rs        — POST /stt/transcribe
     classify.rs     — POST /classify/batch
@@ -69,7 +70,7 @@ src/
 ```
 
 ## Key Conventions
-- **Playground**: `src/api/playground.html` is embedded via `include_str!`. All UI changes require `cargo build --release` to take effect.
+- **Web UI**: `web/` is a React/Vite SPA, embedded from `web/dist/` via `rust_embed` (`src/api/web_assets.rs`), served at `/` and `/playground`. UI changes require `make web` (builds `web/dist/`) followed by `cargo build --release` to take effect. The legacy hand-written `src/api/playground.html` was retired at cutover — no route serves it anymore.
 - **Cache keys**: FNV-1a 64-bit hash with NUL byte separators. Never use `DefaultHasher` (not stable across runs).
 - **Async**: actix-web uses `current_thread` executor. Never use `tokio::task::block_in_place` inside handlers — use `reqwest::blocking::Client` or `spawn_blocking` instead.
 - **ORT**: Always enabled (`ort = "=2.0.0-rc.10"`). Loads `/opt/homebrew/lib/libonnxruntime.dylib` on macOS at runtime.

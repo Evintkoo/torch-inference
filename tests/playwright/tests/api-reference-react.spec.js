@@ -7,9 +7,9 @@ const navApiReference = '[data-testid="panel-nav-api-reference"]';
 const panelApiReference = '[data-testid="panel-content-api-reference"]';
 const scalarMount = '[data-testid="api-reference-mount"]';
 
-test.describe('React API Reference panel (/preview)', () => {
+test.describe('React API Reference panel (/)', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/preview');
+    await page.goto('/');
   });
 
   test('navigates to the API Reference tab and shows its panel', async ({ page }) => {

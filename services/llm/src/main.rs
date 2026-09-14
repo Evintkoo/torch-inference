@@ -40,6 +40,34 @@ fn exit_skipping_ort_teardown(code: i32) -> ! {
     unsafe { libc::_exit(code) }
 }
 
+/// Points `ORT_DYLIB_PATH` at a locally vendored ONNX Runtime build (see
+/// `scripts/download_smolvlm_artifacts.sh`) when one is present and the
+/// caller hasn't already set the var explicitly. SmolVLM's decoder needs
+/// ORT >= 1.25 (`GroupQueryAttention`'s `softcap` attribute); the
+/// system/Homebrew build may be older. No-ops (falls through to whatever
+/// the system ORT resolves to) when `vendor/` is absent — every launch
+/// path (manual, `make run`, the respawn watchdog in the main server) goes
+/// through this, so none of them need to remember the env var themselves.
+fn use_vendored_ort_if_present() {
+    if std::env::var_os("ORT_DYLIB_PATH").is_some() {
+        return;
+    }
+    let vendor_dir = std::path::Path::new("vendor");
+    let Ok(entries) = std::fs::read_dir(vendor_dir) else {
+        return;
+    };
+    let mut candidates: Vec<std::path::PathBuf> = entries
+        .filter_map(|e| e.ok())
+        .map(|e| e.path().join("lib/libonnxruntime.dylib"))
+        .filter(|p| p.is_file())
+        .collect();
+    candidates.sort();
+    if let Some(dylib) = candidates.pop() {
+        tracing::info!(path = %dylib.display(), "using vendored ONNX Runtime");
+        std::env::set_var("ORT_DYLIB_PATH", dylib);
+    }
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     tracing_subscriber::fmt()
@@ -48,6 +76,8 @@ async fn main() -> std::io::Result<()> {
                 .add_directive("llm_service=info".parse().unwrap()),
         )
         .init();
+
+    use_vendored_ort_if_present();
 
     // Commit ORT's shared global thread pool before either engine builds a
     // session — see ort_runtime for why sharing one pool beats each session

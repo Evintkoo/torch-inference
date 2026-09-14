@@ -70,9 +70,10 @@ fn serve_embedded(path: &str, cache_control: &str, req: &HttpRequest) -> HttpRes
         .body(file.data.into_owned())
 }
 
-/// Temporary preview route for the in-progress React frontend. Removed at
-/// cutover, when `/` and `/playground` serve this same `index.html` instead.
-pub async fn serve_preview(req: HttpRequest) -> impl Responder {
+/// Serves the built React/Vite SPA's `index.html` — the app's sole UI,
+/// registered at `/` and `/playground` (the legacy embedded-HTML playground
+/// this replaced also answered both paths, so neither URL breaks on cutover).
+pub async fn serve_index(req: HttpRequest) -> impl Responder {
     serve_embedded("index.html", "no-cache", &req)
 }
 
@@ -85,7 +86,8 @@ pub async fn serve_app_asset(req: HttpRequest, filename: web::Path<String>) -> i
 }
 
 pub fn configure_routes(cfg: &mut web::ServiceConfig) {
-    cfg.route("/preview", web::get().to(serve_preview))
+    cfg.route("/", web::get().to(serve_index))
+        .route("/playground", web::get().to(serve_index))
         .route("/assets/app/{filename:.*}", web::get().to(serve_app_asset));
 }
 
@@ -95,7 +97,7 @@ mod tests {
     use actix_web::{test as actix_test, App};
 
     #[actix_web::test]
-    async fn test_preview_serves_index_html() {
+    async fn test_root_serves_index_html() {
         // `web/dist/` may be absent in this environment (e.g. a fresh clone
         // before `make web` has run) since the embed now tolerates a
         // missing directory (`#[allow_missing = true]`). Only assert the
@@ -104,9 +106,30 @@ mod tests {
             return;
         }
         let app = actix_test::init_service(App::new().configure(configure_routes)).await;
-        let req = actix_test::TestRequest::get().uri("/preview").to_request();
+        let req = actix_test::TestRequest::get().uri("/").to_request();
         let resp = actix_test::call_service(&app, req).await;
         assert_eq!(resp.status(), 200);
+    }
+
+    #[actix_web::test]
+    async fn test_playground_serves_index_html() {
+        if WebDist::get("index.html").is_none() {
+            return;
+        }
+        let app = actix_test::init_service(App::new().configure(configure_routes)).await;
+        let req = actix_test::TestRequest::get().uri("/playground").to_request();
+        let resp = actix_test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
+    }
+
+    #[actix_web::test]
+    async fn test_preview_route_removed_returns_404() {
+        // /preview was the temporary route during the React frontend's
+        // rollout — cutover retired it in favor of / and /playground.
+        let app = actix_test::init_service(App::new().configure(configure_routes)).await;
+        let req = actix_test::TestRequest::get().uri("/preview").to_request();
+        let resp = actix_test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 404);
     }
 
     #[actix_web::test]
@@ -119,16 +142,16 @@ mod tests {
         assert_eq!(resp.status(), 404);
     }
 
-    // ── ETag / If-None-Match on /preview ────────────────────────────────────
+    // ── ETag / If-None-Match on / ────────────────────────────────────────────
 
     #[actix_web::test]
-    async fn test_preview_304_on_matching_if_none_match() {
+    async fn test_root_304_on_matching_if_none_match() {
         if WebDist::get("index.html").is_none() {
             return;
         }
         let app = actix_test::init_service(App::new().configure(configure_routes)).await;
         // First request — learn the ETag.
-        let req1 = actix_test::TestRequest::get().uri("/preview").to_request();
+        let req1 = actix_test::TestRequest::get().uri("/").to_request();
         let resp1 = actix_test::call_service(&app, req1).await;
         let etag = resp1
             .headers()
@@ -139,7 +162,7 @@ mod tests {
             .to_owned();
         // Second request — send matching ETag, expect 304.
         let req2 = actix_test::TestRequest::get()
-            .uri("/preview")
+            .uri("/")
             .insert_header(("if-none-match", etag.as_str()))
             .to_request();
         let resp2 = actix_test::call_service(&app, req2).await;
@@ -147,13 +170,13 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_preview_200_on_mismatched_if_none_match() {
+    async fn test_root_200_on_mismatched_if_none_match() {
         if WebDist::get("index.html").is_none() {
             return;
         }
         let app = actix_test::init_service(App::new().configure(configure_routes)).await;
         let req = actix_test::TestRequest::get()
-            .uri("/preview")
+            .uri("/")
             .insert_header(("if-none-match", "\"stale-00000000\""))
             .to_request();
         let resp = actix_test::call_service(&app, req).await;

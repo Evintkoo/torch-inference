@@ -10,9 +10,9 @@ const FIXTURE_PNG = Buffer.from(
   'base64',
 );
 
-test.describe('React Classify panel (/preview)', () => {
+test.describe('React Classify panel (/)', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/preview');
+    await page.goto('/');
     await page.locator(reactNavClassify).click();
   });
 

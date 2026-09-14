@@ -7,6 +7,14 @@ function makeFile(name = "clip.wav", type = "audio/wav") {
   return new File(["fake-audio-bytes"], name, { type });
 }
 
+// The real recordingToWavFile() needs a real AudioContext to decode audio,
+// which jsdom doesn't implement — the recording flow only cares that
+// whatever it returns gets uploaded, not the actual WAV encoding (that's
+// covered by wav.test.ts).
+vi.mock("@/lib/wav", () => ({
+  recordingToWavFile: vi.fn(async () => new File(["wav-bytes"], "recording.wav", { type: "audio/wav" })),
+}));
+
 describe("UploadTranscribeCard", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -25,6 +33,104 @@ describe("UploadTranscribeCard", () => {
 
     expect(screen.getByTestId("audio-file-name")).toHaveTextContent("clip.wav");
     expect(screen.getByTestId("audio-transcribe-button")).toBeEnabled();
+  });
+
+  it("records via the microphone and auto-transcribes on stop", async () => {
+    const stop = vi.fn();
+    const stream = { getTracks: () => [{ stop: vi.fn() }] } as unknown as MediaStream;
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      mediaDevices: { getUserMedia: vi.fn().mockResolvedValue(stream) },
+    });
+    vi.stubGlobal("isSecureContext", true);
+    class MockRecorder {
+      state = "recording";
+      ondataavailable: ((e: { data: Blob }) => void) | null = null;
+      onstop: (() => void) | null = null;
+      start() {
+        this.ondataavailable?.({ data: new Blob(["chunk"], { type: "audio/webm" }) });
+      }
+      stop() {
+        stop();
+        this.state = "inactive";
+        this.onstop?.();
+      }
+    }
+    vi.stubGlobal("MediaRecorder", MockRecorder);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ text: "recorded text" }) }),
+    );
+
+    render(<UploadTranscribeCard />);
+    fireEvent.click(screen.getByTestId("audio-record-button"));
+    await waitFor(() => expect(screen.getByTestId("audio-record-button")).toHaveTextContent("Stop"));
+
+    fireEvent.click(screen.getByTestId("audio-record-button"));
+    expect(stop).toHaveBeenCalled();
+    await waitFor(() =>
+      expect(screen.getByTestId("audio-result-text")).toHaveTextContent("recorded text"),
+    );
+  });
+
+  it("shows a live waveform while recording and tears down the audio graph on stop", async () => {
+    const stream = { getTracks: () => [{ stop: vi.fn() }] } as unknown as MediaStream;
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      mediaDevices: { getUserMedia: vi.fn().mockResolvedValue(stream) },
+    });
+    vi.stubGlobal("isSecureContext", true);
+    class MockRecorder {
+      state = "recording";
+      ondataavailable: ((e: { data: Blob }) => void) | null = null;
+      onstop: (() => void) | null = null;
+      start() {
+        this.ondataavailable?.({ data: new Blob(["chunk"], { type: "audio/webm" }) });
+      }
+      stop() {
+        this.state = "inactive";
+        this.onstop?.();
+      }
+    }
+    vi.stubGlobal("MediaRecorder", MockRecorder);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ text: "ok" }) }),
+    );
+
+    const analyserClose = vi.fn().mockResolvedValue(undefined);
+    class FakeAnalyserNode {
+      fftSize = 2048;
+      getByteTimeDomainData = vi.fn((arr: Uint8Array) => arr.fill(128));
+    }
+    class FakeMediaStreamSource {
+      connect = vi.fn();
+      disconnect = vi.fn();
+    }
+    class FakeAudioContext {
+      createMediaStreamSource = vi.fn(() => new FakeMediaStreamSource());
+      createAnalyser = vi.fn(() => new FakeAnalyserNode());
+      close = analyserClose;
+      resume = vi.fn().mockResolvedValue(undefined);
+    }
+    vi.stubGlobal("AudioContext", FakeAudioContext);
+    vi.stubGlobal("requestAnimationFrame", vi.fn(() => 0));
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+
+    render(<UploadTranscribeCard />);
+    fireEvent.click(screen.getByTestId("audio-record-button"));
+    await waitFor(() => expect(screen.getByTestId("audio-live-waveform")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId("audio-record-button"));
+    await waitFor(() => expect(screen.queryByTestId("audio-live-waveform")).not.toBeInTheDocument());
+    expect(analyserClose).toHaveBeenCalled();
+  });
+
+  it("shows an error instead of recording when the browser has no mic access", async () => {
+    vi.stubGlobal("navigator", { ...navigator, mediaDevices: undefined });
+    render(<UploadTranscribeCard />);
+    fireEvent.click(screen.getByTestId("audio-record-button"));
+    await waitFor(() => expect(screen.getByTestId("audio-record-error")).toBeInTheDocument());
   });
 
   it("posts the file as multipart form data to /audio/transcribe and renders the result", async () => {

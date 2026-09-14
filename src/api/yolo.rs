@@ -228,8 +228,8 @@ pub async fn detect_objects(
     }
 
     // ── ORT path (no --features torch) ────────────────────────────────────────
-    // Uses YOLOv8n ONNX model from config.models.cache_dir/yolo/yolov8n.onnx
-    let ort_model_path = config.models.cache_dir.join("yolo/yolov8n.onnx");
+    // Uses YOLOv8n ONNX model from config.models.cache_dir/yolo/yolov8n-int8.onnx
+    let ort_model_path = config.models.cache_dir.join("yolo/yolov8n-int8.onnx");
     if !ort_model_path.exists() {
         return Err(ApiError::NotFound(format!(
             "YOLO ORT model not found at {:?}", ort_model_path
@@ -313,10 +313,21 @@ pub async fn get_model_info(
         version.as_str().to_lowercase().replace("yolo", ""),
         size.suffix()
     );
+
+    // Mirror detect_objects' own branching: a `torch`-feature build reads a
+    // per-version/size PyTorch checkpoint from `models_dir/<name>/<name>.pt`,
+    // but the default production (ORT) build only ever loads one fixed ONNX
+    // file (`models_dir/yolo/yolov8n-int8.onnx`) regardless of which version/size
+    // is requested — checking for the `.pt` path in that build always came
+    // back `false`, even for the one combo that's actually loaded and
+    // working, which made the "Downloaded"/"Not downloaded" badge lie.
+    #[cfg(feature = "torch")]
     let model_path = state
         .models_dir
         .join(&model_name)
         .join(format!("{}.pt", model_name));
+    #[cfg(not(feature = "torch"))]
+    let model_path = state.models_dir.join("yolo").join(format!("{}.onnx", model_name));
 
     let response = YoloInfoResponse {
         model_name: model_name.clone(),

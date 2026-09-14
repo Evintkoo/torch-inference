@@ -103,6 +103,48 @@ describe("useChatCompletion", () => {
     expect(result.current.messages).toHaveLength(0);
   });
 
+  it("executes an embedded tool call, strips the tag, and attaches the result", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        if (String(input).includes("/tts/stream")) {
+          return {
+            ok: true,
+            status: 200,
+            body: new ReadableStream<Uint8Array>({
+              start(controller) {
+                controller.enqueue(new Uint8Array([9, 9]));
+                controller.close();
+              },
+            }),
+          };
+        }
+        return {
+          ok: true,
+          status: 200,
+          body: sseStream([
+            'data: {"choices":[{"delta":{"content":"Sure — "}}]}\n\n',
+            'data: {"choices":[{"delta":{"content":"<tool>{\\"name\\":\\"tts\\",\\"args\\":{\\"text\\":\\"hi\\"}}</tool>"}}]}\n\n',
+            "data: [DONE]\n\n",
+          ]),
+        };
+      }),
+    );
+    vi.stubGlobal("URL", { ...URL, createObjectURL: vi.fn(() => "blob:mock") });
+
+    const { result } = renderHook(() => useChatCompletion());
+    await act(async () => {
+      await result.current.send("say hi");
+    });
+
+    await waitFor(() => expect(result.current.messages.at(-1)?.toolResults).toBeTruthy());
+    const assistant = result.current.messages.at(-1);
+    expect(assistant?.content).toBe("Sure —");
+    expect(assistant?.toolResults).toEqual([
+      { name: "tts", status: "ok", summary: "Speech ready", audioUrl: "blob:mock" },
+    ]);
+  });
+
   it("clear() resets history and error state", async () => {
     vi.stubGlobal(
       "fetch",

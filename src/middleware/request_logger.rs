@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use crate::monitor::Monitor;
 use crate::telemetry::{CorrelationId, RequestMetrics};
 use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
@@ -7,8 +8,27 @@ use actix_web::{
 use futures::future::{ok, Ready};
 use std::future::Future;
 use std::pin::Pin;
+use std::sync::Arc;
 
-pub struct RequestLogger;
+/// Also the sole place real request counts/latencies/error rates reach
+/// `Monitor` — see `Monitor::record_request_start`/`record_request_end`.
+/// A handful of legacy handlers in `api::handlers` (`/predict`,
+/// `/synthesize`, `/models`, `/stats`) used to call `Monitor` directly, but
+/// that left every *other* route (the ones actually in use — `/tts/stream`,
+/// `/stt/transcribe`, `/classify/batch`, `/detect`, the `/llm/*` proxy, …)
+/// invisible to the dashboard: total_requests stayed at 0 no matter how much
+/// real traffic the server handled. Centralizing it here, wrapped around the
+/// whole App, means every route is counted uniformly with no handler needing
+/// to remember to call `Monitor` itself.
+pub struct RequestLogger {
+    monitor: Arc<Monitor>,
+}
+
+impl RequestLogger {
+    pub fn new(monitor: Arc<Monitor>) -> Self {
+        Self { monitor }
+    }
+}
 
 impl<S, B> Transform<S, ServiceRequest> for RequestLogger
 where
@@ -23,7 +43,10 @@ where
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
-        ok(RequestLoggerMiddleware { service })
+        ok(RequestLoggerMiddleware {
+            service,
+            monitor: self.monitor.clone(),
+        })
     }
 }
 
@@ -39,6 +62,7 @@ fn status_class(status: u16) -> &'static str {
 
 pub struct RequestLoggerMiddleware<S> {
     service: S,
+    monitor: Arc<Monitor>,
 }
 
 impl<S, B> Service<ServiceRequest> for RequestLoggerMiddleware<S>
@@ -67,6 +91,8 @@ where
             .unwrap_or_default();
 
         let metrics = RequestMetrics::new(correlation_id.clone());
+        let monitor = self.monitor.clone();
+        monitor.record_request_start();
 
         // Pre-call log — borrow everything directly from `req` to avoid String
         // allocations for values only needed here (remote_addr, query, user_agent).
@@ -111,6 +137,7 @@ where
                         .and_then(|v| v.parse().ok())
                         .unwrap_or(0);
                     let duration_ms = metrics.duration_ms();
+                    monitor.record_request_end(duration_ms, &path, status < 400);
 
                     tracing::info!(
                         correlation_id = %metrics.correlation_id.as_str(),
@@ -137,12 +164,15 @@ where
                     Ok(res)
                 }
                 Err(err) => {
+                    let duration_ms = metrics.duration_ms();
+                    monitor.record_request_end(duration_ms, &path, false);
+
                     tracing::error!(
                         correlation_id = %metrics.correlation_id.as_str(),
                         method         = %method,
                         path           = %path,
                         error          = %err,
-                        duration_ms    = metrics.duration_ms(),
+                        duration_ms    = duration_ms,
                         status_class   = "5xx",
                         event          = "request_error",
                     );
@@ -160,13 +190,79 @@ mod tests {
     use actix_web::Error as AxError;
     use actix_web::{test as awtest, web, App, HttpResponse};
 
+    // ── Monitor wiring ──────────────────────────────────────────────────────
+    // Regression coverage for the dashboard showing 0 requests forever: any
+    // route behind this middleware must update Monitor, not just the four
+    // legacy handlers that used to call it directly.
+
+    #[actix_web::test]
+    async fn test_request_logger_records_success_to_monitor() {
+        let monitor = Arc::new(Monitor::new());
+        let app = awtest::init_service(
+            App::new()
+                .wrap(RequestLogger::new(monitor.clone()))
+                .route("/arbitrary/route", web::get().to(|| async { HttpResponse::Ok().finish() })),
+        )
+        .await;
+
+        let req = awtest::TestRequest::get().uri("/arbitrary/route").to_request();
+        let resp = awtest::call_service(&app, req).await;
+        assert_eq!(resp.status(), actix_web::http::StatusCode::OK);
+
+        let metrics = monitor.get_metrics();
+        assert_eq!(metrics.total_requests, 1);
+        assert_eq!(metrics.total_processed, 1);
+        assert_eq!(metrics.total_errors, 0);
+
+        // Per-endpoint stats must be keyed by the real path, not one of the
+        // four legacy strings the old manual calls hardcoded.
+        let endpoint_stats = monitor.get_endpoint_stats();
+        assert!(endpoint_stats.iter().any(|s| s.path == "/arbitrary/route"));
+    }
+
+    #[actix_web::test]
+    async fn test_request_logger_records_error_status_to_monitor() {
+        let monitor = Arc::new(Monitor::new());
+        let app = awtest::init_service(
+            App::new().wrap(RequestLogger::new(monitor.clone())).route(
+                "/fails",
+                web::get().to(|| async { HttpResponse::InternalServerError().finish() }),
+            ),
+        )
+        .await;
+
+        let req = awtest::TestRequest::get().uri("/fails").to_request();
+        let resp = awtest::call_service(&app, req).await;
+        assert_eq!(resp.status(), actix_web::http::StatusCode::INTERNAL_SERVER_ERROR);
+
+        let metrics = monitor.get_metrics();
+        assert_eq!(metrics.total_requests, 1);
+        assert_eq!(metrics.total_errors, 1);
+    }
+
+    #[actix_web::test]
+    async fn test_request_logger_active_requests_returns_to_zero_after_completion() {
+        let monitor = Arc::new(Monitor::new());
+        let app = awtest::init_service(
+            App::new()
+                .wrap(RequestLogger::new(monitor.clone()))
+                .route("/", web::get().to(|| async { HttpResponse::Ok().finish() })),
+        )
+        .await;
+
+        let req = awtest::TestRequest::get().uri("/").to_request();
+        awtest::call_service(&app, req).await;
+
+        assert_eq!(monitor.get_health_status().active_requests, 0);
+    }
+
     // ── Middleware integration tests ──────────────────────────────────────────
 
     #[actix_web::test]
     async fn test_request_logger_passes_through_200() {
         let app = awtest::init_service(
             App::new()
-                .wrap(RequestLogger)
+                .wrap(RequestLogger::new(Arc::new(Monitor::new())))
                 .route("/", web::get().to(|| async { HttpResponse::Ok().finish() })),
         )
         .await;
@@ -179,7 +275,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_request_logger_passes_through_404() {
-        let app = awtest::init_service(App::new().wrap(RequestLogger).route(
+        let app = awtest::init_service(App::new().wrap(RequestLogger::new(Arc::new(Monitor::new()))).route(
             "/exists",
             web::get().to(|| async { HttpResponse::Ok().finish() }),
         ))
@@ -194,7 +290,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_request_logger_post_method() {
-        let app = awtest::init_service(App::new().wrap(RequestLogger).route(
+        let app = awtest::init_service(App::new().wrap(RequestLogger::new(Arc::new(Monitor::new()))).route(
             "/data",
             web::post().to(|| async { HttpResponse::Created().finish() }),
         ))
@@ -208,7 +304,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_request_logger_delete_method() {
-        let app = awtest::init_service(App::new().wrap(RequestLogger).route(
+        let app = awtest::init_service(App::new().wrap(RequestLogger::new(Arc::new(Monitor::new()))).route(
             "/item",
             web::delete().to(|| async { HttpResponse::NoContent().finish() }),
         ))
@@ -224,7 +320,7 @@ mod tests {
     async fn test_request_logger_with_correlation_id_header() {
         let app = awtest::init_service(
             App::new()
-                .wrap(RequestLogger)
+                .wrap(RequestLogger::new(Arc::new(Monitor::new())))
                 .route("/", web::get().to(|| async { HttpResponse::Ok().finish() })),
         )
         .await;
@@ -240,7 +336,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_request_logger_response_body_passes_through() {
-        let app = awtest::init_service(App::new().wrap(RequestLogger).route(
+        let app = awtest::init_service(App::new().wrap(RequestLogger::new(Arc::new(Monitor::new()))).route(
             "/hello",
             web::get().to(|| async { HttpResponse::Ok().body("hello world") }),
         ))
@@ -256,7 +352,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_request_logger_put_method() {
-        let app = awtest::init_service(App::new().wrap(RequestLogger).route(
+        let app = awtest::init_service(App::new().wrap(RequestLogger::new(Arc::new(Monitor::new()))).route(
             "/resource",
             web::put().to(|| async { HttpResponse::Ok().finish() }),
         ))
@@ -270,7 +366,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_request_logger_internal_server_error() {
-        let app = awtest::init_service(App::new().wrap(RequestLogger).route(
+        let app = awtest::init_service(App::new().wrap(RequestLogger::new(Arc::new(Monitor::new()))).route(
             "/error",
             web::get().to(|| async { HttpResponse::InternalServerError().finish() }),
         ))
@@ -290,7 +386,7 @@ mod tests {
         // Exercises the `unwrap_or_else(CorrelationId::new)` path
         let app = awtest::init_service(
             App::new()
-                .wrap(RequestLogger)
+                .wrap(RequestLogger::new(Arc::new(Monitor::new())))
                 .route("/", web::get().to(|| async { HttpResponse::Ok().finish() })),
         )
         .await;
@@ -303,7 +399,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_request_logger_multiple_requests_sequentially() {
-        let app = awtest::init_service(App::new().wrap(RequestLogger).route(
+        let app = awtest::init_service(App::new().wrap(RequestLogger::new(Arc::new(Monitor::new()))).route(
             "/ping",
             web::get().to(|| async { HttpResponse::Ok().body("pong") }),
         ))
@@ -351,6 +447,7 @@ mod tests {
         // Build RequestLoggerMiddleware directly around our always-failing service.
         let middleware = RequestLoggerMiddleware {
             service: AlwaysErrService,
+            monitor: Arc::new(Monitor::new()),
         };
 
         let test_req = awtest::TestRequest::get().uri("/test-err").to_srv_request();
@@ -365,7 +462,7 @@ mod tests {
     // Multiple overlapping tests help llvm-cov attribute coverage to these lines.
     #[actix_web::test]
     async fn test_request_logger_logs_method_and_path() {
-        let app = awtest::init_service(App::new().wrap(RequestLogger).route(
+        let app = awtest::init_service(App::new().wrap(RequestLogger::new(Arc::new(Monitor::new()))).route(
             "/log-test",
             web::get().to(|| async { HttpResponse::Ok().finish() }),
         ))
@@ -382,7 +479,7 @@ mod tests {
         // Header value contains invalid UTF-8 → to_str() fails → unwrap_or_else path
         let app = awtest::init_service(
             App::new()
-                .wrap(RequestLogger)
+                .wrap(RequestLogger::new(Arc::new(Monitor::new())))
                 .route("/", web::get().to(|| async { HttpResponse::Ok().finish() })),
         )
         .await;
@@ -399,7 +496,7 @@ mod tests {
     #[actix_web::test]
     async fn test_request_logger_new_transform() {
         // Exercise RequestLogger::new_transform directly (line 27)
-        let logger = RequestLogger;
+        let logger = RequestLogger::new(Arc::new(Monitor::new()));
         // We can't easily call new_transform without a full Service, but we can
         // verify the struct is constructible and the impl exists.
         let _ = logger;
@@ -409,7 +506,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_request_logger_patch_method() {
-        let app = awtest::init_service(App::new().wrap(RequestLogger).route(
+        let app = awtest::init_service(App::new().wrap(RequestLogger::new(Arc::new(Monitor::new()))).route(
             "/patch-me",
             web::patch().to(|| async { HttpResponse::Ok().finish() }),
         ))
@@ -422,7 +519,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_request_logger_head_method() {
-        let app = awtest::init_service(App::new().wrap(RequestLogger).route(
+        let app = awtest::init_service(App::new().wrap(RequestLogger::new(Arc::new(Monitor::new()))).route(
             "/head-check",
             web::head().to(|| async { HttpResponse::Ok().finish() }),
         ))
@@ -438,7 +535,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_request_logger_accepted_response() {
-        let app = awtest::init_service(App::new().wrap(RequestLogger).route(
+        let app = awtest::init_service(App::new().wrap(RequestLogger::new(Arc::new(Monitor::new()))).route(
             "/accepted",
             web::post().to(|| async { HttpResponse::Accepted().finish() }),
         ))
@@ -454,6 +551,7 @@ mod tests {
         // Exercises the Err arm (lines 90-101) with a correlation ID header present
         let middleware = RequestLoggerMiddleware {
             service: AlwaysErrService,
+            monitor: Arc::new(Monitor::new()),
         };
 
         let test_req = awtest::TestRequest::get()
@@ -470,6 +568,7 @@ mod tests {
         // Exercises Err arm with POST method for full tracing::error! coverage
         let middleware = RequestLoggerMiddleware {
             service: AlwaysErrService,
+            monitor: Arc::new(Monitor::new()),
         };
 
         let test_req = awtest::TestRequest::post()
@@ -486,7 +585,7 @@ mod tests {
         // method/path/correlation_id combinations — increases line hit count.
         let app = awtest::init_service(
             App::new()
-                .wrap(RequestLogger)
+                .wrap(RequestLogger::new(Arc::new(Monitor::new())))
                 .route(
                     "/a",
                     web::get().to(|| async { HttpResponse::Ok().finish() }),
@@ -572,7 +671,7 @@ mod tests {
     async fn test_request_logger_ok_path_with_subscriber() {
         ensure_tracing_subscriber();
 
-        let app = awtest::init_service(App::new().wrap(RequestLogger).route(
+        let app = awtest::init_service(App::new().wrap(RequestLogger::new(Arc::new(Monitor::new()))).route(
             "/trace-ok",
             web::get().to(|| async { HttpResponse::Ok().body("ok") }),
         ))
@@ -593,6 +692,7 @@ mod tests {
 
         let middleware = RequestLoggerMiddleware {
             service: AlwaysErrService,
+            monitor: Arc::new(Monitor::new()),
         };
 
         let test_req = awtest::TestRequest::post()
@@ -617,7 +717,7 @@ mod tests {
 
         let app = awtest::init_service(
             App::new()
-                .wrap(RequestLogger)
+                .wrap(RequestLogger::new(Arc::new(Monitor::new())))
                 .route(
                     "/v1/infer",
                     web::post().to(|| async { HttpResponse::Ok().finish() }),
@@ -649,7 +749,7 @@ mod tests {
     async fn test_request_logger_tracing_fields_request_completed() {
         ensure_tracing_subscriber();
 
-        let app = awtest::init_service(App::new().wrap(RequestLogger).route(
+        let app = awtest::init_service(App::new().wrap(RequestLogger::new(Arc::new(Monitor::new()))).route(
             "/complete",
             web::get().to(|| async { HttpResponse::Ok().body("done") }),
         ))
@@ -676,7 +776,7 @@ mod tests {
 
         let app = awtest::init_service(
             App::new()
-                .wrap(RequestLogger)
+                .wrap(RequestLogger::new(Arc::new(Monitor::new())))
                 .route("/err", web::get().to(error_handler)),
         )
         .await;
@@ -698,6 +798,7 @@ mod tests {
 
         let middleware = RequestLoggerMiddleware {
             service: AlwaysErrService,
+            monitor: Arc::new(Monitor::new()),
         };
 
         // Exercise with a correlation ID header to cover %metrics.correlation_id.as_str()
@@ -744,7 +845,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_request_logger_with_query_string() {
-        let app = awtest::init_service(App::new().wrap(RequestLogger).route(
+        let app = awtest::init_service(App::new().wrap(RequestLogger::new(Arc::new(Monitor::new()))).route(
             "/search",
             web::get().to(|| async { HttpResponse::Ok().finish() }),
         ))
@@ -761,7 +862,7 @@ mod tests {
     async fn test_request_logger_with_user_agent() {
         let app = awtest::init_service(
             App::new()
-                .wrap(RequestLogger)
+                .wrap(RequestLogger::new(Arc::new(Monitor::new())))
                 .route("/", web::get().to(|| async { HttpResponse::Ok().finish() })),
         )
         .await;
@@ -778,7 +879,7 @@ mod tests {
     async fn test_request_logger_without_user_agent() {
         let app = awtest::init_service(
             App::new()
-                .wrap(RequestLogger)
+                .wrap(RequestLogger::new(Arc::new(Monitor::new())))
                 .route("/", web::get().to(|| async { HttpResponse::Ok().finish() })),
         )
         .await;
@@ -790,7 +891,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_request_logger_with_content_length() {
-        let app = awtest::init_service(App::new().wrap(RequestLogger).route(
+        let app = awtest::init_service(App::new().wrap(RequestLogger::new(Arc::new(Monitor::new()))).route(
             "/data",
             web::post().to(|| async { HttpResponse::Ok().finish() }),
         ))
@@ -806,7 +907,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_request_logger_response_with_content_length_header() {
-        let app = awtest::init_service(App::new().wrap(RequestLogger).route(
+        let app = awtest::init_service(App::new().wrap(RequestLogger::new(Arc::new(Monitor::new()))).route(
             "/sized",
             web::get().to(|| async {
                 HttpResponse::Ok()

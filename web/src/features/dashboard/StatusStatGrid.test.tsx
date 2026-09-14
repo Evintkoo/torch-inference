@@ -16,6 +16,14 @@ const healthyResponse: HealthCheck = {
   error_rate: 0.01,
 };
 
+const healthyWithChecks: HealthCheck = {
+  ...healthyResponse,
+  checks: {
+    database: { status: "up", message: "connected", latency_ms: 3 },
+    capacity: { status: "up", message: "0 active requests", latency_ms: 0 },
+  },
+};
+
 function renderWithClient() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -43,13 +51,17 @@ describe("StatusStatGrid", () => {
     expect(screen.getByText("1.00%")).toBeInTheDocument();
   });
 
-  it("renders the raw health JSON", async () => {
+  it("renders each component health check as a row with status, message, and latency", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => healthyResponse }),
+      vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => healthyWithChecks }),
     );
     renderWithClient();
 
-    await waitFor(() => expect(screen.getByTestId("health-raw")).toHaveTextContent(/"status": "healthy"/));
+    const checks = await screen.findByTestId("health-checks");
+    expect(checks).toHaveTextContent("database");
+    expect(checks).toHaveTextContent("connected");
+    expect(checks).toHaveTextContent("3ms");
+    expect(checks).toHaveTextContent("capacity");
   });
 });

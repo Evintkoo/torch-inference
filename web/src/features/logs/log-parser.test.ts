@@ -3,6 +3,7 @@ import {
   filterLogRows,
   formatLogTime,
   logLevelVariant,
+  parseLogFields,
   parseLogLines,
   stripAnsi,
 } from "./log-parser";
@@ -87,6 +88,36 @@ describe("logLevelVariant", () => {
     expect(logLevelVariant("DEBUG")).toBe("neutral");
     expect(logLevelVariant("TRACE")).toBe("neutral");
     expect(logLevelVariant("")).toBe("neutral");
+  });
+});
+
+describe("parseLogFields", () => {
+  it("splits target/location prefix from key=value fields", () => {
+    const message =
+      'torch_inference_server::middleware::request_logger: src/middleware/request_logger.rs:115: correlation_id=abc method=GET path=/health status=200 duration_ms=12 event="request_completed"';
+    const parsed = parseLogFields(message);
+    expect(parsed.target).toBe("torch_inference_server::middleware::request_logger");
+    expect(parsed.fields).toMatchObject({
+      correlation_id: "abc",
+      method: "GET",
+      path: "/health",
+      status: "200",
+      duration_ms: "12",
+      event: "request_completed",
+    });
+    expect(parsed.text).toBe("");
+  });
+
+  it("keeps quoted values with spaces intact", () => {
+    const parsed = parseLogFields('svc: src/x.rs:1: user_agent="Mozilla/5.0 (Macintosh)" path=/health');
+    expect(parsed.fields.user_agent).toBe("Mozilla/5.0 (Macintosh)");
+    expect(parsed.fields.path).toBe("/health");
+  });
+
+  it("falls back to freeform text when there are no key=value pairs", () => {
+    const parsed = parseLogFields("HRM-Text running in STUB mode — no weights loaded");
+    expect(parsed.fields).toEqual({});
+    expect(parsed.text).toBe("HRM-Text running in STUB mode — no weights loaded");
   });
 });
 

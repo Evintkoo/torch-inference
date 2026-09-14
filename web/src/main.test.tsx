@@ -32,7 +32,7 @@ describe("main", () => {
     // Wait for React to complete rendering
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(root.querySelector('[data-testid="panel-nav-dashboard"]')).toBeTruthy();
+    expect(root.querySelector('[data-testid="panel-nav-system-status"]')).toBeTruthy();
   });
 
   it("throws when #root is missing", async () => {

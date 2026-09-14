@@ -627,7 +627,7 @@ impl Default for Config {
                 auto_load: vec!["example".to_string()],
                 cache_dir: PathBuf::from("models"),
                 max_loaded_models: 5,
-                classify_model: PathBuf::from("models/classify/efficientnet-lite4-11.onnx"),
+                classify_model: PathBuf::from("models/classify/efficientnet-lite4-11-int8.onnx"),
                 classify_labels: PathBuf::from("models/classify/imagenet1000.txt"),
                 audio_model_dir: PathBuf::from("models/audio"),
                 yolo_conf_threshold: 0.25,

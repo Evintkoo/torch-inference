@@ -47,4 +47,20 @@ describe("AppLayout", () => {
     await user.click(screen.getByTestId("panel-nav-logs"));
     expect(screen.getByTestId("panel-content-logs")).toHaveTextContent("Logs content");
   });
+
+  it("collapses and re-expands a sidebar group's nav tabs via its dropdown toggle", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ status: "healthy" }) }),
+    );
+    const user = userEvent.setup();
+    renderWithQueryClient(<AppLayout panels={panels} />);
+    const toggle = screen.getByTestId("sidebar-group-toggle-tools");
+
+    expect(screen.getByTestId("panel-nav-logs")).toBeInTheDocument();
+    await user.click(toggle);
+    expect(screen.queryByTestId("panel-nav-logs")).not.toBeInTheDocument();
+    await user.click(toggle);
+    expect(screen.getByTestId("panel-nav-logs")).toBeInTheDocument();
+  });
 });

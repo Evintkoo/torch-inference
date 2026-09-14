@@ -1,6 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
+import { SearchableSelect, type SearchableSelectOption } from "@/components/ui/searchable-select";
 import { apiGet } from "@/lib/api-client";
 import type { TtsEngine, TtsEnginesResponse, TtsVoice, TtsVoicesResponse } from "./types";
+
+// Radix Select.Item forbids an empty-string value, so "default" (i.e. no
+// explicit engine/voice picked) is represented by this sentinel on the wire
+// between the dropdown and the empty-string values the rest of the app uses.
+const DEFAULT_VALUE = "__default__";
 
 function normalizeEngine(engine: TtsEngine): { id: string; label: string } {
   if (typeof engine === "string") return { id: engine, label: engine };
@@ -23,7 +29,7 @@ export interface EngineVoiceSelectProps {
 }
 
 /**
- * Engine + voice `<select>` pair for the REST TTS form, backed by
+ * Engine + voice dropdown pair for the REST TTS form, backed by
  * `GET /tts/engines` and `GET /tts/engines/:id/voices` — mirrors
  * playground.html's `refreshTtsSelects()` / `loadVoicesForEngine()`.
  */
@@ -51,45 +57,46 @@ export function EngineVoiceSelect({ engine, voice, onEngineChange, onVoiceChange
     normalizeVoice,
   );
 
+  // Every engine the backend returns from GET /tts/engines is, by construction,
+  // one that finished loading at startup (engines whose model files are
+  // missing are skipped and never registered) — so "Loaded" is an accurate
+  // status tag, not a guess.
+  const engineOptions: SearchableSelectOption[] = [
+    { value: DEFAULT_VALUE, label: "default" },
+    ...engines.map((e) => ({ value: e.id, label: e.label, badge: "Loaded" })),
+  ];
+  const voiceOptions: SearchableSelectOption[] = [
+    { value: DEFAULT_VALUE, label: "default" },
+    ...voices.map((v) => ({ value: v.id, label: v.label })),
+  ];
+
   return (
     <div className="flex gap-3">
       <div className="flex-1 space-y-1">
         <label htmlFor="tts-engine" className="text-xs font-medium text-muted-foreground">
           Engine
         </label>
-        <select
+        <SearchableSelect
           id="tts-engine"
-          data-testid="tts-engine-select"
-          className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm"
-          value={engine}
-          onChange={(e) => onEngineChange(e.target.value)}
-        >
-          <option value="">default</option>
-          {engines.map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.label}
-            </option>
-          ))}
-        </select>
+          value={engine || DEFAULT_VALUE}
+          onValueChange={(v) => onEngineChange(v === DEFAULT_VALUE ? "" : v)}
+          options={engineOptions}
+          triggerTestId="tts-engine-select"
+          searchPlaceholder="Search engines…"
+        />
       </div>
       <div className="flex-1 space-y-1">
         <label htmlFor="tts-voice" className="text-xs font-medium text-muted-foreground">
           Voice
         </label>
-        <select
+        <SearchableSelect
           id="tts-voice"
-          data-testid="tts-voice-select"
-          className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm"
-          value={voice}
-          onChange={(e) => onVoiceChange(e.target.value)}
-        >
-          <option value="">default</option>
-          {voices.map((v) => (
-            <option key={v.id} value={v.id}>
-              {v.label}
-            </option>
-          ))}
-        </select>
+          value={voice || DEFAULT_VALUE}
+          onValueChange={(v) => onVoiceChange(v === DEFAULT_VALUE ? "" : v)}
+          options={voiceOptions}
+          triggerTestId="tts-voice-select"
+          searchPlaceholder="Search voices…"
+        />
       </div>
     </div>
   );

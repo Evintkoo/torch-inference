@@ -87,10 +87,14 @@ where
             if path_is_html {
                 h.insert(
                     HeaderName::from_static("content-security-policy"),
-                    // The playground uses inline event handlers + inline
-                    // styles + blob: audio. Strict 'self' for scripts breaks
-                    // it — mark inline as unsafe-inline (acknowledged risk;
-                    // long-term plan is to extract to /assets/playground.js).
+                    // Inherited from the legacy embedded playground (inline
+                    // event handlers + inline styles + blob: audio), kept
+                    // as-is post-cutover to the React SPA rather than
+                    // silently tightening an untested policy. The SPA's
+                    // Vite build already loads scripts/styles from
+                    // /assets/app/* rather than inline — worth revisiting
+                    // whether 'unsafe-inline' can be dropped, as a separate
+                    // follow-up with real testing against the built app.
                     HeaderValue::from_static(
                         "default-src 'self'; script-src 'self' 'unsafe-inline'; \
                          style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; \
@@ -124,7 +128,7 @@ impl AuthMiddleware {
 /// Paths that bypass auth even when enabled. Keep this list small — every
 /// route here is reachable unauthenticated from the network.
 fn is_public(path: &str, method: &actix_web::http::Method) -> bool {
-    if path == "/" || path == "/playground" || path == "/preview" {
+    if path == "/" || path == "/playground" {
         return true;
     }
     if path.starts_with("/health") {
@@ -237,7 +241,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_preview_is_public() {
-        assert!(is_public("/preview", &actix_web::http::Method::GET));
+    fn test_root_is_public() {
+        assert!(is_public("/", &actix_web::http::Method::GET));
+    }
+
+    #[test]
+    fn test_playground_is_public() {
+        assert!(is_public("/playground", &actix_web::http::Method::GET));
+    }
+
+    #[test]
+    fn test_preview_no_longer_public() {
+        // /preview was retired at cutover — / and /playground now serve the
+        // SPA directly, so /preview has no route at all (404, not a bypass).
+        assert!(!is_public("/preview", &actix_web::http::Method::GET));
     }
 }
