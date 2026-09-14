@@ -170,6 +170,25 @@ impl SmolVlmEngine {
         }
     }
 
+    /// Builds a past-key-values tensor with shape `[1, NUM_KV_HEADS, past_len, HEAD_DIM]`.
+    /// `Tensor::from_array` rejects any zero-valued shape dimension (its `ToShape`
+    /// validation requires every dim >= 1, even when the data legitimately has
+    /// zero elements) — that hits every prefill call, since `past_len == 0` there.
+    /// `Tensor::new` allocates directly from a `Shape` with no such restriction,
+    /// so it's used for the empty case; `from_array` is used otherwise since it
+    /// avoids an extra allocation+copy for the (much more common) non-empty case.
+    fn kv_tensor(past_len: usize, data: Vec<f32>) -> Result<ort::value::Tensor<f32>> {
+        use ort::value::Tensor;
+        if data.is_empty() {
+            let allocator = ort::memory::Allocator::default();
+            Tensor::<f32>::new(&allocator, [1usize, NUM_KV_HEADS, past_len, HEAD_DIM])
+                .context("allocate empty KV tensor")
+        } else {
+            Tensor::<f32>::from_array(([1usize, NUM_KV_HEADS, past_len, HEAD_DIM], data))
+                .context("build KV tensor from data")
+        }
+    }
+
     /// Run one decoder forward pass. `seq_len` is the number of NEW
     /// positions in `embeds` (full prompt on the first/prefill call, 1 on
     /// every subsequent decode call); `past_len`/`past_k`/`past_v` carry the
@@ -202,14 +221,10 @@ impl SmolVlmEngine {
         inputs.push(("position_ids".to_string(), pos_tensor.into()));
 
         for l in 0..NUM_LAYERS {
-            let k_tensor = Tensor::<f32>::from_array((
-                [1usize, NUM_KV_HEADS, past_len, HEAD_DIM],
-                past_k[l].clone(),
-            )).with_context(|| format!("build past_key_values.{l}.key tensor"))?;
-            let v_tensor = Tensor::<f32>::from_array((
-                [1usize, NUM_KV_HEADS, past_len, HEAD_DIM],
-                past_v[l].clone(),
-            )).with_context(|| format!("build past_key_values.{l}.value tensor"))?;
+            let k_tensor = Self::kv_tensor(past_len, past_k[l].clone())
+                .with_context(|| format!("build past_key_values.{l}.key tensor"))?;
+            let v_tensor = Self::kv_tensor(past_len, past_v[l].clone())
+                .with_context(|| format!("build past_key_values.{l}.value tensor"))?;
             inputs.push((format!("past_key_values.{l}.key"), k_tensor.into()));
             inputs.push((format!("past_key_values.{l}.value"), v_tensor.into()));
         }
