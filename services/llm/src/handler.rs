@@ -344,28 +344,30 @@ mod tests {
         fn model_id(&self) -> &str { "fake" }
     }
 
-    fn state_with(engine: FakeEngine) -> web::Data<AppState> {
-        web::Data::new(AppState {
-            engine: std::sync::Arc::new(engine),
+    /// Builds an `AppState` wrapping `engine` (coerced to `Arc<dyn LlmEngine>`)
+    /// and also returns a directly-inspectable `Arc<FakeEngine>` handle —
+    /// `state.engine` is `Arc<dyn LlmEngine>` and can't be downcast, so tests
+    /// that need to read `last_image_was_some` after the call need this
+    /// second handle onto the very same `FakeEngine`.
+    fn state_with(engine: FakeEngine) -> (web::Data<AppState>, std::sync::Arc<FakeEngine>) {
+        let engine = std::sync::Arc::new(engine);
+        let state = web::Data::new(AppState {
+            engine: engine.clone() as std::sync::Arc<dyn crate::engine::LlmEngine>,
             vision: None,
             lease: crate::engine_lease::EngineLease::new(1),
             gate: std::sync::Arc::new(crate::memory_gate::MemoryGate::new(4096, 3072)),
             limits: crate::config::LimitsConfig::default(),
-        })
+        });
+        (state, engine)
     }
 
-    #[actix_web::test]
-    async fn vision_capable_engine_receives_raw_image_bytes() {
-        let state = state_with(FakeEngine {
-            supports_vision: true,
-            last_image_was_some: Mutex::new(None),
-        });
+    fn image_chat_request() -> web::Json<ChatRequest> {
         let tiny_png_b64 = base64::engine::general_purpose::STANDARD.encode(
             image::DynamicImage::ImageRgb8(image::ImageBuffer::from_pixel(2, 2, image::Rgb([1u8, 2, 3])))
                 .to_rgb8()
                 .as_raw(),
         );
-        let req = web::Json(ChatRequest {
+        web::Json(ChatRequest {
             model: None,
             messages: vec![ChatMessage {
                 role: "user".into(),
@@ -376,9 +378,33 @@ mod tests {
             stream: false,
             max_tokens: 8,
             temperature: 0.0,
+        })
+    }
+
+    #[actix_web::test]
+    async fn vision_capable_engine_receives_raw_image_bytes() {
+        let (state, engine) = state_with(FakeEngine {
+            supports_vision: true,
+            last_image_was_some: Mutex::new(None),
         });
-        let resp = chat_completions(state, req).await;
+        let resp = chat_completions(state, image_chat_request()).await;
         assert_eq!(resp.status(), actix_web::http::StatusCode::OK);
+        assert_eq!(*engine.last_image_was_some.lock().unwrap(), Some(true));
+    }
+
+    #[actix_web::test]
+    async fn non_vision_engine_does_not_receive_raw_image_bytes() {
+        // When the engine doesn't support vision natively, the image must
+        // NOT be passed through to `chat()` — it should instead go through
+        // the caption-bridge path (or, with `state.vision == None` as here,
+        // the "[Image attached but vision bridge disabled.]" text fallback).
+        let (state, engine) = state_with(FakeEngine {
+            supports_vision: false,
+            last_image_was_some: Mutex::new(None),
+        });
+        let resp = chat_completions(state, image_chat_request()).await;
+        assert_eq!(resp.status(), actix_web::http::StatusCode::OK);
+        assert_eq!(*engine.last_image_was_some.lock().unwrap(), Some(false));
     }
 
     #[test]
