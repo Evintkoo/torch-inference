@@ -1,14 +1,36 @@
-//! Single-image preprocessing matching `Idefics3ImageProcessor` with
-//! `do_image_splitting=false` (verified against `preprocessor_config.json`):
-//! resize so the longest edge is 512px (preserving aspect ratio), pad to a
-//! 512x512 square top-left-aligned, rescale [0,255]->[0,1] then normalize
-//! with mean=std=0.5 per channel (-> [-1,1]). `pixel_attention_mask` marks
-//! which pixels are real image content vs. padding.
+//! Single-image preprocessing — deliberately uses Idefics3's
+//! `do_image_splitting=false` mode even though this checkpoint's
+//! `preprocessor_config.json` defaults to `do_image_splitting: true`
+//! (tile-splitting for higher accuracy on large images). This is an explicit
+//! v1 scope decision (see the design spec's Non-goals) trading some
+//! image-understanding fidelity for implementation simplicity —
+//! `do_image_splitting=false` is itself a real, supported
+//! `Idefics3ImageProcessor` mode, not a hack.
+//!
+//! Pipeline: resize so the longest edge is 512px (preserving aspect ratio),
+//! pad to a 512x512 square top-left-aligned, rescale [0,255]->[0,1] then
+//! normalize with mean=std=0.5 per channel (-> [-1,1]). `pixel_attention_mask`
+//! marks which pixels are real image content vs. padding.
 
 use anyhow::{Context, Result};
-use image::{imageops::FilterType, GenericImageView};
+use image::{imageops::FilterType, GenericImageView, ImageReader, Limits};
+use std::io::Cursor;
 
 pub const CANVAS: u32 = 512;
+
+/// Decode limits for untrusted, attacker-controlled image bytes (an HTTP
+/// request body). The `image` crate's default `load_from_memory` path has
+/// no width/height ceiling — a small crafted file can declare enormous pixel
+/// dimensions and force a multi-GB allocation, which in Rust typically
+/// `abort()`s the process rather than surfacing as a catchable `Result::Err`.
+/// These caps turn a malformed/malicious image into a clean decode error.
+fn decode_limits() -> Limits {
+    let mut limits = Limits::default();
+    limits.max_image_width = Some(8192);
+    limits.max_image_height = Some(8192);
+    limits.max_alloc = Some(256 * 1024 * 1024); // 256 MB ceiling
+    limits
+}
 
 #[derive(Debug)]
 pub struct PreppedImage {
@@ -21,7 +43,11 @@ pub struct PreppedImage {
 }
 
 pub fn preprocess(image_bytes: &[u8]) -> Result<PreppedImage> {
-    let img = image::load_from_memory(image_bytes).context("decode image")?;
+    let mut reader = ImageReader::new(Cursor::new(image_bytes))
+        .with_guessed_format()
+        .context("guess image format")?;
+    reader.limits(decode_limits());
+    let img = reader.decode().context("decode image")?;
     let (orig_w, orig_h) = img.dimensions();
     if orig_w == 0 || orig_h == 0 {
         anyhow::bail!("image has zero width or height");
