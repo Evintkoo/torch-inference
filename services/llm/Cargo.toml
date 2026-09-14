@@ -24,6 +24,10 @@ toml       = "0.8"
 # Base64 decoding (image_url data URIs)
 base64     = "0.21"
 
+# Image decode/resize for SmolVLM's vision encoder input — same version the
+# main crate pins (src/core/image_pipeline.rs).
+image = "0.25"
+
 # Error handling
 anyhow     = "1"
 thiserror  = "1"

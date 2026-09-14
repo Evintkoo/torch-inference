@@ -3,3 +3,4 @@
 //! docs/superpowers/specs/2026-09-14-smolvlm-test-engine-design.md).
 
 pub mod prompt;
+pub mod image_prep;
