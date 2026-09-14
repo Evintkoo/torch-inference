@@ -55,17 +55,38 @@ async fn main() -> std::io::Result<()> {
 
     let port = llm_config.port;
 
-    let hrm_config = llm_config.hrm.as_ref().unwrap_or_else(|| {
-        eprintln!("HRM config section missing — add [hrm] to config.toml");
-        std::process::exit(1);
-    });
+    let engine_kind = llm_config.engine.clone().unwrap_or_default().kind;
 
-    let engine = HrmEngine::load(hrm_config).unwrap_or_else(|e| {
-        eprintln!("HRM engine load failed: {e}");
-        // build_session may already have spun up the ORT environment, so exit
-        // the teardown-safe way even on this failure path.
-        exit_skipping_ort_teardown(1);
-    });
+    let engine: Arc<dyn engine::LlmEngine> = match engine_kind.as_str() {
+        "smolvlm" => {
+            let smolvlm_config = llm_config.smolvlm.as_ref().unwrap_or_else(|| {
+                eprintln!("[engine] kind = \"smolvlm\" but [smolvlm] config section missing");
+                std::process::exit(1);
+            });
+            let eng = crate::smolvlm::SmolVlmEngine::load(smolvlm_config).unwrap_or_else(|e| {
+                eprintln!("SmolVLM engine load failed: {e}");
+                exit_skipping_ort_teardown(1);
+            });
+            Arc::new(eng)
+        }
+        "hrm" => {
+            let hrm_config = llm_config.hrm.as_ref().unwrap_or_else(|| {
+                eprintln!("HRM config section missing — add [hrm] to config.toml");
+                std::process::exit(1);
+            });
+            let eng = HrmEngine::load(hrm_config).unwrap_or_else(|e| {
+                eprintln!("HRM engine load failed: {e}");
+                // build_session may already have spun up the ORT environment, so exit
+                // the teardown-safe way even on this failure path.
+                exit_skipping_ort_teardown(1);
+            });
+            Arc::new(eng)
+        }
+        other => {
+            eprintln!("[engine] kind = \"{other}\" is not recognized — use \"hrm\" or \"smolvlm\"");
+            std::process::exit(1);
+        }
+    };
 
     let vision = llm_config.vision_bridge.clone().and_then(|vbcfg| {
         if vbcfg.enabled {
@@ -86,7 +107,7 @@ async fn main() -> std::io::Result<()> {
     ));
 
     let state = web::Data::new(AppState {
-        engine: Arc::new(engine),
+        engine: engine.clone(),
         vision,
         lease: lease.clone(),
         gate: gate.clone(),

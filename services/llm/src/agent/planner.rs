@@ -1,13 +1,13 @@
 //! Planner abstraction so the executor can be tested without the real ONNX model.
 //!
-//! The production impl wraps `HrmEngine::infer_text` via spawn_blocking, draining
+//! The production impl wraps `LlmEngine::complete` via spawn_blocking, draining
 //! the streaming channel into a single String. Tests use a canned-output stub.
 
 use anyhow::Result;
 use async_trait::async_trait;
 use std::sync::Arc;
 
-use crate::hrm_engine::HrmEngine;
+use crate::engine::LlmEngine;
 
 #[async_trait]
 pub trait Planner: Send + Sync {
@@ -16,12 +16,12 @@ pub trait Planner: Send + Sync {
 }
 
 pub struct HrmPlanner {
-    engine: Arc<HrmEngine>,
+    engine: Arc<dyn LlmEngine>,
     lease:  crate::engine_lease::EngineLease,
 }
 
 impl HrmPlanner {
-    pub fn new(engine: Arc<HrmEngine>, lease: crate::engine_lease::EngineLease) -> Self {
+    pub fn new(engine: Arc<dyn LlmEngine>, lease: crate::engine_lease::EngineLease) -> Self {
         Self { engine, lease }
     }
 }
@@ -35,7 +35,7 @@ impl Planner for HrmPlanner {
         // generation so concurrent ONNX runs can't multiply peak memory.
         let _permit = self.lease.acquire().await;
         let handle = tokio::task::spawn_blocking(move || {
-            engine.infer_text(prompt, max_tokens, temperature, tx)
+            engine.complete(prompt, max_tokens, temperature, tx)
         });
         let mut buf = String::new();
         while let Some(s) = rx.recv().await { buf.push_str(&s); }
