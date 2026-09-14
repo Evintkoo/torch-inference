@@ -7,6 +7,7 @@ mod hrm_engine;
 mod memory_gate;
 mod ort_session;
 mod sampling;
+mod smolvlm;
 mod tokenizer;
 mod vision_bridge;
 
