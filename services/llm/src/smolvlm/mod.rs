@@ -177,9 +177,20 @@ impl SmolVlmEngine {
     /// `Tensor::new` allocates directly from a `Shape` with no such restriction,
     /// so it's used for the empty case; `from_array` is used otherwise since it
     /// avoids an extra allocation+copy for the (much more common) non-empty case.
+    ///
+    /// Branches on `past_len == 0` (not `data.is_empty()`): a caller bug that
+    /// passes `past_len > 0` with an empty `data` Vec must never silently take
+    /// the uninitialized-allocation branch and hand ORT garbage memory for a
+    /// non-zero-length tensor — the `ensure!` below turns that into a clean
+    /// error instead of silent corruption.
     fn kv_tensor(past_len: usize, data: Vec<f32>) -> Result<ort::value::Tensor<f32>> {
         use ort::value::Tensor;
-        if data.is_empty() {
+        anyhow::ensure!(
+            data.len() == NUM_KV_HEADS * past_len * HEAD_DIM,
+            "KV tensor data length {} doesn't match expected {} for past_len={}",
+            data.len(), NUM_KV_HEADS * past_len * HEAD_DIM, past_len
+        );
+        if past_len == 0 {
             let allocator = ort::memory::Allocator::default();
             Tensor::<f32>::new(&allocator, [1usize, NUM_KV_HEADS, past_len, HEAD_DIM])
                 .context("allocate empty KV tensor")
@@ -287,7 +298,12 @@ impl SmolVlmEngine {
         let mut past_len = 0usize;
         let mut cur_embeds = embeds;
         let mut cur_seq_len = ids.len();
-        let mut history = ids.clone();
+        // Seed from GENERATED tokens only, not the prompt: SmolVLM's chat
+        // template (`prompt::build_prompt`) appends `<end_of_utterance>`
+        // (== `self.eos_token_id`) after every message, so seeding from the
+        // full prompt would have the repetition penalty permanently suppress
+        // the model's own EOS token on every decode step.
+        let mut history: Vec<i64> = Vec::new();
 
         for _ in 0..max_tokens {
             let (mut logits, new_past_k, new_past_v) =
