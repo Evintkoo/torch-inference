@@ -11,6 +11,16 @@ pub struct LlmConfig {
     #[serde(default)]
     pub hrm: Option<HrmConfig>,
 
+    /// Which engine to load: "hrm" (default) or "smolvlm". Exactly one
+    /// engine loads per process.
+    #[serde(default)]
+    pub engine: Option<EngineSelectConfig>,
+
+    /// SmolVLM-256M-Instruct engine configuration (required when
+    /// `engine.kind = "smolvlm"`).
+    #[serde(default)]
+    pub smolvlm: Option<SmolVlmConfig>,
+
     /// Vision bridge configuration for image description via classify+detect.
     #[serde(default)]
     pub vision_bridge: Option<VisionBridgeConfig>,
@@ -52,6 +62,36 @@ pub struct HrmConfig {
     /// Stub/echo mode. When true, the engine boots WITHOUT loading the ONNX
     /// model or tokenizer and answers with a canned completion — the lightest
     /// possible way to prove the chat/agent pipeline works end-to-end.
+    #[serde(default)]
+    pub stub: Option<bool>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct EngineSelectConfig {
+    #[serde(default = "default_engine_kind")]
+    pub kind: String,
+}
+
+impl Default for EngineSelectConfig {
+    fn default() -> Self {
+        Self { kind: default_engine_kind() }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct SmolVlmConfig {
+    /// Directory containing vision_encoder_int8.onnx, embed_tokens_int8.onnx,
+    /// decoder_model_merged_int8.onnx, tokenizer.json, tokenizer_config.json,
+    /// preprocessor_config.json.
+    pub model_dir: String,
+
+    #[serde(default = "default_ep_preference")]
+    pub ep_preference: String,
+
+    #[serde(default)]
+    pub n_threads: Option<i32>,
+
+    /// Stub/echo mode — same escape hatch as `HrmConfig.stub`.
     #[serde(default)]
     pub stub: Option<bool>,
 }
@@ -283,6 +323,7 @@ fn default_stt_endpoint() -> String { "/stt/transcribe".to_string() }
 
 fn default_port() -> u16 { 8001 }
 fn default_ep_preference() -> String { "auto".to_string() }
+fn default_engine_kind() -> String { "hrm".to_string() }
 
 fn default_vb_enabled() -> bool { true }
 fn default_vb_base() -> String { "http://127.0.0.1:8000".to_string() }
@@ -304,6 +345,8 @@ impl LlmConfig {
             Ok(Self {
                 port: 8001,
                 hrm: None,
+                engine: None,
+                smolvlm: None,
                 vision_bridge: None,
                 agent: None,
                 limits: None,
@@ -390,5 +433,32 @@ enabled = false
         let cfg: LlmConfig = toml::from_str(toml_text).unwrap();
         let kv = cfg.kv_cache.expect("kv_cache section");
         assert!(!kv.enabled);
+    }
+
+    #[test]
+    fn defaults_engine_kind_to_hrm_when_section_absent() {
+        let toml_text = r#"
+port = 8001
+[hrm]
+model_dir = "models/hrm-text-1b"
+"#;
+        let cfg: LlmConfig = toml::from_str(toml_text).unwrap();
+        assert_eq!(cfg.engine.unwrap_or_default().kind, "hrm");
+    }
+
+    #[test]
+    fn parses_engine_section_with_smolvlm_kind() {
+        let toml_text = r#"
+port = 8001
+[engine]
+kind = "smolvlm"
+[smolvlm]
+model_dir = "models/smolvlm-256m"
+"#;
+        let cfg: LlmConfig = toml::from_str(toml_text).unwrap();
+        assert_eq!(cfg.engine.unwrap().kind, "smolvlm");
+        let sv = cfg.smolvlm.expect("smolvlm section present");
+        assert_eq!(sv.model_dir, "models/smolvlm-256m");
+        assert_eq!(sv.ep_preference, "auto");
     }
 }
