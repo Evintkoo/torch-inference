@@ -105,4 +105,51 @@ describe("LogViewer", () => {
       ),
     );
   });
+
+  it("clears the log file via DELETE and refetches after confirming", async () => {
+    const clearResponse = {
+      success: true,
+      message: "Log file server.log cleared successfully",
+      original_size_bytes: 1024,
+      original_size_mb: 0.001,
+    };
+    const fetchMock = vi.fn().mockImplementation((_url: string, init?: RequestInit) => {
+      if (init?.method === "DELETE") {
+        return Promise.resolve({ ok: true, status: 200, json: async () => clearResponse });
+      }
+      return Promise.resolve({ ok: true, status: 200, json: async () => sampleContent });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    renderWithClient(<LogViewer fileName="server.log" />);
+    await waitFor(() => expect(screen.getByText("request served")).toBeInTheDocument());
+    const fetchCountBeforeClear = fetchMock.mock.calls.length;
+
+    await user.click(screen.getByTestId("logs-clear-btn"));
+    await user.click(await screen.findByTestId("logs-clear-confirm"));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith("/logs/server.log", expect.objectContaining({ method: "DELETE" })),
+    );
+    // A refetch of the log content follows the successful clear.
+    await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThan(fetchCountBeforeClear + 1));
+  });
+
+  it("shows an error message when clearing the log file fails", async () => {
+    const fetchMock = vi.fn().mockImplementation((_url: string, init?: RequestInit) => {
+      if (init?.method === "DELETE") {
+        return Promise.resolve({ ok: false, status: 500, json: async () => ({ error: "boom" }) });
+      }
+      return Promise.resolve({ ok: true, status: 200, json: async () => sampleContent });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    renderWithClient(<LogViewer fileName="server.log" />);
+    await waitFor(() => expect(screen.getByText("request served")).toBeInTheDocument());
+
+    await user.click(screen.getByTestId("logs-clear-btn"));
+    await user.click(await screen.findByTestId("logs-clear-confirm"));
+
+    await waitFor(() => expect(screen.getByTestId("logs-clear-error")).toBeInTheDocument());
+  });
 });

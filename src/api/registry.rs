@@ -5,8 +5,41 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use crate::config::Config;
 use crate::core::engine::InferenceEngine;
 use crate::models::registry::ModelFormat;
+
+/// Reject any path outside the server's configured models directory.
+///
+/// `register_model`/`scan_directory` used to hand a caller-supplied path
+/// straight to `ModelManager` with zero sandboxing, and `auth.enabled`
+/// defaults to `false` (see `AuthConfig::default()`), so an unauthenticated
+/// request could otherwise register — and later load and run — an
+/// arbitrary file readable by the server process (e.g. `{"path":"/etc/passwd"}`,
+/// or `{"path":"/"}` for a directory scan). Both call sites resolve the
+/// candidate path and the configured `models.cache_dir` to their canonical
+/// form and require the former to be contained in the latter.
+async fn ensure_within_models_dir(config: &Config, path: &std::path::Path) -> Result<PathBuf, String> {
+    let cache_dir = &config.models.cache_dir;
+    if !cache_dir.exists() {
+        tokio::fs::create_dir_all(cache_dir)
+            .await
+            .map_err(|e| format!("failed to prepare models directory {:?}: {}", cache_dir, e))?;
+    }
+    let canonical_base = tokio::fs::canonicalize(cache_dir)
+        .await
+        .map_err(|e| format!("failed to resolve models directory {:?}: {}", cache_dir, e))?;
+    let canonical_path = tokio::fs::canonicalize(path)
+        .await
+        .map_err(|e| format!("path does not exist or cannot be resolved: {}", e))?;
+    if !canonical_path.starts_with(&canonical_base) {
+        return Err(format!(
+            "path {:?} is outside the configured models directory {:?}",
+            canonical_path, canonical_base
+        ));
+    }
+    Ok(canonical_path)
+}
 
 #[derive(Deserialize)]
 pub struct RegisterModelRequest {
@@ -58,11 +91,19 @@ impl<T> ApiResponse<T> {
 /// Register a model from file path
 pub async fn register_model(
     engine: web::Data<Arc<InferenceEngine>>,
+    config: web::Data<Config>,
     req: web::Json<RegisterModelRequest>,
 ) -> ActixResult<HttpResponse> {
     info!("API: Register model from path: {}", req.path);
 
     let path = PathBuf::from(&req.path);
+    let path = match ensure_within_models_dir(&config, &path).await {
+        Ok(p) => p,
+        Err(e) => {
+            error!("Rejected model registration path: {}", e);
+            return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error(e)));
+        }
+    };
 
     match engine
         .model_manager
@@ -92,11 +133,19 @@ pub async fn register_model(
 /// Scan directory and register all models
 pub async fn scan_directory(
     engine: web::Data<Arc<InferenceEngine>>,
+    config: web::Data<Config>,
     req: web::Json<ScanDirectoryRequest>,
 ) -> ActixResult<HttpResponse> {
     info!("API: Scan directory: {}", req.path);
 
     let path = PathBuf::from(&req.path);
+    let path = match ensure_within_models_dir(&config, &path).await {
+        Ok(p) => p,
+        Err(e) => {
+            error!("Rejected directory scan path: {}", e);
+            return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error(e)));
+        }
+    };
 
     match engine.model_manager.scan_and_register(&path).await {
         Ok(model_ids) => Ok(
@@ -605,14 +654,25 @@ mod tests {
     }
 
     // register_model — non-existent path returns 400
+    // Build a Config whose models.cache_dir is the given directory, so the
+    // register_model/scan_directory path-containment check (added to close
+    // an unauthenticated arbitrary-file-registration hole) accepts paths
+    // under it.
+    fn make_config_rooted_at(dir: &std::path::Path) -> web::Data<Config> {
+        let mut config = Config::default();
+        config.models.cache_dir = dir.to_path_buf();
+        web::Data::new(config)
+    }
+
     #[actix_web::test]
     async fn test_register_model_handler_bad_path() {
         let engine = make_engine();
+        let config = web::Data::new(Config::default());
         let req = web::Json(RegisterModelRequest {
             path: "/no/such/model.onnx".to_string(),
             name: None,
         });
-        let resp = register_model(engine, req).await.unwrap();
+        let resp = register_model(engine, config, req).await.unwrap();
         assert_eq!(resp.status(), actix_web::http::StatusCode::BAD_REQUEST);
     }
 
@@ -620,10 +680,11 @@ mod tests {
     #[actix_web::test]
     async fn test_scan_directory_handler_bad_path() {
         let engine = make_engine();
+        let config = web::Data::new(Config::default());
         let req = web::Json(ScanDirectoryRequest {
             path: "/no/such/directory".to_string(),
         });
-        let resp = scan_directory(engine, req).await.unwrap();
+        let resp = scan_directory(engine, config, req).await.unwrap();
         assert_eq!(resp.status(), actix_web::http::StatusCode::BAD_REQUEST);
     }
 
@@ -632,10 +693,11 @@ mod tests {
     async fn test_scan_directory_handler_empty_dir() {
         let dir = tempfile::tempdir().unwrap();
         let engine = make_engine();
+        let config = make_config_rooted_at(dir.path());
         let req = web::Json(ScanDirectoryRequest {
             path: dir.path().to_string_lossy().to_string(),
         });
-        let resp = scan_directory(engine, req).await.unwrap();
+        let resp = scan_directory(engine, config, req).await.unwrap();
         assert_eq!(resp.status(), actix_web::http::StatusCode::OK);
     }
 
@@ -696,13 +758,34 @@ mod tests {
         std::fs::write(&model_path, b"fake onnx content").unwrap();
 
         let engine = make_engine();
+        let config = make_config_rooted_at(dir.path());
         let req = web::Json(RegisterModelRequest {
             path: model_path.to_string_lossy().to_string(),
             name: Some("my-onnx".to_string()),
         });
-        let resp = register_model(engine, req).await.unwrap();
+        let resp = register_model(engine, config, req).await.unwrap();
         // Should be 200 OK with model_id and metadata in the response
         assert_eq!(resp.status(), actix_web::http::StatusCode::OK);
+    }
+
+    // register_model — path outside the configured models directory is
+    // rejected with 400, even though the file itself exists (regression
+    // test for the unauthenticated arbitrary-file-registration fix).
+    #[actix_web::test]
+    async fn test_register_model_handler_rejects_path_outside_models_dir() {
+        let outside_dir = tempfile::tempdir().unwrap();
+        let model_path = outside_dir.path().join("outside.onnx");
+        std::fs::write(&model_path, b"fake onnx content").unwrap();
+
+        let cache_dir = tempfile::tempdir().unwrap();
+        let engine = make_engine();
+        let config = make_config_rooted_at(cache_dir.path());
+        let req = web::Json(RegisterModelRequest {
+            path: model_path.to_string_lossy().to_string(),
+            name: None,
+        });
+        let resp = register_model(engine, config, req).await.unwrap();
+        assert_eq!(resp.status(), actix_web::http::StatusCode::BAD_REQUEST);
     }
 
     // ── get_model_metadata success path ───────────────────────────────────────

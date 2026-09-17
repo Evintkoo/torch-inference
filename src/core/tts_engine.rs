@@ -75,8 +75,20 @@ pub trait TTSEngine: Send + Sync {
     /// Get engine capabilities
     fn capabilities(&self) -> &EngineCapabilities;
 
-    /// Synthesize text to speech
-    async fn synthesize(&self, text: &str, params: &SynthesisParams) -> Result<AudioData>;
+    /// Synthesize text to speech.
+    ///
+    /// Returns the audio plus, when synthesis was actually carried out by a
+    /// different backend than `self.name()` advertises (e.g. an engine that
+    /// lacks its own model delegating to the shared Kokoro ONNX backend),
+    /// `Some(<actual backend name>)`. `None` means `self.name()` is exactly
+    /// what produced the audio. Callers (e.g. the `/tts/synthesize` handler)
+    /// use this to report an honest `engine_used` instead of silently
+    /// claiming the requested engine ran when it didn't.
+    async fn synthesize(
+        &self,
+        text: &str,
+        params: &SynthesisParams,
+    ) -> Result<(AudioData, Option<&'static str>)>;
 
     /// Get available voices
     fn list_voices(&self) -> Vec<VoiceInfo>;
@@ -187,7 +199,11 @@ impl TTSEngine for TorchTTSEngine {
         &self.capabilities
     }
 
-    async fn synthesize(&self, _text: &str, _params: &SynthesisParams) -> Result<AudioData> {
+    async fn synthesize(
+        &self,
+        _text: &str,
+        _params: &SynthesisParams,
+    ) -> Result<(AudioData, Option<&'static str>)> {
         anyhow::bail!("PyTorch TTS engine requires a trained model. Please configure a model path.")
     }
 
@@ -417,7 +433,7 @@ mod tests {
         let params = SynthesisParams::default();
         let result = engine.synthesize("Hello", &params).await;
         assert!(result.is_err());
-        let msg = format!("{}", result.unwrap_err());
+        let msg = format!("{}", result.err().unwrap());
         assert!(
             msg.contains("trained model"),
             "error should mention trained model: {msg}"

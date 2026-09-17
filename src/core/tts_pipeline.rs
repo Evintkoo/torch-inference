@@ -176,7 +176,7 @@ impl StreamingTtsPipeline {
                 let result = engine
                     .synthesize(sentence, &params)
                     .await
-                    .map(|audio| AudioChunk {
+                    .map(|(audio, _actual_engine)| AudioChunk {
                         sentence_index: idx,
                         is_last: idx == sentences.len() - 1,
                         audio,
@@ -417,15 +417,22 @@ mod tests {
                 supports_streaming: true,
             })
         }
-        async fn synthesize(&self, text: &str, _params: &SynthesisParams) -> Result<AudioData> {
+        async fn synthesize(
+            &self,
+            text: &str,
+            _params: &SynthesisParams,
+        ) -> Result<(AudioData, Option<&'static str>)> {
             *self.call_count.lock().unwrap() += 1;
             // Produce 100ms of silence per character (just for test)
             let samples = vec![0.0f32; (text.len() * 24) as usize];
-            Ok(AudioData {
-                samples,
-                sample_rate: 24000,
-                channels: 1,
-            })
+            Ok((
+                AudioData {
+                    samples,
+                    sample_rate: 24000,
+                    channels: 1,
+                },
+                None,
+            ))
         }
         async fn warmup(&self) -> Result<()> {
             Ok(())

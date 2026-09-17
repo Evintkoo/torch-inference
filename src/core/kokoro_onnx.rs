@@ -69,12 +69,18 @@ impl SessionPool {
     /// Returns `Err` only if the pool has been closed (e.g. shutdown race) —
     /// in which case callers should surface a 503-style failure rather than
     /// crashing the worker.
-    async fn acquire(&self) -> anyhow::Result<SessionGuard<'_>> {
+    ///
+    /// Takes `self` as `&Arc<Self>` so the returned guard owns its own
+    /// `Arc<SessionPool>` clone (instead of borrowing `&'a SessionPool`),
+    /// which makes the guard `Send + 'static` and movable into
+    /// `tokio::task::spawn_blocking` for the CPU-bound `Session::run` call.
+    async fn acquire(self: &Arc<Self>) -> anyhow::Result<SessionGuard> {
         // Acquire the semaphore permit *before* locking the Vec so we never
         // hold the Vec mutex while waiting.
         let permit = self
             .semaphore
-            .acquire()
+            .clone()
+            .acquire_owned()
             .await
             .map_err(|_| anyhow::anyhow!("Kokoro session pool closed"))?;
         let session = {
@@ -85,20 +91,23 @@ impl SessionPool {
         };
         Ok(SessionGuard {
             session: Some(session),
-            pool: self,
+            pool: Arc::clone(self),
             _permit: permit,
         })
     }
 }
 
 /// RAII guard that returns the session to the pool on drop.
-struct SessionGuard<'a> {
+/// Owns an `Arc<SessionPool>` (rather than borrowing it) and an
+/// `OwnedSemaphorePermit` so the whole guard is `Send + 'static` and can be
+/// moved into `tokio::task::spawn_blocking`.
+struct SessionGuard {
     session: Option<Session>,
-    pool: &'a SessionPool,
-    _permit: tokio::sync::SemaphorePermit<'a>,
+    pool: Arc<SessionPool>,
+    _permit: tokio::sync::OwnedSemaphorePermit,
 }
 
-impl<'a> Drop for SessionGuard<'a> {
+impl Drop for SessionGuard {
     fn drop(&mut self) {
         if let Some(s) = self.session.take() {
             // best-effort: if the lock is somehow poisoned we simply discard
@@ -111,7 +120,7 @@ impl<'a> Drop for SessionGuard<'a> {
     }
 }
 
-impl<'a> std::ops::DerefMut for SessionGuard<'a> {
+impl std::ops::DerefMut for SessionGuard {
     fn deref_mut(&mut self) -> &mut Session {
         self.session
             .as_mut()
@@ -119,7 +128,7 @@ impl<'a> std::ops::DerefMut for SessionGuard<'a> {
     }
 }
 
-impl<'a> std::ops::Deref for SessionGuard<'a> {
+impl std::ops::Deref for SessionGuard {
     type Target = Session;
     fn deref(&self) -> &Session {
         self.session
@@ -128,10 +137,50 @@ impl<'a> std::ops::Deref for SessionGuard<'a> {
     }
 }
 
+/// Resolves `requested` to a voice id that is actually present in `loaded`.
+///
+/// If `requested` isn't loaded, falls back to a loaded voice of the same
+/// gender (inferred from Kokoro's `xf_`/`xm_` naming convention — the second
+/// character is `f` for female, `m` for male), or `af_bella` if the gender
+/// can't be determined or no same-gender pack is loaded. This is the single
+/// place synthesis ever falls back to a substitute voice, so every caller —
+/// including ones that bypass `map_voice` entirely, like the primary Kokoro
+/// engine invoked directly with a native voice id — gets a gender-preserving
+/// fallback instead of the previous silent, always-female one.
+fn resolve_voice_id<'a>(loaded: &'a HashMap<String, Vec<f32>>, requested: &'a str) -> &'a str {
+    if let Some((id, _)) = loaded.get_key_value(requested) {
+        return id.as_str();
+    }
+    log::warn!(
+        "Kokoro ONNX: voice {:?} is not loaded, falling back to a substitute voice",
+        requested
+    );
+    let is_male = requested.as_bytes().get(1) == Some(&b'm');
+    let is_female = requested.as_bytes().get(1) == Some(&b'f');
+    let fallback_order: &[&str] = if is_male {
+        &["bm_george", "am_adam", "am_michael", "af_bella"]
+    } else if is_female {
+        &["af_bella", "bf_emma", "af_sarah"]
+    } else {
+        &["af_bella"]
+    };
+    for candidate in fallback_order {
+        if let Some((id, _)) = loaded.get_key_value(*candidate) {
+            return id.as_str();
+        }
+    }
+    // Last resort: whatever the engine has loaded, if anything.
+    loaded
+        .keys()
+        .next()
+        .map(|s| s.as_str())
+        .unwrap_or(requested)
+}
+
 // ─── Engine ──────────────────────────────────────────────────────────────────
 
 pub struct KokoroOnnxEngine {
-    pool: SessionPool,
+    pool: Arc<SessionPool>,
     /// voice_id → flat f32[VOICE_PACK_SIZE * VOICE_STYLE_DIM], loaded once at startup
     voice_styles: HashMap<String, Vec<f32>>,
     config: KokoroOnnxConfig,
@@ -251,7 +300,7 @@ impl KokoroOnnxEngine {
         let capabilities = Self::build_capabilities(sample_rate);
 
         Ok(Self {
-            pool: SessionPool::new(sessions),
+            pool: Arc::new(SessionPool::new(sessions)),
             voice_styles,
             config,
             capabilities,
@@ -392,11 +441,11 @@ impl KokoroOnnxEngine {
         // style: f32 [1, VOICE_STYLE_DIM]
         // Select row by phoneme_count-1, capped at VOICE_PACK_SIZE-1.
         // Borrow the pack directly — copy only the 256-float row (1 KB), not 522 KB.
-        let voice_id = params.voice.as_deref().unwrap_or("af_bella");
+        let requested_voice_id = params.voice.as_deref().unwrap_or("af_bella");
+        let voice_id = resolve_voice_id(&self.voice_styles, requested_voice_id);
         let pack: &[f32] = self
             .voice_styles
             .get(voice_id)
-            .or_else(|| self.voice_styles.get("af_bella"))
             .map(|v| v.as_slice())
             .unwrap_or(&[]);
 
@@ -422,15 +471,26 @@ impl KokoroOnnxEngine {
 
         // Check out a session from the pool — async wait, no blocking.
         let mut session = self.pool.acquire().await?;
-        let outputs = session.run(ort::inputs![
-            "input_ids" => tokens_tensor,
-            "style"     => style_tensor,
-            "speed"     => speed_tensor
-        ])?;
-        // Session automatically returned to pool when `session` guard drops here.
 
-        let (_shape, audio_slice) = outputs["waveform"].try_extract_tensor::<f32>()?;
-        let samples: Vec<f32> = audio_slice.iter().map(|s| s.clamp(-1.0, 1.0)).collect();
+        // `Session::run` is synchronous, CPU-bound ONNX inference (milliseconds
+        // to low-seconds). Running it inline would stall this reactor worker
+        // for the whole call, blocking every other in-flight request on the
+        // same actix `current_thread` executor — so it goes through
+        // `spawn_blocking` onto the blocking thread pool. The guard (and thus
+        // the session) drops at the end of the closure, returning it to the
+        // pool from the blocking thread, which is fine since the pool is
+        // `Mutex`-protected.
+        let samples: Vec<f32> = tokio::task::spawn_blocking(move || -> Result<Vec<f32>> {
+            let outputs = session.run(ort::inputs![
+                "input_ids" => tokens_tensor,
+                "style"     => style_tensor,
+                "speed"     => speed_tensor
+            ])?;
+            let (_shape, audio_slice) = outputs["waveform"].try_extract_tensor::<f32>()?;
+            Ok(audio_slice.iter().map(|s| s.clamp(-1.0, 1.0)).collect())
+        })
+        .await
+        .context("Kokoro ONNX synthesis task panicked")??;
 
         log::info!(
             "Kokoro ONNX: {} phonemes ({} tokens w/ BOS/EOS) -> {} samples ({:.2}s)",
@@ -458,10 +518,15 @@ impl TTSEngine for KokoroOnnxEngine {
         &self.capabilities
     }
 
-    async fn synthesize(&self, text: &str, params: &SynthesisParams) -> Result<AudioData> {
+    async fn synthesize(
+        &self,
+        text: &str,
+        params: &SynthesisParams,
+    ) -> Result<(AudioData, Option<&'static str>)> {
         self.validate_text(text)?;
         self.synthesize_with_onnx(text, params)
             .await
+            .map(|audio| (audio, None))
             .with_context(|| {
                 format!(
                     "Kokoro ONNX synthesis failed for: {:?}",
@@ -499,6 +564,36 @@ impl TTSEngine for KokoroOnnxEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ── resolve_voice_id ──────────────────────────────────────────────────────
+
+    fn loaded_pack_set(ids: &[&str]) -> HashMap<String, Vec<f32>> {
+        ids.iter()
+            .map(|id| (id.to_string(), vec![0.0f32; VOICE_STYLE_DIM]))
+            .collect()
+    }
+
+    #[test]
+    fn resolve_voice_id_passes_through_loaded_id() {
+        let loaded = loaded_pack_set(&["af_bella", "bm_george"]);
+        assert_eq!(resolve_voice_id(&loaded, "af_bella"), "af_bella");
+    }
+
+    #[test]
+    fn resolve_voice_id_falls_back_to_loaded_same_gender_voice() {
+        // A caller that bypasses `map_voice` entirely (e.g. the primary
+        // Kokoro engine invoked directly with a native voice id) must still
+        // never resolve an unloaded id to a wrong-gender pack.
+        let loaded = loaded_pack_set(&["af_bella", "bm_george"]);
+        assert_eq!(resolve_voice_id(&loaded, "af_heart"), "af_bella"); // female -> female
+        assert_eq!(resolve_voice_id(&loaded, "bm_lewis"), "bm_george"); // male -> male
+    }
+
+    #[test]
+    fn resolve_voice_id_falls_back_to_af_bella_for_unrecognised_prefix() {
+        let loaded = loaded_pack_set(&["af_bella", "bm_george"]);
+        assert_eq!(resolve_voice_id(&loaded, "totally-unknown-voice"), "af_bella");
+    }
 
     // ── default_pool_size ─────────────────────────────────────────────────────
 

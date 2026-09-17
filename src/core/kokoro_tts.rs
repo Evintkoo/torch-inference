@@ -216,16 +216,22 @@ impl TTSEngine for KokoroEngine {
         &self.capabilities
     }
 
-    async fn synthesize(&self, text: &str, params: &SynthesisParams) -> Result<AudioData> {
+    async fn synthesize(
+        &self,
+        text: &str,
+        params: &SynthesisParams,
+    ) -> Result<(AudioData, Option<&'static str>)> {
         self.validate_text(text)?;
 
         #[cfg(feature = "torch")]
         if self.native_inference.is_some() {
-            return self.synthesize_with_native(text, params);
+            return self.synthesize_with_native(text, params).map(|audio| (audio, None));
         }
 
         if let Some(ref bridge) = self.python_bridge {
-            return bridge.synthesize(text, params.voice.as_deref(), params.speed);
+            return bridge
+                .synthesize(text, params.voice.as_deref(), params.speed)
+                .map(|audio| (audio, None));
         }
 
         // Last resort: delegate to the shared Kokoro ONNX engine (same model, different runtime).
@@ -240,7 +246,8 @@ impl TTSEngine for KokoroEngine {
                 "Kokoro: Python bridge unavailable, delegating to ONNX engine (voice={})",
                 kokoro_voice
             );
-            return backend.synthesize(text, &mapped).await;
+            let (audio, _) = backend.synthesize(text, &mapped).await?;
+            return Ok((audio, Some("kokoro-onnx")));
         }
 
         anyhow::bail!(
@@ -294,7 +301,7 @@ mod tests {
         //   - files absent   → returns an error (acceptable)
         // Both outcomes are valid; the important invariant is that the call does not panic.
         match result {
-            Ok(audio) => assert!(!audio.samples.is_empty(), "ONNX fallback produced empty audio"),
+            Ok((audio, _tag)) => assert!(!audio.samples.is_empty(), "ONNX fallback produced empty audio"),
             Err(_) => { /* ONNX backend unavailable in this environment — expected */ }
         }
     }

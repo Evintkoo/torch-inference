@@ -125,10 +125,18 @@ impl InferenceEngine {
         Ok(sanitized_result)
     }
 
+    /// NOTE: this legacy engine path does not perform real synthesis — the
+    /// registered-model TTS flow here has no ONNX/engine backing. It used to
+    /// return a fabricated `base64_audio_for_N_words` placeholder disguised
+    /// as a successful response; that silently corrupted any client of
+    /// POST /synthesize with data that was never real audio. Fail loudly
+    /// instead and point callers at the real synthesis endpoint
+    /// (`/tts/synthesize`, backed by `TTSManager`) until this path is wired
+    /// up to an actual engine.
     pub async fn tts_synthesize(&self, model_name: &str, text: &str) -> Result<String> {
         tracing::info!(model = %model_name, "tts synthesis start");
 
-        let sanitized_text = self
+        let _sanitized_text = self
             .sanitizer
             .sanitize_input(&json!(text))
             .map_err(crate::error::InferenceError::InvalidInput)?
@@ -142,14 +150,11 @@ impl InferenceEngine {
 
         let _model = self.model_manager.get_model(model_name)?;
 
-        let word_count = sanitized_text.split_whitespace().count();
-        let audio_data = format!("base64_audio_for_{}_words", word_count);
-
-        self.metrics.record_request();
-
-        tracing::info!(model = %model_name, word_count = word_count, "tts synthesis complete");
-
-        Ok(audio_data)
+        Err(crate::error::InferenceError::InferenceFailed(
+            "This registered-model TTS path is not implemented and no longer returns \
+             fabricated placeholder audio. Use POST /tts/synthesize instead."
+                .to_string(),
+        ))
     }
 
     pub fn health_check(&self) -> serde_json::Value {
@@ -263,7 +268,10 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_engine_tts_synthesize_known_model() {
+    async fn test_engine_tts_synthesize_known_model_fails_loudly_not_fake_audio() {
+        // This legacy path has no real synthesis backend. It used to return a
+        // fabricated "base64_audio_for_N_words" string as a fake success —
+        // verify it now fails explicitly instead of lying to callers.
         use crate::models::manager::BaseModel;
         let config = Config::default();
         let manager = Arc::new(ModelManager::new(&config, None));
@@ -276,9 +284,7 @@ mod tests {
 
         let engine = InferenceEngine::new(manager, &config);
         let result = engine.tts_synthesize("tts-model", "hello there").await;
-        assert!(result.is_ok());
-        let audio = result.unwrap();
-        assert!(audio.contains("base64_audio"));
+        assert!(result.is_err());
     }
 
     #[tokio::test]

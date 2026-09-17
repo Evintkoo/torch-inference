@@ -14,7 +14,6 @@ pub mod tts;
 pub mod types;
 
 // ML inference modules
-pub mod classification;
 pub mod classify; // batched image classification (ImagePipeline + ORT backend)
 pub mod inference;
 

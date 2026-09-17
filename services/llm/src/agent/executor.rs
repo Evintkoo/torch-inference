@@ -33,6 +33,13 @@ pub struct RunContext {
     pub sse_tx:        mpsc::Sender<AgentEvent>,
     pub max_steps:     usize,
     pub per_tool_ms:   u64,
+    /// Per-field trim threshold, applied to each tool result before it's
+    /// stored/emitted. From `LimitsConfig.results.field_trim_above`.
+    pub field_trim_above:  usize,
+    /// Running total of (post-trim) result bytes accumulated so far this run.
+    pub results_bytes:     usize,
+    /// Budget for `results_bytes`. From `LimitsConfig.results.per_run_bytes`.
+    pub per_run_bytes:      usize,
 }
 
 pub struct ExecOptions {
@@ -41,6 +48,12 @@ pub struct ExecOptions {
     pub per_tool_ms:         u64,
     pub planner_temperature: f32,
     pub planner_max_tokens:  u32,
+    /// SSE event channel capacity. From `LimitsConfig.channels.sse_event_buffer`.
+    pub sse_event_buffer:    usize,
+    /// From `LimitsConfig.results.field_trim_above`.
+    pub field_trim_above:    usize,
+    /// From `LimitsConfig.results.per_run_bytes`.
+    pub per_run_bytes:       usize,
 }
 
 pub async fn run_agent(
@@ -50,7 +63,7 @@ pub async fn run_agent(
     inputs: HashMap<String, Input>,
     opts: ExecOptions,
 ) -> mpsc::Receiver<AgentEvent> {
-    let (tx, rx) = mpsc::channel::<AgentEvent>(8);
+    let (tx, rx) = mpsc::channel::<AgentEvent>(opts.sse_event_buffer.max(1));
     tokio::spawn(run_inner(planner, registry, user_msg, inputs, opts, tx));
     rx
 }
@@ -79,6 +92,9 @@ async fn run_inner(
         inputs, results: HashMap::new(),
         sse_tx: tx.clone(),
         max_steps: opts.max_steps, per_tool_ms: opts.per_tool_ms,
+        field_trim_above: opts.field_trim_above,
+        results_bytes: 0,
+        per_run_bytes: opts.per_run_bytes,
     };
 
     let summary = input_summary(&ctx.inputs);
@@ -177,10 +193,17 @@ async fn run_inner(
 
         match result {
             Ok(value) => {
-                ctx.results.insert(step.id.clone(), value.clone());
+                // Cap any individual field before it's stored/streamed — a
+                // tool that returns a large flat text field (fetched body,
+                // transcript, description) shouldn't be allowed to blow past
+                // the per-run result budget on its own.
+                let trimmed = trim_large_fields(value, ctx.field_trim_above);
+                ctx.results_bytes += serde_json::to_string(&trimmed)
+                    .map(|s| s.len()).unwrap_or(0);
+                ctx.results.insert(step.id.clone(), trimmed.clone());
                 let _ = tx.send(AgentEvent::StepResult {
                     idx: i + 1, id: step.id.clone(), ok: true,
-                    value: Some(value), error: None, duration_ms: dur,
+                    value: Some(trimmed), error: None, duration_ms: dur,
                 }).await;
             }
             Err(e) => {
@@ -203,6 +226,20 @@ async fn run_inner(
                 completed: true,
             }).await;
             return;
+        }
+
+        // Checked AFTER the `final` short-circuit above so a `final` step's
+        // own (already field-trimmed) answer is always honored rather than
+        // discarded by a budget that a prior step pushed over the edge.
+        if ctx.results_bytes > ctx.per_run_bytes {
+            let _ = tx.send(AgentEvent::Error {
+                kind: "result_budget_exceeded".into(),
+                message: format!(
+                    "accumulated result size {}B exceeds budget {}B — stopping run",
+                    ctx.results_bytes, ctx.per_run_bytes,
+                ),
+            }).await;
+            break;
         }
     }
 
@@ -259,6 +296,32 @@ fn return_value_for_error_field(step_result: &Value, m: &mut serde_json::Map<Str
     let err_str = step_result.get("error")
         .and_then(Value::as_str).unwrap_or("").to_string();
     m.insert(key.to_string(), Value::String(err_str));
+}
+
+/// Truncates any top-level string field of `value` longer than `threshold`
+/// bytes, replacing it with a UTF-8-safe truncated prefix plus a marker
+/// noting the original size. Mirrors `redact_for_sse`'s shallow (top-level
+/// only) field walk — the realistic overflow source is a flat text field
+/// (fetched body, transcript, description); structured tool outputs are
+/// already small.
+fn trim_large_fields(value: Value, threshold: usize) -> Value {
+    let mut out = value;
+    if let Value::Object(m) = &mut out {
+        for (_, v) in m.iter_mut() {
+            if let Value::String(s) = v {
+                if s.len() > threshold {
+                    let original_len = s.len();
+                    let mut cut = s.as_bytes()[..threshold].to_vec();
+                    while std::str::from_utf8(&cut).is_err() {
+                        cut.pop();
+                    }
+                    let head = String::from_utf8(cut).unwrap_or_default();
+                    *s = format!("{head}...<truncated, original {original_len}B>");
+                }
+            }
+        }
+    }
+    out
 }
 
 fn redact_for_sse(args: &Value) -> Value {
@@ -336,6 +399,7 @@ mod tests {
         ExecOptions {
             max_steps: 8, max_run_ms: 5_000, per_tool_ms: 2_000,
             planner_temperature: 0.0, planner_max_tokens: 128,
+            sse_event_buffer: 8, field_trim_above: 8_192, per_run_bytes: 65_536,
         }
     }
 
@@ -502,5 +566,94 @@ step1. final(answer=\"ok\")
         // No assertion needed beyond the fact that we don't hang; the spawned
         // task should observe sse_tx closure between/at-start of dispatches.
         tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+
+    #[test]
+    fn trim_large_fields_truncates_oversized_string_and_leaves_small_fields() {
+        let value = json!({
+            "small": "ok",
+            "big": "A".repeat(100),
+        });
+        let out = trim_large_fields(value, 10);
+        assert_eq!(out["small"], "ok");
+        let big = out["big"].as_str().unwrap();
+        assert!(big.starts_with(&"A".repeat(10)));
+        assert!(big.contains("truncated, original 100B"));
+        assert!(big.len() < 100, "field must actually shrink");
+    }
+
+    #[test]
+    fn trim_large_fields_is_noop_under_threshold() {
+        let value = json!({"field": "short"});
+        let out = trim_large_fields(value.clone(), 8_192);
+        assert_eq!(out, value);
+    }
+
+    struct BigOutputTool(String);
+    #[async_trait::async_trait]
+    impl crate::agent::tool::Tool for BigOutputTool {
+        fn name(&self) -> &'static str { "classify" }
+        async fn invoke(&self, _: Value, _: Instant) -> Result<Value, ToolError> {
+            Ok(json!({"output": self.0.clone()}))
+        }
+    }
+
+    #[tokio::test]
+    async fn step_result_field_is_trimmed_to_configured_threshold() {
+        let p = canned(vec!["\
+step1. classify(image=input)
+step2. final(answer=\"done\")
+"]);
+        let reg = registry_with(vec![Arc::new(BigOutputTool("X".repeat(500))), Arc::new(FinalTool)]);
+        let mut inputs = HashMap::new();
+        inputs.insert("input".to_string(), Input::Image { b64: "AA".into(), mime: "image/png".into() });
+        let mut o = opts();
+        o.field_trim_above = 50;
+        o.per_run_bytes = 1_000_000; // large enough not to trip the run-level budget here
+        let mut rx = run_agent(p, reg, "Q".into(), inputs, o).await;
+        let mut saw_trim = false;
+        while let Some(e) = rx.recv().await {
+            if let AgentEvent::StepResult { value: Some(v), .. } = &e {
+                if let Some(out) = v.get("output").and_then(Value::as_str) {
+                    assert!(out.len() < 500, "field should have been trimmed, got len {}", out.len());
+                    assert!(out.contains("truncated"));
+                    saw_trim = true;
+                }
+            }
+        }
+        assert!(saw_trim, "expected a trimmed classify output field");
+    }
+
+    #[tokio::test]
+    async fn run_stops_early_once_result_budget_exceeded() {
+        // Two intermediate steps whose (small, per-field-untrimmed) outputs
+        // together exceed a tiny per_run_bytes budget must stop the run with
+        // a `result_budget_exceeded` error rather than run every step.
+        let p = canned(vec!["\
+step1. classify(image=input)
+step2. classify(image=input)
+step3. final(answer=\"done\")
+"]);
+        let reg = registry_with(vec![
+            Arc::new(BigOutputTool("Y".repeat(100))),
+            Arc::new(FinalTool),
+        ]);
+        let mut inputs = HashMap::new();
+        inputs.insert("input".to_string(), Input::Image { b64: "AA".into(), mime: "image/png".into() });
+        let mut o = opts();
+        o.field_trim_above = 10_000; // don't trim the field itself
+        o.per_run_bytes = 120;       // but do trip the cumulative budget after step1
+        let mut rx = run_agent(p, reg, "Q".into(), inputs, o).await;
+        let mut saw_budget_err = false;
+        let mut step_results = 0usize;
+        while let Some(e) = rx.recv().await {
+            match e {
+                AgentEvent::Error { kind, .. } if kind == "result_budget_exceeded" => saw_budget_err = true,
+                AgentEvent::StepResult { .. } => step_results += 1,
+                _ => {}
+            }
+        }
+        assert!(saw_budget_err, "expected a result_budget_exceeded error event");
+        assert!(step_results < 3, "run should have stopped before all steps executed, got {step_results}");
     }
 }

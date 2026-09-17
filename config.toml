@@ -97,7 +97,6 @@ enabled = false
 jwt_secret = "your-secret-key-here-change-in-production"
 jwt_algorithm = "HS256"
 access_token_expire_minutes = 60
-refresh_token_expire_days = 7
 
 [models]
 # Model management
@@ -108,16 +107,13 @@ classify_model = "models/classify/efficientnet-lite4-11-int8.onnx"
 classify_labels = "models/classify/imagenet1000.txt"
 audio_model_dir = "models/audio"
 
-[guard]
-# System Guards - Protection & Auto-Mitigation
-enable_guards = true  # Enable system guards
-max_memory_mb = 8192  # Maximum memory usage (8GB)
-max_requests_per_second = 1000  # Rate limit
-max_queue_depth = 500  # Maximum queue size
-min_cache_hit_rate = 60.0  # Minimum cache hit rate (%)
-max_error_rate = 5.0  # Maximum error rate (%)
-enable_circuit_breaker = true  # Enable circuit breaker
-enable_auto_mitigation = true  # Enable automatic mitigation
+# NOTE: protection/rate-limiting is handled by [server] + the always-on
+# per-IP RateLimitMiddleware and the per-model CircuitBreaker (see
+# src/main.rs) — not by a [guard] section. An earlier `[guard]` block here
+# advertised memory/rate/circuit-breaker/auto-mitigation protection that was
+# never wired to any of those subsystems; it was removed rather than left
+# silently inert. If you're looking for rate limiting, see RateLimiter::new
+# in src/main.rs (600 req/min per IP by default).
 
 
 # ===================================================================

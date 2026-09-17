@@ -11,7 +11,6 @@ pub mod python_tts_bridge;
 // Native Rust TTS components
 pub mod g2p_misaki;
 pub mod istftnet_vocoder;
-pub mod phoneme_converter;
 pub mod styletts2_model;
 
 // Streaming TTS pipeline (sentence-level parallelism → low TTFA)
@@ -34,7 +33,6 @@ pub mod xtts;
 
 // Speech-to-Text (STT) engine
 pub mod whisper_onnx;
-pub mod whisper_stt;
 
 // SIMD-fused image preprocessing pipeline (decode → resize → normalize)
 pub mod image_pipeline;
@@ -45,11 +43,7 @@ pub mod ort_eps;
 // Process-wide ORT environment + shared global thread pool
 pub mod ort_runtime;
 
-// CPU core-affinity utilities for P-core worker pinning
-pub mod affinity;
-
 // Neural network and ML modules
-pub mod image_classifier;
 pub mod model_cache;
 pub mod neural_network;
 pub mod yolo; // YOLO object detection (v5, v8, v10, v11, v12)

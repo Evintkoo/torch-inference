@@ -10,13 +10,6 @@ export class ApiError extends Error {
   }
 }
 
-const AUTH_TOKEN_KEY = "ki_auth_token";
-
-function authHeaders(): Record<string, string> {
-  const token = localStorage.getItem(AUTH_TOKEN_KEY);
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 async function parseErrorBody(res: Response): Promise<unknown> {
   try {
     return await res.json();
@@ -28,7 +21,7 @@ async function parseErrorBody(res: Response): Promise<unknown> {
 export async function apiGet<T>(path: string): Promise<T> {
   const res = await fetch(path, {
     method: "GET",
-    headers: { Accept: "application/json", ...authHeaders() },
+    headers: { Accept: "application/json" },
   });
   if (!res.ok) {
     throw new ApiError(`GET ${path} failed with ${res.status}`, res.status, await parseErrorBody(res));
@@ -42,7 +35,6 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
-      ...authHeaders(),
     },
     body: JSON.stringify(data),
   });
@@ -55,7 +47,7 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
 export async function apiDelete<T>(path: string): Promise<T> {
   const res = await fetch(path, {
     method: "DELETE",
-    headers: { Accept: "application/json", ...authHeaders() },
+    headers: { Accept: "application/json" },
   });
   if (!res.ok) {
     throw new ApiError(`DELETE ${path} failed with ${res.status}`, res.status, await parseErrorBody(res));
@@ -83,7 +75,6 @@ export async function apiPostStream(
     headers: {
       "Content-Type": "application/json",
       Accept: options?.accept ?? "text/event-stream",
-      ...authHeaders(),
     },
     body: JSON.stringify(data),
     signal: options?.signal,
@@ -102,7 +93,7 @@ export async function apiPostStream(
 export async function apiPostForm<T>(path: string, form: FormData): Promise<T> {
   const res = await fetch(path, {
     method: "POST",
-    headers: { Accept: "application/json", ...authHeaders() },
+    headers: { Accept: "application/json" },
     body: form,
   });
   if (!res.ok) {

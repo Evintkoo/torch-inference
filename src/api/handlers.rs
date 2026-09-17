@@ -42,6 +42,7 @@ pub async fn predict(
     engine: web::Data<std::sync::Arc<InferenceEngine>>,
     rate_limiter: web::Data<std::sync::Arc<RateLimiter>>,
     deduplicator: web::Data<std::sync::Arc<RequestDeduplicator>>,
+    circuit_breaker: web::Data<std::sync::Arc<crate::resilience::CircuitBreaker>>,
     http_req: HttpRequest,
 ) -> impl Responder {
     // Borrow peer_addr as &str — ConnectionInfo scoped to this block, no String alloc.
@@ -65,10 +66,26 @@ pub async fn predict(
         });
     }
 
+    // /predict runs arbitrary, generically-registered ONNX models, so a
+    // consistently-failing model (bad weights, GPU fault) is the most likely
+    // source of a cascading failure here. `CircuitBreaker` was already built,
+    // bug-fixed, and registered as app_data in main.rs, but no handler ever
+    // consulted it — connect it here rather than leave it dead.
+    if let Err(msg) = circuit_breaker.try_acquire() {
+        return HttpResponse::ServiceUnavailable().json(InferenceResponse {
+            success: false,
+            result: None,
+            error: Some(msg),
+            processing_time: Some(0.0),
+            model_info: None,
+        });
+    }
+
     let start = std::time::Instant::now();
 
     match engine.infer(&req.model_name, &req.inputs).await {
         Ok(result) => {
+            circuit_breaker.record_success();
             let latency_ms = start.elapsed().as_millis() as u64;
 
             // Cache result for deduplication (TTL 10s)
@@ -84,6 +101,21 @@ pub async fn predict(
         }
         Err(e) => {
             let latency_ms = start.elapsed().as_millis() as u64;
+
+            // Only backend/infra failures count against the breaker — a client
+            // mistake (bad input, unknown model, bad auth) says nothing about
+            // backend health and must not degrade service for everyone else.
+            let is_backend_failure = matches!(
+                e,
+                crate::error::InferenceError::Timeout
+                    | crate::error::InferenceError::GpuError(_)
+                    | crate::error::InferenceError::InferenceFailed(_)
+            );
+            if is_backend_failure {
+                circuit_breaker.record_failure();
+            } else {
+                circuit_breaker.record_success();
+            }
 
             let body = InferenceResponse {
                 success: false,
@@ -380,6 +412,24 @@ mod tests {
         web::Data::new(Arc::new(RequestDeduplicator::new(1000)))
     }
 
+    fn make_circuit_breaker() -> web::Data<Arc<crate::resilience::CircuitBreaker>> {
+        web::Data::new(Arc::new(crate::resilience::CircuitBreaker::new(
+            crate::resilience::CircuitBreakerConfig::default(),
+        )))
+    }
+
+    /// A circuit breaker pre-tripped to Open, for testing the rejection path.
+    fn make_open_circuit_breaker() -> web::Data<Arc<crate::resilience::CircuitBreaker>> {
+        let cb = crate::resilience::CircuitBreaker::new(crate::resilience::CircuitBreakerConfig {
+            failure_threshold: 1,
+            success_threshold: 1,
+            timeout: std::time::Duration::from_secs(3600),
+        });
+        cb.record_failure();
+        assert_eq!(cb.get_state(), crate::resilience::CircuitState::Open);
+        web::Data::new(Arc::new(cb))
+    }
+
     // ── root ─────────────────────────────────────────────────────────────────
 
     // ── get_endpoint_stats ───────────────────────────────────────────────────
@@ -627,6 +677,83 @@ mod tests {
         assert_eq!(body["error_count"], 0);
     }
 
+    // ── predict / circuit breaker ────────────────────────────────────────────
+    // The CircuitBreaker is registered as app_data in main.rs but was never
+    // consulted by any handler — a "not connected" defect. These wire it into
+    // /predict (the generic, arbitrary-model inference endpoint) and cover it.
+
+    #[actix_web::test]
+    async fn test_predict_returns_503_when_circuit_breaker_open() {
+        let monitor = make_monitor();
+        let engine = make_engine();
+        let rate_limiter = make_rate_limiter();
+        let deduplicator = make_deduplicator();
+        let circuit_breaker = make_open_circuit_breaker();
+
+        let app = test::init_service(
+            App::new()
+                .app_data(monitor.clone())
+                .app_data(engine.clone())
+                .app_data(rate_limiter.clone())
+                .app_data(deduplicator.clone())
+                .app_data(circuit_breaker.clone())
+                .route("/predict", web::post().to(predict)),
+        )
+        .await;
+
+        let body = serde_json::json!({
+            "model_name": "whatever",
+            "inputs": {"data": [1]},
+            "priority": 0,
+            "timeout": null
+        });
+        let req = test::TestRequest::post()
+            .uri("/predict")
+            .set_json(&body)
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status().as_u16(), 503);
+    }
+
+    #[actix_web::test]
+    async fn test_predict_client_error_does_not_trip_circuit_breaker() {
+        // ModelNotFound is a client mistake (bad model_name), not a backend
+        // health signal — it must not count toward opening the breaker for
+        // every other client.
+        let monitor = make_monitor();
+        let engine = make_engine();
+        let rate_limiter = make_rate_limiter();
+        let deduplicator = make_deduplicator();
+        let circuit_breaker = make_circuit_breaker();
+
+        let app = test::init_service(
+            App::new()
+                .app_data(monitor.clone())
+                .app_data(engine.clone())
+                .app_data(rate_limiter.clone())
+                .app_data(deduplicator.clone())
+                .app_data(circuit_breaker.clone())
+                .route("/predict", web::post().to(predict)),
+        )
+        .await;
+
+        for _ in 0..10 {
+            let body = serde_json::json!({
+                "model_name": "no-such-model",
+                "inputs": {"data": [1]},
+                "priority": 0,
+                "timeout": null
+            });
+            let req = test::TestRequest::post()
+                .uri("/predict")
+                .set_json(&body)
+                .to_request();
+            let _ = test::call_service(&app, req).await;
+        }
+
+        assert_eq!(circuit_breaker.get_state(), crate::resilience::CircuitState::Closed);
+    }
+
     // ── predict ──────────────────────────────────────────────────────────────
     // The engine has no real model loaded, so it returns 500 — the error path
     // is still a valid handler code path to cover.
@@ -637,6 +764,7 @@ mod tests {
         let engine = make_engine();
         let rate_limiter = make_rate_limiter();
         let deduplicator = make_deduplicator();
+        let circuit_breaker = make_circuit_breaker();
 
         let app = test::init_service(
             App::new()
@@ -644,6 +772,7 @@ mod tests {
                 .app_data(engine.clone())
                 .app_data(rate_limiter.clone())
                 .app_data(deduplicator.clone())
+                .app_data(circuit_breaker.clone())
                 .route("/predict", web::post().to(predict)),
         )
         .await;
@@ -676,6 +805,7 @@ mod tests {
         let engine = make_engine();
         let rate_limiter = make_rate_limiter();
         let deduplicator = make_deduplicator();
+        let circuit_breaker = make_circuit_breaker();
 
         let app = test::init_service(
             App::new()
@@ -683,6 +813,7 @@ mod tests {
                 .app_data(engine.clone())
                 .app_data(rate_limiter.clone())
                 .app_data(deduplicator.clone())
+                .app_data(circuit_breaker.clone())
                 .route("/predict", web::post().to(predict)),
         )
         .await;
@@ -710,6 +841,7 @@ mod tests {
         // Limit of 0 means every request is rejected
         let rate_limiter = web::Data::new(Arc::new(RateLimiter::new(0, 60)));
         let deduplicator = make_deduplicator();
+        let circuit_breaker = make_circuit_breaker();
 
         let app = test::init_service(
             App::new()
@@ -717,6 +849,7 @@ mod tests {
                 .app_data(engine.clone())
                 .app_data(rate_limiter.clone())
                 .app_data(deduplicator.clone())
+                .app_data(circuit_breaker.clone())
                 .route("/predict", web::post().to(predict)),
         )
         .await;
@@ -820,6 +953,7 @@ mod tests {
         let engine = make_engine();
         let rate_limiter = make_rate_limiter();
         let deduplicator = make_deduplicator();
+        let circuit_breaker = make_circuit_breaker();
 
         // Pre-populate the cache using the same key the handler will generate.
         let inputs = serde_json::json!({"data": [42]});
@@ -835,6 +969,7 @@ mod tests {
                 .app_data(engine.clone())
                 .app_data(rate_limiter.clone())
                 .app_data(deduplicator.clone())
+                .app_data(circuit_breaker.clone())
                 .route("/predict", web::post().to(predict)),
         )
         .await;
@@ -860,6 +995,7 @@ mod tests {
         let engine = make_engine();
         let rate_limiter = make_rate_limiter();
         let deduplicator = make_deduplicator();
+        let circuit_breaker = make_circuit_breaker();
 
         let inputs = serde_json::json!({"text": "hello"});
         let model_name = "dedup-model";
@@ -874,6 +1010,7 @@ mod tests {
                 .app_data(engine.clone())
                 .app_data(rate_limiter.clone())
                 .app_data(deduplicator.clone())
+                .app_data(circuit_breaker.clone())
                 .route("/predict", web::post().to(predict)),
         )
         .await;
@@ -931,6 +1068,7 @@ mod tests {
         let monitor = make_monitor();
         let rate_limiter = make_rate_limiter();
         let deduplicator = make_deduplicator();
+        let circuit_breaker = make_circuit_breaker();
         let cfg = Config::default();
         let manager = Arc::new(ModelManager::new(&cfg, None));
         {
@@ -950,6 +1088,7 @@ mod tests {
                 .app_data(engine.clone())
                 .app_data(rate_limiter.clone())
                 .app_data(deduplicator.clone())
+                .app_data(circuit_breaker.clone())
                 .route("/predict", web::post().to(predict)),
         )
         .await;
@@ -973,6 +1112,7 @@ mod tests {
         let monitor = make_monitor();
         let rate_limiter = make_rate_limiter();
         let deduplicator = make_deduplicator();
+        let circuit_breaker = make_circuit_breaker();
         let cfg = Config::default();
         let manager = Arc::new(ModelManager::new(&cfg, None));
         {
@@ -992,6 +1132,7 @@ mod tests {
                 .app_data(engine.clone())
                 .app_data(rate_limiter.clone())
                 .app_data(deduplicator.clone())
+                .app_data(circuit_breaker.clone())
                 .route("/predict", web::post().to(predict)),
         )
         .await;
@@ -1015,10 +1156,15 @@ mod tests {
         assert!(resp_body["result"].is_object());
     }
 
-    // ── synthesize_tts: success path (lines 124-135) ──────────────────────────
+    // ── synthesize_tts: legacy engine path is not implemented ─────────────────
+    // engine.tts_synthesize() used to fabricate a `base64_audio_for_N_words`
+    // placeholder and return it as a 200 success. It now fails loudly
+    // instead of silently returning fake audio disguised as real synthesis.
+    // (Real synthesis lives behind POST /tts/synthesize, backed by
+    // TTSManager — see src/api/tts.rs.)
 
     #[actix_web::test]
-    async fn test_synthesize_tts_with_loaded_model_returns_200() {
+    async fn test_synthesize_tts_with_loaded_model_no_longer_fakes_success() {
         let monitor = make_monitor();
         let cfg = Config::default();
         let manager = Arc::new(ModelManager::new(&cfg, None));
@@ -1057,11 +1203,12 @@ mod tests {
             .set_json(&body)
             .to_request();
         let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), 200);
+        assert_ne!(resp.status(), 200);
+        assert!(resp.status().is_server_error());
     }
 
     #[actix_web::test]
-    async fn test_synthesize_tts_success_response_body_shape() {
+    async fn test_synthesize_tts_error_response_body_has_no_fake_audio() {
         let monitor = make_monitor();
         let cfg = Config::default();
         let manager = Arc::new(ModelManager::new(&cfg, None));
@@ -1100,11 +1247,9 @@ mod tests {
             .set_json(&body)
             .to_request();
         let resp_body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
-        assert_eq!(resp_body["success"], true);
-        assert!(resp_body["error"].is_null());
-        assert!(resp_body["audio_data"].is_string());
-        assert!(resp_body["processing_time"].is_number());
-        assert_eq!(resp_body["sample_rate"], 16000);
+        assert_eq!(resp_body["success"], false);
+        assert!(resp_body["error"].is_string());
+        assert!(resp_body["audio_data"].is_null());
     }
 
     #[actix_web::test]

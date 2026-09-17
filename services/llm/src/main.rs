@@ -93,16 +93,23 @@ async fn main() -> std::io::Result<()> {
 
     let engine_kind = llm_config.engine.clone().unwrap_or_default().kind;
 
+    // Computed ahead of engine construction: SmolVlmEngine::load needs
+    // limits.max_ctx_size for its sequence-length guard (see config.rs's doc
+    // comment on `LimitsConfig.max_ctx_size` for why SmolVLM, unlike HRM,
+    // sources its ctx ceiling from here instead of a model-embedded value).
+    let limits = llm_config.limits.clone().unwrap_or_default();
+
     let engine: Arc<dyn engine::LlmEngine> = match engine_kind.as_str() {
         "smolvlm" => {
             let smolvlm_config = llm_config.smolvlm.as_ref().unwrap_or_else(|| {
                 eprintln!("[engine] kind = \"smolvlm\" but [smolvlm] config section missing");
                 std::process::exit(1);
             });
-            let eng = crate::smolvlm::SmolVlmEngine::load(smolvlm_config).unwrap_or_else(|e| {
-                eprintln!("SmolVLM engine load failed: {e}");
-                exit_skipping_ort_teardown(1);
-            });
+            let eng = crate::smolvlm::SmolVlmEngine::load(smolvlm_config, limits.max_ctx_size)
+                .unwrap_or_else(|e| {
+                    eprintln!("SmolVLM engine load failed: {e}");
+                    exit_skipping_ort_teardown(1);
+                });
             Arc::new(eng)
         }
         "hrm" => {
@@ -130,7 +137,6 @@ async fn main() -> std::io::Result<()> {
         } else { None }
     });
 
-    let limits = llm_config.limits.clone().unwrap_or_default();
     let mg_cfg = llm_config.memory_gate.clone().unwrap_or(crate::config::MemoryGateConfig {
         high_water_mb: 4096,
         low_water_mb: 3072,
@@ -186,6 +192,21 @@ async fn main() -> std::io::Result<()> {
                 &tools_cfg.main_server_base,
                 &tools_cfg.tts_endpoint,
             ));
+            // The tts tool writes one WAV per call to temp_dir() with no
+            // consumer-side cleanup contract; sweep stale ones periodically
+            // so a long-running service doesn't leak disk unboundedly.
+            tokio::spawn(async {
+                let mut ticker = tokio::time::interval(std::time::Duration::from_secs(600));
+                loop {
+                    ticker.tick().await;
+                    let removed = crate::agent::tools::tts::sweep_stale_temp_files(
+                        std::time::Duration::from_secs(600),
+                    );
+                    if removed > 0 {
+                        tracing::debug!(removed, "swept stale agent_tts_ temp files");
+                    }
+                }
+            });
             reg.insert(crate::agent::tools::stt::SttTool::new(
                 client.clone(),
                 &tools_cfg.main_server_base,

@@ -24,21 +24,12 @@ describe("apiGet", () => {
     expect(result).toEqual({ ok: true });
   });
 
-  it("does not send an Authorization header when no token is stored", async () => {
+  it("does not send an Authorization header", async () => {
     mockFetchOnce(200, {});
     await apiGet("/system/info");
     const call = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
     const headers = call[1].headers as Record<string, string>;
     expect(headers.Authorization).toBeUndefined();
-  });
-
-  it("sends a Bearer Authorization header when ki_auth_token is stored", async () => {
-    localStorage.setItem("ki_auth_token", "test-token-123");
-    mockFetchOnce(200, {});
-    await apiGet("/system/info");
-    const call = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
-    const headers = call[1].headers as Record<string, string>;
-    expect(headers.Authorization).toBe("Bearer test-token-123");
   });
 
   it("throws ApiError with status and body on non-2xx", async () => {

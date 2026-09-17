@@ -193,6 +193,16 @@ pub struct LimitsConfig {
     pub max_messages: usize,
     #[serde(default = "default_max_generated_tokens")]
     pub max_generated_tokens: u32,
+    /// Hard ceiling on total sequence length (prompt + image placeholder
+    /// tokens) for engines that have no per-model context size of their own.
+    /// HRM-Text's ceiling comes from its bundled `config.json`
+    /// (`HrmRuntimeConfig.ctx_size`) and does NOT use this field; SmolVLM has
+    /// no equivalent model-embedded value wired up, so `SmolVlmEngine` uses
+    /// this as its prefill/decode guard (see `smolvlm::SmolVlmEngine::load`).
+    /// Default matches SmolVLM-256M's backbone `max_position_embeddings`
+    /// (8192, per `models/smolvlm-256m/config.json`), which is also at least
+    /// as permissive as `max_prompt_chars`'s effective token budget
+    /// (16_384 chars / ~4 chars-per-token ≈ 4096 tokens).
     #[serde(default = "default_max_ctx_size")]
     pub max_ctx_size: u32,
     #[serde(default)]
@@ -235,6 +245,11 @@ pub struct LimitsResultsConfig {
     pub field_trim_above: usize,
 }
 
+/// `MemoryGate` (see `memory_gate.rs`) only ever polls RSS lazily inside
+/// `admit()` — there is no background-poller thread implemented. `true` is
+/// therefore the only behavior that exists; `LlmConfig::load` rejects
+/// `false` at startup (see `validate`) rather than silently keeping the
+/// lazy-poll behavior while claiming something else was configured.
 #[derive(Debug, Clone, Deserialize)]
 pub struct MemoryGateConfig {
     #[serde(default = "default_high_water_mb")]
@@ -245,6 +260,13 @@ pub struct MemoryGateConfig {
     pub poll_on_admit_only: bool,
 }
 
+/// KV-cache decode toggle. `SmolVlmEngine::generate` always decodes via its
+/// KV-cache (`decode_step`'s `past_k`/`past_v` inputs); `HrmEngine` has no
+/// KV-cache path at all (its `prefill`/`decode_greedy` re-run the full
+/// monolithic graph over the whole prefix every step). Neither engine has a
+/// non-KV-cache fallback to switch to, so `enabled = false` has nothing to
+/// select — `LlmConfig::load` rejects it at startup (see `validate`) instead
+/// of silently ignoring it.
 #[derive(Debug, Clone, Deserialize)]
 pub struct KvCacheConfig {
     #[serde(default = "default_kv_cache_enabled")]
@@ -294,7 +316,7 @@ fn default_max_image_bytes() -> usize { 2_097_152 }
 fn default_max_prompt_chars() -> usize { 16_384 }
 fn default_max_messages() -> usize { 32 }
 fn default_max_generated_tokens() -> u32 { 512 }
-fn default_max_ctx_size() -> u32 { 1024 }
+fn default_max_ctx_size() -> u32 { 8192 }
 fn default_body_limit() -> usize { 4_194_304 }
 fn default_sse_event_buffer() -> usize { 8 }
 fn default_chat_stream_buffer() -> usize { 16 }
@@ -336,13 +358,13 @@ impl LlmConfig {
     /// Load from `config.toml` in the current working directory, or use defaults.
     pub fn load() -> Result<Self> {
         let config_path = std::path::PathBuf::from("config.toml");
-        if config_path.exists() {
+        let cfg = if config_path.exists() {
             let text = std::fs::read_to_string(&config_path)
                 .context("read config.toml")?;
-            toml::from_str(&text).context("parse config.toml")
+            toml::from_str(&text).context("parse config.toml")?
         } else {
             tracing::warn!("config.toml not found, using defaults");
-            Ok(Self {
+            Self {
                 port: 8001,
                 hrm: None,
                 engine: None,
@@ -352,8 +374,34 @@ impl LlmConfig {
                 limits: None,
                 memory_gate: None,
                 kv_cache: None,
-            })
+            }
+        };
+        cfg.validate()?;
+        Ok(cfg)
+    }
+
+    /// Rejects config values that parse cleanly but select behavior nothing
+    /// in this crate implements — see the doc comments on `KvCacheConfig`
+    /// and `MemoryGateConfig` for why these two specifically have no
+    /// alternate code path to switch to.
+    fn validate(&self) -> Result<()> {
+        if let Some(kv) = &self.kv_cache {
+            anyhow::ensure!(
+                kv.enabled,
+                "kv_cache.enabled = false is not supported: both engines always decode via \
+                 their KV-cache path (SmolVLM) or have no KV-cache path to disable (HRM). \
+                 Remove [kv_cache] or set enabled = true."
+            );
         }
+        if let Some(mg) = &self.memory_gate {
+            anyhow::ensure!(
+                mg.poll_on_admit_only,
+                "memory_gate.poll_on_admit_only = false is not supported: MemoryGate only \
+                 implements lazy polling on admit() — there is no background-poller mode to \
+                 switch to. Remove [memory_gate] poll_on_admit_only or set it to true."
+            );
+        }
+        Ok(())
     }
 }
 
@@ -433,6 +481,51 @@ enabled = false
         let cfg: LlmConfig = toml::from_str(toml_text).unwrap();
         let kv = cfg.kv_cache.expect("kv_cache section");
         assert!(!kv.enabled);
+    }
+
+    #[test]
+    fn validate_rejects_kv_cache_disabled() {
+        // Parsing succeeds (tested above); `validate()` — invoked by `load()` —
+        // is what actually enforces that no code path implements this.
+        let toml_text = r#"
+port = 8001
+[kv_cache]
+enabled = false
+"#;
+        let cfg: LlmConfig = toml::from_str(toml_text).unwrap();
+        let err = cfg.validate().unwrap_err().to_string();
+        assert!(err.contains("kv_cache.enabled"), "got: {err}");
+    }
+
+    #[test]
+    fn validate_accepts_kv_cache_enabled_or_absent() {
+        let cfg: LlmConfig = toml::from_str("port = 8001\n[kv_cache]\nenabled = true\n").unwrap();
+        assert!(cfg.validate().is_ok());
+        let cfg: LlmConfig = toml::from_str("port = 8001\n").unwrap();
+        assert!(cfg.validate().is_ok());
+    }
+
+    #[test]
+    fn validate_rejects_memory_gate_poll_on_admit_only_disabled() {
+        let toml_text = r#"
+port = 8001
+[memory_gate]
+poll_on_admit_only = false
+"#;
+        let cfg: LlmConfig = toml::from_str(toml_text).unwrap();
+        let err = cfg.validate().unwrap_err().to_string();
+        assert!(err.contains("poll_on_admit_only"), "got: {err}");
+    }
+
+    #[test]
+    fn max_ctx_size_defaults_to_smolvlm_backbone_context() {
+        let toml_text = r#"
+port = 8001
+[limits]
+max_image_bytes = 1024
+"#;
+        let cfg: LlmConfig = toml::from_str(toml_text).unwrap();
+        assert_eq!(cfg.limits.unwrap().max_ctx_size, 8_192);
     }
 
     #[test]

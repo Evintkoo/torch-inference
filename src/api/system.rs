@@ -391,8 +391,8 @@ mod tests {
         let req = test::TestRequest::get().uri("/system/config").to_request();
         let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
         let server = &body["server"];
-        // Config::default() gives host="0.0.0.0" and port=8000
-        assert_eq!(server["host"].as_str().unwrap(), "0.0.0.0");
+        // Config::default() gives host="127.0.0.1" and port=8000
+        assert_eq!(server["host"].as_str().unwrap(), "127.0.0.1");
         assert_eq!(server["port"].as_u64().unwrap(), 8000);
         assert!(server["workers"].as_u64().unwrap() > 0);
         assert_eq!(server["max_connections"].as_u64().unwrap(), 1000);

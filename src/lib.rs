@@ -8,7 +8,6 @@ pub mod config;
 pub mod core;
 pub mod dedup;
 pub mod error;
-pub mod guard;
 pub mod inflight_batch;
 pub mod middleware;
 pub mod model_pool;

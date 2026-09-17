@@ -178,7 +178,11 @@ impl TTSEngine for PiperTTSEngine {
         &self.capabilities
     }
 
-    async fn synthesize(&self, text: &str, params: &SynthesisParams) -> Result<AudioData> {
+    async fn synthesize(
+        &self,
+        text: &str,
+        params: &SynthesisParams,
+    ) -> Result<(AudioData, Option<&'static str>)> {
         self.validate_text(text)?;
 
         // Delegate to shared Kokoro ONNX backend (same as other stub engines)
@@ -189,13 +193,13 @@ impl TTSEngine for PiperTTSEngine {
                 ..params.clone()
             };
             match backend.synthesize(text, &mapped).await {
-                Ok(audio) => return Ok(audio),
+                Ok((audio, _)) => return Ok((audio, Some("kokoro-onnx"))),
                 Err(e) => tracing::warn!(error = %e, "Piper: Kokoro ONNX backend error, using fallback"),
             }
         }
 
         // Parametric fallback
-        self.synthesize_fallback(text, params)
+        self.synthesize_fallback(text, params).map(|audio| (audio, None))
     }
 
     fn list_voices(&self) -> Vec<VoiceInfo> {
@@ -389,7 +393,7 @@ mod tests {
         };
         let result = engine.synthesize("hello", &params).await;
         // synthesize delegates to Kokoro ONNX backend or parametric fallback — always Ok.
-        let audio = result.expect("piper should succeed via fallback");
+        let (audio, _tag) = result.expect("piper should succeed via fallback");
         assert!(!audio.samples.is_empty(), "should produce audio");
     }
 

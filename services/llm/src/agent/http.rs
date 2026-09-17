@@ -107,13 +107,7 @@ pub async fn run(
         Err(e) => return HttpResponse::PayloadTooLarge().json(serde_json::json!({"error": e})),
     };
 
-    let opts = ExecOptions {
-        max_steps:           req.config.as_ref().and_then(|c| c.max_steps).unwrap_or(layer.config.max_steps),
-        max_run_ms:          req.config.as_ref().and_then(|c| c.max_run_ms).unwrap_or(layer.config.max_run_ms),
-        per_tool_ms:         req.config.as_ref().and_then(|c| c.per_tool_ms).unwrap_or(layer.config.per_tool_ms),
-        planner_temperature: req.config.as_ref().and_then(|c| c.temperature).unwrap_or(layer.config.planner_temperature),
-        planner_max_tokens:  256,
-    };
+    let opts = resolve_exec_options(req.config.as_ref(), &layer.config, &layer.limits);
 
     let rx = run_agent(
         layer.planner.clone(),
@@ -159,6 +153,34 @@ fn stage_inputs(
     Ok(m)
 }
 
+/// Merge a request's `AgentConfigOverride` onto the server-configured
+/// `AgentConfig`. Overrides may only TIGHTEN the budget (a smaller
+/// `max_steps`/`max_run_ms`/`per_tool_ms`), never loosen it — `server.*` is
+/// the operator-set ceiling. Without this clamp a client could pass e.g.
+/// `max_steps: 999999999` or `max_run_ms: u64::MAX` to bypass the resource
+/// caps entirely (each step can call out to slow tools/upstreams), defeating
+/// the whole point of `[agent] max_steps` / `max_run_ms` / `per_tool_ms` in
+/// config.toml.
+fn resolve_exec_options(
+    req_config: Option<&AgentConfigOverride>,
+    server: &AgentConfig,
+    limits: &crate::config::LimitsConfig,
+) -> ExecOptions {
+    ExecOptions {
+        max_steps: req_config.and_then(|c| c.max_steps)
+            .map_or(server.max_steps, |v| v.min(server.max_steps)),
+        max_run_ms: req_config.and_then(|c| c.max_run_ms)
+            .map_or(server.max_run_ms, |v| v.min(server.max_run_ms)),
+        per_tool_ms: req_config.and_then(|c| c.per_tool_ms)
+            .map_or(server.per_tool_ms, |v| v.min(server.per_tool_ms)),
+        planner_temperature: req_config.and_then(|c| c.temperature).unwrap_or(server.planner_temperature),
+        planner_max_tokens:  256,
+        sse_event_buffer: limits.channels.sse_event_buffer,
+        field_trim_above: limits.results.field_trim_above,
+        per_run_bytes: limits.results.per_run_bytes,
+    }
+}
+
 fn split_data_uri_or_bare(s: &str, default_mime: &str) -> (String, String) {
     if let Some(comma) = s.find(',') {
         if let Some(meta) = s.get(..comma) {
@@ -182,5 +204,65 @@ fn receiver_to_sse(
             yield Ok::<_, actix_web::Error>(Bytes::from(ev.to_sse_frame()));
         }
         yield Ok::<_, actix_web::Error>(Bytes::from_static(b"data: [DONE]\n\n"));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn server_cfg() -> AgentConfig {
+        AgentConfig {
+            enabled: true,
+            max_steps: 4,
+            max_run_ms: 10_000,
+            per_tool_ms: 2_000,
+            max_concurrent_runs: 4,
+            reflect_max_tokens: 128,
+            planner_temperature: 0.0,
+            http_fetch: None,
+            tools: None,
+        }
+    }
+
+    #[test]
+    fn request_cannot_loosen_the_configured_budget() {
+        // A client trying to blow past the operator's caps must be clamped
+        // down to the server ceiling, not granted the larger value.
+        let overrides = AgentConfigOverride {
+            max_steps: Some(999_999_999),
+            max_run_ms: Some(u64::MAX),
+            per_tool_ms: Some(u64::MAX),
+            temperature: None,
+        };
+        let opts = resolve_exec_options(Some(&overrides), &server_cfg(), &crate::config::LimitsConfig::default());
+        assert_eq!(opts.max_steps, 4);
+        assert_eq!(opts.max_run_ms, 10_000);
+        assert_eq!(opts.per_tool_ms, 2_000);
+    }
+
+    #[test]
+    fn request_may_tighten_the_configured_budget() {
+        // A client asking for a SMALLER budget than the server ceiling is
+        // legitimate (e.g. a latency-sensitive caller) and must be honored.
+        let overrides = AgentConfigOverride {
+            max_steps: Some(1),
+            max_run_ms: Some(500),
+            per_tool_ms: Some(100),
+            temperature: None,
+        };
+        let opts = resolve_exec_options(Some(&overrides), &server_cfg(), &crate::config::LimitsConfig::default());
+        assert_eq!(opts.max_steps, 1);
+        assert_eq!(opts.max_run_ms, 500);
+        assert_eq!(opts.per_tool_ms, 100);
+    }
+
+    #[test]
+    fn no_override_uses_server_defaults() {
+        let opts = resolve_exec_options(None, &server_cfg(), &crate::config::LimitsConfig::default());
+        assert_eq!(opts.max_steps, 4);
+        assert_eq!(opts.max_run_ms, 10_000);
+        assert_eq!(opts.per_tool_ms, 2_000);
+        assert_eq!(opts.planner_temperature, 0.0);
     }
 }

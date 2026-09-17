@@ -116,7 +116,11 @@ impl TTSEngine for WindowsSAPIEngine {
         &self.capabilities
     }
 
-    async fn synthesize(&self, text: &str, params: &SynthesisParams) -> Result<AudioData> {
+    async fn synthesize(
+        &self,
+        text: &str,
+        params: &SynthesisParams,
+    ) -> Result<(AudioData, Option<&'static str>)> {
         self.validate_text(text)?;
 
         log::info!("🎤 Generating REAL SPEECH with Windows SAPI: '{}'", text);
@@ -140,7 +144,7 @@ impl TTSEngine for WindowsSAPIEngine {
             audio.samples.len() as f32 / audio.sample_rate as f32
         );
 
-        Ok(audio)
+        Ok((audio, None))
     }
 
     fn list_voices(&self) -> Vec<VoiceInfo> {

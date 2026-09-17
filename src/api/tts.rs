@@ -109,13 +109,13 @@ pub async fn synthesize(
         language: req.language.clone(),
     };
 
-    let mut audio = state
+    let (mut audio, actual_engine) = state
         .manager
         .synthesize(&req.text, req.engine.as_deref(), params)
         .await
         .map_err(|e| ApiError::InternalError(format!("Synthesis failed: {}", e)))?;
 
-    let engine_used = if let Some(engine_id) = req.engine.as_deref() {
+    let requested_engine = if let Some(engine_id) = req.engine.as_deref() {
         engine_id.to_string()
     } else {
         state
@@ -123,6 +123,17 @@ pub async fn synthesize(
             .get_default_engine()
             .map(|e| e.name().to_string())
             .unwrap_or_else(|| "unknown".to_string())
+    };
+
+    // When the requested engine delegated to a different backend (e.g. "xtts"
+    // has no model loaded and silently falls back to the shared Kokoro ONNX
+    // backend), report that honestly instead of claiming the requested engine
+    // produced the audio.
+    let engine_used = match actual_engine {
+        Some(actual) if actual != requested_engine => {
+            format!("{} ({})", requested_engine, actual)
+        }
+        _ => requested_engine,
     };
 
     // Post-process samples (silence detection → DC offset → normalize → trim)
@@ -482,12 +493,15 @@ mod tests {
             &self,
             _text: &str,
             _params: &SynthesisParams,
-        ) -> anyhow::Result<AudioData> {
-            Ok(AudioData {
-                samples: vec![0.0_f32; 22050],
-                sample_rate: 22050,
-                channels: 1,
-            })
+        ) -> anyhow::Result<(AudioData, Option<&'static str>)> {
+            Ok((
+                AudioData {
+                    samples: vec![0.0_f32; 22050],
+                    sample_rate: 22050,
+                    channels: 1,
+                },
+                None,
+            ))
         }
         fn list_voices(&self) -> Vec<VoiceInfo> {
             self.caps.supported_voices.clone()

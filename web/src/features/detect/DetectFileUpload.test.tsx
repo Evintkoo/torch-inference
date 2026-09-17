@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
@@ -144,6 +144,10 @@ const successResponse: YoloDetectResponse = {
 
 describe("DetectFileUpload", () => {
   afterEach(() => {
+    // Unmount before restoring globals — DetectFileUpload's own unmount
+    // cleanup calls URL.revokeObjectURL, which needs the stub still in
+    // place (real jsdom doesn't implement it). Mirrors ImageUploader.test.tsx.
+    cleanup();
     vi.unstubAllGlobals();
   });
 

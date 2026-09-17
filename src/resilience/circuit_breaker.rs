@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use log::{info, warn};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::OnceLock;
@@ -50,27 +49,9 @@ impl CircuitBreaker {
     where
         F: FnOnce() -> Result<T, String>,
     {
-        // Phase 1: check/transition state, then *release the lock* so concurrent
-        // callers are not serialised through the duration of `f()`.
-        {
-            let mut state = self.state.lock();
-            if *state == CircuitState::Open {
-                let nanos = self.last_failure_nanos.load(Ordering::Relaxed);
-                let should_retry = nanos > 0 && {
-                    let last = cb_epoch() + Duration::from_nanos(nanos);
-                    last.elapsed() >= self.config.timeout
-                };
+        self.try_acquire()?;
 
-                if should_retry {
-                    info!("Circuit breaker transitioning to HalfOpen");
-                    *state = CircuitState::HalfOpen;
-                } else {
-                    return Err("Circuit breaker is open".to_string());
-                }
-            }
-        } // ← state lock released here
-
-        // Phase 2: call `f()` without holding any lock.
+        // Call `f()` without holding any lock (try_acquire already released it).
         match f() {
             Ok(result) => {
                 self.on_success();
@@ -83,11 +64,47 @@ impl CircuitBreaker {
         }
     }
 
-    fn on_success(&self) {
-        // Relaxed is correct: all paths that read these counters first acquire
-        // the state mutex, which provides the required memory ordering.
-        self.failure_count.store(0, Ordering::Relaxed);
+    /// Phase-1 check/transition of `call()`, exposed standalone so async
+    /// callers (which can't hand an `.await`-ing future to `call`'s sync
+    /// `FnOnce`) can check admission, run their own async work, then report
+    /// the outcome via `record_success`/`record_failure`.
+    pub fn try_acquire(&self) -> Result<(), String> {
+        let mut state = self.state.lock();
+        if *state == CircuitState::Open {
+            let nanos = self.last_failure_nanos.load(Ordering::Relaxed);
+            let should_retry = nanos > 0 && {
+                let last = cb_epoch() + Duration::from_nanos(nanos);
+                last.elapsed() >= self.config.timeout
+            };
 
+            if should_retry {
+                info!("Circuit breaker transitioning to HalfOpen");
+                *state = CircuitState::HalfOpen;
+            } else {
+                return Err("Circuit breaker is open".to_string());
+            }
+        }
+        Ok(())
+    }
+
+    /// Reports a successful call admitted via `try_acquire`. See `on_success`.
+    pub fn record_success(&self) {
+        self.on_success();
+    }
+
+    /// Reports a failed call admitted via `try_acquire`. See `on_failure`.
+    pub fn record_failure(&self) {
+        self.on_failure();
+    }
+
+    fn on_success(&self) {
+        // failure_count is reset only under the state lock (matching
+        // per_model_breaker.rs::on_success). It previously reset
+        // unconditionally *before* acquiring the lock, which could race
+        // with a concurrent on_failure()'s fetch_add and silently drop
+        // failures that were about to (or just did) push the breaker past
+        // failure_threshold, letting it stay Closed despite the threshold
+        // being met.
         let mut state = self.state.lock();
         match *state {
             CircuitState::HalfOpen => {
@@ -95,11 +112,12 @@ impl CircuitBreaker {
                 if success_count >= self.config.success_threshold {
                     info!("Circuit breaker transitioning to Closed");
                     *state = CircuitState::Closed;
+                    self.failure_count.store(0, Ordering::Relaxed);
                     self.success_count.store(0, Ordering::Relaxed);
                 }
             }
             CircuitState::Closed => {
-                self.success_count.store(0, Ordering::Relaxed);
+                self.failure_count.store(0, Ordering::Relaxed);
             }
             _ => {}
         }
@@ -157,6 +175,70 @@ impl Default for CircuitBreakerConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ── try_acquire / record_success / record_failure (async-friendly API) ────
+    // `call()` is sync-closure-only, which doesn't compose with `.await`-based
+    // handlers. These three decompose the same Phase-1/Phase-2 logic `call()`
+    // already uses, so an async caller can check-then-await-then-record.
+
+    #[test]
+    fn try_acquire_allows_when_closed() {
+        let cb = CircuitBreaker::new(CircuitBreakerConfig::default());
+        assert!(cb.try_acquire().is_ok());
+    }
+
+    #[test]
+    fn try_acquire_rejects_when_open_before_timeout() {
+        let cb = CircuitBreaker::new(CircuitBreakerConfig {
+            failure_threshold: 1,
+            success_threshold: 1,
+            timeout: Duration::from_secs(60),
+        });
+        cb.record_failure();
+        assert_eq!(cb.get_state(), CircuitState::Open);
+        assert!(cb.try_acquire().is_err());
+    }
+
+    #[test]
+    fn try_acquire_transitions_to_half_open_after_timeout() {
+        let cb = CircuitBreaker::new(CircuitBreakerConfig {
+            failure_threshold: 1,
+            success_threshold: 1,
+            timeout: Duration::from_millis(10),
+        });
+        cb.record_failure();
+        assert_eq!(cb.get_state(), CircuitState::Open);
+        std::thread::sleep(Duration::from_millis(30));
+        assert!(cb.try_acquire().is_ok());
+        assert_eq!(cb.get_state(), CircuitState::HalfOpen);
+    }
+
+    #[test]
+    fn record_success_and_record_failure_match_call_semantics() {
+        // decomposed try_acquire+record_* must behave identically to call()
+        // for the same sequence of outcomes.
+        let via_call = CircuitBreaker::new(CircuitBreakerConfig {
+            failure_threshold: 2,
+            success_threshold: 2,
+            timeout: Duration::from_secs(60),
+        });
+        let via_decomposed = CircuitBreaker::new(CircuitBreakerConfig {
+            failure_threshold: 2,
+            success_threshold: 2,
+            timeout: Duration::from_secs(60),
+        });
+
+        let _ = via_call.call(|| Err::<(), String>("e".to_string()));
+        via_decomposed.try_acquire().unwrap();
+        via_decomposed.record_failure();
+
+        let _ = via_call.call(|| Err::<(), String>("e".to_string()));
+        via_decomposed.try_acquire().unwrap();
+        via_decomposed.record_failure();
+
+        assert_eq!(via_call.get_state(), CircuitState::Open);
+        assert_eq!(via_decomposed.get_state(), CircuitState::Open);
+    }
 
     #[test]
     fn test_circuit_breaker_initial_state() {

@@ -258,7 +258,14 @@ pub async fn transcribe_audio(
     }))
 }
 
-pub async fn validate_audio(mut payload: Multipart) -> Result<HttpResponse, ApiError> {
+pub async fn validate_audio(
+    mut payload: Multipart,
+    config: web::Data<Config>,
+) -> Result<HttpResponse, ApiError> {
+    // Same cap as transcribe_audio — this handler previously had no size
+    // limit at all, unlike its sibling, letting a client stream an
+    // unbounded body straight into memory before any validation ran.
+    let max_bytes = config.server.multipart_audio_limit_mb.saturating_mul(1024 * 1024);
     let mut audio_data = Vec::new();
     let mut errors = Vec::new();
 
@@ -267,6 +274,12 @@ pub async fn validate_audio(mut payload: Multipart) -> Result<HttpResponse, ApiE
 
         while let Some(chunk) = field.next().await {
             let data = chunk.map_err(|e| ApiError::BadRequest(e.to_string()))?;
+            if audio_data.len().saturating_add(data.len()) > max_bytes {
+                return Err(ApiError::PayloadTooLarge(format!(
+                    "audio upload exceeds {} MiB limit",
+                    config.server.multipart_audio_limit_mb
+                )));
+            }
             audio_data.extend_from_slice(&data);
         }
     }
@@ -799,7 +812,11 @@ mod tests {
     #[tokio::test]
     async fn test_validate_audio_no_audio_field_returns_invalid() {
         let app =
-            test::init_service(App::new().route("/audio/validate", web::post().to(validate_audio)))
+            test::init_service(
+                App::new()
+                    .app_data(web::Data::new(Config::default()))
+                    .route("/audio/validate", web::post().to(validate_audio)),
+            )
                 .await;
 
         // Multipart with only a non-audio field — audio_data stays empty
@@ -834,7 +851,11 @@ mod tests {
         let wav_bytes = make_wav_bytes_for_test(16000, 1, 16000);
 
         let app =
-            test::init_service(App::new().route("/audio/validate", web::post().to(validate_audio)))
+            test::init_service(
+                App::new()
+                    .app_data(web::Data::new(Config::default()))
+                    .route("/audio/validate", web::post().to(validate_audio)),
+            )
                 .await;
 
         let boundary = "wavboundary123";
@@ -861,7 +882,11 @@ mod tests {
         let invalid_audio = b"this is not audio data at all".to_vec();
 
         let app =
-            test::init_service(App::new().route("/audio/validate", web::post().to(validate_audio)))
+            test::init_service(
+                App::new()
+                    .app_data(web::Data::new(Config::default()))
+                    .route("/audio/validate", web::post().to(validate_audio)),
+            )
                 .await;
 
         let boundary = "invalidboundary";
@@ -1138,7 +1163,11 @@ mod tests {
         let wav_bytes = make_wav_bytes_for_test(22050, 2, 22050);
 
         let app =
-            test::init_service(App::new().route("/audio/validate", web::post().to(validate_audio)))
+            test::init_service(
+                App::new()
+                    .app_data(web::Data::new(Config::default()))
+                    .route("/audio/validate", web::post().to(validate_audio)),
+            )
                 .await;
 
         let boundary = "filenametest";
@@ -1193,7 +1222,11 @@ mod tests {
     #[tokio::test]
     async fn test_validate_audio_truly_empty_multipart_returns_invalid() {
         let app =
-            test::init_service(App::new().route("/audio/validate", web::post().to(validate_audio)))
+            test::init_service(
+                App::new()
+                    .app_data(web::Data::new(Config::default()))
+                    .route("/audio/validate", web::post().to(validate_audio)),
+            )
                 .await;
 
         let boundary = "emptyvalidatebnd";
@@ -1261,7 +1294,11 @@ mod tests {
     #[tokio::test]
     async fn test_validate_audio_empty_field_body_returns_valid_false() {
         let app =
-            test::init_service(App::new().route("/audio/validate", web::post().to(validate_audio)))
+            test::init_service(
+                App::new()
+                    .app_data(web::Data::new(Config::default()))
+                    .route("/audio/validate", web::post().to(validate_audio)),
+            )
                 .await;
 
         let boundary = "emptybody123";

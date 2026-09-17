@@ -13,18 +13,54 @@ pub struct Claims {
 
 pub struct JwtHandler {
     secret: String,
+    algorithm: Algorithm,
+    access_token_ttl: Duration,
 }
 
 impl JwtHandler {
+    /// Defaults to HS256 with a 60-minute access token TTL — same behavior
+    /// as before `auth.jwt_algorithm` / `auth.access_token_expire_minutes`
+    /// were wired up. Prefer `with_options` when config values are available.
     pub fn new(secret: &str) -> Self {
+        Self::with_options(secret, "HS256", 60)
+    }
+
+    /// `algorithm` is parsed from `config.auth.jwt_algorithm`. Only the HMAC
+    /// family (HS256/HS384/HS512) is supported since `JwtHandler` signs with
+    /// a shared secret (`EncodingKey::from_secret`) rather than an asymmetric
+    /// keypair; an unrecognized value falls back to HS256 with a warning
+    /// instead of silently ignoring the config. `access_token_expire_minutes`
+    /// of 0 falls back to the 60-minute default rather than minting
+    /// already-expired tokens.
+    pub fn with_options(secret: &str, algorithm: &str, access_token_expire_minutes: u32) -> Self {
+        let algorithm = match algorithm.to_ascii_uppercase().as_str() {
+            "HS256" => Algorithm::HS256,
+            "HS384" => Algorithm::HS384,
+            "HS512" => Algorithm::HS512,
+            other => {
+                log::warn!(
+                    "auth.jwt_algorithm '{}' is not a supported HMAC algorithm \
+                     (HS256/HS384/HS512); falling back to HS256",
+                    other
+                );
+                Algorithm::HS256
+            }
+        };
+        let ttl_minutes = if access_token_expire_minutes == 0 {
+            60
+        } else {
+            access_token_expire_minutes
+        };
         Self {
             secret: secret.to_string(),
+            algorithm,
+            access_token_ttl: Duration::minutes(ttl_minutes as i64),
         }
     }
 
     pub fn create_token(&self, username: &str) -> Result<String, Box<dyn std::error::Error>> {
         let now = Utc::now();
-        let exp = (now + Duration::hours(1)).timestamp();
+        let exp = (now + self.access_token_ttl).timestamp();
 
         let claims = Claims {
             sub: username.to_string(),
@@ -34,7 +70,7 @@ impl JwtHandler {
         };
 
         let token = encode(
-            &Header::new(Algorithm::HS256),
+            &Header::new(self.algorithm),
             &claims,
             &EncodingKey::from_secret(self.secret.as_ref()),
         )?;
@@ -46,7 +82,7 @@ impl JwtHandler {
         let data = decode(
             token,
             &DecodingKey::from_secret(self.secret.as_ref()),
-            &Validation::new(Algorithm::HS256),
+            &Validation::new(self.algorithm),
         )?;
 
         Ok(data.claims)
@@ -123,6 +159,42 @@ mod tests {
             result.is_err(),
             "expected Err when verifying with wrong secret"
         );
+    }
+
+    #[test]
+    fn jwt_with_options_unknown_algorithm_falls_back_to_hs256() {
+        // Must not panic and must still produce a verifiable token.
+        let handler = JwtHandler::with_options("test_secret", "RS256", 60);
+        let token = handler.create_token("alice").expect("create_token failed");
+        let claims = handler.verify_token(&token).expect("verify_token failed");
+        assert_eq!(claims.sub, "alice");
+    }
+
+    #[test]
+    fn jwt_with_options_zero_expiry_falls_back_to_default() {
+        let handler = JwtHandler::with_options("test_secret", "HS256", 0);
+        let token = handler.create_token("alice").expect("create_token failed");
+        let claims = handler.verify_token(&token).expect("verify_token failed");
+        // exp must be in the future (60-minute fallback), not already expired.
+        assert!(claims.exp > chrono::Utc::now().timestamp());
+    }
+
+    #[test]
+    fn jwt_with_options_respects_custom_expiry_minutes() {
+        let handler = JwtHandler::with_options("test_secret", "HS256", 5);
+        let token = handler.create_token("alice").expect("create_token failed");
+        let claims = handler.verify_token(&token).expect("verify_token failed");
+        let now = chrono::Utc::now().timestamp();
+        // exp should be ~5 minutes out, well under the 60-minute default.
+        assert!(claims.exp > now && claims.exp <= now + 6 * 60);
+    }
+
+    #[test]
+    fn jwt_with_options_hs512_roundtrip() {
+        let handler = JwtHandler::with_options("test_secret", "HS512", 60);
+        let token = handler.create_token("bob").expect("create_token failed");
+        let claims = handler.verify_token(&token).expect("verify_token failed");
+        assert_eq!(claims.sub, "bob");
     }
 
     // ── UserStore ────────────────────────────────────────────────────────────

@@ -284,20 +284,23 @@ impl OnnxModelLoader {
     pub fn infer(
         &self,
         _model: &LoadedOnnxModel,
-        input: &Value,
+        _input: &Value,
         metadata: &ModelMetadata,
     ) -> Result<Value> {
-        info!("Running ONNX inference for model: {}", metadata.name);
-
-        // TODO: Implement proper input tensor conversion
-        // For now, this is a placeholder that requires implementation based on input schema
-
-        // Example of running inference (simplified)
-        // let inputs = inputs![...];
-        // let outputs = model.session.run(inputs)?;
-
-        // For now, just return the input as a mock result
-        Ok(input.clone())
+        // Generic input->tensor conversion for arbitrary registered ONNX models
+        // (reached via POST /predict for models loaded through the generic
+        // model registry, as opposed to the dedicated classify/yolo/tts/stt
+        // ONNX pipelines which have their own real tensor conversion) is not
+        // implemented. Previously this silently echoed the request body back
+        // as `Ok(input.clone())`, which looked like a successful inference to
+        // callers. Fail explicitly instead — `/predict` already maps errors
+        // to a proper HTTP error response (see api::handlers::predict).
+        anyhow::bail!(
+            "Generic ONNX inference for model '{}' is not implemented: input tensor \
+             conversion from arbitrary JSON schemas is not yet wired up. Use the \
+             dedicated /classify, /detect, /tts, or /stt endpoints instead.",
+            metadata.name
+        )
     }
 }
 

@@ -27,6 +27,11 @@ pub struct SmolVlmEngine {
     tokenizer: Option<HrmTokenizer>,
     image_token_id: u32,
     eos_token_id: u32,
+    /// Hard ceiling on total sequence length (prompt + image placeholder
+    /// tokens + generated tokens so far). Sourced from
+    /// `LimitsConfig.max_ctx_size` — see that field's doc comment for why
+    /// SmolVLM (unlike HRM) has no model-embedded ctx size of its own.
+    max_ctx_size: u32,
     stub: bool,
 }
 
@@ -38,7 +43,7 @@ impl SmolVlmEngine {
         self.stub
     }
 
-    pub fn load(cfg: &SmolVlmConfig) -> Result<Self> {
+    pub fn load(cfg: &SmolVlmConfig, max_ctx_size: u32) -> Result<Self> {
         let model_dir = PathBuf::from(&cfg.model_dir);
 
         if cfg.stub.unwrap_or(false) {
@@ -50,6 +55,7 @@ impl SmolVlmEngine {
                 tokenizer: None,
                 image_token_id: 0,
                 eos_token_id: 0,
+                max_ctx_size,
                 stub: true,
             });
         }
@@ -91,6 +97,7 @@ impl SmolVlmEngine {
             tokenizer: Some(tokenizer),
             image_token_id,
             eos_token_id,
+            max_ctx_size,
             stub: false,
         })
     }
@@ -283,6 +290,24 @@ impl SmolVlmEngine {
         temperature: f32,
         tx: &tokio::sync::mpsc::Sender<String>,
     ) -> Result<()> {
+        // Hard ceiling on prompt length. Mirrors `HrmEngine::prefill`'s guard:
+        // refuse here — before touching the tokenizer, running the vision
+        // encoder, the embed lookup, or any decoder pass — so EVERY caller
+        // (chat, complete) is protected from an unbounded prompt (plus
+        // IMAGE_SEQ_LEN image-placeholder tokens once spliced in) driving the
+        // KV-cache decode loop's memory/compute past what the model was ever
+        // trained/sized for. Checked first (ahead of the stub-engine
+        // tokenizer lookup below) so the guard is provable on a stub engine
+        // the same way `HrmEngine::prefill`'s tests prove it on a session-less
+        // stub — see `generate_refuses_sequence_longer_than_ctx_size`.
+        if ids.len() as u32 > self.max_ctx_size {
+            anyhow::bail!(
+                "input sequence length {} exceeds ctx_size {} — refusing generation",
+                ids.len(),
+                self.max_ctx_size
+            );
+        }
+
         let tokenizer = self.tokenizer.as_ref()
             .ok_or_else(|| anyhow::anyhow!("generate called on stub engine"))?;
 
@@ -306,6 +331,14 @@ impl SmolVlmEngine {
         let mut history: Vec<i64> = Vec::new();
 
         for _ in 0..max_tokens {
+            // Same ceiling, enforced again per-step: the prompt-length check
+            // above only catches an oversized *prompt*; without this the
+            // decode loop would keep growing the KV-cache past max_ctx_size
+            // one generated token at a time.
+            if (past_len + cur_seq_len) as u32 >= self.max_ctx_size {
+                tracing::warn!("decode hit ctx_size cap");
+                break;
+            }
             let (mut logits, new_past_k, new_past_v) =
                 self.decode_step(&cur_embeds, cur_seq_len, past_len, &past_k, &past_v)?;
             past_k = new_past_k;
@@ -439,6 +472,10 @@ mod tests {
     use super::*;
     use crate::config::SmolVlmConfig;
 
+    /// Matches `config::default_max_ctx_size()` — SmolVLM-256M's backbone
+    /// `max_position_embeddings` (see `models/smolvlm-256m/config.json`).
+    const TEST_CTX_SIZE: u32 = 8_192;
+
     fn fixture_cfg() -> SmolVlmConfig {
         SmolVlmConfig {
             model_dir: format!("{}/models/smolvlm-256m", env!("CARGO_MANIFEST_DIR")),
@@ -466,7 +503,7 @@ mod tests {
 
     #[test]
     fn stub_load_succeeds_without_any_model_files() {
-        let eng = SmolVlmEngine::load(&stub_cfg()).expect("stub load should succeed");
+        let eng = SmolVlmEngine::load(&stub_cfg(), TEST_CTX_SIZE).expect("stub load should succeed");
         assert!(eng.is_stub());
     }
 
@@ -478,7 +515,7 @@ mod tests {
             n_threads: Some(2),
             stub: Some(false),
         };
-        let err = SmolVlmEngine::load(&cfg).unwrap_err();
+        let err = SmolVlmEngine::load(&cfg, TEST_CTX_SIZE).unwrap_err();
         assert!(err.to_string().contains("not found"));
     }
 
@@ -489,7 +526,7 @@ mod tests {
             eprintln!("skipping: run `make smolvlm-download` to enable SmolVLM load tests");
             return;
         }
-        let eng = SmolVlmEngine::load(&fixture_cfg()).unwrap();
+        let eng = SmolVlmEngine::load(&fixture_cfg(), TEST_CTX_SIZE).unwrap();
         assert_eq!(eng.image_token_id, 49190);
         assert_eq!(eng.eos_token_id, 49279);
     }
@@ -501,7 +538,7 @@ mod tests {
             eprintln!("skipping");
             return;
         }
-        let eng = SmolVlmEngine::load(&fixture_cfg()).unwrap();
+        let eng = SmolVlmEngine::load(&fixture_cfg(), TEST_CTX_SIZE).unwrap();
         // 4x4 red square PNG, tiny but decodable.
         let img = image::DynamicImage::ImageRgb8(
             image::ImageBuffer::from_pixel(4, 4, image::Rgb([255u8, 0, 0])),
@@ -529,9 +566,39 @@ mod tests {
         assert!(embeds[2 * HIDDEN_SIZE..3 * HIDDEN_SIZE].iter().all(|&v| v == 0.0));
     }
 
+    #[test]
+    fn generate_refuses_sequence_longer_than_ctx_size() {
+        // Same proof shape as HrmEngine's `prefill_refuses_sequence_longer_than_ctx_size`:
+        // a stub engine (tokenizer = None) proves the guard fires BEFORE the
+        // "no tokenizer" error, i.e. ahead of any resource access.
+        let eng = SmolVlmEngine::load(&stub_cfg(), 8).unwrap();
+        let oversized = vec![0i64; 9];
+        let (tx, _rx) = tokio::sync::mpsc::channel::<String>(4);
+        let err = eng.generate(oversized, None, 4, 0.0, &tx).unwrap_err().to_string();
+        assert!(
+            err.contains("ctx_size") || err.contains("exceeds"),
+            "expected a ctx-size refusal, got: {err}"
+        );
+    }
+
+    #[test]
+    fn generate_allows_sequence_at_ctx_size_boundary() {
+        let eng = SmolVlmEngine::load(&stub_cfg(), 8).unwrap();
+        let at_boundary = vec![0i64; 8];
+        let (tx, _rx) = tokio::sync::mpsc::channel::<String>(4);
+        let err = eng.generate(at_boundary, None, 4, 0.0, &tx).unwrap_err().to_string();
+        // Boundary length must not trip the ctx-size guard — it should fall
+        // through to the "no tokenizer" stub error instead.
+        assert!(
+            !(err.contains("ctx_size") || err.contains("exceeds")),
+            "boundary length must not trip the ctx-size guard, got: {err}"
+        );
+        assert!(err.contains("stub"), "expected the stub-tokenizer error, got: {err}");
+    }
+
     #[tokio::test]
     async fn stub_chat_streams_nonempty_output() {
-        let eng = Arc::new(SmolVlmEngine::load(&stub_cfg()).unwrap());
+        let eng = Arc::new(SmolVlmEngine::load(&stub_cfg(), TEST_CTX_SIZE).unwrap());
         let (tx, mut rx) = tokio::sync::mpsc::channel::<String>(64);
         let eng2 = eng.clone();
         let h = tokio::task::spawn_blocking(move || {
@@ -545,7 +612,7 @@ mod tests {
 
     #[tokio::test]
     async fn stub_complete_respects_max_tokens() {
-        let eng = Arc::new(SmolVlmEngine::load(&stub_cfg()).unwrap());
+        let eng = Arc::new(SmolVlmEngine::load(&stub_cfg(), TEST_CTX_SIZE).unwrap());
         let (tx, mut rx) = tokio::sync::mpsc::channel::<String>(64);
         let eng2 = eng.clone();
         let h = tokio::task::spawn_blocking(move || {
@@ -561,7 +628,7 @@ mod tests {
     #[test]
     fn model_id_and_supports_vision_are_correct() {
         use crate::engine::LlmEngine;
-        let eng: Arc<dyn LlmEngine> = Arc::new(SmolVlmEngine::load(&stub_cfg()).unwrap());
+        let eng: Arc<dyn LlmEngine> = Arc::new(SmolVlmEngine::load(&stub_cfg(), TEST_CTX_SIZE).unwrap());
         assert_eq!(eng.model_id(), "smolvlm-256m");
         assert!(eng.supports_vision());
     }
@@ -573,7 +640,7 @@ mod tests {
             eprintln!("skipping");
             return;
         }
-        let eng = Arc::new(SmolVlmEngine::load(&fixture_cfg()).unwrap());
+        let eng = Arc::new(SmolVlmEngine::load(&fixture_cfg(), TEST_CTX_SIZE).unwrap());
         let (tx, mut rx) = tokio::sync::mpsc::channel::<String>(64);
         let eng2 = eng.clone();
         let h = tokio::task::spawn_blocking(move || {
@@ -592,7 +659,7 @@ mod tests {
             eprintln!("skipping");
             return;
         }
-        let eng = Arc::new(SmolVlmEngine::load(&fixture_cfg()).unwrap());
+        let eng = Arc::new(SmolVlmEngine::load(&fixture_cfg(), TEST_CTX_SIZE).unwrap());
         let img = image::DynamicImage::ImageRgb8(
             image::ImageBuffer::from_pixel(64, 64, image::Rgb([10u8, 200, 10])),
         );

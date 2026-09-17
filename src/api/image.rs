@@ -1,7 +1,8 @@
+use crate::config::Config;
 use crate::core::image_security::{ImageSecurityResult, ImageSecurityValidator, SecurityLevel};
 use crate::error::ApiError;
 use actix_multipart::Multipart;
-use actix_web::{HttpResponse, Result};
+use actix_web::{web, HttpResponse, Result};
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 
@@ -59,12 +60,20 @@ impl SecurityLevel {
     }
 }
 
-pub async fn process_image_secure(mut payload: Multipart) -> Result<HttpResponse, ApiError> {
+pub async fn process_image_secure(
+    mut payload: Multipart,
+    config: web::Data<Config>,
+) -> Result<HttpResponse, ApiError> {
     let start_time = std::time::Instant::now();
+    let max_bytes = config.server.multipart_image_limit_mb.saturating_mul(1024 * 1024);
     let mut image_data = Vec::new();
     let mut security_level = SecurityLevel::Medium;
 
-    // Parse multipart data
+    // Parse multipart data. Bail out as soon as the accumulated image bytes
+    // would exceed the configured per-request cap (mirrors yolo.rs) — this
+    // handler previously had no size limit at all, so a client could stream
+    // an unbounded body and both exhaust memory and, since the decode below
+    // ran inline, stall the reactor thread for the whole upload+decode.
     while let Some(item) = payload.next().await {
         let mut field = item.map_err(|e| ApiError::BadRequest(e.to_string()))?;
         let field_name = field
@@ -85,6 +94,12 @@ pub async fn process_image_secure(mut payload: Multipart) -> Result<HttpResponse
         } else if field_name == "image" {
             while let Some(chunk) = field.next().await {
                 let data = chunk.map_err(|e| ApiError::BadRequest(e.to_string()))?;
+                if image_data.len().saturating_add(data.len()) > max_bytes {
+                    return Err(ApiError::PayloadTooLarge(format!(
+                        "image upload exceeds {} MiB limit",
+                        config.server.multipart_image_limit_mb
+                    )));
+                }
                 image_data.extend_from_slice(&data);
             }
         }
@@ -94,33 +109,32 @@ pub async fn process_image_secure(mut payload: Multipart) -> Result<HttpResponse
         return Err(ApiError::BadRequest("No image data provided".to_string()));
     }
 
-    let validator = ImageSecurityValidator::new();
+    // Decode + security validation + sanitize + PNG re-encode are all
+    // CPU-bound and synchronous; offload to a blocking task so the actix
+    // reactor stays free to serve other requests.
+    let processing_level = security_level.clone();
+    let (security_result, image_base64) = tokio::task::spawn_blocking(move || {
+        let validator = ImageSecurityValidator::new();
 
-    // Validate security
-    let security_result = validator
-        .validate(&image_data, security_level.clone())
-        .map_err(|e| ApiError::InternalError(e.to_string()))?;
+        let security_result = validator.validate(&image_data, processing_level.clone())?;
 
-    // If safe, process and sanitize
-    let image_base64 = if security_result.is_safe {
-        let img = image::load_from_memory(&image_data)
-            .map_err(|e| ApiError::BadRequest(e.to_string()))?;
+        let image_base64 = if security_result.is_safe {
+            let img = image::load_from_memory(&image_data)?;
+            let sanitized = validator.sanitize(&img, processing_level)?;
 
-        let sanitized = validator
-            .sanitize(&img, security_level)
-            .map_err(|e| ApiError::InternalError(e.to_string()))?;
+            let mut png_data = Vec::new();
+            let mut cursor = std::io::Cursor::new(&mut png_data);
+            sanitized.write_to(&mut cursor, image::ImageFormat::Png)?;
+            Some(base64_encode(&png_data))
+        } else {
+            None
+        };
 
-        // Convert to PNG bytes
-        let mut png_data = Vec::new();
-        let mut cursor = std::io::Cursor::new(&mut png_data);
-        sanitized
-            .write_to(&mut cursor, image::ImageFormat::Png)
-            .map_err(|e| ApiError::InternalError(e.to_string()))?;
-
-        Some(base64_encode(&png_data))
-    } else {
-        None
-    };
+        Ok::<_, anyhow::Error>((security_result, image_base64))
+    })
+    .await
+    .map_err(|e| ApiError::InternalError(format!("task join: {}", e)))?
+    .map_err(|e| ApiError::InternalError(e.to_string()))?;
 
     let processing_time_ms = start_time.elapsed().as_millis() as u64;
 
@@ -132,7 +146,11 @@ pub async fn process_image_secure(mut payload: Multipart) -> Result<HttpResponse
     }))
 }
 
-pub async fn validate_image_security(mut payload: Multipart) -> Result<HttpResponse, ApiError> {
+pub async fn validate_image_security(
+    mut payload: Multipart,
+    config: web::Data<Config>,
+) -> Result<HttpResponse, ApiError> {
+    let max_bytes = config.server.multipart_image_limit_mb.saturating_mul(1024 * 1024);
     let mut image_data = Vec::new();
     let mut security_level = SecurityLevel::Medium;
 
@@ -156,6 +174,12 @@ pub async fn validate_image_security(mut payload: Multipart) -> Result<HttpRespo
         } else if field_name == "image" {
             while let Some(chunk) = field.next().await {
                 let data = chunk.map_err(|e| ApiError::BadRequest(e.to_string()))?;
+                if image_data.len().saturating_add(data.len()) > max_bytes {
+                    return Err(ApiError::PayloadTooLarge(format!(
+                        "image upload exceeds {} MiB limit",
+                        config.server.multipart_image_limit_mb
+                    )));
+                }
                 image_data.extend_from_slice(&data);
             }
         }
@@ -165,10 +189,12 @@ pub async fn validate_image_security(mut payload: Multipart) -> Result<HttpRespo
         return Err(ApiError::BadRequest("No image data provided".to_string()));
     }
 
-    let validator = ImageSecurityValidator::new();
-    let security_result = validator
-        .validate(&image_data, security_level)
-        .map_err(|e| ApiError::InternalError(e.to_string()))?;
+    let security_result = tokio::task::spawn_blocking(move || {
+        ImageSecurityValidator::new().validate(&image_data, security_level)
+    })
+    .await
+    .map_err(|e| ApiError::InternalError(format!("task join: {}", e)))?
+    .map_err(|e| ApiError::InternalError(e.to_string()))?;
 
     Ok(HttpResponse::Ok().json(ImageValidationResponse { security_result }))
 }
@@ -478,7 +504,9 @@ mod tests {
     #[tokio::test]
     async fn test_process_image_secure_no_image_returns_bad_request() {
         let app = test::init_service(
-            App::new().route("/image/process", web::post().to(process_image_secure)),
+            App::new()
+                .app_data(web::Data::new(Config::default()))
+                .route("/image/process", web::post().to(process_image_secure)),
         )
         .await;
         // Send an empty multipart – no image field.
@@ -499,7 +527,9 @@ mod tests {
     #[tokio::test]
     async fn test_process_image_secure_with_valid_image_returns_200() {
         let app = test::init_service(
-            App::new().route("/image/process", web::post().to(process_image_secure)),
+            App::new()
+                .app_data(web::Data::new(Config::default()))
+                .route("/image/process", web::post().to(process_image_secure)),
         )
         .await;
 
@@ -524,7 +554,9 @@ mod tests {
     #[tokio::test]
     async fn test_process_image_secure_with_medium_security_level() {
         let app = test::init_service(
-            App::new().route("/image/process", web::post().to(process_image_secure)),
+            App::new()
+                .app_data(web::Data::new(Config::default()))
+                .route("/image/process", web::post().to(process_image_secure)),
         )
         .await;
 
@@ -549,7 +581,9 @@ mod tests {
     #[tokio::test]
     async fn test_process_image_secure_with_high_security_level() {
         let app = test::init_service(
-            App::new().route("/image/process", web::post().to(process_image_secure)),
+            App::new()
+                .app_data(web::Data::new(Config::default()))
+                .route("/image/process", web::post().to(process_image_secure)),
         )
         .await;
 
@@ -574,7 +608,9 @@ mod tests {
     #[tokio::test]
     async fn test_process_image_secure_with_maximum_security_level() {
         let app = test::init_service(
-            App::new().route("/image/process", web::post().to(process_image_secure)),
+            App::new()
+                .app_data(web::Data::new(Config::default()))
+                .route("/image/process", web::post().to(process_image_secure)),
         )
         .await;
 
@@ -599,7 +635,9 @@ mod tests {
     #[tokio::test]
     async fn test_process_image_secure_invalid_security_level_returns_bad_request() {
         let app = test::init_service(
-            App::new().route("/image/process", web::post().to(process_image_secure)),
+            App::new()
+                .app_data(web::Data::new(Config::default()))
+                .route("/image/process", web::post().to(process_image_secure)),
         )
         .await;
 
@@ -624,7 +662,9 @@ mod tests {
     #[tokio::test]
     async fn test_process_image_secure_response_body_has_success_field() {
         let app = test::init_service(
-            App::new().route("/image/process", web::post().to(process_image_secure)),
+            App::new()
+                .app_data(web::Data::new(Config::default()))
+                .route("/image/process", web::post().to(process_image_secure)),
         )
         .await;
 
@@ -652,7 +692,9 @@ mod tests {
     async fn test_process_image_secure_image_only_no_security_level() {
         // No security_level field → defaults to Medium.
         let app = test::init_service(
-            App::new().route("/image/process", web::post().to(process_image_secure)),
+            App::new()
+                .app_data(web::Data::new(Config::default()))
+                .route("/image/process", web::post().to(process_image_secure)),
         )
         .await;
 
@@ -676,7 +718,9 @@ mod tests {
     #[tokio::test]
     async fn test_validate_image_security_no_image_returns_bad_request() {
         let app = test::init_service(
-            App::new().route("/image/validate", web::post().to(validate_image_security)),
+            App::new()
+                .app_data(web::Data::new(Config::default()))
+                .route("/image/validate", web::post().to(validate_image_security)),
         )
         .await;
 
@@ -697,7 +741,9 @@ mod tests {
     #[tokio::test]
     async fn test_validate_image_security_with_valid_image_returns_200() {
         let app = test::init_service(
-            App::new().route("/image/validate", web::post().to(validate_image_security)),
+            App::new()
+                .app_data(web::Data::new(Config::default()))
+                .route("/image/validate", web::post().to(validate_image_security)),
         )
         .await;
 
@@ -722,7 +768,9 @@ mod tests {
     #[tokio::test]
     async fn test_validate_image_security_response_has_security_result() {
         let app = test::init_service(
-            App::new().route("/image/validate", web::post().to(validate_image_security)),
+            App::new()
+                .app_data(web::Data::new(Config::default()))
+                .route("/image/validate", web::post().to(validate_image_security)),
         )
         .await;
 
@@ -748,7 +796,9 @@ mod tests {
     #[tokio::test]
     async fn test_validate_image_security_invalid_level_returns_bad_request() {
         let app = test::init_service(
-            App::new().route("/image/validate", web::post().to(validate_image_security)),
+            App::new()
+                .app_data(web::Data::new(Config::default()))
+                .route("/image/validate", web::post().to(validate_image_security)),
         )
         .await;
 
@@ -774,7 +824,9 @@ mod tests {
     async fn test_validate_image_security_image_only_default_level() {
         // No security_level field → defaults to Medium.
         let app = test::init_service(
-            App::new().route("/image/validate", web::post().to(validate_image_security)),
+            App::new()
+                .app_data(web::Data::new(Config::default()))
+                .route("/image/validate", web::post().to(validate_image_security)),
         )
         .await;
 
@@ -796,7 +848,9 @@ mod tests {
     #[tokio::test]
     async fn test_validate_image_security_high_level() {
         let app = test::init_service(
-            App::new().route("/image/validate", web::post().to(validate_image_security)),
+            App::new()
+                .app_data(web::Data::new(Config::default()))
+                .route("/image/validate", web::post().to(validate_image_security)),
         )
         .await;
 
@@ -821,7 +875,9 @@ mod tests {
     #[tokio::test]
     async fn test_validate_image_security_maximum_level() {
         let app = test::init_service(
-            App::new().route("/image/validate", web::post().to(validate_image_security)),
+            App::new()
+                .app_data(web::Data::new(Config::default()))
+                .route("/image/validate", web::post().to(validate_image_security)),
         )
         .await;
 
@@ -848,7 +904,9 @@ mod tests {
     #[tokio::test]
     async fn test_process_image_secure_non_image_field_returns_bad_request() {
         let app = test::init_service(
-            App::new().route("/image/process", web::post().to(process_image_secure)),
+            App::new()
+                .app_data(web::Data::new(Config::default()))
+                .route("/image/process", web::post().to(process_image_secure)),
         )
         .await;
 
@@ -870,7 +928,9 @@ mod tests {
     #[tokio::test]
     async fn test_validate_image_security_non_image_field_returns_bad_request() {
         let app = test::init_service(
-            App::new().route("/image/validate", web::post().to(validate_image_security)),
+            App::new()
+                .app_data(web::Data::new(Config::default()))
+                .route("/image/validate", web::post().to(validate_image_security)),
         )
         .await;
 

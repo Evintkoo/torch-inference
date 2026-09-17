@@ -117,10 +117,22 @@ pub struct AuthMiddleware {
 }
 
 impl AuthMiddleware {
-    pub fn new(enabled: bool, secret: &str) -> Self {
+    /// `jwt_algorithm` / `access_token_expire_minutes` come from
+    /// `config.auth` so they actually take effect instead of being silently
+    /// ignored (previously this always hardcoded HS256 / 60 minutes).
+    pub fn with_options(
+        enabled: bool,
+        secret: &str,
+        jwt_algorithm: &str,
+        access_token_expire_minutes: u32,
+    ) -> Self {
         Self {
             enabled,
-            jwt: Arc::new(JwtHandler::new(secret)),
+            jwt: Arc::new(JwtHandler::with_options(
+                secret,
+                jwt_algorithm,
+                access_token_expire_minutes,
+            )),
         }
     }
 }

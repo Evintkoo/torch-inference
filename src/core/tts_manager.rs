@@ -46,8 +46,11 @@ pub struct TTSManager {
     /// 16-way sharded content-addressed synthesis cache.
     /// Shard = cache_key & 0xF (low 4 bits of FNV-1a hash).
     /// Storing Arc<AudioData> means cache hits are a single atomic increment (~5 ns)
-    /// instead of a full Vec<f32> clone (100–500 KB).
-    synthesis_cache: [parking_lot::Mutex<LruCache<u64, Arc<AudioData>>>; 16],
+    /// instead of a full Vec<f32> clone (100–500 KB). The `Option<&'static str>`
+    /// alongside each entry is the actual backend that produced the audio when it
+    /// differs from the requested engine (see `TTSEngine::synthesize`) — cached so
+    /// cache hits report it just as accurately as cache misses.
+    synthesis_cache: [parking_lot::Mutex<LruCache<u64, (Arc<AudioData>, Option<&'static str>)>>; 16],
     synthesis_cache_capacity: usize,
 }
 
@@ -189,7 +192,7 @@ impl TTSManager {
         text: &str,
         engine_id: Option<&str>,
         params: SynthesisParams,
-    ) -> Result<Arc<AudioData>> {
+    ) -> Result<(Arc<AudioData>, Option<&'static str>)> {
         let engine_id = engine_id.unwrap_or(&self.config.default_engine);
         let cache_key = Self::synthesis_cache_key(text, engine_id, &params);
         let shard = (cache_key & 0xF) as usize;
@@ -197,13 +200,13 @@ impl TTSManager {
         // Fast path: Arc clone — no data copy, ~5 ns
         {
             let mut cache = self.synthesis_cache[shard].lock();
-            if let Some(cached) = cache.get(&cache_key) {
+            if let Some((cached_audio, cached_actual_engine)) = cache.get(&cache_key) {
                 log::debug!(
                     "TTS cache hit ({} chars, engine '{}')",
                     text.len(),
                     engine_id
                 );
-                return Ok(Arc::clone(cached));
+                return Ok((Arc::clone(cached_audio), *cached_actual_engine));
             }
         }
 
@@ -218,7 +221,7 @@ impl TTSManager {
             engine_id,
             text.len()
         );
-        let audio = engine
+        let (audio, actual_engine) = engine
             .synthesize(text, &params)
             .await
             .context("Synthesis failed")?;
@@ -233,10 +236,10 @@ impl TTSManager {
         // Store result; evicts LRU entry automatically when at capacity.
         {
             let mut cache = self.synthesis_cache[shard].lock();
-            cache.put(cache_key, Arc::clone(&arc_audio));
+            cache.put(cache_key, (Arc::clone(&arc_audio), actual_engine));
         }
 
-        Ok(arc_audio)
+        Ok((arc_audio, actual_engine))
     }
 
     /// Initialize production TTS engines only
@@ -533,7 +536,7 @@ mod tests {
                 &self,
                 _text: &str,
                 _params: &crate::core::tts_engine::SynthesisParams,
-            ) -> anyhow::Result<crate::core::audio::AudioData> {
+            ) -> anyhow::Result<(crate::core::audio::AudioData, Option<&'static str>)> {
                 anyhow::bail!("not implemented")
             }
             fn list_voices(&self) -> Vec<VoiceInfo> {
@@ -593,14 +596,17 @@ mod tests {
             &self,
             text: &str,
             _params: &crate::core::tts_engine::SynthesisParams,
-        ) -> anyhow::Result<crate::core::audio::AudioData> {
+        ) -> anyhow::Result<(crate::core::audio::AudioData, Option<&'static str>)> {
             // Return a simple sine-wave-ish audio just to give back a real value
             let _ = text;
-            Ok(crate::core::audio::AudioData {
-                samples: vec![0.0_f32; 240],
-                sample_rate: 24000,
-                channels: 1,
-            })
+            Ok((
+                crate::core::audio::AudioData {
+                    samples: vec![0.0_f32; 240],
+                    sample_rate: 24000,
+                    channels: 1,
+                },
+                None,
+            ))
         }
         fn list_voices(&self) -> Vec<crate::core::tts_engine::VoiceInfo> {
             vec![]
@@ -767,7 +773,7 @@ mod tests {
     #[tokio::test]
     async fn test_synthesize_returns_audio() {
         let manager = make_manager_with_mock("mock");
-        let audio = manager
+        let (audio, _tag) = manager
             .synthesize("Test", Some("mock"), SynthesisParams::default())
             .await
             .expect("synthesis should succeed");
@@ -786,11 +792,11 @@ mod tests {
             language: None,
         };
 
-        let audio1 = manager
+        let (audio1, _tag1) = manager
             .synthesize("Cache me", Some("mock"), params.clone())
             .await
             .unwrap();
-        let audio2 = manager
+        let (audio2, _tag2) = manager
             .synthesize("Cache me", Some("mock"), params)
             .await
             .unwrap();
@@ -1171,11 +1177,11 @@ mod tests {
             .insert("mock2".to_string(), make_mock_engine());
 
         let params = SynthesisParams::default();
-        let a1 = manager
+        let (a1, _tag1) = manager
             .synthesize("hello", Some("mock1"), params.clone())
             .await
             .unwrap();
-        let a2 = manager
+        let (a2, _tag2) = manager
             .synthesize("hello", Some("mock2"), params.clone())
             .await
             .unwrap();
@@ -1243,7 +1249,7 @@ mod tests {
             "synthesis with voice+language should succeed: {:?}",
             result.err()
         );
-        let audio = result.unwrap();
+        let (audio, _tag) = result.unwrap();
         assert_eq!(audio.sample_rate, 24000);
         assert!(!audio.samples.is_empty());
     }
@@ -1359,7 +1365,7 @@ mod tests {
     async fn test_synthesize_success_logs_duration_line_185() {
         // Exercises lines 181-185 (audio synthesized, logged, cached)
         let manager = make_manager_with_mock("mock");
-        let audio = manager
+        let (audio, _tag) = manager
             .synthesize("cover line 185", Some("mock"), SynthesisParams::default())
             .await
             .expect("synthesis should succeed");
@@ -1638,13 +1644,13 @@ mod tests {
         };
 
         // First call: cache miss — synthesizes and stores
-        let audio_first = manager
+        let (audio_first, _tag_first) = manager
             .synthesize("cache hit test phrase", Some("mock"), params.clone())
             .await
             .expect("first synthesis should succeed");
 
         // Second call: cache hit — must return identical data without re-synthesizing
-        let audio_second = manager
+        let (audio_second, _tag_second) = manager
             .synthesize("cache hit test phrase", Some("mock"), params.clone())
             .await
             .expect("second synthesis (cache hit) should succeed");
@@ -1679,7 +1685,7 @@ mod tests {
     async fn test_synthesize_audio_duration_formula_is_sane() {
         let manager = make_manager_with_mock("mock");
         // MockEngine returns 240 samples at 24000 Hz → 0.01 s
-        let audio = manager
+        let (audio, _tag) = manager
             .synthesize(
                 "duration formula test",
                 Some("mock"),
@@ -2100,8 +2106,8 @@ mod tests {
             second.err()
         );
 
-        let a = first.unwrap();
-        let b = second.unwrap();
+        let (a, _tag_a) = first.unwrap();
+        let (b, _tag_b) = second.unwrap();
         assert_eq!(a.sample_rate, b.sample_rate);
         assert_eq!(a.samples, b.samples);
     }
@@ -2130,7 +2136,7 @@ mod tests {
             .synthesize("arc test phrase", Some("mock"), SynthesisParams::default())
             .await;
         assert!(result.is_ok(), "synthesis should succeed: {:?}", result.err());
-        let arc_audio = result.unwrap();
+        let (arc_audio, _tag) = result.unwrap();
         // Arc<AudioData> derefs to AudioData
         assert_eq!(arc_audio.sample_rate, 24000);
         assert!(!arc_audio.samples.is_empty());

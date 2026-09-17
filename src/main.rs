@@ -9,7 +9,6 @@ mod config;
 mod core;
 mod dedup;
 mod error;
-mod guard;
 mod inflight_batch;
 mod middleware;
 mod model_pool;
@@ -701,6 +700,8 @@ async fn async_main() -> std::io::Result<()> {
     let rate_limit_mw_limiter = rate_limiter.clone();
     let auth_enabled = config.auth.enabled;
     let auth_secret = config.auth.jwt_secret.clone();
+    let auth_jwt_algorithm = config.auth.jwt_algorithm.clone();
+    let auth_access_token_expire_minutes = config.auth.access_token_expire_minutes;
     let circuit_breaker_data = web::Data::new(circuit_breaker);
     let bulkhead_data = web::Data::new(bulkhead);
     let cache_data = web::Data::new(cache);
@@ -826,18 +827,34 @@ async fn async_main() -> std::io::Result<()> {
             .app_data(classify_state.clone())
             .app_data(yolo_state.clone())
             .app_data(nn_state.clone())
-            // Middleware order (innermost → outermost on response path):
-            //   CorrelationIdMiddleware, RequestLogger, Auth (gates protected
-            //   routes), RateLimit (per-IP, skips /health and /metrics),
-            //   SecurityHeaders (adds CSP/XCTO/XFO), Compress (gzip).
-            // Wraps run outermost-first, so the order here is the order
-            // requests traverse top-down.
-            .wrap(CorrelationIdMiddleware)
-            .wrap(RequestLogger::new(monitor.clone()))
-            .wrap(AuthMiddleware::new(auth_enabled, &auth_secret))
-            .wrap(RateLimitMiddleware::new(rate_limit_mw_limiter.clone()))
-            .wrap(SecurityHeaders)
+            // Middleware order: actix-web's `.wrap(M)` wraps whatever has
+            // been built so far, so the LAST `.wrap()` call is OUTERMOST and
+            // sees the request first (this file previously had a comment
+            // claiming the opposite, which meant CorrelationId/RequestLogger
+            // were registered innermost — behind Auth and RateLimit — so a
+            // 401 or 429 response never reached them: failed-auth and
+            // rate-limited traffic, exactly what you most need visibility
+            // into, was invisible to Monitor's request counts and to the
+            // structured request logs, and got no correlation ID).
+            //
+            // Registered here in request-traversal order, outermost first:
+            //   CorrelationIdMiddleware (assign an ID to every request,
+            //   even rejected ones), RequestLogger (record it in Monitor
+            //   regardless of outcome), Auth (gate protected routes),
+            //   RateLimit (per-IP, skips /health and /metrics),
+            //   SecurityHeaders (adds CSP/XCTO/XFO), Compress (gzip,
+            //   innermost — closest to the handler response body).
             .wrap(Compress::default())
+            .wrap(SecurityHeaders)
+            .wrap(RateLimitMiddleware::new(rate_limit_mw_limiter.clone()))
+            .wrap(AuthMiddleware::with_options(
+                auth_enabled,
+                &auth_secret,
+                &auth_jwt_algorithm,
+                auth_access_token_expire_minutes,
+            ))
+            .wrap(RequestLogger::new(monitor.clone()))
+            .wrap(CorrelationIdMiddleware)
             // Health check endpoints
             .route("/health", web::get().to(crate::api::health::health))
             .route("/health/live", web::get().to(crate::api::health::liveness))

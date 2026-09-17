@@ -1,11 +1,23 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { apiGet } from "@/lib/api-client";
+import { apiDelete, apiGet } from "@/lib/api-client";
 import { filterLogRows, formatLogTime, logLevelVariant, parseLogFields, parseLogLines, stripAnsi } from "./log-parser";
-import { LOG_LINE_OPTIONS, type LogFileContent, type LogLineOption } from "./types";
+import { LOG_LINE_OPTIONS, type ClearLogResponse, type LogFileContent, type LogLineOption } from "./types";
 
 export interface LogViewerProps {
   /** File name to view, or null when nothing is selected yet. */
@@ -23,8 +35,10 @@ export function LogViewer({ fileName }: LogViewerProps) {
   const [search, setSearch] = useState("");
 
   const [live, setLive] = useState(true);
+  const [isClearing, setIsClearing] = useState(false);
+  const [clearError, setClearError] = useState<string | null>(null);
 
-  const { data, isPending, isError, isFetching } = useQuery({
+  const { data, isPending, isError, isFetching, refetch } = useQuery({
     queryKey: ["logs-content", fileName, lines],
     queryFn: () =>
       apiGet<LogFileContent>(`/logs/${encodeURIComponent(fileName as string)}?lines=${lines}&from_end=true`),
@@ -33,6 +47,20 @@ export function LogViewer({ fileName }: LogViewerProps) {
     // show up without the user having to keep hitting Refresh.
     refetchInterval: fileName != null && live ? 3_000 : false,
   });
+
+  async function handleClear() {
+    if (!fileName) return;
+    setIsClearing(true);
+    setClearError(null);
+    try {
+      await apiDelete<ClearLogResponse>(`/logs/${encodeURIComponent(fileName)}`);
+      await refetch();
+    } catch {
+      setClearError("Failed to clear log file.");
+    } finally {
+      setIsClearing(false);
+    }
+  }
 
   const rows = useMemo(() => {
     if (!data) return [];
@@ -67,7 +95,47 @@ export function LogViewer({ fileName }: LogViewerProps) {
             {live ? "Live" : "Paused"}
           </button>
         )}
+        {fileName && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="xs"
+                className="font-sans"
+                disabled={isClearing}
+                data-testid="logs-clear-btn"
+              >
+                {isClearing ? "Clearing…" : "Clear"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent size="sm">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Clear {fileName}?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This truncates the log file on the server via{" "}
+                  <code className="font-mono text-xs">DELETE /logs/{fileName}</code>. This cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  onClick={handleClear}
+                  data-testid="logs-clear-confirm"
+                >
+                  Clear log
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </div>
+      {clearError && (
+        <p className="mb-2 text-xs text-destructive" data-testid="logs-clear-error">
+          {clearError}
+        </p>
+      )}
 
       <div className="mb-2 flex flex-wrap gap-2">
         <input

@@ -381,7 +381,17 @@ async fn finish_stt(
         channels: 1,
     };
 
-    match audio_state.model_manager.transcribe_audio(&audio, false) {
+    // Whisper inference (FFT, mel-spectrogram, ONNX session run) is CPU-bound
+    // and synchronous. Offload to a blocking task so the actix reactor stays
+    // free to serve other requests/sessions — the REST transcribe_audio
+    // handler (src/api/audio.rs) already does this for the identical call;
+    // this WS path was missed and ran it inline on the reactor thread.
+    let model_manager = audio_state.model_manager.clone();
+    let result = tokio::task::spawn_blocking(move || model_manager.transcribe_audio(&audio, false))
+        .await
+        .unwrap_or_else(|e| Err(anyhow::anyhow!("task join: {}", e)));
+
+    match result {
         Ok(r) => {
             let msg = ServerMsg::Transcript {
                 text: r.text,

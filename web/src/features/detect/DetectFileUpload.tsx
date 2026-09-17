@@ -103,6 +103,11 @@ export function DetectFileUpload() {
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
+  // The object URL backing whatever's currently loaded into `imageRef` via
+  // the file picker/drag-drop path — distinct from `lastFrameUrlRef` below
+  // (the camera path), and previously never revoked at all, leaking a blob
+  // per upload for the life of the tab.
+  const uploadedImageUrlRef = useRef<string | null>(null);
 
   const drawImageToCanvas = useCallback((img: HTMLImageElement) => {
     imageRef.current = img;
@@ -118,9 +123,12 @@ export function DetectFileUpload() {
       setFile(f);
       setStatus("idle");
       setMessage("Image loaded — click Detect.");
+      if (uploadedImageUrlRef.current) URL.revokeObjectURL(uploadedImageUrlRef.current);
+      const url = URL.createObjectURL(f);
+      uploadedImageUrlRef.current = url;
       const img = new Image();
       img.onload = () => drawImageToCanvas(img);
-      img.src = URL.createObjectURL(f);
+      img.src = url;
     },
     [drawImageToCanvas],
   );
@@ -222,6 +230,17 @@ export function DetectFileUpload() {
   });
 
   const lastFrameUrlRef = useRef<string | null>(null);
+
+  // Release whichever object URL(s) are outstanding when the component goes
+  // away — the file-upload path and the camera-frame path each hold their
+  // own current URL in a ref, so neither gets cleaned up by React itself.
+  useEffect(
+    () => () => {
+      if (uploadedImageUrlRef.current) URL.revokeObjectURL(uploadedImageUrlRef.current);
+      if (lastFrameUrlRef.current) URL.revokeObjectURL(lastFrameUrlRef.current);
+    },
+    [],
+  );
 
   const sendNextFrame = useCallback(() => {
     if (modeRef.current === "idle" || !cameraActiveRef.current) return;

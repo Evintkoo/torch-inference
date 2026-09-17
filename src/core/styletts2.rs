@@ -104,7 +104,11 @@ impl TTSEngine for StyleTTS2Engine {
         &self.capabilities
     }
 
-    async fn synthesize(&self, text: &str, params: &SynthesisParams) -> Result<AudioData> {
+    async fn synthesize(
+        &self,
+        text: &str,
+        params: &SynthesisParams,
+    ) -> Result<(AudioData, Option<&'static str>)> {
         log::info!(
             "StyleTTS2: Synthesizing '{}' (expressive)",
             &text[..text.len().min(40)]
@@ -122,7 +126,8 @@ impl TTSEngine for StyleTTS2Engine {
                 "StyleTTS2: delegating to Kokoro ONNX (voice={})",
                 kokoro_voice
             );
-            return backend.synthesize(text, &mapped).await;
+            let (audio, _) = backend.synthesize(text, &mapped).await?;
+            return Ok((audio, Some("kokoro-onnx")));
         }
 
         // No ONNX model available — fall back to parametric synthesis.
@@ -172,11 +177,14 @@ impl TTSEngine for StyleTTS2Engine {
         }
 
         log::info!("StyleTTS2: Synthesis completed (parametric fallback)");
-        Ok(AudioData {
-            samples,
-            sample_rate: self.config.sample_rate,
-            channels: 1,
-        })
+        Ok((
+            AudioData {
+                samples,
+                sample_rate: self.config.sample_rate,
+                channels: 1,
+            },
+            None,
+        ))
     }
 
     fn list_voices(&self) -> Vec<VoiceInfo> {
@@ -289,7 +297,7 @@ mod tests {
         let params = crate::core::tts_engine::SynthesisParams::default();
         let result = engine.synthesize("hello world", &params).await;
         assert!(result.is_ok());
-        let audio = result.unwrap();
+        let (audio, _tag) = result.unwrap();
         assert_eq!(audio.channels, 1);
         assert_eq!(audio.sample_rate, 24000);
         assert!(!audio.samples.is_empty());
@@ -315,7 +323,7 @@ mod tests {
     async fn test_styletts2_synthesize_samples_clamped() {
         let engine = StyleTTS2Engine::new(&empty_cfg()).unwrap();
         let params = crate::core::tts_engine::SynthesisParams::default();
-        let audio = engine.synthesize("check clamp", &params).await.unwrap();
+        let (audio, _tag) = engine.synthesize("check clamp", &params).await.unwrap();
         for &s in &audio.samples {
             assert!(s >= -1.0 && s <= 1.0, "sample out of range: {}", s);
         }

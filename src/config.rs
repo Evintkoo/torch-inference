@@ -2,7 +2,12 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 fn default_json_body_limit_mb() -> usize { 50 }
-fn default_server_host() -> String { "0.0.0.0".to_string() }
+// CLAUDE.md: "server.host, server.port — default 127.0.0.1:8000. Use
+// 0.0.0.0 only with auth + TLS in front." Binding all interfaces by default
+// while auth.enabled also defaults to false (see AuthConfig::default) would
+// expose every route, including model registration/loading, to the network
+// with zero authentication on a bare `cargo run` / missing config.toml.
+fn default_server_host() -> String { "127.0.0.1".to_string() }
 fn default_server_port() -> u16 { 8000 }
 fn default_server_workers() -> usize { num_cpus::get() }
 fn default_log_level() -> String { "info".to_string() }
@@ -28,8 +33,6 @@ pub struct Config {
     pub models: ModelsConfig,
     #[serde(default)]
     pub microservices: MicroservicesConfig,
-    #[serde(default)]
-    pub guard: GuardConfig,
     #[serde(default)]
     pub sanitizer: SanitizerConfig,
     #[serde(default)]
@@ -300,8 +303,6 @@ pub struct AuthConfig {
     pub jwt_algorithm: String,
     #[serde(default)]
     pub access_token_expire_minutes: u32,
-    #[serde(default)]
-    pub refresh_token_expire_days: u32,
 }
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ModelsConfig {
@@ -310,6 +311,13 @@ pub struct ModelsConfig {
     /// Root directory for all model files. Default: "models".
     #[serde(default)]
     pub cache_dir: PathBuf,
+    /// NOT CURRENTLY ENFORCED. `ModelManager` (src/models/manager.rs) has no
+    /// eviction policy — models loaded via `/registry` or auto_load stay
+    /// resident until process exit regardless of this value. Wiring real LRU
+    /// eviction needs reference-counting against in-flight inference (an
+    /// evicted-while-serving model must not be freed out from under a live
+    /// request), which is a correctness-sensitive feature, not a config-read
+    /// fix — left unimplemented rather than risk a blind eviction bug.
     #[serde(default)]
     pub max_loaded_models: usize,
     /// Path to the EfficientNet-Lite4 ONNX classification model.
@@ -327,26 +335,6 @@ pub struct ModelsConfig {
     /// Default YOLO IoU threshold for NMS (0–1). Can be overridden per-request. Default: 0.45.
     #[serde(default)]
     pub yolo_iou_threshold: f32,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct GuardConfig {
-    #[serde(default)]
-    pub enable_guards: bool,
-    #[serde(default)]
-    pub max_memory_mb: usize,
-    #[serde(default)]
-    pub max_requests_per_second: usize,
-    #[serde(default)]
-    pub max_queue_depth: usize,
-    #[serde(default)]
-    pub min_cache_hit_rate: f64,
-    #[serde(default)]
-    pub max_error_rate: f64,
-    #[serde(default)]
-    pub enable_circuit_breaker: bool,
-    #[serde(default)]
-    pub enable_auto_mitigation: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -543,7 +531,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             server: ServerConfig {
-                host: "0.0.0.0".to_string(),
+                host: default_server_host(),
                 port: 8000,
                 log_level: "info".to_string(),
                 workers: num_cpus::get(),
@@ -621,7 +609,6 @@ impl Default for Config {
                 jwt_secret: "your-secret-key-here".to_string(),
                 jwt_algorithm: "HS256".to_string(),
                 access_token_expire_minutes: 60,
-                refresh_token_expire_days: 7,
             },
             models: ModelsConfig {
                 auto_load: vec!["example".to_string()],
@@ -636,16 +623,6 @@ impl Default for Config {
             microservices: MicroservicesConfig {
                 llm_host: "127.0.0.1".to_string(),
                 llm_port: 8001,
-            },
-            guard: GuardConfig {
-                enable_guards: true,
-                max_memory_mb: 8192,
-                max_requests_per_second: 1000,
-                max_queue_depth: 500,
-                min_cache_hit_rate: 60.0,
-                max_error_rate: 5.0,
-                enable_circuit_breaker: true,
-                enable_auto_mitigation: true,
             },
             sanitizer: SanitizerConfig {
                 max_text_length: 10000,
@@ -670,7 +647,7 @@ mod tests {
     fn test_config_default() {
         let config = Config::default();
         assert_eq!(config.server.port, 8000);
-        assert_eq!(config.server.host, "0.0.0.0");
+        assert_eq!(config.server.host, "127.0.0.1");
         assert_eq!(config.device.device_type, "auto");
         assert_eq!(config.batch.batch_size, 1);
         assert_eq!(config.batch.max_batch_size, 8);
@@ -720,7 +697,6 @@ mod tests {
         assert!(!config.auth.enabled);
         assert_eq!(config.auth.jwt_algorithm, "HS256");
         assert_eq!(config.auth.access_token_expire_minutes, 60);
-        assert_eq!(config.auth.refresh_token_expire_days, 7);
     }
 
     #[test]
@@ -803,19 +779,6 @@ mod tests {
         let config = Config::default();
         assert_eq!(config.models.max_loaded_models, 5);
         assert_eq!(config.models.cache_dir, PathBuf::from("models"));
-    }
-
-    #[test]
-    fn test_guard_config_defaults() {
-        let config = Config::default();
-        assert!(config.guard.enable_guards);
-        assert_eq!(config.guard.max_memory_mb, 8192);
-        assert_eq!(config.guard.max_requests_per_second, 1000);
-        assert_eq!(config.guard.max_queue_depth, 500);
-        assert_eq!(config.guard.min_cache_hit_rate, 60.0);
-        assert_eq!(config.guard.max_error_rate, 5.0);
-        assert!(config.guard.enable_circuit_breaker);
-        assert!(config.guard.enable_auto_mitigation);
     }
 
     #[test]
@@ -908,7 +871,6 @@ mod tests {
         assert_eq!(deserialized.server.host, config.server.host);
         assert_eq!(deserialized.batch.batch_size, config.batch.batch_size);
         assert_eq!(deserialized.auth.jwt_algorithm, config.auth.jwt_algorithm);
-        assert_eq!(deserialized.guard.max_memory_mb, config.guard.max_memory_mb);
         assert_eq!(
             deserialized.sanitizer.max_text_length,
             config.sanitizer.max_text_length
@@ -918,7 +880,7 @@ mod tests {
     #[test]
     fn test_server_config_standalone_default() {
         let srv = ServerConfig::default();
-        assert_eq!(srv.host, "0.0.0.0");
+        assert_eq!(srv.host, "127.0.0.1");
         assert_eq!(srv.port, 8000);
         assert_eq!(srv.log_level, "info");
         assert!(srv.workers > 0);
@@ -945,17 +907,6 @@ mod tests {
         assert_eq!(auth.jwt_secret, "");
         assert_eq!(auth.jwt_algorithm, "");
         assert_eq!(auth.access_token_expire_minutes, 0);
-        assert_eq!(auth.refresh_token_expire_days, 0);
-    }
-
-    #[test]
-    fn test_guard_config_standalone_default() {
-        let guard = GuardConfig::default();
-        assert!(!guard.enable_guards);
-        assert_eq!(guard.max_memory_mb, 0);
-        assert_eq!(guard.max_requests_per_second, 0);
-        assert!(!guard.enable_circuit_breaker);
-        assert!(!guard.enable_auto_mitigation);
     }
 
     // ── PostprocessConfig ─────────────────────────────────────────────────────

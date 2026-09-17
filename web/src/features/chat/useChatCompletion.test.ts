@@ -1,4 +1,4 @@
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useChatCompletion } from "./useChatCompletion";
 
@@ -18,7 +18,13 @@ function sseStream(chunks: string[]): ReadableStream<Uint8Array> {
 }
 
 describe("useChatCompletion", () => {
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    // Unmount before restoring globals — the hook's own unmount cleanup
+    // revokes any outstanding tool-result object URLs via URL.revokeObjectURL,
+    // which needs the stub still in place (real jsdom doesn't implement it).
+    cleanup();
+    vi.unstubAllGlobals();
+  });
 
   it("appends the user message, then streams the assistant reply token by token", async () => {
     vi.stubGlobal(
@@ -130,7 +136,7 @@ describe("useChatCompletion", () => {
         };
       }),
     );
-    vi.stubGlobal("URL", { ...URL, createObjectURL: vi.fn(() => "blob:mock") });
+    vi.stubGlobal("URL", { ...URL, createObjectURL: vi.fn(() => "blob:mock"), revokeObjectURL: vi.fn() });
 
     const { result } = renderHook(() => useChatCompletion());
     await act(async () => {
