@@ -1,47 +1,77 @@
 {
   "status": "done",
+  "title": "Torch Inference",
+  "description": "A Rust/actix-web multimodal model server: TTS, STT, vision, and LLM chat, all behind a shared batching/pooling/resilience core.",
   "nodes": {
     "adaptive-request-batching": {
-      "status": "done"
+      "status": "done",
+      "title": "Adaptive Request Batching",
+      "description": "Groups concurrent requests into GPU-efficient batches with a queue-depth-adaptive timeout."
     },
     "in-flight-request-coalescing": {
-      "status": "done"
+      "status": "done",
+      "title": "In-Flight Request Coalescing",
+      "description": "Deduplicates identical concurrent requests so redundant work isn't repeated while one is already in progress."
     },
     "model-tensor-pooling": {
-      "status": "done"
+      "status": "done",
+      "title": "Model & Tensor Pooling",
+      "description": "Pools loaded models and pre-allocated tensors to avoid reload/allocation overhead per request."
     },
     "dynamic-model-registry": {
-      "status": "done"
+      "status": "done",
+      "title": "Dynamic Model Registry",
+      "description": "Downloads, registers, and manages ONNX/PyTorch model artifacts on demand, including auto-download on first server start."
     },
     "text-to-speech-synthesis": {
-      "status": "done"
+      "status": "done",
+      "title": "Text-to-Speech Synthesis",
+      "description": "Serves speech synthesis across six interchangeable engines (Kokoro-ONNX primary, plus Bark/XTTS/StyleTTS2/Piper/VITS)."
     },
     "speech-to-text-transcription": {
-      "status": "done"
+      "status": "done",
+      "title": "Speech-to-Text Transcription",
+      "description": "Transcribes audio via a Whisper ONNX encoder/decoder pipeline."
     },
     "image-classification-detection": {
-      "status": "done"
+      "status": "done",
+      "title": "Image Classification & Detection",
+      "description": "Runs ONNX image classification (EfficientNet-Lite4) and YOLOv8 object detection with NMS."
     },
     "llm-chat-completion": {
-      "status": "in-progress"
+      "status": "in-progress",
+      "title": "LLM Chat Completion",
+      "description": "Proxies to a separate microservice offering an OpenAI-compatible streaming chat endpoint over an HRM-Text engine or SmolVLM-256M vision model."
     },
     "agentic-tool-use-layer": {
-      "status": "in-progress"
+      "status": "in-progress",
+      "title": "Agentic Tool-Use Layer",
+      "description": "A planner/executor loop lets the LLM call tools (HTTP fetch, TTS, STT, classify, detect, vision, reflection) \u2014 the newest, least-mature subsystem in the repo."
     },
     "circuit-breakers-backpressure": {
-      "status": "done"
+      "status": "done",
+      "title": "Circuit Breakers & Backpressure",
+      "description": "Per-model circuit breakers, bulkheads, and token-bucket rate limiting protect backend model calls."
     },
     "request-security-auth": {
-      "status": "done"
+      "status": "done",
+      "title": "Request Security & Auth",
+      "description": "Input sanitization/validation, auth middleware, and security middleware guard the API surface."
     },
     "observability": {
-      "status": "done"
+      "status": "done",
+      "title": "Observability",
+      "description": "Structured logging, Prometheus metrics, and correlation-ID middleware instrument every request."
     },
     "react-dashboard-consolidated-panels": {
-      "status": "done"
+      "status": "done",
+      "title": "React Dashboard & Consolidated Panels",
+      "description": "A React frontend with dashboard, chat, TTS, STT, classify, and detect views, log viewing, and a health indicator wired to the backend."
     },
     "frontend-resource-hygiene": {
-      "status": "done"
+      "status": "done",
+      "title": "Frontend Resource Hygiene",
+      "description": "Blob URLs (image previews, chat TTS audio) are properly revoked and SSE chat streams stop updating after tab-switch unmount."
     }
   }
 }
