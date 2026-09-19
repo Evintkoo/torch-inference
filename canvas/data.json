@@ -1,3 +1,47 @@
 {
-  "status": "done"
+  "status": "done",
+  "nodes": {
+    "adaptive-request-batching": {
+      "status": "done"
+    },
+    "in-flight-request-coalescing": {
+      "status": "done"
+    },
+    "model-tensor-pooling": {
+      "status": "done"
+    },
+    "dynamic-model-registry": {
+      "status": "done"
+    },
+    "text-to-speech-synthesis": {
+      "status": "done"
+    },
+    "speech-to-text-transcription": {
+      "status": "done"
+    },
+    "image-classification-detection": {
+      "status": "done"
+    },
+    "llm-chat-completion": {
+      "status": "in-progress"
+    },
+    "agentic-tool-use-layer": {
+      "status": "in-progress"
+    },
+    "circuit-breakers-backpressure": {
+      "status": "done"
+    },
+    "request-security-auth": {
+      "status": "done"
+    },
+    "observability": {
+      "status": "done"
+    },
+    "react-dashboard-consolidated-panels": {
+      "status": "done"
+    },
+    "frontend-resource-hygiene": {
+      "status": "done"
+    }
+  }
 }
