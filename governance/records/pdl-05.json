@@ -1,0 +1,27 @@
+{
+  "control": "PDL-05",
+  "title": "Acceptance, release, and retirement",
+  "owner": "Release Manager",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/product-discovery.md",
+  "required_terms": [
+    "acceptance",
+    "release",
+    "retirement"
+  ],
+  "metric": {
+    "name": "releases_with_acceptance_record",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "release record",
+    "window": "per release",
+    "method": "count releases with recorded acceptance divided by releases",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

@@ -1,0 +1,8 @@
+# Copyright (c) 2026 Torviello.
+* @torviello/engineering
+/services/engine/ @torviello/engine-team
+/services/engine-py/ @torviello/engine-team
+/web/ @torviello/web-team
+/docs/ @torviello/docs-team
+/packaging/ @torviello/platform-team
+/monitoring/ @torviello/platform-team

@@ -1,0 +1,27 @@
+{
+  "control": "EXT-02",
+  "title": "Feedback, complaints, and dispute handling",
+  "owner": "Support Lead",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/stakeholder-relations.md",
+  "required_terms": [
+    "feedback",
+    "complaint",
+    "dispute"
+  ],
+  "metric": {
+    "name": "complaints_resolved",
+    "target": 10,
+    "unit": "business_days",
+    "direction": "at_most",
+    "source": "complaint log",
+    "window": "per complaint",
+    "method": "median time from complaint to resolution",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

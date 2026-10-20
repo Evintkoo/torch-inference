@@ -1,0 +1,27 @@
+{
+  "control": "MEDIA-03",
+  "title": "Media design system and content templates",
+  "owner": "Design Lead",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/design-research.md",
+  "required_terms": [
+    "design system",
+    "content template",
+    "review"
+  ],
+  "metric": {
+    "name": "assets_using_approved_templates",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "asset registry",
+    "window": "per release",
+    "method": "count published assets using approved templates divided by assets",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

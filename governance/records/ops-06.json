@@ -1,0 +1,28 @@
+{
+  "control": "OPS-06",
+  "title": "Operational roles, coverage, and handover",
+  "owner": "Operations Lead",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/on-call.md",
+  "required_terms": [
+    "on-call",
+    "handover",
+    "coverage",
+    "escalation"
+  ],
+  "metric": {
+    "name": "on_call_coverage",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "on-call rota",
+    "window": "per week",
+    "method": "count covered on-call slots divided by required slots",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

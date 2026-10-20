@@ -1,0 +1,61 @@
+# Copyright (c) 2026 Torviello.
+[package]
+name = "torviello-engine"
+version = "1.0.0"
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+argon2 = "0.5"
+jsonwebtoken = "9"
+axum = { version = "0.8", features = ["ws"] }
+config = "0.15"
+opentelemetry = "0.31"
+opentelemetry-otlp = "0.31"
+opentelemetry_sdk = "0.31"
+prometheus = "0.14"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
+schemars = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "migrate"] }
+thiserror = "2"
+tokio = { version = "1", features = ["full"] }
+toml = "1"
+tokio-tungstenite = "0.28"
+tower-http = { version = "0.6", features = ["cors", "limit", "timeout", "trace"] }
+tracing = "0.1"
+tracing-opentelemetry = "0.32"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+
+[features]
+default = ["engine"]
+engine = []
+full = ["engine", "web"]
+web = []
+cuda = []
+metal = []
+vulkan = []
+rocm = []
+coreml = []
+directml = []
+
+[dev-dependencies]
+proptest = "1"
+
+[[test]]
+name = "security"
+path = "tests/unit/test_security.rs"
+
+[[test]]
+name = "contract"
+path = "tests/contract/test_contract.rs"
+
+[[test]]
+name = "hardware_fallback"
+path = "tests/integration/test_hardware_fallback.rs"

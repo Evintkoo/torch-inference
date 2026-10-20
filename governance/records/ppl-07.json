@@ -1,0 +1,27 @@
+{
+  "control": "PPL-07",
+  "title": "Performance and corrective action",
+  "owner": "People Operations",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/people.md",
+  "required_terms": [
+    "performance review",
+    "recognition",
+    "corrective action"
+  ],
+  "metric": {
+    "name": "performance_reviews_completed",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "HR information system",
+    "window": "per year",
+    "method": "count completed performance reviews divided by required reviews",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

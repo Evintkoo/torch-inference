@@ -1,0 +1,27 @@
+{
+  "control": "PDL-01",
+  "title": "Problem discovery and evidence",
+  "owner": "Product Lead",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/product-discovery.md",
+  "required_terms": [
+    "problem statement",
+    "user evidence",
+    "discovery"
+  ],
+  "metric": {
+    "name": "initiatives_with_problem_evidence",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "discovery record",
+    "window": "per initiative",
+    "method": "count initiatives with recorded problem evidence divided by initiatives",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

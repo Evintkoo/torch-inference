@@ -1,0 +1,27 @@
+{
+  "control": "VEND-02",
+  "title": "Vendor exit and continuity",
+  "owner": "Procurement Lead",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/vendor-management.md",
+  "required_terms": [
+    "exit plan",
+    "continuity",
+    "data portability"
+  ],
+  "metric": {
+    "name": "vendors_with_exit_plan",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "vendor register",
+    "window": "per year",
+    "method": "count vendors with approved exit plan divided by vendors",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

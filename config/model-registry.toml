@@ -1,0 +1,14 @@
+# Copyright (c) 2026 Torviello.
+[[models]]
+id = "engine-demo-classifier"
+version = "1.0.0"
+content_hash = "sha256:6f1c0b4f0d7f4d6b9d3e8a2c5f7a1b0c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a"
+source_url = "https://models.torviello.local/engine-demo-classifier-1.0.0.bin"
+license = "Apache-2.0"
+
+[[models]]
+id = "engine-demo-embedder"
+version = "1.2.0"
+content_hash = "sha256:1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f809"
+source_url = "https://models.torviello.local/engine-demo-embedder-1.2.0.bin"
+license = "Apache-2.0"

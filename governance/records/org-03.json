@@ -1,0 +1,27 @@
+{
+  "control": "ORG-03",
+  "title": "Compliance risk and obligations",
+  "owner": "Compliance Officer",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/organization.md",
+  "required_terms": [
+    "compliance register",
+    "risk owner",
+    "obligation"
+  ],
+  "metric": {
+    "name": "obligations_reviewed_on_schedule",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "compliance register",
+    "window": "per quarter",
+    "method": "count obligations reviewed by due date divided by obligations",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

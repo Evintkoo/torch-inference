@@ -1,0 +1,27 @@
+{
+  "control": "CHG-04",
+  "title": "Emergency changes and risk acceptance",
+  "owner": "Incident Commander",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/change-control.md",
+  "required_terms": [
+    "emergency change",
+    "risk acceptance",
+    "post-incident review"
+  ],
+  "metric": {
+    "name": "emergency_post_review_timeliness",
+    "target": 5,
+    "unit": "business_days",
+    "direction": "at_most",
+    "source": "incident tracker",
+    "window": "per emergency change",
+    "method": "median days from emergency change to post-incident review",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

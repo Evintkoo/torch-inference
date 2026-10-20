@@ -1,0 +1,27 @@
+{
+  "control": "ORG-04",
+  "title": "Spending, procurement, and commitments",
+  "owner": "Finance Lead",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/organization.md",
+  "required_terms": [
+    "procurement",
+    "approval",
+    "budget"
+  ],
+  "metric": {
+    "name": "purchases_approved_before_commitment",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "procurement log",
+    "window": "per purchase",
+    "method": "count purchases approved before commitment divided by purchases",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

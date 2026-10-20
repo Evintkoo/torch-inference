@@ -1,0 +1,27 @@
+{
+  "control": "PPL-06",
+  "title": "Recruitment and hiring decisions",
+  "owner": "People Operations",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/people.md",
+  "required_terms": [
+    "recruitment",
+    "selection",
+    "hiring decision"
+  ],
+  "metric": {
+    "name": "hires_with_recorded_selection_criteria",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "recruitment file",
+    "window": "per hire",
+    "method": "count hires with selection criteria recorded divided by hires",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

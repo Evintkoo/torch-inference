@@ -1,0 +1,27 @@
+{
+  "control": "COL-01",
+  "title": "Communication, meetings, reviews, and handoffs",
+  "owner": "Engineering Manager",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/communication.md",
+  "required_terms": [
+    "meeting",
+    "handoff",
+    "review"
+  ],
+  "metric": {
+    "name": "meetings_with_published_notes",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "meeting notes index",
+    "window": "per meeting",
+    "method": "count meetings with notes and handoff divided by meetings",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

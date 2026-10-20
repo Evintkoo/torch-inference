@@ -1,0 +1,27 @@
+{
+  "control": "SEC-12",
+  "title": "Personnel security and access lifecycle",
+  "owner": "Security Lead",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/personnel-security.md",
+  "required_terms": [
+    "background check",
+    "access lifecycle",
+    "offboarding"
+  ],
+  "metric": {
+    "name": "access_review_before_start_date",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "identity and access records",
+    "window": "per joiner",
+    "method": "count joiners with access reviewed before start divided by joiners",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

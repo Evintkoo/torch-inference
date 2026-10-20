@@ -1,0 +1,27 @@
+{
+  "control": "VEND-04",
+  "title": "Provider selection and risk review",
+  "owner": "Procurement Lead",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/vendor-management.md",
+  "required_terms": [
+    "provider selection",
+    "contract",
+    "risk review"
+  ],
+  "metric": {
+    "name": "providers_with_current_risk_review",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "vendor risk register",
+    "window": "per year",
+    "method": "count providers with current risk review divided by providers",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

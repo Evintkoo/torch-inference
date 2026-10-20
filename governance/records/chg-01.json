@@ -1,0 +1,27 @@
+{
+  "control": "CHG-01",
+  "title": "Feature specification and requirements",
+  "owner": "Head of Product",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/change-control.md",
+  "required_terms": [
+    "feature specification",
+    "acceptance criteria",
+    "requirement id"
+  ],
+  "metric": {
+    "name": "feature_spec_acceptance_coverage",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "change records and requirement links",
+    "window": "per change",
+    "method": "count approved specs with acceptance criteria divided by approved specs",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

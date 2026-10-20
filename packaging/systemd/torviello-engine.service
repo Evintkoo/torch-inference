@@ -1,0 +1,23 @@
+# Copyright (c) 2026 Torviello.
+[Unit]
+Description=Torviello Engine
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=torviello
+Group=torviello
+ExecStart=/opt/torviello/bin/torviello-engine
+EnvironmentFile=/etc/torviello/engine.env
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=20
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/torviello
+
+[Install]
+WantedBy=multi-user.target

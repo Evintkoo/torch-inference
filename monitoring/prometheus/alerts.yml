@@ -1,0 +1,18 @@
+# Copyright (c) 2026 Torviello.
+groups:
+  - name: torviello-engine
+    rules:
+      - alert: EngineNotReady
+        expr: up{job="torviello-engine"} == 0
+        for: 5m
+        labels:
+          severity: S2
+        annotations:
+          summary: Engine is not ready
+      - alert: InferenceLatencyHigh
+        expr: histogram_quantile(0.95, rate(request_duration_seconds_bucket[5m])) > 0.25
+        for: 10m
+        labels:
+          severity: S3
+        annotations:
+          summary: p95 inference latency exceeds the SLO

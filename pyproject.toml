@@ -1,0 +1,22 @@
+[project]
+name = "torviello-enforcer-checks"
+version = "0.1.0"
+description = "Structural checks for the Torviello rules corpus"
+requires-python = ">=3.15"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=9,<10",
+    "ruff>=0.17.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["torviello-enforcer", "services/engine-py"]
+python_files = ["test_*.py"]
+addopts = ["-ra"]
+pythonpath = ["services/engine-py"]
+
+[tool.uv]
+package = false
+required-version = ">=0.13.1"

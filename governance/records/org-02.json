@@ -1,0 +1,27 @@
+{
+  "control": "ORG-02",
+  "title": "Ethical conduct and protected reporting",
+  "owner": "Compliance Officer",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/organization.md",
+  "required_terms": [
+    "code of conduct",
+    "conflict of interest",
+    "protected reporting"
+  ],
+  "metric": {
+    "name": "annual_conflict_disclosures",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "attestation system",
+    "window": "per year",
+    "method": "count completed disclosures divided by required personnel",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

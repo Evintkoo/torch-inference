@@ -1,0 +1,27 @@
+{
+  "control": "DOC-05",
+  "title": "User research, content, and design review",
+  "owner": "Design Lead",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/design-research.md",
+  "required_terms": [
+    "user research",
+    "design review",
+    "content review"
+  ],
+  "metric": {
+    "name": "design_reviews_before_release",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "design review log",
+    "window": "per release",
+    "method": "count releases with completed design and content review divided by releases",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

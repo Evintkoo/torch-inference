@@ -1,0 +1,27 @@
+{
+  "control": "VEND-01",
+  "title": "Stack selection and production limits",
+  "owner": "Procurement Lead",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/vendor-management.md",
+  "required_terms": [
+    "vendor",
+    "stack selection",
+    "production limit"
+  ],
+  "metric": {
+    "name": "vendors_with_documented_limits",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "vendor register",
+    "window": "per year",
+    "method": "count vendors with documented production limits divided by vendors",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

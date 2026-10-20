@@ -1,0 +1,27 @@
+{
+  "control": "PPL-04",
+  "title": "Work intake and prioritization",
+  "owner": "Delivery Lead",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/people.md",
+  "required_terms": [
+    "work intake",
+    "prioritization",
+    "capacity"
+  ],
+  "metric": {
+    "name": "work_items_prioritized_at_intake",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "work intake board",
+    "window": "per month",
+    "method": "count items prioritized at intake divided by new items",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

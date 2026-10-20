@@ -1,0 +1,27 @@
+{
+  "control": "EXT-04",
+  "title": "External incident and stakeholder communications",
+  "owner": "Incident Commander",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/stakeholder-relations.md",
+  "required_terms": [
+    "incident communication",
+    "stakeholder",
+    "notification"
+  ],
+  "metric": {
+    "name": "incident_notification_time",
+    "target": 24,
+    "unit": "hours",
+    "direction": "at_most",
+    "source": "incident log",
+    "window": "per incident",
+    "method": "median time from incident declaration to stakeholder notification",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

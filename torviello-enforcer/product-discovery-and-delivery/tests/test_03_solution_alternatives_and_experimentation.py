@@ -1,0 +1,277 @@
+"""Repo-wide conformance test for torviello-enforcer/product-discovery-and-delivery/rules/03-solution-alternatives-and-experimentation.md (controls PDL-03)."""
+
+import json
+import re
+from pathlib import Path
+
+import pytest
+
+CONTROL = "PDL-03"
+HERE = Path(__file__).resolve()
+RULES_ROOT = HERE.parents[3]
+SOURCE = RULES_ROOT
+
+LANGUAGE_BY_SUFFIX = {
+    ".rs": "rust",
+    ".ts": "typescript",
+    ".tsx": "typescript",
+    ".js": "javascript",
+    ".jsx": "javascript",
+    ".mjs": "javascript",
+    ".cjs": "javascript",
+    ".py": "python",
+    ".go": "go",
+    ".java": "java",
+    ".kt": "kotlin",
+    ".kts": "kotlin",
+    ".c": "c",
+    ".cc": "c++",
+    ".cpp": "c++",
+    ".h": "c/c++",
+    ".hpp": "c++",
+    ".cs": "csharp",
+    ".rb": "ruby",
+    ".php": "php",
+    ".swift": "swift",
+    ".sh": "shell",
+    ".bash": "shell",
+    ".zsh": "shell",
+    ".ps1": "powershell",
+    ".sql": "sql",
+    ".vue": "vue",
+    ".svelte": "svelte",
+}
+EXCLUDED_PARTS = {
+    ".git",
+    "target",
+    "node_modules",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "dist",
+    "build",
+    ".pytest_cache",
+}
+EXCLUDED_PREFIXES = {("torviello-enforcer",), ("requirements",), ("notes",)}
+TEXT_SUFFIXES = {
+    ".toml",
+    ".json",
+    ".yaml",
+    ".yml",
+    ".xml",
+    ".ini",
+    ".cfg",
+    ".env",
+    ".lock",
+    ".gradle",
+    ".mod",
+}
+MANIFEST_NAMES = {
+    "Cargo.toml",
+    "package.json",
+    "pyproject.toml",
+    "requirements.txt",
+    "requirements-dev.txt",
+    "Pipfile",
+    "go.mod",
+    "pom.xml",
+    "build.gradle",
+    "build.gradle.kts",
+    "Gemfile",
+    "composer.json",
+    "Package.swift",
+    "Directory.Build.props",
+}
+LOCKFILE_NAMES = {
+    "Cargo.lock",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "bun.lockb",
+    "poetry.lock",
+    "uv.lock",
+    "Pipfile.lock",
+    "go.sum",
+    "Gemfile.lock",
+    "composer.lock",
+    "packages.lock.json",
+}
+
+
+def src(*parts: str) -> Path:
+    return SOURCE.joinpath(*parts)
+
+
+def is_excluded(path: Path) -> bool:
+    parts = path.relative_to(SOURCE).parts
+    if any(part in EXCLUDED_PARTS for part in parts):
+        return True
+    return any(parts[: len(prefix)] == prefix for prefix in EXCLUDED_PREFIXES)
+
+
+def all_files(suffixes: set[str] | None = None) -> list[Path]:
+    result: list[Path] = []
+    for path in SOURCE.rglob("*"):
+        if not path.is_file() or is_excluded(path):
+            continue
+        if suffixes is not None and path.suffix.lower() not in suffixes:
+            continue
+        result.append(path)
+    return sorted(result)
+
+
+def files(glob: str, root: str = ".") -> list[Path]:
+    base = SOURCE if root == "." else src(*root.split("/"))
+    if not base.exists():
+        return []
+    return sorted(path for path in base.rglob(glob) if path.is_file() and not is_excluded(path))
+
+
+def source_files() -> list[Path]:
+    return all_files(set(LANGUAGE_BY_SUFFIX))
+
+
+def languages() -> list[str]:
+    return sorted({LANGUAGE_BY_SUFFIX[path.suffix.lower()] for path in source_files()})
+
+
+def lang_files(language: str) -> list[Path]:
+    return [path for path in source_files() if LANGUAGE_BY_SUFFIX[path.suffix.lower()] == language]
+
+
+def read_path(path: Path) -> str:
+    return path.read_text(encoding="utf-8", errors="replace")
+
+
+def read_all(paths: list[Path]) -> str:
+    return "\n".join(read_path(path) for path in paths)
+
+
+def read(rel: str) -> str:
+    path = src(*rel.split("/"))
+    if not path.exists():
+        pytest.fail(f"[{CONTROL}] missing required artifact: {rel}")
+    return read_path(path)
+
+
+def code_text(language: str | None = None, root: str | None = None) -> str:
+    if root is not None:
+        return "\n".join(read_path(path) for path in files("*", root) if path.suffix.lower() in LANGUAGE_BY_SUFFIX)
+    paths = lang_files(language) if language else source_files()
+    return "\n".join(read_path(path) for path in paths)
+
+
+def count(pattern: str, language: str | None = None, root: str | None = None) -> int:
+    text = code_text(language=language, root=root)
+    return len(re.findall(pattern, text, re.M))
+
+
+def manifests() -> list[Path]:
+    return [path for path in all_files(TEXT_SUFFIXES) if path.name in MANIFEST_NAMES]
+
+
+def manifest_text() -> str:
+    return read_all(manifests())
+
+
+def lockfiles() -> list[Path]:
+    return [path for path in all_files(TEXT_SUFFIXES) if path.name in LOCKFILE_NAMES]
+
+
+def workflow_text() -> str:
+    return read_all(
+        [path for path in all_files({".yml", ".yaml"}) if ".github" in path.parts and "workflows" in path.parts]
+    )
+
+
+def config_files() -> list[Path]:
+    result: list[Path] = []
+    for path in all_files(TEXT_SUFFIXES):
+        if path.name in LOCKFILE_NAMES or path.name in {"tsconfig.json", "jsconfig.json", "package-lock.json"}:
+            continue
+        if any(part in {"config", "configs", ".config"} for part in path.parts):
+            result.append(path)
+        elif path.parent == SOURCE and path.suffix.lower() in {".toml", ".yaml", ".yml", ".ini", ".cfg"}:
+            result.append(path)
+    return sorted(result)
+
+
+def config_text() -> str:
+    return read_all(config_files())
+
+
+def discovered_tests() -> list[Path]:
+    result: list[Path] = []
+    for path in all_files(set(LANGUAGE_BY_SUFFIX)):
+        parts = path.relative_to(SOURCE).parts
+        if "test" in parts or "tests" in parts:
+            result.append(path)
+        elif path.name.startswith("test_") or path.name.endswith(("_test.rs", "_test.py", ".test.ts", ".test.tsx", ".spec.ts", ".spec.tsx")):
+            result.append(path)
+    return result
+
+
+def require(condition: object, message: str) -> None:
+    if not condition:
+        pytest.fail(f"[{CONTROL}] {message}")
+
+
+def evidence(message: str) -> None:
+    pytest.fail(f"[{CONTROL}] No source-observable evidence: {message}")
+
+
+def test_product_discovery_and_delivery_03_solution_alternatives_and_experimentation() -> None:
+    """Assert this rule across the repository's multi-language source tree."""
+    if not SOURCE.is_dir():
+        pytest.fail(f"[{CONTROL}] source tree not found: {SOURCE}")
+    require(source_files(), "no product source files found in the repository")
+    require(languages(), "no product source language detected")
+    record_path = f"governance/records/{CONTROL.lower()}.json"
+    require(src(record_path).exists(), f"no governance evidence record exists for {CONTROL}")
+    record = json.loads(read(record_path))
+    require(record.get("control") == CONTROL, f"evidence record is for {record.get('control')}, not {CONTROL}")
+    require(record.get("owner"), f"{CONTROL} evidence record has no accountable owner")
+    require(record.get("status") in {"approved", "active", "monitored"}, f"{CONTROL} evidence record is not approved or active")
+    require(record.get("reviewed_at"), f"{CONTROL} evidence record has no review date")
+    require(str(record.get("artifact", "")).startswith("governance/"), f"{CONTROL} evidence record has no governance artifact")
+    terms = record.get("required_terms") or []
+    require(len(terms) >= 3, f"{CONTROL} evidence record does not define enough review terms")
+    artifact = read(record["artifact"])
+    missing_terms = [term for term in terms if term.lower() not in artifact.lower()]
+    require(not missing_terms, f"{CONTROL} evidence artifact is missing: {missing_terms}")
+
+    metric = record.get("metric")
+    require(isinstance(metric, dict), f"{CONTROL} has no measurable control definition")
+    for field in ("name", "target", "unit", "direction", "source", "window", "method", "measurement_status", "current_value", "last_measured_at"):
+        require(field in metric, f"{CONTROL} metric is missing {field}")
+    for field in ("name", "unit", "source", "window", "method"):
+        require(isinstance(metric[field], str) and metric[field].strip(), f"{CONTROL} metric field {field} is empty")
+    require(metric["direction"] in {"at_least", "at_most"}, f"{CONTROL} metric direction is invalid")
+    target = metric["target"]
+    require(isinstance(target, (int, float)) and not isinstance(target, bool) and target > 0, f"{CONTROL} metric target must be a positive number")
+    require(metric["measurement_status"] in {"measured", "not_yet_measured"}, f"{CONTROL} measurement status is invalid")
+    if metric["measurement_status"] == "measured":
+        current = metric["current_value"]
+        require(isinstance(current, (int, float)) and not isinstance(current, bool), f"{CONTROL} measured control has no numeric current value")
+        require(metric["last_measured_at"], f"{CONTROL} measured control has no measurement timestamp")
+    else:
+        require(metric["current_value"] is None, f"{CONTROL} unmeasured control must not claim a current value")
+        require(metric["last_measured_at"] is None, f"{CONTROL} unmeasured control must not claim a measurement timestamp")
+
+    specs = [
+        path
+        for path in all_files({".md", ".feature", ".yaml", ".yml", ".json"})
+        if path.name not in {"README.md", "AGENTS.md"}
+        and (
+            {"spec", "specs", "specifications"} & {part.lower() for part in path.relative_to(SOURCE).parts}
+            or path.suffix.lower() == ".feature"
+            or "acceptance" in path.name.lower()
+        )
+    ]
+    require(specs, "no specification or acceptance-criteria artifacts found (SDD stage)")
+    text = read_all(specs)
+    require(
+        re.search(r"given\b.*when\b.*then\b", text, re.I | re.S) or "acceptance criteria" in text.lower(),
+        "specifications contain no Given/When/Then scenario or acceptance criteria",
+    )
+    require(re.search(r"\b[A-Z]{2}-\d{3}\b", text), "specifications do not cite stable requirement IDs")

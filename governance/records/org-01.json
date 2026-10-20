@@ -1,0 +1,27 @@
+{
+  "control": "ORG-01",
+  "title": "Functional roles and decision rights",
+  "owner": "Chief Operating Officer",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/organization.md",
+  "required_terms": [
+    "role",
+    "accountability",
+    "decision right"
+  ],
+  "metric": {
+    "name": "roles_with_decision_rights",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "role register",
+    "window": "per quarter",
+    "method": "count roles with named owner and decision right divided by roles",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

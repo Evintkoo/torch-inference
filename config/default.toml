@@ -1,0 +1,31 @@
+# Copyright (c) 2026 Torviello.
+schema = "services/engine/api/contracts/schema.json"
+host = "127.0.0.1"
+port = 8000
+require_auth = true
+auth_enabled = true
+max_body_bytes = 1048576
+max_frame_bytes = 262144
+max_batch_size = 8
+max_queue_depth = 32
+timeout_ms = 30000
+shutdown_timeout_ms = 15000
+retention_max_age_days = 7
+max_size_bytes = 104857600
+rate_limit_per_minute = 120
+decompression_max_expansion_bytes = 4194304
+tls_min_version = "1.3"
+cors_allowed_origin = "https://console.torviello.local"
+accelerator_fallback = "cpu"
+
+[accelerators]
+cuda = true
+metal = true
+vulkan = true
+rocm = true
+coreml = true
+directml = true
+
+[secrets]
+source = "environment"
+variables = ["TORCH_AUTH_JWT_SECRET", "TORCH_TLS_CERT", "TORCH_TLS_KEY"]

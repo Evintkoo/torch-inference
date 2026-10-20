@@ -1,0 +1,27 @@
+{
+  "control": "PPL-01",
+  "title": "Joining, role change, leave, and separation",
+  "owner": "People Operations",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/people.md",
+  "required_terms": [
+    "joiner",
+    "leaver",
+    "access review"
+  ],
+  "metric": {
+    "name": "access_removed_by_end_date",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "identity and access records",
+    "window": "per leaver",
+    "method": "count leavers with access removed by end date divided by leavers",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

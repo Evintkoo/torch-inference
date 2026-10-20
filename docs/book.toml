@@ -1,0 +1,10 @@
+# Copyright (c) 2026 Torviello.
+[book]
+title = "Torviello Engine"
+authors = ["Torviello"]
+language = "en"
+src = "."
+
+[build]
+build-dir = "book"
+create-missing = false

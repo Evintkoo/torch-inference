@@ -1,0 +1,27 @@
+{
+  "control": "PPL-05",
+  "title": "Time, leave, and expense integrity",
+  "owner": "Finance Lead",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/people.md",
+  "required_terms": [
+    "time record",
+    "leave",
+    "expense"
+  ],
+  "metric": {
+    "name": "expenses_approved_before_reimbursement",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "expense system",
+    "window": "per month",
+    "method": "count approved-before-reimbursement expenses divided by expenses",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

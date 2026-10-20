@@ -1,0 +1,27 @@
+{
+  "control": "VEND-05",
+  "title": "Provider failure and exit continuity",
+  "owner": "Procurement Lead",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/vendor-management.md",
+  "required_terms": [
+    "provider failure",
+    "continuity",
+    "exit"
+  ],
+  "metric": {
+    "name": "provider_failure_drills",
+    "target": 1,
+    "unit": "count",
+    "direction": "at_least",
+    "source": "continuity exercise log",
+    "window": "per year",
+    "method": "count completed provider-failure drills",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

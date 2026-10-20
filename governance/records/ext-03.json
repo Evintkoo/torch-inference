@@ -1,0 +1,27 @@
+{
+  "control": "EXT-03",
+  "title": "Public statements and product claims",
+  "owner": "Marketing Lead",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/stakeholder-relations.md",
+  "required_terms": [
+    "public statement",
+    "product claim",
+    "marketing approval"
+  ],
+  "metric": {
+    "name": "public_claims_with_marketing_approval",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "marketing approval log",
+    "window": "per claim",
+    "method": "count claims with approval divided by published claims",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

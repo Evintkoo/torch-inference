@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "title": "Torviello Engine runtime",
+  "branches": [
+    {
+      "id": "request-path",
+      "label": "Authenticated inference path",
+      "nodes": [
+        { "id": "request", "label": "Inference request", "path": "services/engine/src/api.rs" },
+        { "id": "auth", "label": "Authentication", "path": "services/engine/src/auth.rs" },
+        { "id": "engine", "label": "Local engine", "path": "services/engine/src/domain.rs" }
+      ]
+    },
+    {
+      "id": "operations-path",
+      "label": "Operations path",
+      "nodes": [
+        { "id": "metrics", "label": "Metrics and traces", "path": "services/engine/src/observability.rs" },
+        { "id": "store", "label": "Persistence", "path": "services/engine/src/persistence.rs" }
+      ]
+    }
+  ],
+  "edges": [
+    { "from": "request", "to": "auth" },
+    { "from": "auth", "to": "engine" },
+    { "from": "engine", "to": "metrics" },
+    { "from": "metrics", "to": "store" }
+  ]
+}

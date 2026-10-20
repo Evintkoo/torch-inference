@@ -1,0 +1,79 @@
+name: Bug triage
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  validate:
+    name: validate bug report
+    if: contains(github.event.issue.labels.*.name, 'bug') || startsWith(github.event.issue.title, '[BUG]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check required sections and route the report
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const body = context.payload.issue.body || "";
+            const required = [
+              "## 1. Issue Metadata",
+              "## 2. Issue Summary",
+              "## 3. Preconditions",
+              "## 4. Steps to Reproduce",
+              "## 5. Expected Behavior",
+              "## 6. Actual Behavior",
+              "## 7. Reproducibility",
+              "## 8. Environment Details",
+              "## 9. Supporting Evidence",
+              "## 10. Impact Assessment",
+              "## 11. Technical Investigation",
+              "## 12. Resolution & Verification Criteria"
+            ];
+            const missing = required.filter((heading) => !body.includes(heading));
+            const fields = [
+              "Component / Module",
+              "Severity",
+              "Priority",
+              "Environment",
+              "First Observed",
+              "Reporter"
+            ];
+            const missingFields = fields.filter((field) => !body.includes(field));
+            const issue_number = context.issue.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            if (missing.length > 0 || missingFields.length > 0) {
+              await github.rest.issues.addLabels({ owner, repo, issue_number, labels: ["needs-info"] });
+              const text = [
+                "This report is not triage-ready.",
+                "",
+                "Missing sections: " + (missing.length ? missing.join(", ") : "none"),
+                "Missing metadata fields: " + (missingFields.length ? missingFields.join(", ") : "none"),
+                "",
+                "Use `.github/ISSUE_TEMPLATE/bug_report.md` and the 12-section standard in `docs/operations/bug-report-standard.md`. A human owner must confirm severity; automation will not set it."
+              ].join("\n");
+              await github.rest.issues.createComment({ owner, repo, issue_number, body: text });
+              return;
+            }
+
+            await github.rest.issues.addLabels({ owner, repo, issue_number, labels: ["triage"] });
+            try {
+              await github.rest.issues.removeLabel({ owner, repo, issue_number, name: "needs-info" });
+            } catch (error) {
+              if (error.status !== 404) {
+                throw error;
+              }
+            }
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number,
+              body: "All required sections are present. A human owner must confirm reproducibility, severity, priority, and disposition. Automation does not set final severity or close defects."
+            });

@@ -1,0 +1,10 @@
+# Copyright (c) 2026 Torviello.
+line-length = 100
+target-version = "py315"
+
+[lint]
+select = ["E", "F", "I", "B", "UP", "S", "C90"]
+ignore = ["S101"]
+
+[lint.per-file-ignores]
+"torviello-enforcer/**" = ["E501"]

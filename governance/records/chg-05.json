@@ -1,0 +1,27 @@
+{
+  "control": "CHG-05",
+  "title": "Repository history and plan retention",
+  "owner": "Repository Maintainer",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/change-control.md",
+  "required_terms": [
+    "repository history",
+    "plan retention",
+    "audit trail"
+  ],
+  "metric": {
+    "name": "plan_retention_compliance",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "repository audit",
+    "window": "per quarter",
+    "method": "count retained plans meeting policy divided by sampled plans",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

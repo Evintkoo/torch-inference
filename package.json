@@ -1,0 +1,26 @@
+{
+  "name": "torviello-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Torviello operator console and shared web components.",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "tsx --test web/src/components/ui/Button.test.tsx"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^10.13.0",
+    "prettier": "3.6.2",
+    "tsx": "^4.23.15",
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.72.0"
+  },
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  }
+}

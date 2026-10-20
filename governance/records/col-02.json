@@ -1,0 +1,27 @@
+{
+  "control": "COL-02",
+  "title": "Organizational records and information lifecycle",
+  "owner": "Records Owner",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/communication.md",
+  "required_terms": [
+    "record retention",
+    "information lifecycle",
+    "classification"
+  ],
+  "metric": {
+    "name": "records_with_current_classification",
+    "target": 100,
+    "unit": "%",
+    "direction": "at_least",
+    "source": "records register",
+    "window": "per quarter",
+    "method": "count classified records divided by sampled records",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

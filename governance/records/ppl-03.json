@@ -1,0 +1,27 @@
+{
+  "control": "PPL-03",
+  "title": "Respectful, accessible, and safe work",
+  "owner": "People Operations",
+  "status": "active",
+  "reviewed_at": "2026-10-01",
+  "review_cycle": "quarterly",
+  "artifact": "governance/people.md",
+  "required_terms": [
+    "respectful workplace",
+    "accessibility",
+    "safety"
+  ],
+  "metric": {
+    "name": "safety_incidents_closed_on_time",
+    "target": 30,
+    "unit": "days",
+    "direction": "at_most",
+    "source": "safety incident log",
+    "window": "per incident",
+    "method": "median days from safety incident report to closure",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}
