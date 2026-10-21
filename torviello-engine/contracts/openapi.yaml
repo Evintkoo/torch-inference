@@ -10,9 +10,10 @@ info:
 
     Every successful capability response uses the result envelope. Every failure uses
     an RFC 9457 application/problem+json document with stable engine extensions.
-    Authentication is disabled by default in local mode; when enabled, protected
-    routes require a bearer token. Remote deployments require TLS 1.3 and asymmetric
-    JWT algorithms under RFC 8725.
+    Authentication is enabled by default; protected routes require a bearer token.
+    TLS 1.3 and asymmetric JWT algorithms under RFC 8725 are required for remote
+    deployments. Test harnesses may construct an in-memory state with authentication
+    disabled, but the shipped configuration cannot disable it.
   contact:
     name: Torviello engine owner
 servers:
@@ -38,6 +39,7 @@ paths:
       description: Returns liveness plus per-subsystem status. Optional subsystems report degraded without failing liveness. Readiness is reported separately.
       security: []
       responses:
+        "500": { $ref: "#/components/responses/InternalError" }
         "200":
           description: Health snapshot. Process is alive.
           content:
@@ -50,6 +52,7 @@ paths:
       summary: Report process liveness.
       security: []
       responses:
+        "500": { $ref: "#/components/responses/InternalError" }
         "200":
           description: The process can make progress.
           content:
@@ -68,6 +71,7 @@ paths:
       description: Ready only when required configuration, backends, and models are available. Saturation and rate limiting do not change readiness.
       security: []
       responses:
+        "500": { $ref: "#/components/responses/InternalError" }
         "200":
           description: Ready.
           content:
@@ -85,6 +89,8 @@ paths:
       summary: Report effective runtime information.
       description: Reports version, selected backend, devices, loaded models, uptime, and limits. Secrets and absolute host paths are redacted.
       responses:
+        "501": { $ref: "#/components/responses/NotImplemented" }
+        "500": { $ref: "#/components/responses/InternalError" }
         "200":
           description: System snapshot.
           content:
@@ -101,6 +107,8 @@ paths:
           in: query
           schema: { type: integer, minimum: 1, maximum: 5000, default: 200 }
       responses:
+        "501": { $ref: "#/components/responses/NotImplemented" }
+        "500": { $ref: "#/components/responses/InternalError" }
         "200":
           description: Redacted diagnostic entries.
           content:
@@ -113,6 +121,8 @@ paths:
       operationId: clearSystemLogs
       summary: Clear the diagnostic log through an authorized, audited action.
       responses:
+        "501": { $ref: "#/components/responses/NotImplemented" }
+        "500": { $ref: "#/components/responses/InternalError" }
         "204": { description: Log cleared. }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -122,6 +132,7 @@ paths:
       operationId: listModels
       summary: List model catalog entries with independent state dimensions.
       responses:
+        "500": { $ref: "#/components/responses/InternalError" }
         "200":
           description: Catalog page.
           content:
@@ -143,6 +154,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ModelId"
       responses:
+        "500": { $ref: "#/components/responses/InternalError" }
         "200":
           description: Model detail.
           content:
@@ -164,6 +176,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ModelId"
       responses:
+        "500": { $ref: "#/components/responses/InternalError" }
         "202":
           description: Load admitted or already in progress.
           content:
@@ -187,6 +200,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ModelId"
       responses:
+        "500": { $ref: "#/components/responses/InternalError" }
         "202":
           description: Unload admitted.
           content:
@@ -214,6 +228,7 @@ paths:
           application/json:
             schema: { $ref: "#/components/schemas/DownloadRequest" }
       responses:
+        "500": { $ref: "#/components/responses/InternalError" }
         "202":
           description: Download job accepted.
           content:
@@ -236,6 +251,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ModelId"
       responses:
+        "500": { $ref: "#/components/responses/InternalError" }
         "200":
           description: Download status.
           content:
@@ -248,6 +264,7 @@ paths:
                       data: { $ref: "#/components/schemas/DownloadJob" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
   /models/{modelId}/download/progress:
     get:
       tags: [Models]
@@ -257,6 +274,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ModelId"
       responses:
+        "500": { $ref: "#/components/responses/InternalError" }
         "200":
           description: Event stream.
           content:
@@ -264,6 +282,7 @@ paths:
               schema: { $ref: "#/components/schemas/DownloadProgressEvent" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
   /tts:
     post:
       tags: [Speech]
@@ -276,6 +295,8 @@ paths:
           application/json:
             schema: { $ref: "#/components/schemas/TtsRequest" }
       responses:
+        "501": { $ref: "#/components/responses/NotImplemented" }
+        "500": { $ref: "#/components/responses/InternalError" }
         "200":
           description: Audio bytes with synthesis metadata in headers.
           headers:
@@ -310,6 +331,8 @@ paths:
           application/json:
             schema: { $ref: "#/components/schemas/TtsRequest" }
       responses:
+        "501": { $ref: "#/components/responses/NotImplemented" }
+        "500": { $ref: "#/components/responses/InternalError" }
         "200":
           description: Ordered audio stream.
           content:
@@ -331,6 +354,8 @@ paths:
           multipart/form-data:
             schema: { $ref: "#/components/schemas/SttRequest" }
       responses:
+        "501": { $ref: "#/components/responses/NotImplemented" }
+        "500": { $ref: "#/components/responses/InternalError" }
         "200":
           description: Transcript result.
           content:
@@ -358,6 +383,8 @@ paths:
           multipart/form-data:
             schema: { $ref: "#/components/schemas/ClassifyRequest" }
       responses:
+        "501": { $ref: "#/components/responses/NotImplemented" }
+        "500": { $ref: "#/components/responses/InternalError" }
         "200":
           description: Classification results in input order.
           content:
@@ -387,6 +414,8 @@ paths:
           multipart/form-data:
             schema: { $ref: "#/components/schemas/DetectRequest" }
       responses:
+        "501": { $ref: "#/components/responses/NotImplemented" }
+        "500": { $ref: "#/components/responses/InternalError" }
         "200":
           description: Detection result.
           content:
@@ -414,6 +443,8 @@ paths:
           application/json:
             schema: { $ref: "#/components/schemas/ChatRequest" }
       responses:
+        "501": { $ref: "#/components/responses/NotImplemented" }
+        "500": { $ref: "#/components/responses/InternalError" }
         "200":
           description: Completion or streamed completion.
           content:
@@ -434,6 +465,7 @@ paths:
       description: Label sets are bounded. Request content, identifiers, paths, and user-controlled values never appear as labels.
       security: []
       responses:
+        "500": { $ref: "#/components/responses/InternalError" }
         "200":
           description: Prometheus exposition.
           content:
@@ -445,6 +477,15 @@ paths:
             text/plain:
               schema: { type: string }
   /api/v1/models:
+    get:
+      tags: [Catalog]
+      operationId: listModelsAlias
+      summary: Versioned alias of GET /models.
+      x-alias-of: /models
+      responses:
+        "500": { $ref: "#/components/responses/InternalError" }
+        "200": { $ref: "#/paths/~1models/get/responses/200" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
     post:
       tags: [Administration]
       operationId: registerModel
@@ -456,6 +497,8 @@ paths:
           application/json:
             schema: { $ref: "#/components/schemas/ModelRegistration" }
       responses:
+        "501": { $ref: "#/components/responses/NotImplemented" }
+        "500": { $ref: "#/components/responses/InternalError" }
         "201":
           description: Model registered.
           content:
@@ -479,6 +522,8 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ModelId"
       responses:
+        "501": { $ref: "#/components/responses/NotImplemented" }
+        "500": { $ref: "#/components/responses/InternalError" }
         "204": { description: Removed. }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -491,6 +536,8 @@ paths:
       summary: Realtime audio session.
       description: WebSocket upgrade. Negotiates audio framing, applies bounded buffers and ordered frames, and releases work on disconnect.
       responses:
+        "501": { $ref: "#/components/responses/NotImplemented" }
+        "500": { $ref: "#/components/responses/InternalError" }
         "101": { description: Switching protocols. }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
@@ -501,6 +548,8 @@ paths:
       operationId: classifyWebSocket
       summary: Realtime classification session.
       responses:
+        "501": { $ref: "#/components/responses/NotImplemented" }
+        "500": { $ref: "#/components/responses/InternalError" }
         "101": { description: Switching protocols. }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
@@ -510,9 +559,101 @@ paths:
       operationId: detectWebSocket
       summary: Realtime detection session.
       responses:
+        "501": { $ref: "#/components/responses/NotImplemented" }
+        "500": { $ref: "#/components/responses/InternalError" }
         "101": { description: Switching protocols. }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+  /api/v1/health:
+    get:
+      tags: [Health]
+      operationId: getHealthAlias
+      summary: Versioned alias of /health.
+      x-alias-of: /health
+      security: []
+      responses:
+        "500": { $ref: "#/components/responses/InternalError" }
+        "200": { $ref: "#/paths/~1health/get/responses/200" }
+  /api/v1/tts:
+    post:
+      tags: [Speech]
+      operationId: synthesizeSpeechAlias
+      summary: Versioned alias of /tts.
+      x-alias-of: /tts
+      requestBody: { $ref: "#/paths/~1tts/post/requestBody" }
+      responses:
+        "501": { $ref: "#/components/responses/NotImplemented" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "200": { $ref: "#/paths/~1tts/post/responses/200" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "413": { $ref: "#/components/responses/TooLarge" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+  /api/v1/tts/stream:
+    post:
+      tags: [Speech]
+      operationId: streamSpeechAlias
+      summary: Versioned alias of /tts/stream.
+      x-alias-of: /tts/stream
+      requestBody: { $ref: "#/paths/~1tts~1stream/post/requestBody" }
+      responses:
+        "501": { $ref: "#/components/responses/NotImplemented" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "200": { $ref: "#/paths/~1tts~1stream/post/responses/200" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "413": { $ref: "#/components/responses/TooLarge" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+  /api/v1/stt:
+    post:
+      tags: [Speech]
+      operationId: transcribeSpeechAlias
+      summary: Versioned alias of /stt.
+      x-alias-of: /stt
+      requestBody: { $ref: "#/paths/~1stt/post/requestBody" }
+      responses:
+        "501": { $ref: "#/components/responses/NotImplemented" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "200": { $ref: "#/paths/~1stt/post/responses/200" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "413": { $ref: "#/components/responses/TooLarge" }
+        "415": { $ref: "#/components/responses/UnsupportedMediaType" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+  /api/v1/classify:
+    post:
+      tags: [Vision]
+      operationId: classifyImagesAlias
+      summary: Versioned alias of /classify.
+      x-alias-of: /classify
+      requestBody: { $ref: "#/paths/~1classify/post/requestBody" }
+      responses:
+        "501": { $ref: "#/components/responses/NotImplemented" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "200": { $ref: "#/paths/~1classify/post/responses/200" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "413": { $ref: "#/components/responses/TooLarge" }
+        "415": { $ref: "#/components/responses/UnsupportedMediaType" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+  /api/v1/detect:
+    post:
+      tags: [Vision]
+      operationId: detectObjectsAlias
+      summary: Versioned alias of /detect.
+      x-alias-of: /detect
+      requestBody: { $ref: "#/paths/~1detect/post/requestBody" }
+      responses:
+        "501": { $ref: "#/components/responses/NotImplemented" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "200": { $ref: "#/paths/~1detect/post/responses/200" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "413": { $ref: "#/components/responses/TooLarge" }
+        "415": { $ref: "#/components/responses/UnsupportedMediaType" }
+        "503": { $ref: "#/components/responses/Unavailable" }
 components:
   securitySchemes:
     bearerAuth:
@@ -563,6 +704,16 @@ components:
           schema: { $ref: "#/components/schemas/ErrorEnvelope" }
     UnsupportedMediaType:
       description: Payload encoding is not supported.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    InternalError:
+      description: Unhandled internal failure.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    NotImplemented:
+      description: The route is reserved by the contract but the operation is not implemented.
       content:
         application/problem+json:
           schema: { $ref: "#/components/schemas/ErrorEnvelope" }
@@ -618,7 +769,7 @@ components:
         RFC 9457 problem details with stable engine extensions. The response
         content type is application/problem+json. The `type` URI identifies the
         error class; `code` is the stable machine-readable engine identifier.
-      required: [type, title, status, code, category]
+      required: [type, title, status, code, category, detail, instance, request_id, retryable]
       properties:
         type: { type: string, format: uri, description: Stable URI identifying the error class. }
         title: { type: string, description: Short human-readable summary. }
@@ -959,7 +1110,7 @@ components:
             license: { type: string }
 x-engine:
   default_bind: 127.0.0.1:8000
-  authentication_default: disabled
+  authentication_default: enabled
   local_token_algorithms: [HS256, HS384, HS512]
   remote_token_algorithms: [ES256, EdDSA, RS256]
   token_ttl_minutes: 60

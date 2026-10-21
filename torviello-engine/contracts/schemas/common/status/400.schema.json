@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/400.schema.json",
+  "title": "400 Bad Request",
+  "description": "RFC 9110 \u00a715.5.1; class client_error; engine use: used.\nTrigger: Request syntax, path, parameter, model name, or source is invalid.\nContent: application/problem+json (ErrorEnvelope).\nRequired headers: none.\nCache-Control: no-store; retry: never.",
+  "x-status": 400,
+  "x-engine-use": "used",
+  "x-response-body": "problem+json",
+  "x-response-contract": {
+    "content_type": "application/problem+json",
+    "schema": "ErrorEnvelope",
+    "required_headers": [],
+    "optional_headers": [],
+    "cache_control": "no-store",
+    "retry": "never",
+    "body_fields": [
+      "type",
+      "title",
+      "status",
+      "code",
+      "category",
+      "detail",
+      "instance",
+      "request_id",
+      "retryable"
+    ],
+    "forbidden_body_fields": [
+      "data"
+    ],
+    "error_codes": [
+      "invalid_input",
+      "model.invalid_name",
+      "model.invalid_source",
+      "model.path_outside_root"
+    ],
+    "error_category": "validation",
+    "retryable": false,
+    "trigger": "Request syntax, path, parameter, model name, or source is invalid."
+  },
+  "$ref": "../ErrorEnvelope.schema.json",
+  "examples": [
+    {
+      "type": "https://torviello.local/problems/invalid_input",
+      "title": "Bad Request",
+      "status": 400,
+      "code": "invalid_input",
+      "category": "validation",
+      "detail": "Request syntax, path, parameter, model name, or source is invalid.",
+      "instance": "urn:torviello:request:00000000-0000-4000-8000-000000000000",
+      "request_id": "00000000-0000-4000-8000-000000000000",
+      "retryable": false
+    }
+  ]
+}

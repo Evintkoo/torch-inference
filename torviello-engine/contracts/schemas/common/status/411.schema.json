@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/411.schema.json",
+  "title": "411 Length Required",
+  "description": "RFC 9110 \u00a715.5.12; class client_error; engine use: conditional.\nTrigger: A request that requires a framing length omitted Content-Length or chunked framing.\nContent: application/problem+json (ErrorEnvelope).\nRequired headers: none.\nCache-Control: no-store; retry: never.",
+  "x-status": 411,
+  "x-engine-use": "conditional",
+  "x-response-body": "problem+json",
+  "x-response-contract": {
+    "content_type": "application/problem+json",
+    "schema": "ErrorEnvelope",
+    "required_headers": [],
+    "optional_headers": [],
+    "cache_control": "no-store",
+    "retry": "never",
+    "body_fields": [
+      "type",
+      "title",
+      "status",
+      "code",
+      "category",
+      "detail",
+      "instance",
+      "request_id",
+      "retryable"
+    ],
+    "forbidden_body_fields": [
+      "data"
+    ],
+    "error_codes": [],
+    "error_category": null,
+    "retryable": false,
+    "trigger": "A request that requires a framing length omitted Content-Length or chunked framing."
+  },
+  "$ref": "../ErrorEnvelope.schema.json",
+  "examples": [
+    {
+      "type": "https://torviello.local/problems/status-411",
+      "title": "Length Required",
+      "status": 411,
+      "code": "framework_error",
+      "category": "internal",
+      "detail": "A request that requires a framing length omitted Content-Length or chunked framing.",
+      "instance": "urn:torviello:request:00000000-0000-4000-8000-000000000000",
+      "request_id": "00000000-0000-4000-8000-000000000000",
+      "retryable": false
+    }
+  ]
+}

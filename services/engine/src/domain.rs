@@ -18,6 +18,26 @@ pub const COREML_ENABLED: bool = true;
 #[cfg(feature = "directml")]
 pub const DIRECTML_ENABLED: bool = true;
 
+#[must_use]
+#[allow(unused_mut, clippy::vec_init_then_push)]
+pub fn compiled_backends() -> Vec<&'static str> {
+    let mut backends = Vec::with_capacity(7);
+    backends.push("cpu");
+    #[cfg(feature = "cuda")]
+    backends.push("cuda");
+    #[cfg(feature = "metal")]
+    backends.push("metal");
+    #[cfg(feature = "vulkan")]
+    backends.push("vulkan");
+    #[cfg(feature = "rocm")]
+    backends.push("rocm");
+    #[cfg(feature = "coreml")]
+    backends.push("coreml");
+    #[cfg(feature = "directml")]
+    backends.push("directml");
+    backends
+}
+
 #[derive(Debug, Clone)]
 pub struct InferenceRequest {
     pub prompt: String,

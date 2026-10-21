@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/speech/TtsRequest.schema.json",
+  "title": "TtsRequest",
+  "type": "object",
+  "required": [
+    "text"
+  ],
+  "properties": {
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 5000
+    },
+    "model_id": {
+      "type": "string"
+    },
+    "voice": {
+      "type": "string"
+    },
+    "language": {
+      "type": "string"
+    },
+    "speed": {
+      "type": "number",
+      "minimum": 0.5,
+      "maximum": 2.0,
+      "default": 1.0
+    },
+    "pitch": {
+      "type": "number",
+      "minimum": 0.5,
+      "maximum": 2.0,
+      "default": 1.0
+    },
+    "format": {
+      "type": "string",
+      "enum": [
+        "pcm_s16le",
+        "wav"
+      ],
+      "default": "pcm_s16le"
+    },
+    "sample_rate": {
+      "type": "integer",
+      "enum": [
+        24000
+      ],
+      "default": 24000
+    }
+  }
+}

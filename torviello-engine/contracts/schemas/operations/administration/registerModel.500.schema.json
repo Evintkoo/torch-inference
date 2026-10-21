@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/operations/administration/registerModel.500.schema.json",
+  "title": "registerModel response 500",
+  "$ref": "../../common/ErrorEnvelope.schema.json"
+}

@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/events/schemas/streaming/stream.failed.schema.json",
+  "title": "stream.failed",
+  "description": "A terminal error frame is written.",
+  "type": "object",
+  "required": [
+    "event_id",
+    "event_type",
+    "occurred_at",
+    "profile_id",
+    "engine_version",
+    "request_id",
+    "error_code",
+    "frames_written"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event_type": {
+      "type": "string",
+      "const": "stream.failed"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "profile_id": {
+      "type": "string"
+    },
+    "engine_version": {
+      "type": "string"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "success",
+        "failure",
+        "cancelled",
+        "denied"
+      ]
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "frames_written": {
+      "type": "integer"
+    }
+  },
+  "x-requirement": "ENG-013"
+}

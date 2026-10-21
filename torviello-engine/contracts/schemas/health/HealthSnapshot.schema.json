@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/health/HealthSnapshot.schema.json",
+  "title": "HealthSnapshot",
+  "type": "object",
+  "required": [
+    "status",
+    "subsystems",
+    "uptime_ms",
+    "version"
+  ],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "ok",
+        "degraded",
+        "unavailable"
+      ]
+    },
+    "uptime_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "version": {
+      "type": "string"
+    },
+    "subsystems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "status",
+          "required"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "degraded",
+              "unavailable"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "error_code": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

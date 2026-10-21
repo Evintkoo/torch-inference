@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/operations/models/loadModel.409.schema.json",
+  "title": "loadModel response 409",
+  "$ref": "../../common/ErrorEnvelope.schema.json"
+}

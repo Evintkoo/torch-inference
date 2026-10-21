@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/events/schemas/configuration/config.reload_rejected.schema.json",
+  "title": "config.reload_rejected",
+  "description": "A reload candidate fails.",
+  "type": "object",
+  "required": [
+    "event_id",
+    "event_type",
+    "occurred_at",
+    "profile_id",
+    "engine_version",
+    "setting_names",
+    "retained_snapshot_version"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event_type": {
+      "type": "string",
+      "const": "config.reload_rejected"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "profile_id": {
+      "type": "string"
+    },
+    "engine_version": {
+      "type": "string"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "success",
+        "failure",
+        "cancelled",
+        "denied"
+      ]
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "setting_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "retained_snapshot_version": {
+      "type": "string"
+    }
+  },
+  "x-requirement": "ENG-001"
+}

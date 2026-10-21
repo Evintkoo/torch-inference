@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/operations/administration/registerModel.403.schema.json",
+  "title": "registerModel response 403",
+  "$ref": "../../common/ErrorEnvelope.schema.json"
+}

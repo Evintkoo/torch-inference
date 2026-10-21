@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/events/schemas/limits/limit.rejected.schema.json",
+  "title": "limit.rejected",
+  "description": "A body, item, or concurrency limit is exceeded.",
+  "type": "object",
+  "required": [
+    "event_id",
+    "event_type",
+    "occurred_at",
+    "profile_id",
+    "engine_version",
+    "limit_name",
+    "value",
+    "unit",
+    "scope"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event_type": {
+      "type": "string",
+      "const": "limit.rejected"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "profile_id": {
+      "type": "string"
+    },
+    "engine_version": {
+      "type": "string"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "success",
+        "failure",
+        "cancelled",
+        "denied"
+      ]
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "limit_name": {
+      "type": "string"
+    },
+    "value": {
+      "type": "integer"
+    },
+    "unit": {
+      "type": "string"
+    },
+    "scope": {
+      "type": "string"
+    }
+  },
+  "x-requirement": "ENG-015"
+}

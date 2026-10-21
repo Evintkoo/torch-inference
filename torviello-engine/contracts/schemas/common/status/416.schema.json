@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/416.schema.json",
+  "title": "416 Range Not Satisfiable",
+  "description": "RFC 9110 \u00a715.5.17; class client_error; engine use: not-used.\nTrigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.\nContent: none.\nRequired headers: none.\nCache-Control: none; retry: never.",
+  "x-status": 416,
+  "x-engine-use": "not-used",
+  "x-response-body": "problem+json",
+  "x-response-contract": {
+    "content_type": null,
+    "schema": null,
+    "required_headers": [],
+    "optional_headers": [],
+    "cache_control": null,
+    "retry": "never",
+    "body_fields": [],
+    "forbidden_body_fields": [],
+    "error_codes": [],
+    "error_category": null,
+    "retryable": false,
+    "trigger": "Prohibited on the engine surface; no handler or framework fallback may emit this status."
+  },
+  "$ref": "../ErrorEnvelope.schema.json"
+}

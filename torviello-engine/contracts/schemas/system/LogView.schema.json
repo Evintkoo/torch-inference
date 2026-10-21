@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/system/LogView.schema.json",
+  "title": "LogView",
+  "type": "object",
+  "required": [
+    "entries",
+    "truncated"
+  ],
+  "properties": {
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warn",
+              "info",
+              "debug",
+              "trace"
+            ]
+          },
+          "target": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "truncated": {
+      "type": "boolean"
+    },
+    "next_cursor": {
+      "type": "string"
+    }
+  }
+}

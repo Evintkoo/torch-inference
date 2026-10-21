@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/speech/SttRequest.schema.json",
+  "title": "SttRequest",
+  "type": "object",
+  "required": [
+    "file",
+    "model_id"
+  ],
+  "properties": {
+    "file": {
+      "type": "string",
+      "format": "binary",
+      "description": "Bounded audio payload."
+    },
+    "model_id": {
+      "type": "string"
+    },
+    "language": {
+      "type": "string",
+      "description": "Optional hint; response reports the effective language."
+    },
+    "response_format": {
+      "type": "string",
+      "enum": [
+        "json",
+        "text"
+      ],
+      "default": "json"
+    }
+  }
+}

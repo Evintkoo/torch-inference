@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/models/ModelRegistration.schema.json",
+  "title": "ModelRegistration",
+  "type": "object",
+  "required": [
+    "model_id",
+    "task",
+    "format",
+    "asset_digest"
+  ],
+  "properties": {
+    "model_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "display_name": {
+      "type": "string"
+    },
+    "task": {
+      "type": "string",
+      "enum": [
+        "tts",
+        "stt",
+        "classification",
+        "detection",
+        "chat",
+        "tensor"
+      ]
+    },
+    "format": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "asset_digest": {
+      "type": "object",
+      "required": [
+        "algorithm",
+        "value"
+      ],
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "enum": [
+            "sha256"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "backend_requirements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "source_scheme": {
+          "type": "string"
+        },
+        "license": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

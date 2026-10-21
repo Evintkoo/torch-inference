@@ -11,33 +11,30 @@ workspace = true
 [dependencies]
 argon2 = "0.5"
 jsonwebtoken = "9"
-axum = { version = "0.8", features = ["ws"] }
-config = "0.15"
-opentelemetry = "0.31"
-opentelemetry-otlp = "0.31"
-opentelemetry_sdk = "0.31"
+jsonschema = { version = "0.59", default-features = false }
+axum = "0.8"
 prometheus = "0.14"
+opentelemetry = { version = "0.31", optional = true }
+opentelemetry_sdk = { version = "0.31", optional = true }
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
-schemars = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
-sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "migrate"] }
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "sqlite", "migrate", "macros"], optional = true }
 thiserror = "2"
+time = { version = "0.3", features = ["formatting"] }
 tokio = { version = "1", features = ["full"] }
+tokio-stream = "0.1"
 toml = "1"
-tokio-tungstenite = "0.28"
-tower-http = { version = "0.6", features = ["cors", "limit", "timeout", "trace"] }
 tracing = "0.1"
-tracing-opentelemetry = "0.32"
-tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 uuid = { version = "1", features = ["v4", "serde"] }
 
 [features]
 default = ["engine"]
 engine = []
-full = ["engine", "web"]
-web = []
+persistence = ["dep:sqlx"]
+telemetry = ["dep:opentelemetry", "dep:opentelemetry_sdk"]
+full = ["persistence", "telemetry"]
 cuda = []
 metal = []
 vulkan = []
@@ -46,7 +43,10 @@ coreml = []
 directml = []
 
 [dev-dependencies]
+http-body-util = "0.1"
 proptest = "1"
+serde_yaml = "0.9"
+tower = { version = "0.5", features = ["util"] }
 
 [[test]]
 name = "security"
@@ -55,6 +55,30 @@ path = "tests/unit/test_security.rs"
 [[test]]
 name = "contract"
 path = "tests/contract/test_contract.rs"
+
+[[test]]
+name = "first_slice"
+path = "tests/contract/test_first_slice.rs"
+
+[[test]]
+name = "model_lifecycle"
+path = "tests/contract/test_model_lifecycle.rs"
+
+[[test]]
+name = "router_parity"
+path = "tests/contract/test_router_parity.rs"
+
+[[test]]
+name = "config_schema"
+path = "tests/contract/test_config_schema.rs"
+
+[[test]]
+name = "transport_limits"
+path = "tests/contract/test_transport_limits.rs"
+
+[[test]]
+name = "endpoint_usage"
+path = "tests/contract/test_endpoint_usage.rs"
 
 [[test]]
 name = "hardware_fallback"

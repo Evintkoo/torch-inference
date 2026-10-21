@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/421.schema.json",
+  "title": "421 Misdirected Request",
+  "description": "RFC 9110 \u00a715.5.20; class client_error; engine use: conditional.\nTrigger: The connection authority does not match the request target authority.\nContent: application/problem+json (ErrorEnvelope).\nRequired headers: none.\nCache-Control: no-store; retry: never.",
+  "x-status": 421,
+  "x-engine-use": "conditional",
+  "x-response-body": "problem+json",
+  "x-response-contract": {
+    "content_type": "application/problem+json",
+    "schema": "ErrorEnvelope",
+    "required_headers": [],
+    "optional_headers": [],
+    "cache_control": "no-store",
+    "retry": "never",
+    "body_fields": [
+      "type",
+      "title",
+      "status",
+      "code",
+      "category",
+      "detail",
+      "instance",
+      "request_id",
+      "retryable"
+    ],
+    "forbidden_body_fields": [
+      "data"
+    ],
+    "error_codes": [],
+    "error_category": null,
+    "retryable": false,
+    "trigger": "The connection authority does not match the request target authority."
+  },
+  "$ref": "../ErrorEnvelope.schema.json",
+  "examples": [
+    {
+      "type": "https://torviello.local/problems/status-421",
+      "title": "Misdirected Request",
+      "status": 421,
+      "code": "framework_error",
+      "category": "internal",
+      "detail": "The connection authority does not match the request target authority.",
+      "instance": "urn:torviello:request:00000000-0000-4000-8000-000000000000",
+      "request_id": "00000000-0000-4000-8000-000000000000",
+      "retryable": false
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/events/schemas/operations/backend.unavailable.schema.json",
+  "title": "backend.unavailable",
+  "description": "A requested provider cannot be used.",
+  "type": "object",
+  "required": [
+    "event_id",
+    "event_type",
+    "occurred_at",
+    "profile_id",
+    "engine_version",
+    "backend",
+    "reason",
+    "fallback_permitted"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event_type": {
+      "type": "string",
+      "const": "backend.unavailable"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "profile_id": {
+      "type": "string"
+    },
+    "engine_version": {
+      "type": "string"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "success",
+        "failure",
+        "cancelled",
+        "denied"
+      ]
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "backend": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "fallback_permitted": {
+      "type": "boolean"
+    }
+  },
+  "x-requirement": "ENG-003"
+}

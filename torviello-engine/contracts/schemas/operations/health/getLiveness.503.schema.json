@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/operations/health/getLiveness.503.schema.json",
+  "title": "getLiveness response 503",
+  "$ref": "../../common/ErrorEnvelope.schema.json"
+}

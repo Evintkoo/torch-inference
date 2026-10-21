@@ -1,0 +1,355 @@
+# Copyright (c) 2026 Torviello.
+# Event catalog: normative payload fields. Schemas are generated from this file.
+version: 1.0.0
+envelope:
+  required: [event_id, event_type, occurred_at, profile_id, engine_version]
+  properties:
+    event_id: {type: string, format: uuid}
+    event_type: {type: string}
+    occurred_at: {type: string, format: date-time}
+    request_id: {type: string}
+    profile_id: {type: string}
+    engine_version: {type: string}
+    subject: {type: string}
+    outcome: {type: string, enum: [success, failure, cancelled, denied]}
+    error_code: {type: string}
+events:
+  - name: engine.starting
+    requirement: ENG-002
+    description: Validation succeeded and initialization begins.
+    payload:
+      configuration_source: string
+  - name: engine.ready
+    requirement: ENG-002
+    description: Required components are ready.
+    payload:
+      backend: string
+      model_count: integer
+      bind_addresses: string[]
+  - name: engine.degraded
+    requirement: ENG-002
+    description: A required or optional component becomes unavailable.
+    payload:
+      component: string
+      required: boolean
+      error_code: string
+  - name: engine.stopping
+    requirement: ENG-002
+    description: Termination signal accepted.
+    payload:
+      reason: string
+      in_flight_count: integer
+  - name: engine.stopped
+    requirement: ENG-002
+    description: Process is about to exit.
+    payload:
+      drain_duration_ms: integer
+      completed_count: integer
+      cancelled_count: integer
+      forced: boolean
+  - name: config.loaded
+    requirement: ENG-001
+    description: A configuration candidate is accepted.
+    payload:
+      source_names: string[]
+      schema_version: string
+      changed_keys: string[]
+  - name: config.rejected
+    requirement: ENG-001
+    description: Configuration validation fails.
+    payload:
+      setting_names: string[]
+      error_codes: string[]
+  - name: config.reload_rejected
+    requirement: ENG-001
+    description: A reload candidate fails.
+    payload:
+      setting_names: string[]
+      retained_snapshot_version: string
+  - name: model.registered
+    requirement: ENG-025
+    description: Administrative registration succeeds.
+    payload:
+      model_id: string
+      actor: string
+      descriptor_digest: string
+  - name: model.registration_denied
+    requirement: ENG-025
+    description: Authorization or validation fails during registration.
+    payload:
+      model_id: string?
+      actor: string
+      error_code: string
+  - name: model.download_queued
+    requirement: ENG-005
+    description: A download job is accepted.
+    payload:
+      task_id: string
+      model_id: string
+      source_scheme: string
+  - name: model.download_progress
+    requirement: ENG-005
+    description: Transfer changes state or the progress interval elapses.
+    payload:
+      task_id: string
+      bytes_transferred: integer
+      bytes_total: integer?
+      percent: number
+  - name: model.download_verified
+    requirement: ENG-005
+    description: Integrity verification succeeds.
+    payload:
+      task_id: string
+      digest_algorithm: string
+      digest: string
+  - name: model.download_failed
+    requirement: ENG-005
+    description: A download job reaches failed.
+    payload:
+      task_id: string
+      error_code: string
+      safe_message: string
+  - name: model.activated
+    requirement: ENG-005
+    description: A verified asset becomes available.
+    payload:
+      model_id: string
+      asset_digest: string
+      size_bytes: integer
+  - name: model.loaded
+    requirement: ENG-006
+    description: A model slot reaches ready.
+    payload:
+      model_id: string
+      backend: string
+      device: string
+      precision: string
+      load_duration_ms: integer
+  - name: model.load_failed
+    requirement: ENG-006
+    description: A model slot reaches failed.
+    payload:
+      model_id: string
+      backend: string
+      error_code: string
+  - name: model.unloaded
+    requirement: ENG-006
+    description: A model slot reaches unloaded.
+    payload:
+      model_id: string
+      reason: string
+      memory_freed_bytes: integer?
+  - name: model.evicted
+    requirement: ENG-006
+    description: Capacity policy removes a model slot.
+    payload:
+      model_id: string
+      reason: string
+      remaining_slots: integer
+  - name: inference.admitted
+    requirement: ENG-007
+    description: Limits and authentication pass.
+    payload:
+      request_id: string
+      capability: string
+      model_id: string
+  - name: inference.cache_hit
+    requirement: ENG-014
+    description: A valid cached result is returned.
+    payload:
+      request_id: string
+      model_id: string
+      cache_key_hash: string
+      age_ms: integer
+  - name: inference.cache_miss
+    requirement: ENG-014
+    description: No valid cache entry exists.
+    payload:
+      request_id: string
+      model_id: string
+  - name: inference.coalesced
+    requirement: ENG-014
+    description: A request joins an in-flight execution.
+    payload:
+      request_id: string
+      leader_request_id: string
+      model_id: string
+  - name: inference.batched
+    requirement: ENG-014
+    description: A request joins a batch.
+    payload:
+      request_id: string
+      batch_id: string
+      batch_size: integer
+      wait_duration_ms: integer
+  - name: inference.completed
+    requirement: ENG-007
+    description: A result is produced.
+    payload:
+      request_id: string
+      model_id: string
+      backend: string
+      latency_ms: number
+      output_count: integer?
+      output_bytes: integer?
+  - name: inference.failed
+    requirement: ENG-017
+    description: Execution fails.
+    payload:
+      request_id: string
+      model_id: string
+      backend: string
+      error_code: string
+      latency_ms: number
+  - name: inference.cancelled
+    requirement: ENG-022
+    description: The caller disconnects or the deadline expires.
+    payload:
+      request_id: string
+      model_id: string
+      reason: string
+  - name: inference.rejected
+    requirement: ENG-015
+    description: Admission or validation rejects the request.
+    payload:
+      request_id: string?
+      reason: string
+      error_code: string
+  - name: stream.opened
+    requirement: ENG-013
+    description: Stream negotiation succeeds.
+    payload:
+      request_id: string
+      capability: string
+      model_id: string
+      framing: string
+  - name: stream.first_frame
+    requirement: ENG-013
+    description: The first data frame is written.
+    payload:
+      request_id: string
+      time_since_admission_ms: integer
+  - name: stream.completed
+    requirement: ENG-013
+    description: A terminal frame is written.
+    payload:
+      request_id: string
+      frames: integer
+      bytes: integer
+      duration_ms: integer
+  - name: stream.failed
+    requirement: ENG-013
+    description: A terminal error frame is written.
+    payload:
+      request_id: string
+      error_code: string
+      frames_written: integer
+  - name: stream.disconnected
+    requirement: ENG-013
+    description: The client closes the transport.
+    payload:
+      request_id: string
+      phase: string
+      frames_written: integer
+  - name: session.opened
+    requirement: ENG-013
+    description: A WebSocket session is ready.
+    payload:
+      session_id: string
+      transport: string
+      peer_policy_identity: string
+  - name: session.configured
+    requirement: ENG-013
+    description: A configuration or control frame is accepted.
+    payload:
+      session_id: string
+      capability: string
+      model_id: string
+  - name: session.error
+    requirement: ENG-013
+    description: An invalid frame or execution error occurs.
+    payload:
+      session_id: string
+      error_code: string
+      frame_type: string
+  - name: session.closed
+    requirement: ENG-013
+    description: The session ends.
+    payload:
+      session_id: string
+      reason: string
+      duration_ms: integer
+      active_work_cancelled: boolean
+  - name: auth.denied
+    requirement: ENG-016
+    description: A missing or invalid credential is rejected.
+    payload:
+      route_group: string
+      reason_code: string
+      peer_identity: string?
+  - name: auth.forbidden
+    requirement: ENG-016
+    description: A valid credential lacks the required scope.
+    payload:
+      actor: string
+      action: string
+      target: string
+      required_scope: string
+  - name: ratelimit.rejected
+    requirement: ENG-015
+    description: A client exceeds its request budget.
+    payload:
+      route_group: string
+      retry_after_ms: integer
+      identity_source: string
+  - name: limit.rejected
+    requirement: ENG-015
+    description: A body, item, or concurrency limit is exceeded.
+    payload:
+      limit_name: string
+      value: integer
+      unit: string
+      scope: string
+  - name: backend.selected
+    requirement: ENG-003
+    description: Startup selects an execution provider.
+    payload:
+      backend: string
+      device: string
+      precision: string
+      reason: string
+  - name: backend.unavailable
+    requirement: ENG-003
+    description: A requested provider cannot be used.
+    payload:
+      backend: string
+      reason: string
+      fallback_permitted: boolean
+  - name: circuit.opened
+    requirement: ENG-015
+    description: A failure threshold is crossed.
+    payload:
+      component: string
+      failure_count: integer
+      open_duration_ms: integer
+  - name: circuit.closed
+    requirement: ENG-015
+    description: A probe succeeds.
+    payload:
+      component: string
+      probe_result: string
+  - name: metric.scrape
+    requirement: ENG-018
+    description: Metrics are served.
+    payload:
+      status: integer
+      duration_ms: number
+      series_count: integer
+  - name: log.accessed
+    requirement: ENG-020
+    description: A diagnostic log is read or cleared.
+    payload:
+      actor: string
+      file_name: string
+      action: string
+      outcome: string

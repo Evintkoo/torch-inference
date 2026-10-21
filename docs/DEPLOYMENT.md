@@ -4,9 +4,14 @@ Copyright (c) 2026 Torviello.
 
 ## Deployment profiles
 
-- `cpu`: default single-node profile.
-- `gpu`: CUDA, Metal, ROCm, Vulkan, CoreML, or DirectML acceleration when available.
-- `full`: engine, web console, docs, and media assets.
+- `cpu` (default): `cargo build --release --no-default-features --features engine`.
+- `persistence`: adds SQLite persistence (`--features persistence`).
+- `telemetry`: adds the OpenTelemetry propagation surface (`--features telemetry`).
+- `full`: persistence and telemetry (`--features full`).
+- Hardware features (`cuda`, `metal`, `vulkan`, `rocm`, `coreml`, `directml`)
+  select provider code at compile time. No accelerator provider is implemented
+  yet; enabling one without a provider fails startup with
+  `model.backend_unavailable` rather than silently claiming support.
 
 Deploy with the signed release bundle. Verify the checksum and SBOM before
 starting the service. The default bind is `127.0.0.1`; remote deployments

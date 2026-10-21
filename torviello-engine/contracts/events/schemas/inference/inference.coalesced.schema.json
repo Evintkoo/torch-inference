@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/events/schemas/inference/inference.coalesced.schema.json",
+  "title": "inference.coalesced",
+  "description": "A request joins an in-flight execution.",
+  "type": "object",
+  "required": [
+    "event_id",
+    "event_type",
+    "occurred_at",
+    "profile_id",
+    "engine_version",
+    "request_id",
+    "leader_request_id",
+    "model_id"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event_type": {
+      "type": "string",
+      "const": "inference.coalesced"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "profile_id": {
+      "type": "string"
+    },
+    "engine_version": {
+      "type": "string"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "success",
+        "failure",
+        "cancelled",
+        "denied"
+      ]
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "leader_request_id": {
+      "type": "string"
+    },
+    "model_id": {
+      "type": "string"
+    }
+  },
+  "x-requirement": "ENG-014"
+}

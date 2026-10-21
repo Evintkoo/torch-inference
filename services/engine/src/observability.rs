@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Torviello.
 use std::sync::OnceLock;
 
-use opentelemetry::propagation::TextMapPropagator;
-use opentelemetry_sdk::propagation::TraceContextPropagator;
 use prometheus::{Encoder, TextEncoder};
 use tracing::info;
 use uuid::Uuid;
@@ -17,9 +15,10 @@ pub fn correlation_id() -> String {
     Uuid::new_v4().to_string()
 }
 
+#[cfg(feature = "telemetry")]
 #[must_use]
-pub fn trace_context() -> impl TextMapPropagator {
-    TraceContextPropagator::new()
+pub fn trace_context() -> impl opentelemetry::propagation::TextMapPropagator {
+    opentelemetry_sdk::propagation::TraceContextPropagator::new()
 }
 
 pub fn record_startup(version: &str) {

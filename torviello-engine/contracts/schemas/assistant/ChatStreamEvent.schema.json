@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/assistant/ChatStreamEvent.schema.json",
+  "title": "ChatStreamEvent",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "delta": {
+      "type": "string"
+    },
+    "finish_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

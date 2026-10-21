@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/operations/vision/classifyImagesAlias.200.schema.json",
+  "title": "classifyImagesAlias response 200",
+  "allOf": [
+    {
+      "$ref": "../../common/Envelope.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "../../vision/Classification.schema.json"
+          }
+        }
+      }
+    }
+  ]
+}

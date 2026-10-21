@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/508.schema.json",
+  "title": "508 Loop Detected",
+  "description": "RFC 5842 \u00a77.2; class server_error; engine use: not-used.\nTrigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.\nContent: none.\nRequired headers: none.\nCache-Control: none; retry: never.",
+  "x-status": 508,
+  "x-engine-use": "not-used",
+  "x-response-body": "problem+json",
+  "x-response-contract": {
+    "content_type": null,
+    "schema": null,
+    "required_headers": [],
+    "optional_headers": [],
+    "cache_control": null,
+    "retry": "never",
+    "body_fields": [],
+    "forbidden_body_fields": [],
+    "error_codes": [],
+    "error_category": null,
+    "retryable": false,
+    "trigger": "Prohibited on the engine surface; no handler or framework fallback may emit this status."
+  },
+  "$ref": "../ErrorEnvelope.schema.json"
+}

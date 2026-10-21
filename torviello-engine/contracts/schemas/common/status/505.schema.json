@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/505.schema.json",
+  "title": "505 HTTP Version Not Supported",
+  "description": "RFC 9110 \u00a715.6.6; class server_error; engine use: conditional.\nTrigger: The request used an unsupported HTTP major version.\nContent: application/problem+json (ErrorEnvelope).\nRequired headers: none.\nCache-Control: no-store; retry: never.",
+  "x-status": 505,
+  "x-engine-use": "conditional",
+  "x-response-body": "problem+json",
+  "x-response-contract": {
+    "content_type": "application/problem+json",
+    "schema": "ErrorEnvelope",
+    "required_headers": [],
+    "optional_headers": [],
+    "cache_control": "no-store",
+    "retry": "never",
+    "body_fields": [
+      "type",
+      "title",
+      "status",
+      "code",
+      "category",
+      "detail",
+      "instance",
+      "request_id",
+      "retryable"
+    ],
+    "forbidden_body_fields": [
+      "data"
+    ],
+    "error_codes": [],
+    "error_category": null,
+    "retryable": false,
+    "trigger": "The request used an unsupported HTTP major version."
+  },
+  "$ref": "../ErrorEnvelope.schema.json",
+  "examples": [
+    {
+      "type": "https://torviello.local/problems/status-505",
+      "title": "HTTP Version Not Supported",
+      "status": 505,
+      "code": "framework_error",
+      "category": "internal",
+      "detail": "The request used an unsupported HTTP major version.",
+      "instance": "urn:torviello:request:00000000-0000-4000-8000-000000000000",
+      "request_id": "00000000-0000-4000-8000-000000000000",
+      "retryable": false
+    }
+  ]
+}

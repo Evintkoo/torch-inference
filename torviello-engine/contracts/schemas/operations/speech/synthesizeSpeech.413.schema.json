@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/operations/speech/synthesizeSpeech.413.schema.json",
+  "title": "synthesizeSpeech response 413",
+  "$ref": "../../common/ErrorEnvelope.schema.json"
+}

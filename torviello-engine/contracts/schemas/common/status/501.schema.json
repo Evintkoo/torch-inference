@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/501.schema.json",
+  "title": "501 Not Implemented",
+  "description": "RFC 9110 \u00a715.6.2; class server_error; engine use: used.\nTrigger: The route is reserved by the contract but its capability is not implemented.\nContent: application/problem+json (ErrorEnvelope).\nRequired headers: none.\nCache-Control: no-store; retry: never.",
+  "x-status": 501,
+  "x-engine-use": "used",
+  "x-response-body": "problem+json",
+  "x-response-contract": {
+    "content_type": "application/problem+json",
+    "schema": "ErrorEnvelope",
+    "required_headers": [],
+    "optional_headers": [],
+    "cache_control": "no-store",
+    "retry": "never",
+    "body_fields": [
+      "type",
+      "title",
+      "status",
+      "code",
+      "category",
+      "detail",
+      "instance",
+      "request_id",
+      "retryable"
+    ],
+    "forbidden_body_fields": [
+      "data"
+    ],
+    "error_codes": [
+      "not_implemented"
+    ],
+    "error_category": "not_found",
+    "retryable": false,
+    "trigger": "The route is reserved by the contract but its capability is not implemented."
+  },
+  "$ref": "../ErrorEnvelope.schema.json",
+  "examples": [
+    {
+      "type": "https://torviello.local/problems/not_implemented",
+      "title": "Not Implemented",
+      "status": 501,
+      "code": "not_implemented",
+      "category": "not_found",
+      "detail": "The route is reserved by the contract but its capability is not implemented.",
+      "instance": "urn:torviello:request:00000000-0000-4000-8000-000000000000",
+      "request_id": "00000000-0000-4000-8000-000000000000",
+      "retryable": false
+    }
+  ]
+}

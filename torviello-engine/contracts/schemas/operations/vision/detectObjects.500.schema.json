@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/operations/vision/detectObjects.500.schema.json",
+  "title": "detectObjects response 500",
+  "$ref": "../../common/ErrorEnvelope.schema.json"
+}

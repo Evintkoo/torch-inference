@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/409.schema.json",
+  "title": "409 Conflict",
+  "description": "RFC 9110 \u00a715.5.10; class client_error; engine use: used.\nTrigger: The request conflicts with model, job, capacity, or unload state.\nContent: application/problem+json (ErrorEnvelope).\nRequired headers: none.\nCache-Control: no-store; retry: never.",
+  "x-status": 409,
+  "x-engine-use": "used",
+  "x-response-body": "problem+json",
+  "x-response-contract": {
+    "content_type": "application/problem+json",
+    "schema": "ErrorEnvelope",
+    "required_headers": [],
+    "optional_headers": [],
+    "cache_control": "no-store",
+    "retry": "never",
+    "body_fields": [
+      "type",
+      "title",
+      "status",
+      "code",
+      "category",
+      "detail",
+      "instance",
+      "request_id",
+      "retryable"
+    ],
+    "forbidden_body_fields": [
+      "data"
+    ],
+    "error_codes": [
+      "model.digest_mismatch",
+      "model.not_ready",
+      "model.busy",
+      "model.capacity_exceeded",
+      "model.download_in_progress"
+    ],
+    "error_category": "conflict",
+    "retryable": false,
+    "trigger": "The request conflicts with model, job, capacity, or unload state."
+  },
+  "$ref": "../ErrorEnvelope.schema.json",
+  "examples": [
+    {
+      "type": "https://torviello.local/problems/model-digest_mismatch",
+      "title": "Conflict",
+      "status": 409,
+      "code": "model.digest_mismatch",
+      "category": "conflict",
+      "detail": "The request conflicts with model, job, capacity, or unload state.",
+      "instance": "urn:torviello:request:00000000-0000-4000-8000-000000000000",
+      "request_id": "00000000-0000-4000-8000-000000000000",
+      "retryable": false
+    }
+  ]
+}

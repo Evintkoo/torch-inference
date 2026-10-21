@@ -16,7 +16,10 @@ fn accelerator_fallback_defaults_to_cpu() {
         fs::read_to_string("../../config/default.toml").expect("default config must exist");
     assert!(config.contains("accelerator_fallback = \"cpu\""));
     for backend in ["cuda", "metal", "vulkan", "rocm", "coreml", "directml"] {
-        assert!(config.contains(&format!("{backend} = true")), "{backend}");
+        assert!(
+            config.contains(&format!("{backend} = false")),
+            "{backend} must remain disabled unless the matching build feature is selected"
+        );
     }
     assert_eq!(SEED, 42);
 }

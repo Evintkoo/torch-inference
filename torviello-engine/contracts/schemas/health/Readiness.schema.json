@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/health/Readiness.schema.json",
+  "title": "Readiness",
+  "type": "object",
+  "required": [
+    "ready"
+  ],
+  "properties": {
+    "ready": {
+      "type": "boolean"
+    },
+    "pending": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "failed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "backend": {
+      "type": "string"
+    },
+    "loaded_models": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

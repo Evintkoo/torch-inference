@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/operations/health/getReadiness.503.schema.json",
+  "title": "getReadiness response 503",
+  "$ref": "../../health/Readiness.schema.json"
+}

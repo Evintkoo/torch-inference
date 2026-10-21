@@ -1,9 +1,13 @@
 // Copyright (c) 2026 Torviello.
+use std::path::Path;
+
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 use crate::auth::Principal;
 use crate::error::{AppError, AppResult};
+
+const MAX_MODEL_ID_BYTES: usize = 128;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelRecord {
@@ -11,10 +15,30 @@ pub struct ModelRecord {
     pub version: String,
     pub content_hash: String,
     pub source_url: String,
+    #[serde(default)]
+    pub display_name: Option<String>,
+    #[serde(default = "default_task")]
+    pub task: String,
+    #[serde(default = "default_format")]
+    pub format: String,
+    #[serde(default)]
+    pub size_bytes: u64,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
+    pub license: Option<String>,
+    #[serde(default)]
+    pub backend_requirements: Vec<String>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct ModelRegistry {
+    models: Vec<ModelRecord>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct RegistryFile {
+    #[serde(default)]
     models: Vec<ModelRecord>,
 }
 
@@ -26,12 +50,27 @@ pub struct AuditEvent {
 }
 
 impl ModelRegistry {
+    pub fn from_path(path: &Path) -> AppResult<Self> {
+        let text = std::fs::read_to_string(path).map_err(|_| AppError::InvalidInput)?;
+        let file: RegistryFile = toml::from_str(&text).map_err(|_| AppError::InvalidInput)?;
+        let mut registry = Self::default();
+        for record in file.models {
+            Self::validate(&record)?;
+            if registry.find(&record.id).is_some() {
+                return Err(AppError::InvalidInput);
+            }
+            registry.models.push(record);
+        }
+        Ok(registry)
+    }
+
     pub fn register(
         &mut self,
         principal: &Principal,
         record: ModelRecord,
     ) -> AppResult<AuditEvent> {
-        if !record.source_url.starts_with("https://") {
+        Self::validate(&record)?;
+        if self.find(&record.id).is_some() {
             return Err(AppError::InvalidInput);
         }
         self.models.push(record.clone());
@@ -43,6 +82,7 @@ impl ModelRegistry {
     }
 
     pub fn update(&mut self, principal: &Principal, record: ModelRecord) -> AppResult<AuditEvent> {
+        Self::validate(&record)?;
         let Some(existing) = self.models.iter_mut().find(|item| item.id == record.id) else {
             return Err(AppError::NotFound);
         };
@@ -71,6 +111,62 @@ impl ModelRegistry {
     pub fn find(&self, id: &str) -> Option<&ModelRecord> {
         self.models.iter().find(|item| item.id == id)
     }
+
+    #[must_use]
+    pub fn all(&self) -> &[ModelRecord] {
+        &self.models
+    }
+
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.models.is_empty()
+    }
+
+    fn validate(record: &ModelRecord) -> AppResult<()> {
+        if !valid_model_id(&record.id)
+            || record.version.is_empty()
+            || record.task.is_empty()
+            || record.format.is_empty()
+            || !valid_sha256(&record.content_hash)
+            || !record.source_url.starts_with("https://")
+        {
+            return Err(AppError::InvalidInput);
+        }
+        Ok(())
+    }
+}
+
+fn default_task() -> String {
+    "classification".to_owned()
+}
+
+fn default_format() -> String {
+    "torchscript".to_owned()
+}
+
+pub fn validate_model_id(id: &str) -> AppResult<()> {
+    if valid_model_id(id) {
+        return Ok(());
+    }
+    Err(AppError::InvalidModelName)
+}
+
+fn valid_model_id(id: &str) -> bool {
+    !id.is_empty()
+        && id.len() <= MAX_MODEL_ID_BYTES
+        && id
+            .bytes()
+            .next()
+            .is_some_and(|byte| byte.is_ascii_alphanumeric())
+        && id
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'_' | b'-'))
+}
+
+fn valid_sha256(value: &str) -> bool {
+    value.strip_prefix("sha256:").is_some_and(|digest| {
+        digest.len() == 64 && digest.bytes().all(|byte| byte.is_ascii_hexdigit())
+    })
 }
 
 #[must_use]
@@ -96,4 +192,23 @@ pub fn download_url(url: &str) -> AppResult<&str> {
 #[must_use]
 pub fn activation_requires_checksum(record: &ModelRecord) -> bool {
     record.content_hash.starts_with("sha256:")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{ModelRegistry, valid_model_id, valid_sha256};
+
+    #[test]
+    fn rejects_traversal_and_short_digests() {
+        assert!(!valid_model_id("../model"));
+        assert!(!valid_model_id("model/name"));
+        assert!(valid_model_id("engine-demo-classifier"));
+        assert!(!valid_sha256("sha256:abc"));
+        assert!(valid_sha256(&format!("sha256:{}", "a".repeat(64))));
+    }
+
+    #[test]
+    fn empty_registry_has_no_models() {
+        assert!(ModelRegistry::default().is_empty());
+    }
 }

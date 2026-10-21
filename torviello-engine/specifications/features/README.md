@@ -47,4 +47,4 @@ Run `uv run pytest -q torviello-enforcer/test_requirement_documents.py torviello
 
 ## Status
 
-All 27 feature files are specified and `@HPA-4` tagged. No step definitions or product execution evidence exist yet, so no feature is claimed as passing.
+All 27 feature files are specified and `@HPA-4` tagged. Scaffold tests cover parts of `load-config-and-list-models`, `model-acquisition`, `model-loading`, and `health-and-metrics`, but no Gherkin step definitions or HPA-4 evaluation evidence exist, so no feature is claimed as passing.

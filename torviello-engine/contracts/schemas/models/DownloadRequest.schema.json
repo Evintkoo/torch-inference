@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/models/DownloadRequest.schema.json",
+  "title": "DownloadRequest",
+  "type": "object",
+  "required": [
+    "source"
+  ],
+  "properties": {
+    "source": {
+      "type": "object",
+      "required": [
+        "scheme"
+      ],
+      "properties": {
+        "scheme": {
+          "type": "string",
+          "enum": [
+            "huggingface",
+            "https",
+            "local"
+          ]
+        },
+        "repository": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "path": {
+          "type": "string",
+          "description": "Path relative to the configured model root."
+        }
+      }
+    },
+    "expected_digest": {
+      "type": "object",
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "enum": [
+            "sha256"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    }
+  }
+}

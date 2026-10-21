@@ -4,7 +4,7 @@
 **Requirement:** ENG-006  
 **Type:** Automated  
 **Source:** [acceptance-criteria.md](../acceptance-criteria.md)  
-**Status:** Specified; no implementation or evaluation evidence is recorded in this repository.
+**Status:** Scaffold implementation exists for the slot lifecycle, single-flight load, reference-aware unload, and capacity rejection; TLA+/Loom models, memory-failure injection, and evaluation evidence are absent. Not accepted.
 
 ### SMART specification
 

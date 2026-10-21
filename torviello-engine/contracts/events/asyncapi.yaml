@@ -1,0 +1,157 @@
+asyncapi: 3.0.0
+info:
+  title: Torviello Engine event streams
+  version: 1.0.0
+  description: SSE and WebSocket transport contracts. Domain event payloads are versioned
+    JSON Schema 2020-12.
+defaultContentType: application/json
+servers:
+  local:
+    host: 127.0.0.1:8000
+    protocol: http
+channels:
+  modelDownloadProgress:
+    address: /models/{modelId}/download/progress
+    messages:
+      progress:
+        $ref: '#/components/messages/DownloadProgress'
+      verified:
+        $ref: '#/components/messages/DownloadVerified'
+      failed:
+        $ref: '#/components/messages/DownloadFailed'
+      activated:
+        $ref: '#/components/messages/ModelActivated'
+  ttsStream:
+    address: /tts/stream
+    messages:
+      chunk:
+        $ref: '#/components/messages/AudioChunk'
+  chatStream:
+    address: /v1/chat/completions
+    messages:
+      delta:
+        $ref: '#/components/messages/ChatStreamEvent'
+  audioSession:
+    address: /ws/audio
+    messages:
+      opened:
+        $ref: '#/components/messages/stream.opened'
+      firstFrame:
+        $ref: '#/components/messages/stream.first_frame'
+      completed:
+        $ref: '#/components/messages/stream.completed'
+      failed:
+        $ref: '#/components/messages/stream.failed'
+      disconnected:
+        $ref: '#/components/messages/stream.disconnected'
+  classificationSession:
+    address: /ws/classify
+    messages:
+      opened:
+        $ref: '#/components/messages/session.opened'
+      configured:
+        $ref: '#/components/messages/session.configured'
+      error:
+        $ref: '#/components/messages/session.error'
+      closed:
+        $ref: '#/components/messages/session.closed'
+  detectionSession:
+    address: /ws/detect
+    messages:
+      opened:
+        $ref: '#/components/messages/session.opened'
+      configured:
+        $ref: '#/components/messages/session.configured'
+      error:
+        $ref: '#/components/messages/session.error'
+      closed:
+        $ref: '#/components/messages/session.closed'
+operations:
+  receive_modelDownloadProgress:
+    action: receive
+    channel:
+      $ref: '#/channels/modelDownloadProgress'
+  receive_ttsStream:
+    action: receive
+    channel:
+      $ref: '#/channels/ttsStream'
+  receive_chatStream:
+    action: receive
+    channel:
+      $ref: '#/channels/chatStream'
+  receive_audioSession:
+    action: receive
+    channel:
+      $ref: '#/channels/audioSession'
+  receive_classificationSession:
+    action: receive
+    channel:
+      $ref: '#/channels/classificationSession'
+  receive_detectionSession:
+    action: receive
+    channel:
+      $ref: '#/channels/detectionSession'
+components:
+  messages:
+    DownloadProgress:
+      name: DownloadProgress
+      payload:
+        $ref: schemas/models/model.download_progress.schema.json
+    DownloadVerified:
+      name: DownloadVerified
+      payload:
+        $ref: schemas/models/model.download_verified.schema.json
+    DownloadFailed:
+      name: DownloadFailed
+      payload:
+        $ref: schemas/models/model.download_failed.schema.json
+    ModelActivated:
+      name: ModelActivated
+      payload:
+        $ref: schemas/models/model.activated.schema.json
+    ChatStreamEvent:
+      name: ChatStreamEvent
+      payload:
+        $ref: ../schemas/assistant/ChatStreamEvent.schema.json
+    AudioChunk:
+      name: AudioChunk
+      contentType: audio/pcm
+      payload:
+        type: string
+        contentEncoding: base64
+    stream.opened:
+      name: stream.opened
+      payload:
+        $ref: schemas/streaming/stream.opened.schema.json
+    stream.first_frame:
+      name: stream.first_frame
+      payload:
+        $ref: schemas/streaming/stream.first_frame.schema.json
+    stream.completed:
+      name: stream.completed
+      payload:
+        $ref: schemas/streaming/stream.completed.schema.json
+    stream.failed:
+      name: stream.failed
+      payload:
+        $ref: schemas/streaming/stream.failed.schema.json
+    stream.disconnected:
+      name: stream.disconnected
+      payload:
+        $ref: schemas/streaming/stream.disconnected.schema.json
+    session.opened:
+      name: session.opened
+      payload:
+        $ref: schemas/streaming/session.opened.schema.json
+    session.configured:
+      name: session.configured
+      payload:
+        $ref: schemas/streaming/session.configured.schema.json
+    session.error:
+      name: session.error
+      payload:
+        $ref: schemas/streaming/session.error.schema.json
+    session.closed:
+      name: session.closed
+      payload:
+        $ref: schemas/streaming/session.closed.schema.json

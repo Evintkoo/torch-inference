@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/operations/vision/detectObjects.200.schema.json",
+  "title": "detectObjects response 200",
+  "allOf": [
+    {
+      "$ref": "../../common/Envelope.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "../../vision/DetectionResult.schema.json"
+        }
+      }
+    }
+  ]
+}

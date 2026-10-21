@@ -41,10 +41,16 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 **Requirement:** Repository policy MUST distinguish review artifacts that are retained (specification, decision, test evidence, release notes) from local transient artifacts (private plans, scratch files, generated caches).
 
+### CHG-05.07 — Completed work MUST be committed before handoff…
+
+**Requirement:** Completed, verified work MUST be committed to version control before it is handed off, released, or reported complete. The history MUST provide a revertible revision for each coherent change, and the reported evidence MUST identify the committed revision. A task MUST NOT leave its only copy of completed work as uncommitted changes. Work-in-progress MAY remain uncommitted only while it is explicitly owned and identified as incomplete. Credentials, personal data, build outputs, and generated caches MUST NOT be committed. Pushing or publishing the revision remains subject to explicit authorization.
+
 ## Prohibited conditions
 
 - Do not publish a private plan merely because a local planning file was accidentally included in a commit; remove it before release and assess exposure.
 - Do not use mutable tags or rewritten release history as the mechanism for correcting a published artifact.
+- Reporting work complete while task-owned changes remain uncommitted and no approved retention exception exists.
+- Committing credentials, personal data, build outputs, or generated caches to create a rollback point.
 
 ## Implementation guidance
 
@@ -65,17 +71,18 @@ Assess the design and its operation using the applicable methods below. The asse
 
 ### Test
 
-- Inspect clean and published Git history, release archives, and change records for private-plan leakage, stable source identities, and completed traceability.
+- Inspect clean and published Git history, release archives, and change records for private-plan leakage, stable source identities, and completed traceability. Confirm the reported revision contains the completed work and that the worktree is clean apart from explicitly owned work-in-progress.
 - Exercise negative, boundary, and failure cases identified by the control; record actual versus expected behavior. A skipped required check is not passing evidence.
 
 ## Assessment determination
 
-Assess each control ID as **pass**, **fail**, or **not applicable**. Pass requires every applicable MUST to be implemented and supported by current evidence. Fail applies when behavior contradicts a requirement, enforcement is bypassable, evidence is missing/stale, or a required scenario cannot be reproduced. Not applicable requires a condition stated by the requirement and reviewer rationale.
+Assess each control ID as **pass**, **fail**, or **not applicable**. Pass requires every applicable MUST to be implemented and supported by current evidence, including a revertible committed revision for completed work. Fail applies when behavior contradicts a requirement, enforcement is bypassable, evidence is missing/stale, completed work exists only as uncommitted changes, or a required scenario cannot be reproduced. Not applicable requires a condition stated by the requirement and reviewer rationale.
 
 ## Required evidence
 
 - Change/design record with applicable control IDs, requirement IDs, and accountable owner.
 - Automated or documented manual evidence covering the domain-specific verification above on a stated revision and environment.
+- Commit hash and clean worktree status for the reported revision.
 - Exception record where an approved deviation exists, including scope, risk, compensating controls, owner, approval, and expiry.
 
 ## Exceptions and nonconformance

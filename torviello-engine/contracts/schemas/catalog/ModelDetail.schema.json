@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/catalog/ModelDetail.schema.json",
+  "title": "ModelDetail",
+  "allOf": [
+    {
+      "$ref": "ModelSummary.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "backend_requirements": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "input_contract": {
+          "type": "object"
+        },
+        "asset_digest": {
+          "type": "string"
+        },
+        "provenance": {
+          "type": "object",
+          "properties": {
+            "source_scheme": {
+              "type": "string"
+            },
+            "license": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

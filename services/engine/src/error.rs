@@ -1,7 +1,8 @@
 // Copyright (c) 2026 Torviello.
 use axum::Json;
+use axum::http::HeaderValue;
 use axum::http::StatusCode;
-use axum::http::header::CONTENT_TYPE;
+use axum::http::header::{CONTENT_TYPE, RETRY_AFTER};
 use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 
@@ -19,6 +20,12 @@ pub enum AppError {
     Forbidden,
     #[error("not found")]
     NotFound,
+    #[error("method not allowed")]
+    MethodNotAllowed,
+    #[error("unsupported media type")]
+    UnsupportedMediaType,
+    #[error("not implemented")]
+    NotImplemented,
     #[error("payload too large")]
     PayloadTooLarge,
     #[error("too many requests")]
@@ -29,6 +36,30 @@ pub enum AppError {
     Unavailable,
     #[error("internal error")]
     Internal,
+    #[error("invalid model name")]
+    InvalidModelName,
+    #[error("invalid model source")]
+    InvalidSource,
+    #[error("path outside the model root")]
+    PathOutsideRoot,
+    #[error("model digest mismatch")]
+    DigestMismatch,
+    #[error("model not found")]
+    ModelNotFound,
+    #[error("model asset is not ready")]
+    ModelNotReady,
+    #[error("model is busy")]
+    ModelBusy,
+    #[error("model capacity exceeded")]
+    CapacityExceeded,
+    #[error("download already in progress")]
+    DownloadInProgress,
+    #[error("model backend unavailable")]
+    BackendUnavailable,
+    #[error("model source unavailable")]
+    SourceUnavailable,
+    #[error("model artifact too large")]
+    ModelTooLarge,
 }
 
 #[derive(Debug, Serialize)]
@@ -51,15 +82,27 @@ impl AppError {
     #[must_use]
     pub fn status(&self) -> u16 {
         match self {
-            Self::InvalidInput => 400,
+            Self::InvalidInput
+            | Self::InvalidModelName
+            | Self::InvalidSource
+            | Self::PathOutsideRoot => 400,
             Self::Unauthorized => 401,
             Self::Forbidden => 403,
-            Self::NotFound => 404,
-            Self::PayloadTooLarge => 413,
+            Self::NotFound | Self::ModelNotFound => 404,
+            Self::MethodNotAllowed => 405,
+            Self::UnsupportedMediaType => 415,
+            Self::PayloadTooLarge | Self::ModelTooLarge => 413,
             Self::TooManyRequests { .. } => 429,
             Self::Timeout => 504,
-            Self::Unavailable => 503,
+            Self::Unavailable | Self::BackendUnavailable => 503,
+            Self::SourceUnavailable => 502,
+            Self::NotImplemented => 501,
             Self::Internal => 500,
+            Self::DigestMismatch
+            | Self::ModelNotReady
+            | Self::ModelBusy
+            | Self::CapacityExceeded
+            | Self::DownloadInProgress => 409,
         }
     }
 
@@ -70,11 +113,26 @@ impl AppError {
             Self::Unauthorized => "unauthorized",
             Self::Forbidden => "forbidden",
             Self::NotFound => "not_found",
+            Self::MethodNotAllowed => "method_not_allowed",
+            Self::UnsupportedMediaType => "unsupported_media_type",
+            Self::NotImplemented => "not_implemented",
             Self::PayloadTooLarge => "payload_too_large",
             Self::TooManyRequests { .. } => "rate_limited",
             Self::Timeout => "timeout",
             Self::Unavailable => "unavailable",
             Self::Internal => "internal",
+            Self::InvalidModelName => "model.invalid_name",
+            Self::InvalidSource => "model.invalid_source",
+            Self::PathOutsideRoot => "model.path_outside_root",
+            Self::DigestMismatch => "model.digest_mismatch",
+            Self::ModelNotFound => "model.not_found",
+            Self::ModelNotReady => "model.not_ready",
+            Self::ModelBusy => "model.busy",
+            Self::CapacityExceeded => "model.capacity_exceeded",
+            Self::DownloadInProgress => "model.download_in_progress",
+            Self::BackendUnavailable => "model.backend_unavailable",
+            Self::SourceUnavailable => "model.source_unavailable",
+            Self::ModelTooLarge => "model.too_large",
         }
     }
 
@@ -85,25 +143,54 @@ impl AppError {
             Self::Unauthorized => "Authentication required",
             Self::Forbidden => "Insufficient role",
             Self::NotFound => "Resource not found",
+            Self::MethodNotAllowed => "Method not allowed",
+            Self::UnsupportedMediaType => "Unsupported media type",
+            Self::NotImplemented => "Not implemented",
             Self::PayloadTooLarge => "Payload too large",
             Self::TooManyRequests { .. } => "Rate limit exceeded",
             Self::Timeout => "Request timed out",
             Self::Unavailable => "Service unavailable",
             Self::Internal => "Internal error",
+            Self::InvalidModelName => "Invalid model name",
+            Self::InvalidSource => "Invalid model source",
+            Self::PathOutsideRoot => "Path outside the model root",
+            Self::DigestMismatch => "Model digest mismatch",
+            Self::ModelNotFound => "Model not found",
+            Self::ModelNotReady => "Model asset is not ready",
+            Self::ModelBusy => "Model is busy",
+            Self::CapacityExceeded => "Model capacity exceeded",
+            Self::DownloadInProgress => "Download already in progress",
+            Self::BackendUnavailable => "Model backend unavailable",
+            Self::SourceUnavailable => "Model source unavailable",
+            Self::ModelTooLarge => "Model artifact too large",
         }
     }
 
     #[must_use]
     pub fn category(&self) -> &'static str {
         match self {
-            Self::InvalidInput | Self::PayloadTooLarge => "validation",
+            Self::InvalidInput
+            | Self::PayloadTooLarge
+            | Self::InvalidModelName
+            | Self::InvalidSource
+            | Self::PathOutsideRoot
+            | Self::ModelTooLarge
+            | Self::UnsupportedMediaType => "validation",
             Self::Unauthorized => "authentication",
             Self::Forbidden => "authorization",
-            Self::NotFound => "not_found",
+            Self::NotFound
+            | Self::ModelNotFound
+            | Self::MethodNotAllowed
+            | Self::NotImplemented => "not_found",
             Self::TooManyRequests { .. } => "limit",
-            Self::Timeout => "upstream",
-            Self::Unavailable => "unavailable",
+            Self::Timeout | Self::SourceUnavailable => "upstream",
+            Self::Unavailable | Self::BackendUnavailable => "unavailable",
             Self::Internal => "internal",
+            Self::DigestMismatch
+            | Self::ModelNotReady
+            | Self::ModelBusy
+            | Self::CapacityExceeded
+            | Self::DownloadInProgress => "conflict",
         }
     }
 
@@ -114,11 +201,30 @@ impl AppError {
             Self::Unauthorized => "https://torviello.local/problems/unauthorized",
             Self::Forbidden => "https://torviello.local/problems/forbidden",
             Self::NotFound => "https://torviello.local/problems/not-found",
+            Self::MethodNotAllowed => "https://torviello.local/problems/method-not-allowed",
+            Self::UnsupportedMediaType => "https://torviello.local/problems/unsupported-media-type",
+            Self::NotImplemented => "https://torviello.local/problems/not-implemented",
             Self::PayloadTooLarge => "https://torviello.local/problems/payload-too-large",
             Self::TooManyRequests { .. } => "https://torviello.local/problems/rate-limited",
             Self::Timeout => "https://torviello.local/problems/timeout",
             Self::Unavailable => "https://torviello.local/problems/unavailable",
             Self::Internal => "https://torviello.local/problems/internal",
+            Self::InvalidModelName => "https://torviello.local/problems/model-invalid-name",
+            Self::InvalidSource => "https://torviello.local/problems/model-invalid-source",
+            Self::PathOutsideRoot => "https://torviello.local/problems/model-path-outside-root",
+            Self::DigestMismatch => "https://torviello.local/problems/model-digest-mismatch",
+            Self::ModelNotFound => "https://torviello.local/problems/model-not-found",
+            Self::ModelNotReady => "https://torviello.local/problems/model-not-ready",
+            Self::ModelBusy => "https://torviello.local/problems/model-busy",
+            Self::CapacityExceeded => "https://torviello.local/problems/model-capacity-exceeded",
+            Self::DownloadInProgress => {
+                "https://torviello.local/problems/model-download-in-progress"
+            }
+            Self::BackendUnavailable => {
+                "https://torviello.local/problems/model-backend-unavailable"
+            }
+            Self::SourceUnavailable => "https://torviello.local/problems/model-source-unavailable",
+            Self::ModelTooLarge => "https://torviello.local/problems/model-too-large",
         }
     }
 
@@ -126,7 +232,11 @@ impl AppError {
     pub fn retryable(&self) -> bool {
         matches!(
             self,
-            Self::TooManyRequests { .. } | Self::Timeout | Self::Unavailable
+            Self::TooManyRequests { .. }
+                | Self::Timeout
+                | Self::Unavailable
+                | Self::BackendUnavailable
+                | Self::SourceUnavailable
         )
     }
 
@@ -157,7 +267,35 @@ impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let status =
             StatusCode::from_u16(self.status()).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
+        let retry_after = match &self {
+            Self::TooManyRequests {
+                retry_after_seconds,
+            } => Some(*retry_after_seconds),
+            _ => None,
+        };
         let body = Json(self.envelope(correlation_id()));
-        (status, [(CONTENT_TYPE, "application/problem+json")], body).into_response()
+        let mut response =
+            (status, [(CONTENT_TYPE, "application/problem+json")], body).into_response();
+        if let Some(seconds) = retry_after
+            && let Ok(value) = HeaderValue::from_str(&seconds.to_string())
+        {
+            response.headers_mut().insert(RETRY_AFTER, value);
+        }
+        response
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use axum::http::header::CONTENT_TYPE;
+    use axum::response::IntoResponse;
+
+    use super::AppError;
+
+    #[test]
+    fn internal_error_is_rfc_9457_problem_details() {
+        let response = AppError::Internal.into_response();
+        assert_eq!(response.status().as_u16(), 500);
+        assert_eq!(response.headers()[CONTENT_TYPE], "application/problem+json");
     }
 }

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/operations/models/loadModel.202.schema.json",
+  "title": "loadModel response 202",
+  "allOf": [
+    {
+      "$ref": "../../common/Envelope.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "../../models/ModelSlot.schema.json"
+        }
+      }
+    }
+  ]
+}

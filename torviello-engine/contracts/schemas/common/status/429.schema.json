@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/429.schema.json",
+  "title": "429 Too Many Requests",
+  "description": "RFC 6585 \u00a74; class client_error; engine use: used.\nTrigger: The caller exceeded the configured request budget for the route or principal.\nContent: application/problem+json (ErrorEnvelope).\nRequired headers: Retry-After.\nCache-Control: no-store; retry: retry-after.",
+  "x-status": 429,
+  "x-engine-use": "used",
+  "x-response-body": "problem+json",
+  "x-response-contract": {
+    "content_type": "application/problem+json",
+    "schema": "ErrorEnvelope",
+    "required_headers": [
+      "Retry-After"
+    ],
+    "optional_headers": [],
+    "cache_control": "no-store",
+    "retry": "retry-after",
+    "body_fields": [
+      "type",
+      "title",
+      "status",
+      "code",
+      "category",
+      "detail",
+      "instance",
+      "request_id",
+      "retryable"
+    ],
+    "forbidden_body_fields": [
+      "data"
+    ],
+    "error_codes": [
+      "rate_limited"
+    ],
+    "error_category": "limit",
+    "retryable": true,
+    "trigger": "The caller exceeded the configured request budget for the route or principal."
+  },
+  "$ref": "../ErrorEnvelope.schema.json",
+  "x-required-headers": [
+    "Retry-After"
+  ],
+  "x-header-rules": {
+    "Retry-After": {
+      "grammar": "delta-seconds",
+      "value": "Non-negative integer seconds until the caller may retry.",
+      "notes": "HTTP-date form is not used. Required on 429 and retryable 503."
+    }
+  },
+  "examples": [
+    {
+      "type": "https://torviello.local/problems/rate_limited",
+      "title": "Too Many Requests",
+      "status": 429,
+      "code": "rate_limited",
+      "category": "limit",
+      "detail": "The caller exceeded the configured request budget for the route or principal.",
+      "instance": "urn:torviello:request:00000000-0000-4000-8000-000000000000",
+      "request_id": "00000000-0000-4000-8000-000000000000",
+      "retryable": true,
+      "retry_after_ms": 60000
+    }
+  ]
+}

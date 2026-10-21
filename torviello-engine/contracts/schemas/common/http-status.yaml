@@ -1,0 +1,1535 @@
+# Copyright (c) 2026 Torviello.
+# HTTP status response policy for the engine contract. Sources:
+#   RFC 9110 (HTTP Semantics), RFC 9457 (Problem Details), IANA registry.
+# `engine` values:
+#   used        - emitted by at least one operation declared in openapi.yaml.
+#   conditional - protocol- or framework-generated only; not required in openapi.yaml.
+#   not-used    - standard status, prohibited on the engine surface.
+# Every assigned entry carries its trigger, content type, schema, header rules,
+# cache/retry semantics, body fields, and stable error codes.
+version: 2.0.0
+classes:
+  1: informational
+  2: successful
+  3: redirection
+  4: client_error
+  5: server_error
+envelope:
+  media_type: application/json
+  schema: Envelope
+  required_fields:
+  - data
+  - meta
+  cache_control: per-operation
+problem:
+  media_type: application/problem+json
+  schema: ErrorEnvelope
+  required_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_fields:
+  - data
+  cache_control: no-store
+assigned:
+- code: 100
+  name: Continue
+  class: informational
+  reference: RFC 9110 §15.2.1
+  engine: not-used
+  body: none
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 101
+  name: Switching Protocols
+  class: informational
+  reference: RFC 9110 §15.2.2
+  engine: conditional
+  body: upgrade
+  trigger: Switching from HTTP/1.1 to the WebSocket protocol.
+  content_type: null
+  schema: null
+  required_headers:
+  - Upgrade
+  - Connection
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 102
+  name: Processing
+  class: informational
+  reference: RFC 2518 §10.1
+  engine: not-used
+  body: none
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 103
+  name: Early Hints
+  class: informational
+  reference: RFC 8297 §2
+  engine: not-used
+  body: none
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 104
+  name: Upload Resumption Supported
+  class: informational
+  reference: draft-ietf-httpbis-resumable-upload-05
+  engine: not-used
+  body: none
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 200
+  name: OK
+  class: successful
+  reference: RFC 9110 §15.3.1
+  engine: used
+  body: envelope
+  trigger: Operation completed and returned its declared representation.
+  content_type: per-operation
+  schema: per-operation
+  required_headers: []
+  optional_headers: []
+  cache_control: per-operation
+  retry: never
+  body_fields:
+  - data
+  - meta
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 201
+  name: Created
+  class: successful
+  reference: RFC 9110 §15.3.2
+  engine: used
+  body: envelope
+  trigger: A model registration created a new resource.
+  content_type: application/json
+  schema: Envelope
+  required_headers:
+  - Location
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - data
+  - meta
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 202
+  name: Accepted
+  class: successful
+  reference: RFC 9110 §15.3.3
+  engine: used
+  body: envelope
+  trigger: Acquisition or load work was accepted but is not complete.
+  content_type: application/json
+  schema: Envelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - data
+  - meta
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 203
+  name: Non-Authoritative Information
+  class: successful
+  reference: RFC 9110 §15.3.4
+  engine: not-used
+  body: envelope
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 204
+  name: No Content
+  class: successful
+  reference: RFC 9110 §15.3.5
+  engine: used
+  body: none
+  trigger: Delete or clear operation completed; no representation is returned.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 205
+  name: Reset Content
+  class: successful
+  reference: RFC 9110 §15.3.6
+  engine: not-used
+  body: none
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 206
+  name: Partial Content
+  class: successful
+  reference: RFC 9110 §15.3.7
+  engine: not-used
+  body: binary
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 207
+  name: Multi-Status
+  class: successful
+  reference: RFC 4918 §11.1
+  engine: not-used
+  body: envelope
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 208
+  name: Already Reported
+  class: successful
+  reference: RFC 5842 §7.1
+  engine: not-used
+  body: none
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 226
+  name: IM Used
+  class: successful
+  reference: RFC 3229 §10.4.1
+  engine: not-used
+  body: envelope
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 300
+  name: Multiple Choices
+  class: redirection
+  reference: RFC 9110 §15.4.1
+  engine: not-used
+  body: location
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 301
+  name: Moved Permanently
+  class: redirection
+  reference: RFC 9110 §15.4.2
+  engine: not-used
+  body: location
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 302
+  name: Found
+  class: redirection
+  reference: RFC 9110 §15.4.3
+  engine: not-used
+  body: location
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 303
+  name: See Other
+  class: redirection
+  reference: RFC 9110 §15.4.4
+  engine: not-used
+  body: location
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 304
+  name: Not Modified
+  class: redirection
+  reference: RFC 9110 §15.4.5
+  engine: not-used
+  body: none
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 305
+  name: Use Proxy
+  class: redirection
+  reference: RFC 9110 §15.4.6
+  engine: not-used
+  body: none
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 306
+  name: (Unused)
+  class: redirection
+  reference: RFC 9110 §15.4.7
+  engine: not-used
+  body: none
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 307
+  name: Temporary Redirect
+  class: redirection
+  reference: RFC 9110 §15.4.8
+  engine: not-used
+  body: location
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 308
+  name: Permanent Redirect
+  class: redirection
+  reference: RFC 9110 §15.4.9
+  engine: not-used
+  body: location
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 400
+  name: Bad Request
+  class: client_error
+  reference: RFC 9110 §15.5.1
+  engine: used
+  body: problem+json
+  trigger: Request syntax, path, parameter, model name, or source is invalid.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes:
+  - invalid_input
+  - model.invalid_name
+  - model.invalid_source
+  - model.path_outside_root
+  error_category: validation
+  retryable: false
+- code: 401
+  name: Unauthorized
+  class: client_error
+  reference: RFC 9110 §15.5.2
+  engine: used
+  body: problem+json
+  trigger: A protected route received no credential or an invalid/expired bearer token.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers:
+  - WWW-Authenticate
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes:
+  - unauthorized
+  error_category: authentication
+  retryable: false
+- code: 402
+  name: Payment Required
+  class: client_error
+  reference: RFC 9110 §15.5.3
+  engine: not-used
+  body: problem+json
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 403
+  name: Forbidden
+  class: client_error
+  reference: RFC 9110 §15.5.4
+  engine: used
+  body: problem+json
+  trigger: The authenticated principal lacks the required role or scope.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes:
+  - forbidden
+  error_category: authorization
+  retryable: false
+- code: 404
+  name: Not Found
+  class: client_error
+  reference: RFC 9110 §15.5.5
+  engine: used
+  body: problem+json
+  trigger: The path, model, acquisition job, or loaded slot does not exist.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes:
+  - not_found
+  - model.not_found
+  error_category: not_found
+  retryable: false
+- code: 405
+  name: Method Not Allowed
+  class: client_error
+  reference: RFC 9110 §15.5.6
+  engine: conditional
+  body: problem+json
+  trigger: The path exists but does not allow the request method.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers:
+  - Allow
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes:
+  - method_not_allowed
+  error_category: not_found
+  retryable: false
+- code: 406
+  name: Not Acceptable
+  class: client_error
+  reference: RFC 9110 §15.5.7
+  engine: conditional
+  body: problem+json
+  trigger: No representation matching Accept is available for the operation.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 407
+  name: Proxy Authentication Required
+  class: client_error
+  reference: RFC 9110 §15.5.8
+  engine: not-used
+  body: problem+json
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 408
+  name: Request Timeout
+  class: client_error
+  reference: RFC 9110 §15.5.9
+  engine: conditional
+  body: problem+json
+  trigger: The server closed an idle or over-deadline request before completion.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 409
+  name: Conflict
+  class: client_error
+  reference: RFC 9110 §15.5.10
+  engine: used
+  body: problem+json
+  trigger: The request conflicts with model, job, capacity, or unload state.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes:
+  - model.digest_mismatch
+  - model.not_ready
+  - model.busy
+  - model.capacity_exceeded
+  - model.download_in_progress
+  error_category: conflict
+  retryable: false
+- code: 410
+  name: Gone
+  class: client_error
+  reference: RFC 9110 §15.5.11
+  engine: not-used
+  body: problem+json
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 411
+  name: Length Required
+  class: client_error
+  reference: RFC 9110 §15.5.12
+  engine: conditional
+  body: problem+json
+  trigger: A request that requires a framing length omitted Content-Length or chunked framing.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 412
+  name: Precondition Failed
+  class: client_error
+  reference: RFC 9110 §15.5.13
+  engine: conditional
+  body: problem+json
+  trigger: A declared precondition such as If-Match failed.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 413
+  name: Content Too Large
+  class: client_error
+  reference: RFC 9110 §15.5.14
+  engine: used
+  body: problem+json
+  trigger: The request body, batch, frame, or artifact exceeds the configured limit.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes:
+  - payload_too_large
+  - model.too_large
+  error_category: validation
+  retryable: false
+- code: 414
+  name: URI Too Long
+  class: client_error
+  reference: RFC 9110 §15.5.15
+  engine: conditional
+  body: problem+json
+  trigger: The request target exceeds the server URI length limit.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 415
+  name: Unsupported Media Type
+  class: client_error
+  reference: RFC 9110 §15.5.16
+  engine: used
+  body: problem+json
+  trigger: The request Content-Type or Content-Encoding is not supported by the operation.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes:
+  - unsupported_media_type
+  error_category: validation
+  retryable: false
+- code: 416
+  name: Range Not Satisfiable
+  class: client_error
+  reference: RFC 9110 §15.5.17
+  engine: not-used
+  body: problem+json
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 417
+  name: Expectation Failed
+  class: client_error
+  reference: RFC 9110 §15.5.18
+  engine: conditional
+  body: problem+json
+  trigger: An Expect header expectation cannot be met.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 418
+  name: (Unused)
+  class: client_error
+  reference: RFC 9110 §15.5.19
+  engine: not-used
+  body: none
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 421
+  name: Misdirected Request
+  class: client_error
+  reference: RFC 9110 §15.5.20
+  engine: conditional
+  body: problem+json
+  trigger: The connection authority does not match the request target authority.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 422
+  name: Unprocessable Content
+  class: client_error
+  reference: RFC 9110 §15.5.21
+  engine: conditional
+  body: problem+json
+  trigger: The syntax is valid but semantic validation of the document failed.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 423
+  name: Locked
+  class: client_error
+  reference: RFC 4918 §11.3
+  engine: not-used
+  body: problem+json
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 424
+  name: Failed Dependency
+  class: client_error
+  reference: RFC 4918 §11.4
+  engine: not-used
+  body: problem+json
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 425
+  name: Too Early
+  class: client_error
+  reference: RFC 8470 §5.2
+  engine: conditional
+  body: problem+json
+  trigger: Replay-unsafe early data arrived before the TLS handshake completed.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 426
+  name: Upgrade Required
+  class: client_error
+  reference: RFC 9110 §15.5.22
+  engine: conditional
+  body: problem+json
+  trigger: The profile requires TLS 1.3 or a protocol upgrade before the request can proceed.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers:
+  - Upgrade
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 428
+  name: Precondition Required
+  class: client_error
+  reference: RFC 6585 §3
+  engine: conditional
+  body: problem+json
+  trigger: The operation requires a conditional request but none was supplied.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 429
+  name: Too Many Requests
+  class: client_error
+  reference: RFC 6585 §4
+  engine: used
+  body: problem+json
+  trigger: The caller exceeded the configured request budget for the route or principal.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers:
+  - Retry-After
+  optional_headers: []
+  cache_control: no-store
+  retry: retry-after
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes:
+  - rate_limited
+  error_category: limit
+  retryable: true
+- code: 431
+  name: Request Header Fields Too Large
+  class: client_error
+  reference: RFC 6585 §5
+  engine: conditional
+  body: problem+json
+  trigger: Request header fields exceed the configured size limit.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 451
+  name: Unavailable For Legal Reasons
+  class: client_error
+  reference: RFC 7725 §3
+  engine: not-used
+  body: problem+json
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 500
+  name: Internal Server Error
+  class: server_error
+  reference: RFC 9110 §15.6.1
+  engine: used
+  body: problem+json
+  trigger: An unhandled internal failure occurred; no internal detail is exposed.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: conditional
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes:
+  - internal
+  error_category: internal
+  retryable: false
+- code: 501
+  name: Not Implemented
+  class: server_error
+  reference: RFC 9110 §15.6.2
+  engine: used
+  body: problem+json
+  trigger: The route is reserved by the contract but its capability is not implemented.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes:
+  - not_implemented
+  error_category: not_found
+  retryable: false
+- code: 502
+  name: Bad Gateway
+  class: server_error
+  reference: RFC 9110 §15.6.3
+  engine: used
+  body: problem+json
+  trigger: An optional upstream returned an invalid response or failed before completion.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: conditional
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes:
+  - model.source_unavailable
+  error_category: upstream
+  retryable: true
+- code: 503
+  name: Service Unavailable
+  class: server_error
+  reference: RFC 9110 §15.6.4
+  engine: used
+  body: per-operation
+  trigger: A required model, backend, or dependency is unavailable.
+  content_type: per-operation
+  schema: per-operation
+  required_headers:
+  - Retry-After
+  optional_headers: []
+  cache_control: no-store
+  retry: retry-after
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: unavailable
+  retryable: true
+- code: 504
+  name: Gateway Timeout
+  class: server_error
+  reference: RFC 9110 §15.6.5
+  engine: used
+  body: problem+json
+  trigger: An execution or upstream deadline expired.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: conditional
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes:
+  - timeout
+  error_category: upstream
+  retryable: true
+- code: 505
+  name: HTTP Version Not Supported
+  class: server_error
+  reference: RFC 9110 §15.6.6
+  engine: conditional
+  body: problem+json
+  trigger: The request used an unsupported HTTP major version.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: never
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 506
+  name: Variant Also Negotiates
+  class: server_error
+  reference: RFC 2295 §8.1
+  engine: not-used
+  body: problem+json
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 507
+  name: Insufficient Storage
+  class: server_error
+  reference: RFC 4918 §11.5
+  engine: conditional
+  body: problem+json
+  trigger: The managed asset store cannot accept the write because storage is exhausted.
+  content_type: application/problem+json
+  schema: ErrorEnvelope
+  required_headers: []
+  optional_headers: []
+  cache_control: no-store
+  retry: conditional
+  body_fields:
+  - type
+  - title
+  - status
+  - code
+  - category
+  - detail
+  - instance
+  - request_id
+  - retryable
+  forbidden_body_fields:
+  - data
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 508
+  name: Loop Detected
+  class: server_error
+  reference: RFC 5842 §7.2
+  engine: not-used
+  body: problem+json
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 510
+  name: Not Extended (Obsoleted)
+  class: server_error
+  reference: RFC 2774 §7
+  engine: not-used
+  body: problem+json
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+- code: 511
+  name: Network Authentication Required
+  class: server_error
+  reference: RFC 6585 §6
+  engine: not-used
+  body: problem+json
+  trigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.
+  content_type: null
+  schema: null
+  required_headers: []
+  optional_headers: []
+  cache_control: null
+  retry: never
+  body_fields: []
+  forbidden_body_fields: []
+  error_codes: []
+  error_category: null
+  retryable: false
+unassigned:
+- 105-199
+- 209-225
+- 227-299
+- 309-399
+- 419-420
+- 427
+- 430
+- 432-450
+- 452-499
+- 509
+- 512-599
+headers:
+  Allow:
+    grammar: 1#method
+    value: Comma-separated methods registered for the request target.
+    notes: Every method declared for the path MUST appear; HEAD is implied by GET.
+  Connection:
+    grammar: token
+    value: Upgrade
+    notes: Required with 101 and an Upgrade header.
+  Location:
+    grammar: URI-reference
+    value: Root-relative or absolute URI of the created resource.
+    notes: Required on 201. Must not contain credentials.
+  Retry-After:
+    grammar: delta-seconds
+    value: Non-negative integer seconds until the caller may retry.
+    notes: HTTP-date form is not used. Required on 429 and retryable 503.
+  Upgrade:
+    grammar: 1#protocol
+    value: websocket for 101; the required protocol token for 426.
+    notes: Must name a protocol the server is willing to switch to.
+  WWW-Authenticate:
+    grammar: challenge
+    value: Bearer realm="torviello"
+    notes: Add error="invalid_token" for malformed or expired credentials; never echo the token.

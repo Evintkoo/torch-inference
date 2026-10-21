@@ -4,7 +4,7 @@
 **Requirement:** ENG-005  
 **Type:** Automated  
 **Source:** [acceptance-criteria.md](../acceptance-criteria.md)  
-**Status:** Specified; no implementation or evaluation evidence is recorded in this repository.
+**Status:** Scaffold implementation exists for local acquisition, https transport, digest verification, status, and progress; deletion, archive fuzzing, TLA+/Loom evidence, and evaluation evidence are absent. Not accepted.
 
 ### SMART specification
 

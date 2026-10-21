@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/226.schema.json",
+  "title": "226 IM Used",
+  "description": "RFC 3229 \u00a710.4.1; class successful; engine use: not-used.\nTrigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.\nContent: none.\nRequired headers: none.\nCache-Control: none; retry: never.",
+  "x-status": 226,
+  "x-engine-use": "not-used",
+  "x-response-body": "envelope",
+  "x-response-contract": {
+    "content_type": null,
+    "schema": null,
+    "required_headers": [],
+    "optional_headers": [],
+    "cache_control": null,
+    "retry": "never",
+    "body_fields": [],
+    "forbidden_body_fields": [],
+    "error_codes": [],
+    "error_category": null,
+    "retryable": false,
+    "trigger": "Prohibited on the engine surface; no handler or framework fallback may emit this status."
+  },
+  "$ref": "../Envelope.schema.json",
+  "examples": [
+    {
+      "data": {},
+      "meta": {
+        "latency_ms": 0,
+        "model_id": "engine-demo-tensor",
+        "postprocessing_applied": false,
+        "version": "1.0.0",
+        "request_id": "00000000-0000-4000-8000-000000000000"
+      }
+    }
+  ]
+}

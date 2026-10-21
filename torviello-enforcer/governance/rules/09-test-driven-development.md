@@ -7,7 +7,7 @@
 
 ## Control objective
 
-Test-Driven Development verifies correctness while implementation proceeds. Approved behaviors and edge cases MUST be driven by failing tests through the RED → GREEN → REFACTOR cycle, with unit, contract, and integration tests kept in their categories. A passing run on a weakened, skipped, or deleted test MUST NOT count as verification.
+Test-Driven Development verifies correctness while implementation proceeds. Approved behaviors and edge cases MUST be driven by failing tests through the RED → GREEN → REFACTOR cycle, with unit, contract, and integration tests kept in their categories. For interface changes, contract-first ordering MUST hold: the contract is approved before tests, and failing tests exist before implementation. A passing run on a weakened, skipped, or deleted test MUST NOT count as verification.
 
 ## Applicability
 
@@ -41,9 +41,14 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 **Requirement:** Every test MUST be traceable to a requirement, specification, or contract, and the repository MUST record the command and result used to produce the passing evidence. Coverage claims MUST name the tests and the scope they cover.
 
+### GOV-09.07 — Contract-first ordering MUST precede failing-first implementation…
+
+**Requirement:** For interface changes, failing-first tests MUST be written against the approved contract before implementation begins. Tests MUST NOT be used to discover or retroactively define the contract; a test whose expectations are absent from the contract MUST be rejected until the contract is updated and approved. The mandatory order is contract → failing test → implementation.
+
 ## Prohibited conditions
 
 - Writing implementation first and adding tests that cannot fail afterward.
+- Writing tests before the affected contract is approved, or using tests to define an interface retroactively.
 - Deleting, skipping, or narrowing assertions to obtain a green run.
 - Counting a flaky test, a quarantined test, or a skipped test as verification.
 - Running a single undifferentiated test command that cannot select the required category.
@@ -53,18 +58,20 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 1. Identify the requirement, specification, or contract each changed test verifies.
 2. Confirm a failing-first test exists for each new behavior or edge case.
-3. Run the required test categories independently and record the commands and results.
-4. Inspect the change history for weakened, skipped, or deleted tests and for secrets or external dependencies.
-5. Confirm contract, error-path, and environment-dependent tests state their prerequisites.
-6. Record the result in the governance assurance register.
+3. For interface changes, confirm the contract was approved before the tests and that the tests reference the approved contract.
+4. Run the required test categories independently and record the commands and results.
+5. Inspect the change history for weakened, skipped, or deleted tests and for secrets or external dependencies.
+6. Confirm contract, error-path, and environment-dependent tests state their prerequisites.
+7. Record the result in the governance assurance register.
 
 ## Assessment determination
 
-The control passes only when approved behaviors have failing-first tests, required categories are independently selectable, tests are deterministic and traceable, and the recorded commands and results show them passing without weakening. Missing failing-first evidence, non-deterministic tests, or weakened tests are failures.
+The control passes only when approved behaviors have failing-first tests written after contract approval, required categories are independently selectable, tests are deterministic and traceable, and the recorded commands and results show them passing without weakening. Missing failing-first evidence, non-deterministic tests, or weakened tests are failures.
 
 ## Required evidence
 
 - Failing-first test and its failure output before implementation.
+- Evidence that the contract was approved before the failing test for interface changes.
 - Passing test output after implementation, with the exact command.
 - Test category layout and independent selection commands.
 - Trace from tests to requirement, specification, or contract identifiers.

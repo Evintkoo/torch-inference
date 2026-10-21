@@ -1,14 +1,39 @@
 # Copyright (c) 2026 Torviello.
 [[models]]
 id = "engine-demo-classifier"
+display_name = "Engine demo classifier"
 version = "1.0.0"
+task = "classification"
+format = "torchscript"
+size_bytes = 0
 content_hash = "sha256:6f1c0b4f0d7f4d6b9d3e8a2c5f7a1b0c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a"
 source_url = "https://models.torviello.local/engine-demo-classifier-1.0.0.bin"
 license = "Apache-2.0"
+description = "Demo catalog entry; no model asset is bundled with this scaffold."
+backend_requirements = ["cpu"]
 
 [[models]]
 id = "engine-demo-embedder"
+display_name = "Engine demo embedder"
 version = "1.2.0"
+task = "tensor"
+format = "torchscript"
+size_bytes = 0
 content_hash = "sha256:1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f809"
 source_url = "https://models.torviello.local/engine-demo-embedder-1.2.0.bin"
 license = "Apache-2.0"
+description = "Demo catalog entry; no model asset is bundled with this scaffold."
+backend_requirements = ["cpu"]
+
+[[models]]
+id = "engine-demo-tensor"
+display_name = "Engine demo tensor classifier"
+version = "1.0.0"
+task = "classification"
+format = "torviello-tensor-v1"
+size_bytes = 180
+content_hash = "sha256:20c2c11e5e688af633b180ba7fb6f8eeb73a6e4900a021e92e0a3d83afba0aeb"
+source_url = "https://models.torviello.local/engine-demo-tensor-1.0.0.json"
+license = "Apache-2.0"
+description = "Reference CPU adapter fixture for the load lifecycle; not a PyTorch artifact."
+backend_requirements = ["cpu"]

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/models/ModelSlot.schema.json",
+  "title": "ModelSlot",
+  "type": "object",
+  "required": [
+    "model_id",
+    "state"
+  ],
+  "properties": {
+    "model_id": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "unloaded",
+        "queued",
+        "loading",
+        "ready",
+        "draining",
+        "failed"
+      ]
+    },
+    "backend": {
+      "type": "string"
+    },
+    "device": {
+      "type": "string"
+    },
+    "precision": {
+      "type": "string"
+    },
+    "references": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "loaded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "error_code": {
+      "type": "string"
+    }
+  }
+}

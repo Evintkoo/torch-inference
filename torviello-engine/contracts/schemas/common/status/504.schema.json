@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/504.schema.json",
+  "title": "504 Gateway Timeout",
+  "description": "RFC 9110 \u00a715.6.5; class server_error; engine use: used.\nTrigger: An execution or upstream deadline expired.\nContent: application/problem+json (ErrorEnvelope).\nRequired headers: none.\nCache-Control: no-store; retry: conditional.",
+  "x-status": 504,
+  "x-engine-use": "used",
+  "x-response-body": "problem+json",
+  "x-response-contract": {
+    "content_type": "application/problem+json",
+    "schema": "ErrorEnvelope",
+    "required_headers": [],
+    "optional_headers": [],
+    "cache_control": "no-store",
+    "retry": "conditional",
+    "body_fields": [
+      "type",
+      "title",
+      "status",
+      "code",
+      "category",
+      "detail",
+      "instance",
+      "request_id",
+      "retryable"
+    ],
+    "forbidden_body_fields": [
+      "data"
+    ],
+    "error_codes": [
+      "timeout"
+    ],
+    "error_category": "upstream",
+    "retryable": true,
+    "trigger": "An execution or upstream deadline expired."
+  },
+  "$ref": "../ErrorEnvelope.schema.json",
+  "examples": [
+    {
+      "type": "https://torviello.local/problems/timeout",
+      "title": "Gateway Timeout",
+      "status": 504,
+      "code": "timeout",
+      "category": "upstream",
+      "detail": "An execution or upstream deadline expired.",
+      "instance": "urn:torviello:request:00000000-0000-4000-8000-000000000000",
+      "request_id": "00000000-0000-4000-8000-000000000000",
+      "retryable": true,
+      "retry_after_ms": 60000
+    }
+  ]
+}

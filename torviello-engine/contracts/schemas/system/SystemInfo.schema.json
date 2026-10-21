@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/system/SystemInfo.schema.json",
+  "title": "SystemInfo",
+  "type": "object",
+  "required": [
+    "version",
+    "backend",
+    "device",
+    "models",
+    "limits"
+  ],
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "build_profile": {
+      "type": "string"
+    },
+    "backend": {
+      "type": "string"
+    },
+    "device": {
+      "type": "string"
+    },
+    "precision": {
+      "type": "string"
+    },
+    "uptime_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "models": {
+      "type": "array",
+      "items": {
+        "$ref": "../catalog/ModelSummary.schema.json"
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer"
+      }
+    },
+    "sampling_window_seconds": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

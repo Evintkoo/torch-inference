@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/events/schemas/inference/inference.completed.schema.json",
+  "title": "inference.completed",
+  "description": "A result is produced.",
+  "type": "object",
+  "required": [
+    "event_id",
+    "event_type",
+    "occurred_at",
+    "profile_id",
+    "engine_version",
+    "request_id",
+    "model_id",
+    "backend",
+    "latency_ms"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event_type": {
+      "type": "string",
+      "const": "inference.completed"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "profile_id": {
+      "type": "string"
+    },
+    "engine_version": {
+      "type": "string"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "success",
+        "failure",
+        "cancelled",
+        "denied"
+      ]
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "model_id": {
+      "type": "string"
+    },
+    "backend": {
+      "type": "string"
+    },
+    "latency_ms": {
+      "type": "number"
+    },
+    "output_count": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "output_bytes": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    }
+  },
+  "x-requirement": "ENG-007"
+}

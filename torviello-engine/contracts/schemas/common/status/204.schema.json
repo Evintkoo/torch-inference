@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/204.schema.json",
+  "title": "204 No Content",
+  "description": "RFC 9110 \u00a715.3.5; class successful; engine use: used.\nTrigger: Delete or clear operation completed; no representation is returned.\nContent: none.\nRequired headers: none.\nCache-Control: none; retry: never.",
+  "x-status": 204,
+  "x-engine-use": "used",
+  "x-response-body": "none",
+  "x-response-contract": {
+    "content_type": null,
+    "schema": null,
+    "required_headers": [],
+    "optional_headers": [],
+    "cache_control": null,
+    "retry": "never",
+    "body_fields": [],
+    "forbidden_body_fields": [],
+    "error_codes": [],
+    "error_category": null,
+    "retryable": false,
+    "trigger": "Delete or clear operation completed; no representation is returned."
+  },
+  "type": "null",
+  "examples": [
+    null
+  ]
+}

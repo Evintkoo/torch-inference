@@ -6,13 +6,23 @@ Part of **torviello-engine** — Core PyTorch inference runtime. Brand message: 
 
 Machine-readable event payload schemas.
 
-## Expected contents
+## Contents
 
-Event schema files with version and compatibility notes.
+- [catalog.yaml](catalog.yaml) — normative event names, requirements, and payload fields.
+- [schemas/](schemas/) — one generated JSON Schema 2020-12 per cataloged event.
+- [asyncapi.yaml](asyncapi.yaml) — SSE and WebSocket channels referencing those schemas.
+- [../traceability.md](../traceability.md) — feature-to-event mapping.
+
+Schemas are generated; edit `catalog.yaml` and run `uv run python torviello-engine/contracts/tools/contracts.py generate`.
 
 ## Validation
 
-Consumers and producers validate against the same schema.
+```sh
+uv run python torviello-engine/contracts/tools/contracts.py check
+uv run pytest -q torviello-enforcer/test_contract_artifacts.py
+```
+
+Every event documented in `../../domain/events.md` must appear in `catalog.yaml` and have a schema. The schema set validates structurally; producer and consumer agreement is not yet recorded.
 
 ## Assurance
 
@@ -24,4 +34,4 @@ This directory is governed by [HPA-4](../../../requirements/assurance-standard.m
 
 ## Status
 
-Repository shape only. No artifact, implementation, or evaluation evidence is recorded here yet.
+The catalog and 47 event schemas exist and are structurally validated. No producer emits these events, no consumer validates live payloads, and no compatibility review has approved the field choices.

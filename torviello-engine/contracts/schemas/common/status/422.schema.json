@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/422.schema.json",
+  "title": "422 Unprocessable Content",
+  "description": "RFC 9110 \u00a715.5.21; class client_error; engine use: conditional.\nTrigger: The syntax is valid but semantic validation of the document failed.\nContent: application/problem+json (ErrorEnvelope).\nRequired headers: none.\nCache-Control: no-store; retry: never.",
+  "x-status": 422,
+  "x-engine-use": "conditional",
+  "x-response-body": "problem+json",
+  "x-response-contract": {
+    "content_type": "application/problem+json",
+    "schema": "ErrorEnvelope",
+    "required_headers": [],
+    "optional_headers": [],
+    "cache_control": "no-store",
+    "retry": "never",
+    "body_fields": [
+      "type",
+      "title",
+      "status",
+      "code",
+      "category",
+      "detail",
+      "instance",
+      "request_id",
+      "retryable"
+    ],
+    "forbidden_body_fields": [
+      "data"
+    ],
+    "error_codes": [],
+    "error_category": null,
+    "retryable": false,
+    "trigger": "The syntax is valid but semantic validation of the document failed."
+  },
+  "$ref": "../ErrorEnvelope.schema.json",
+  "examples": [
+    {
+      "type": "https://torviello.local/problems/status-422",
+      "title": "Unprocessable Content",
+      "status": 422,
+      "code": "framework_error",
+      "category": "internal",
+      "detail": "The syntax is valid but semantic validation of the document failed.",
+      "instance": "urn:torviello:request:00000000-0000-4000-8000-000000000000",
+      "request_id": "00000000-0000-4000-8000-000000000000",
+      "retryable": false
+    }
+  ]
+}

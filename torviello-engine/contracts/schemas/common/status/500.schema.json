@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/500.schema.json",
+  "title": "500 Internal Server Error",
+  "description": "RFC 9110 \u00a715.6.1; class server_error; engine use: used.\nTrigger: An unhandled internal failure occurred; no internal detail is exposed.\nContent: application/problem+json (ErrorEnvelope).\nRequired headers: none.\nCache-Control: no-store; retry: conditional.",
+  "x-status": 500,
+  "x-engine-use": "used",
+  "x-response-body": "problem+json",
+  "x-response-contract": {
+    "content_type": "application/problem+json",
+    "schema": "ErrorEnvelope",
+    "required_headers": [],
+    "optional_headers": [],
+    "cache_control": "no-store",
+    "retry": "conditional",
+    "body_fields": [
+      "type",
+      "title",
+      "status",
+      "code",
+      "category",
+      "detail",
+      "instance",
+      "request_id",
+      "retryable"
+    ],
+    "forbidden_body_fields": [
+      "data"
+    ],
+    "error_codes": [
+      "internal"
+    ],
+    "error_category": "internal",
+    "retryable": false,
+    "trigger": "An unhandled internal failure occurred; no internal detail is exposed."
+  },
+  "$ref": "../ErrorEnvelope.schema.json",
+  "examples": [
+    {
+      "type": "https://torviello.local/problems/internal",
+      "title": "Internal Server Error",
+      "status": 500,
+      "code": "internal",
+      "category": "internal",
+      "detail": "An unhandled internal failure occurred; no internal detail is exposed.",
+      "instance": "urn:torviello:request:00000000-0000-4000-8000-000000000000",
+      "request_id": "00000000-0000-4000-8000-000000000000",
+      "retryable": false
+    }
+  ]
+}

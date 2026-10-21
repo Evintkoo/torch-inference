@@ -1,0 +1,742 @@
+openapi: 3.2.1
+info:
+  title: Torviello Engine API - implemented first slice
+  version: 1.0.0
+  summary: 'Implemented subset: health, catalog, model lifecycle, and metrics.'
+  description: This file records the eleven routes implemented by the current scaffold.
+    It is a subset of `openapi.yaml`, which remains the full product target. Routes
+    in the target contract that are absent here are not implemented.
+  contact:
+    name: Torviello engine owner
+servers:
+- url: http://127.0.0.1:8000
+  description: Default local bind. Loopback is the safe default.
+tags:
+- name: Health
+- name: Catalog
+- name: Observability
+security:
+- bearerAuth: []
+paths:
+  /health:
+    get:
+      tags:
+      - Health
+      operationId: getHealth
+      summary: Report subsystem health.
+      description: Returns liveness plus per-subsystem status. Optional subsystems
+        report degraded without failing liveness. Readiness is reported separately.
+      security: []
+      responses:
+        '200':
+          description: Health snapshot. Process is alive.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthSnapshot'
+  /health/live:
+    get:
+      tags:
+      - Health
+      operationId: getLiveness
+      summary: Report process liveness.
+      security: []
+      responses:
+        '200':
+          description: The process can make progress.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Liveness'
+        '503':
+          description: The process cannot make progress.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /health/ready:
+    get:
+      tags:
+      - Health
+      operationId: getReadiness
+      summary: Report readiness to serve inference.
+      description: Ready only when required configuration, backends, and models are
+        available. Saturation and rate limiting do not change readiness.
+      security: []
+      responses:
+        '200':
+          description: Ready.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Readiness'
+        '503':
+          description: Not ready, with the pending or failed component.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Readiness'
+  /models:
+    get:
+      tags:
+      - Catalog
+      operationId: listModels
+      summary: List model catalog entries with independent state dimensions.
+      responses:
+        '200':
+          description: Catalog page.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Envelope'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/ModelSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /models/{modelId}:
+    get:
+      tags:
+      - Catalog
+      operationId: getModel
+      summary: Read one model descriptor and its state.
+      parameters:
+      - $ref: '#/components/parameters/ModelId'
+      responses:
+        '200':
+          description: Model detail.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Envelope'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/ModelDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /models/{modelId}/download:
+    post:
+      tags:
+      - Models
+      operationId: downloadModel
+      summary: Acquire a model asset set.
+      description: Creates a bounded acquisition job. Names and destinations are
+        confined to the configured model root; the registry digest is authoritative.
+      parameters:
+      - $ref: '#/components/parameters/ModelId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DownloadRequest'
+      responses:
+        '202':
+          description: Acquisition job accepted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Envelope'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/DownloadJob'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          description: Acquisition queue is full.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /models/{modelId}/status:
+    get:
+      tags:
+      - Models
+      operationId: getDownloadStatus
+      summary: Read acquisition progress and asset availability.
+      description: Reports the current job. A model with a preloaded asset but no
+        job reports ready. A model with neither a job nor an asset returns 409.
+      parameters:
+      - $ref: '#/components/parameters/ModelId'
+      responses:
+        '200':
+          description: Acquisition status.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Envelope'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/DownloadJob'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /models/{modelId}/download/progress:
+    get:
+      tags:
+      - Models
+      operationId: streamDownloadProgress
+      summary: Stream acquisition progress as server-sent events.
+      description: Emits bounded progress events and one terminal event, then closes.
+      parameters:
+      - $ref: '#/components/parameters/ModelId'
+      responses:
+        '200':
+          description: Event stream.
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/DownloadProgressEvent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /models/{modelId}/load:
+    post:
+      tags:
+      - Models
+      operationId: loadModel
+      summary: Load a model into a runtime slot.
+      description: Idempotent for one model ID. Concurrent loads join the same
+        initialization. The asset digest is re-verified before the slot becomes ready.
+      parameters:
+      - $ref: '#/components/parameters/ModelId'
+      responses:
+        '202':
+          description: Load admitted or already in progress.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Envelope'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/ModelSlot'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /models/{modelId}/unload:
+    post:
+      tags:
+      - Models
+      operationId: unloadModel
+      summary: Request unload of a model slot.
+      description: Stops new references, drains active references within the
+        configured timeout, then frees the runtime.
+      parameters:
+      - $ref: '#/components/parameters/ModelId'
+      responses:
+        '202':
+          description: Unload completed or was already unloaded.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Envelope'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/ModelSlot'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /metrics:
+    get:
+      tags:
+      - Observability
+      operationId: getMetrics
+      summary: Expose Prometheus text metrics.
+      description: Label sets are bounded. Request content, identifiers, paths, and
+        user-controlled values never appear as labels.
+      security: []
+      responses:
+        '200':
+          description: Prometheus exposition.
+          content:
+            text/plain:
+              schema:
+                type: string
+        '503':
+          description: Metrics subsystem unavailable.
+          content:
+            text/plain:
+              schema:
+                type: string
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: HS256, HS384, or HS512. Disabled by default in local mode.
+  parameters:
+    ModelId:
+      name: modelId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+        pattern: ^[A-Za-z0-9][A-Za-z0-9._-]*$
+  responses:
+    BadRequest:
+      description: Invalid input or parameter.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Conflict:
+      description: Request conflicts with current state.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Unavailable:
+      description: Required component or model is unavailable.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Unauthorized:
+      description: Missing or invalid credential.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    NotFound:
+      description: Model or resource does not exist.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+  schemas:
+    Envelope:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data: {}
+        meta:
+          $ref: '#/components/schemas/Meta'
+    Meta:
+      type: object
+      required:
+      - latency_ms
+      - model_id
+      - postprocessing_applied
+      - version
+      - request_id
+      properties:
+        latency_ms:
+          type: integer
+          minimum: 0
+        model_id:
+          type: string
+        backend:
+          type: string
+        postprocessing_applied:
+          type: boolean
+        postprocess_steps:
+          type: array
+          items:
+            type: string
+        warnings:
+          type: array
+          items:
+            type: string
+        version:
+          type: string
+        request_id:
+          type: string
+    ErrorEnvelope:
+      type: object
+      description: 'RFC 9457 problem details with stable engine extensions. The response
+
+        content type is application/problem+json. The `type` URI identifies the
+
+        error class; `code` is the stable machine-readable engine identifier.
+
+        '
+      required:
+      - type
+      - title
+      - status
+      - code
+      - category
+      properties:
+        type:
+          type: string
+          format: uri
+          description: Stable URI identifying the error class.
+        title:
+          type: string
+          description: Short human-readable summary.
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        detail:
+          type: string
+          description: Safe explanation that does not leak internals.
+        instance:
+          type: string
+          format: uri-reference
+          description: Request-specific occurrence identifier.
+        code:
+          type: string
+          examples:
+          - MODEL_NOT_FOUND
+          description: Stable engine error code.
+        category:
+          type: string
+          enum:
+          - validation
+          - authentication
+          - authorization
+          - not_found
+          - conflict
+          - limit
+          - unavailable
+          - upstream
+          - internal
+        retryable:
+          type: boolean
+        retry_after_ms:
+          type: integer
+          minimum: 0
+        errors:
+          type: array
+          description: Field-level validation failures.
+          items:
+            type: object
+            required:
+            - field
+            - code
+            properties:
+              field:
+                type: string
+              code:
+                type: string
+              detail:
+                type: string
+        request_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    ModelSummary:
+      type: object
+      required:
+      - model_id
+      - task
+      - format
+      - catalog_present
+      - locally_available
+      - download_state
+      - load_state
+      properties:
+        model_id:
+          type: string
+        display_name:
+          type: string
+        task:
+          type: string
+          enum:
+          - tts
+          - stt
+          - classification
+          - detection
+          - chat
+          - tensor
+        format:
+          type: string
+        catalog_present:
+          type: boolean
+        locally_available:
+          type: boolean
+        download_state:
+          type: string
+          enum:
+          - absent
+          - queued
+          - downloading
+          - verifying
+          - ready
+          - failed
+          - cancelled
+        load_state:
+          type: string
+          enum:
+          - unloaded
+          - queued
+          - loading
+          - ready
+          - draining
+          - failed
+        size_bytes:
+          type: integer
+          minimum: 0
+    ModelDetail:
+      allOf:
+      - $ref: '#/components/schemas/ModelSummary'
+      - type: object
+        properties:
+          description:
+            type: string
+          version:
+            type: string
+          backend_requirements:
+            type: array
+            items:
+              type: string
+          input_contract:
+            type: object
+          asset_digest:
+            type: string
+          provenance:
+            type: object
+            properties:
+              source_scheme:
+                type: string
+              license:
+                type: string
+    ModelSlot:
+      type: object
+      required:
+      - model_id
+      - state
+      - references
+      properties:
+        model_id:
+          type: string
+        state:
+          type: string
+          enum:
+          - unloaded
+          - queued
+          - loading
+          - ready
+          - draining
+          - failed
+        backend:
+          type: string
+        device:
+          type: string
+        precision:
+          type: string
+        references:
+          type: integer
+          minimum: 0
+        loaded_at:
+          type: string
+          format: date-time
+        error_code:
+          type: string
+    DownloadRequest:
+      type: object
+      required:
+      - source
+      properties:
+        source:
+          type: object
+          required:
+          - scheme
+          properties:
+            scheme:
+              type: string
+              enum:
+              - huggingface
+              - https
+              - local
+            repository:
+              type: string
+            revision:
+              type: string
+            url:
+              type: string
+              format: uri
+            path:
+              type: string
+              description: Path relative to the configured model root.
+        expected_digest:
+          type: object
+          properties:
+            algorithm:
+              type: string
+              enum:
+              - sha256
+            value:
+              type: string
+              pattern: '^[a-f0-9]{64}$'
+    DownloadJob:
+      type: object
+      required:
+      - task_id
+      - model_id
+      - state
+      properties:
+        task_id:
+          type: string
+        model_id:
+          type: string
+        state:
+          type: string
+          enum:
+          - queued
+          - downloading
+          - verifying
+          - extracting
+          - ready
+          - failed
+          - cancelled
+        bytes_transferred:
+          type: integer
+          minimum: 0
+        bytes_total:
+          type: integer
+          minimum: 0
+        percent:
+          type: number
+          minimum: 0
+          maximum: 100
+        error_code:
+          type: string
+        safe_message:
+          type: string
+        started_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
+    DownloadProgressEvent:
+      type: object
+      required:
+      - event_type
+      - task_id
+      - model_id
+      - state
+      properties:
+        event_type:
+          type: string
+          enum:
+          - model.download_progress
+          - model.download_verified
+          - model.download_failed
+          - model.activated
+        event_id:
+          type: string
+        occurred_at:
+          type: string
+          format: date-time
+        task_id:
+          type: string
+        model_id:
+          type: string
+        state:
+          type: string
+        bytes_transferred:
+          type: integer
+        bytes_total:
+          type: integer
+        error_code:
+          type: string
+    HealthSnapshot:
+      type: object
+      required:
+      - status
+      - subsystems
+      - uptime_ms
+      - version
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+          - degraded
+          - unavailable
+        uptime_ms:
+          type: integer
+          minimum: 0
+        version:
+          type: string
+        subsystems:
+          type: array
+          items:
+            type: object
+            required:
+            - name
+            - status
+            - required
+            properties:
+              name:
+                type: string
+              status:
+                type: string
+                enum:
+                - ok
+                - degraded
+                - unavailable
+              required:
+                type: boolean
+              error_code:
+                type: string
+    Liveness:
+      type: object
+      required:
+      - status
+      properties:
+        status:
+          type: string
+          enum:
+          - alive
+    Readiness:
+      type: object
+      required:
+      - ready
+      properties:
+        ready:
+          type: boolean
+        pending:
+          type: array
+          items:
+            type: string
+        failed:
+          type: array
+          items:
+            type: string
+        backend:
+          type: string
+        loaded_models:
+          type: integer
+          minimum: 0

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/401.schema.json",
+  "title": "401 Unauthorized",
+  "description": "RFC 9110 \u00a715.5.2; class client_error; engine use: used.\nTrigger: A protected route received no credential or an invalid/expired bearer token.\nContent: application/problem+json (ErrorEnvelope).\nRequired headers: WWW-Authenticate.\nCache-Control: no-store; retry: never.",
+  "x-status": 401,
+  "x-engine-use": "used",
+  "x-response-body": "problem+json",
+  "x-response-contract": {
+    "content_type": "application/problem+json",
+    "schema": "ErrorEnvelope",
+    "required_headers": [
+      "WWW-Authenticate"
+    ],
+    "optional_headers": [],
+    "cache_control": "no-store",
+    "retry": "never",
+    "body_fields": [
+      "type",
+      "title",
+      "status",
+      "code",
+      "category",
+      "detail",
+      "instance",
+      "request_id",
+      "retryable"
+    ],
+    "forbidden_body_fields": [
+      "data"
+    ],
+    "error_codes": [
+      "unauthorized"
+    ],
+    "error_category": "authentication",
+    "retryable": false,
+    "trigger": "A protected route received no credential or an invalid/expired bearer token."
+  },
+  "$ref": "../ErrorEnvelope.schema.json",
+  "x-required-headers": [
+    "WWW-Authenticate"
+  ],
+  "x-header-rules": {
+    "WWW-Authenticate": {
+      "grammar": "challenge",
+      "value": "Bearer realm=\"torviello\"",
+      "notes": "Add error=\"invalid_token\" for malformed or expired credentials; never echo the token."
+    }
+  },
+  "examples": [
+    {
+      "type": "https://torviello.local/problems/unauthorized",
+      "title": "Unauthorized",
+      "status": 401,
+      "code": "unauthorized",
+      "category": "authentication",
+      "detail": "A protected route received no credential or an invalid/expired bearer token.",
+      "instance": "urn:torviello:request:00000000-0000-4000-8000-000000000000",
+      "request_id": "00000000-0000-4000-8000-000000000000",
+      "retryable": false
+    }
+  ]
+}

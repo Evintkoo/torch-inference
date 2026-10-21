@@ -9,7 +9,8 @@
     "require_auth",
     "max_body_bytes",
     "timeout_ms",
-    "schema"
+    "schema",
+    "model_registry"
   ],
   "properties": {
     "schema": {
@@ -29,7 +30,10 @@
       "const": true
     },
     "auth_enabled": {
-      "type": "boolean"
+      "type": "boolean",
+      "const": true,
+      "deprecated": true,
+      "description": "Deprecated alias for require_auth; it cannot disable authentication."
     },
     "max_body_bytes": {
       "type": "integer",
@@ -126,6 +130,39 @@
           "minItems": 1
         }
       }
+    },
+    "model_registry": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model_root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "max_model_bytes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "max_loaded_models": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "0 disables the capacity limit explicitly."
+    },
+    "download_concurrency": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "download_timeout_ms": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "model_source_allowlist": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
     }
   },
   "additionalProperties": false

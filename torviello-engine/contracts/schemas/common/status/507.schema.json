@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/507.schema.json",
+  "title": "507 Insufficient Storage",
+  "description": "RFC 4918 \u00a711.5; class server_error; engine use: conditional.\nTrigger: The managed asset store cannot accept the write because storage is exhausted.\nContent: application/problem+json (ErrorEnvelope).\nRequired headers: none.\nCache-Control: no-store; retry: conditional.",
+  "x-status": 507,
+  "x-engine-use": "conditional",
+  "x-response-body": "problem+json",
+  "x-response-contract": {
+    "content_type": "application/problem+json",
+    "schema": "ErrorEnvelope",
+    "required_headers": [],
+    "optional_headers": [],
+    "cache_control": "no-store",
+    "retry": "conditional",
+    "body_fields": [
+      "type",
+      "title",
+      "status",
+      "code",
+      "category",
+      "detail",
+      "instance",
+      "request_id",
+      "retryable"
+    ],
+    "forbidden_body_fields": [
+      "data"
+    ],
+    "error_codes": [],
+    "error_category": null,
+    "retryable": false,
+    "trigger": "The managed asset store cannot accept the write because storage is exhausted."
+  },
+  "$ref": "../ErrorEnvelope.schema.json",
+  "examples": [
+    {
+      "type": "https://torviello.local/problems/status-507",
+      "title": "Insufficient Storage",
+      "status": 507,
+      "code": "framework_error",
+      "category": "internal",
+      "detail": "The managed asset store cannot accept the write because storage is exhausted.",
+      "instance": "urn:torviello:request:00000000-0000-4000-8000-000000000000",
+      "request_id": "00000000-0000-4000-8000-000000000000",
+      "retryable": false
+    }
+  ]
+}

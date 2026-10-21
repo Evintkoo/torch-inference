@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/operations/speech/transcribeSpeech.400.schema.json",
+  "title": "transcribeSpeech response 400",
+  "$ref": "../../common/ErrorEnvelope.schema.json"
+}

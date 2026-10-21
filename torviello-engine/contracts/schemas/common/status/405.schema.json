@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/405.schema.json",
+  "title": "405 Method Not Allowed",
+  "description": "RFC 9110 \u00a715.5.6; class client_error; engine use: conditional.\nTrigger: The path exists but does not allow the request method.\nContent: application/problem+json (ErrorEnvelope).\nRequired headers: Allow.\nCache-Control: no-store; retry: never.",
+  "x-status": 405,
+  "x-engine-use": "conditional",
+  "x-response-body": "problem+json",
+  "x-response-contract": {
+    "content_type": "application/problem+json",
+    "schema": "ErrorEnvelope",
+    "required_headers": [
+      "Allow"
+    ],
+    "optional_headers": [],
+    "cache_control": "no-store",
+    "retry": "never",
+    "body_fields": [
+      "type",
+      "title",
+      "status",
+      "code",
+      "category",
+      "detail",
+      "instance",
+      "request_id",
+      "retryable"
+    ],
+    "forbidden_body_fields": [
+      "data"
+    ],
+    "error_codes": [
+      "method_not_allowed"
+    ],
+    "error_category": "not_found",
+    "retryable": false,
+    "trigger": "The path exists but does not allow the request method."
+  },
+  "$ref": "../ErrorEnvelope.schema.json",
+  "x-required-headers": [
+    "Allow"
+  ],
+  "x-header-rules": {
+    "Allow": {
+      "grammar": "1#method",
+      "value": "Comma-separated methods registered for the request target.",
+      "notes": "Every method declared for the path MUST appear; HEAD is implied by GET."
+    }
+  },
+  "examples": [
+    {
+      "type": "https://torviello.local/problems/method_not_allowed",
+      "title": "Method Not Allowed",
+      "status": 405,
+      "code": "method_not_allowed",
+      "category": "not_found",
+      "detail": "The path exists but does not allow the request method.",
+      "instance": "urn:torviello:request:00000000-0000-4000-8000-000000000000",
+      "request_id": "00000000-0000-4000-8000-000000000000",
+      "retryable": false
+    }
+  ]
+}

@@ -12,10 +12,13 @@ is split into independently releasable areas: `services`, `web`, `docs`,
 The component and runtime views below are the **target architecture**. The
 current Rust scaffold implements an HTTP shell with HS256 authentication,
 configuration validation, RFC 9457 errors, health/readiness, metrics, and
-version endpoints. It does not yet implement model loading, inference, a model
-registry, SQLite persistence, OpenTelemetry export, WebSocket transport, or the
-24-route OpenAPI contract. The React console is a shell. Treat unimplemented
-boxes as planned, not as conformance evidence.
+version endpoints. It implements a validated model catalog, confined local
+acquisition with digest verification, acquisition status and SSE progress, and
+a model load lifecycle with single-flight initialization and reference-aware
+unload. It does not yet implement remote Hugging Face acquisition, managed-asset
+deletion, inference routes, SQLite persistence, OpenTelemetry export, WebSocket
+transport, or the 22-path canonical contract (23 canonical operations, 32 with aliases). The React console is a shell. Treat
+unimplemented boxes as planned, not as conformance evidence.
 
 ## System context
 

@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/operations/observability/getSystemInfo.200.schema.json",
+  "title": "getSystemInfo response 200",
+  "$ref": "../../system/SystemInfo.schema.json"
+}

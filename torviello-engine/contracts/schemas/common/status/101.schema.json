@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/101.schema.json",
+  "title": "101 Switching Protocols",
+  "description": "RFC 9110 \u00a715.2.2; class informational; engine use: conditional.\nTrigger: Switching from HTTP/1.1 to the WebSocket protocol.\nContent: none.\nRequired headers: Upgrade, Connection.\nCache-Control: none; retry: never.",
+  "x-status": 101,
+  "x-engine-use": "conditional",
+  "x-response-body": "upgrade",
+  "x-response-contract": {
+    "content_type": null,
+    "schema": null,
+    "required_headers": [
+      "Upgrade",
+      "Connection"
+    ],
+    "optional_headers": [],
+    "cache_control": null,
+    "retry": "never",
+    "body_fields": [],
+    "forbidden_body_fields": [],
+    "error_codes": [],
+    "error_category": null,
+    "retryable": false,
+    "trigger": "Switching from HTTP/1.1 to the WebSocket protocol."
+  },
+  "type": "null",
+  "x-required-headers": [
+    "Upgrade",
+    "Connection"
+  ],
+  "x-header-rules": {
+    "Upgrade": {
+      "grammar": "1#protocol",
+      "value": "websocket for 101; the required protocol token for 426.",
+      "notes": "Must name a protocol the server is willing to switch to."
+    },
+    "Connection": {
+      "grammar": "token",
+      "value": "Upgrade",
+      "notes": "Required with 101 and an Upgrade header."
+    }
+  },
+  "examples": [
+    null
+  ]
+}

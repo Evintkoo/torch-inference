@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/202.schema.json",
+  "title": "202 Accepted",
+  "description": "RFC 9110 \u00a715.3.3; class successful; engine use: used.\nTrigger: Acquisition or load work was accepted but is not complete.\nContent: application/json (Envelope).\nRequired headers: none.\nCache-Control: no-store; retry: never.",
+  "x-status": 202,
+  "x-engine-use": "used",
+  "x-response-body": "envelope",
+  "x-response-contract": {
+    "content_type": "application/json",
+    "schema": "Envelope",
+    "required_headers": [],
+    "optional_headers": [],
+    "cache_control": "no-store",
+    "retry": "never",
+    "body_fields": [
+      "data",
+      "meta"
+    ],
+    "forbidden_body_fields": [],
+    "error_codes": [],
+    "error_category": null,
+    "retryable": false,
+    "trigger": "Acquisition or load work was accepted but is not complete."
+  },
+  "$ref": "../Envelope.schema.json",
+  "examples": [
+    {
+      "data": {},
+      "meta": {
+        "latency_ms": 0,
+        "model_id": "engine-demo-tensor",
+        "postprocessing_applied": false,
+        "version": "1.0.0",
+        "request_id": "00000000-0000-4000-8000-000000000000"
+      }
+    }
+  ]
+}

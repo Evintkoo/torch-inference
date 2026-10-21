@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/operations/models/downloadModel.request.json.schema.json",
+  "title": "downloadModel request (application/json)",
+  "$ref": "../../models/DownloadRequest.schema.json"
+}

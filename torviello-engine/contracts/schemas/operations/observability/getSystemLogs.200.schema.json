@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/operations/observability/getSystemLogs.200.schema.json",
+  "title": "getSystemLogs response 200",
+  "$ref": "../../system/LogView.schema.json"
+}

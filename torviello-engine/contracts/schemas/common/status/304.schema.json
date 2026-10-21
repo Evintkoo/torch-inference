@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/304.schema.json",
+  "title": "304 Not Modified",
+  "description": "RFC 9110 \u00a715.4.5; class redirection; engine use: not-used.\nTrigger: Prohibited on the engine surface; no handler or framework fallback may emit this status.\nContent: none.\nRequired headers: none.\nCache-Control: none; retry: never.",
+  "x-status": 304,
+  "x-engine-use": "not-used",
+  "x-response-body": "none",
+  "x-response-contract": {
+    "content_type": null,
+    "schema": null,
+    "required_headers": [],
+    "optional_headers": [],
+    "cache_control": null,
+    "retry": "never",
+    "body_fields": [],
+    "forbidden_body_fields": [],
+    "error_codes": [],
+    "error_category": null,
+    "retryable": false,
+    "trigger": "Prohibited on the engine surface; no handler or framework fallback may emit this status."
+  },
+  "type": "null",
+  "examples": [
+    null
+  ]
+}

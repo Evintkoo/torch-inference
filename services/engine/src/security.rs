@@ -9,7 +9,6 @@ pub const MAX_FRAME_BYTES: usize = 262_144;
 pub const MAX_IDEMPOTENCY_KEY_BYTES: usize = 128;
 pub const MAX_PAGE_SIZE: usize = 100;
 pub const MAX_DECOMPRESSED_BYTES: usize = 4_194_304;
-pub const RATE_LIMIT_PER_MINUTE: u32 = 120;
 
 #[derive(Debug, Clone)]
 pub struct PageRequest {
@@ -53,14 +52,16 @@ pub fn confine_path(root: &Path, requested: &Path) -> AppResult<PathBuf> {
 
 #[derive(Debug)]
 pub struct RateLimiter {
+    limit: u32,
     window_start: Instant,
     count: u32,
 }
 
 impl RateLimiter {
     #[must_use]
-    pub fn new() -> Self {
+    pub fn new(limit: u32) -> Self {
         Self {
+            limit,
             window_start: Instant::now(),
             count: 0,
         }
@@ -72,7 +73,7 @@ impl RateLimiter {
             self.count = 0;
         }
         self.count += 1;
-        if self.count > RATE_LIMIT_PER_MINUTE {
+        if self.count > self.limit {
             return Err(AppError::TooManyRequests {
                 retry_after_seconds: 60,
             });
@@ -83,7 +84,7 @@ impl RateLimiter {
 
 impl Default for RateLimiter {
     fn default() -> Self {
-        Self::new()
+        Self::new(120)
     }
 }
 

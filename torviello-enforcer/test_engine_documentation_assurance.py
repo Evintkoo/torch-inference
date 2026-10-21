@@ -16,7 +16,7 @@ def _local_links(path: Path) -> list[str]:
 
 def test_every_engine_markdown_is_hpa4_governed() -> None:
     documents = sorted(ENGINE.rglob("*.md"))
-    assert len(documents) == 78
+    assert len(documents) == 138
     for document in documents:
         text = document.read_text(encoding="utf-8")
         assert "HPA-4" in text, document

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/200.schema.json",
+  "title": "200 OK",
+  "description": "RFC 9110 \u00a715.3.1; class successful; engine use: used.\nTrigger: Operation completed and returned its declared representation.\nContent: per-operation (per-operation).\nRequired headers: none.\nCache-Control: per-operation; retry: never.",
+  "x-status": 200,
+  "x-engine-use": "used",
+  "x-response-body": "envelope",
+  "x-response-contract": {
+    "content_type": "per-operation",
+    "schema": "per-operation",
+    "required_headers": [],
+    "optional_headers": [],
+    "cache_control": "per-operation",
+    "retry": "never",
+    "body_fields": [
+      "data",
+      "meta"
+    ],
+    "forbidden_body_fields": [],
+    "error_codes": [],
+    "error_category": null,
+    "retryable": false,
+    "trigger": "Operation completed and returned its declared representation."
+  },
+  "$ref": "../Envelope.schema.json",
+  "examples": [
+    {
+      "data": {},
+      "meta": {
+        "latency_ms": 0,
+        "model_id": "engine-demo-tensor",
+        "postprocessing_applied": false,
+        "version": "1.0.0",
+        "request_id": "00000000-0000-4000-8000-000000000000"
+      }
+    }
+  ]
+}

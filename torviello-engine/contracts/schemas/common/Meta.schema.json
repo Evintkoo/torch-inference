@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/Meta.schema.json",
+  "title": "Meta",
+  "type": "object",
+  "required": [
+    "latency_ms",
+    "model_id",
+    "postprocessing_applied",
+    "version",
+    "request_id"
+  ],
+  "properties": {
+    "latency_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "model_id": {
+      "type": "string"
+    },
+    "backend": {
+      "type": "string"
+    },
+    "postprocessing_applied": {
+      "type": "boolean"
+    },
+    "postprocess_steps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "version": {
+      "type": "string"
+    },
+    "request_id": {
+      "type": "string"
+    }
+  }
+}

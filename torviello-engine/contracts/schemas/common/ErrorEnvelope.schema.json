@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/ErrorEnvelope.schema.json",
+  "title": "ErrorEnvelope",
+  "type": "object",
+  "description": "RFC 9457 problem details with stable engine extensions. The response\ncontent type is application/problem+json. The `type` URI identifies the\nerror class; `code` is the stable machine-readable engine identifier.\n",
+  "required": [
+    "type",
+    "title",
+    "status",
+    "code",
+    "category",
+    "detail",
+    "instance",
+    "request_id",
+    "retryable"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "format": "uri",
+      "description": "Stable URI identifying the error class."
+    },
+    "title": {
+      "type": "string",
+      "description": "Short human-readable summary."
+    },
+    "status": {
+      "type": "integer",
+      "minimum": 400,
+      "maximum": 599
+    },
+    "detail": {
+      "type": "string",
+      "description": "Safe explanation that does not leak internals."
+    },
+    "instance": {
+      "type": "string",
+      "format": "uri-reference",
+      "description": "Request-specific occurrence identifier."
+    },
+    "code": {
+      "type": "string",
+      "examples": [
+        "MODEL_NOT_FOUND"
+      ],
+      "description": "Stable engine error code."
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "validation",
+        "authentication",
+        "authorization",
+        "not_found",
+        "conflict",
+        "limit",
+        "unavailable",
+        "upstream",
+        "internal"
+      ]
+    },
+    "retryable": {
+      "type": "boolean"
+    },
+    "retry_after_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "errors": {
+      "type": "array",
+      "description": "Field-level validation failures.",
+      "items": {
+        "type": "object",
+        "required": [
+          "field",
+          "code"
+        ],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

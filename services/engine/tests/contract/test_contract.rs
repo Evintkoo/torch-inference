@@ -8,7 +8,32 @@ fn openapi_contract_declares_the_registered_route() {
     assert!(contract.contains("openapi: 3.2.1"));
     assert!(contract.contains("/classify:"));
     assert!(contract.contains("ErrorEnvelope"));
-    assert_eq!(contract.matches("\n  /").count(), 24);
+    assert_eq!(contract.matches("\n  /").count(), 30);
+}
+
+#[test]
+fn implemented_subset_is_eleven_routes() {
+    let contract = fs::read_to_string("../../torviello-engine/contracts/openapi.first-slice.yaml")
+        .expect("first-slice contract must be readable");
+    assert!(contract.contains("openapi: 3.2.1"));
+    assert_eq!(contract.matches("\n  /").count(), 11);
+    for path in [
+        "/health/live",
+        "/health/ready",
+        "/models",
+        "/models/{modelId}",
+        "/models/{modelId}/download",
+        "/models/{modelId}/status",
+        "/models/{modelId}/download/progress",
+        "/models/{modelId}/load",
+        "/models/{modelId}/unload",
+        "/metrics",
+    ] {
+        assert!(
+            contract.contains(path),
+            "{path} missing from implemented subset"
+        );
+    }
 }
 
 #[test]

@@ -1,0 +1,330 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/http-status.catalog.schema.json",
+  "title": "HTTP status response policy",
+  "type": "object",
+  "required": [
+    "version",
+    "classes",
+    "envelope",
+    "problem",
+    "headers",
+    "assigned",
+    "unassigned"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Catalog version; increment on any normative response-contract change."
+    },
+    "classes": {
+      "type": "object",
+      "required": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "additionalProperties": {
+        "type": "string",
+        "enum": [
+          "informational",
+          "successful",
+          "redirection",
+          "client_error",
+          "server_error"
+        ]
+      },
+      "description": "Status class names keyed by the first digit of the status code."
+    },
+    "envelope": {
+      "type": "object",
+      "required": [
+        "media_type",
+        "schema",
+        "required_fields",
+        "cache_control"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "media_type": {
+          "type": "string"
+        },
+        "schema": {
+          "type": "string"
+        },
+        "required_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "cache_control": {
+          "type": "string"
+        }
+      },
+      "description": "Shared success-envelope contract applied to all 2xx JSON responses."
+    },
+    "problem": {
+      "type": "object",
+      "required": [
+        "media_type",
+        "schema",
+        "required_fields",
+        "forbidden_fields",
+        "cache_control"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "media_type": {
+          "const": "application/problem+json"
+        },
+        "schema": {
+          "const": "ErrorEnvelope"
+        },
+        "required_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "forbidden_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "cache_control": {
+          "const": "no-store"
+        }
+      },
+      "description": "Shared RFC 9457 problem-details contract applied to all error responses."
+    },
+    "headers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "grammar",
+          "value",
+          "notes"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "grammar": {
+            "type": "string",
+            "minLength": 1
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "notes": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "description": "Header rules keyed by header name; every header used by an entry must be declared here."
+    },
+    "assigned": {
+      "type": "array",
+      "minItems": 64,
+      "items": {
+        "$ref": "#/$defs/entry"
+      },
+      "description": "Statuses the engine policy assigns. Every code from 100 through 599 appears exactly once across assigned and unassigned."
+    },
+    "unassigned": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": [
+          "string",
+          "integer"
+        ],
+        "pattern": "^\\d+(-\\d+)?$"
+      },
+      "description": "Inclusive status-code ranges or single codes that the policy does not assign."
+    }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "required": [
+        "code",
+        "name",
+        "class",
+        "reference",
+        "engine",
+        "body",
+        "trigger",
+        "content_type",
+        "schema",
+        "required_headers",
+        "optional_headers",
+        "cache_control",
+        "retry",
+        "body_fields",
+        "forbidden_body_fields",
+        "error_codes",
+        "error_category",
+        "retryable"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 599,
+          "description": "HTTP status code."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Registered reason phrase."
+        },
+        "class": {
+          "type": "string",
+          "enum": [
+            "informational",
+            "successful",
+            "redirection",
+            "client_error",
+            "server_error"
+          ],
+          "description": "Status class derived from the code."
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Normative RFC section that defines the status."
+        },
+        "engine": {
+          "type": "string",
+          "enum": [
+            "used",
+            "conditional",
+            "not-used"
+          ],
+          "description": "Whether the engine uses, conditionally uses, or never emits this status."
+        },
+        "body": {
+          "type": "string",
+          "enum": [
+            "none",
+            "envelope",
+            "per-operation",
+            "problem+json",
+            "location",
+            "upgrade",
+            "text",
+            "binary",
+            "sse"
+          ],
+          "description": "Representation kind returned with this status."
+        },
+        "trigger": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The only condition that permits this status."
+        },
+        "content_type": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Exact response media type, or null when no body is permitted."
+        },
+        "schema": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Schema name for the body, or null when no body is permitted."
+        },
+        "required_headers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Headers the response must include."
+        },
+        "optional_headers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Headers the response may include."
+        },
+        "cache_control": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Required Cache-Control value, or null when no value is mandated."
+        },
+        "retry": {
+          "type": "string",
+          "enum": [
+            "never",
+            "retry-after",
+            "conditional"
+          ],
+          "description": "Client retry policy for this status."
+        },
+        "body_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Fields the body must contain for this status."
+        },
+        "forbidden_body_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Fields the body must never contain for this status."
+        },
+        "error_codes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Stable engine error codes permitted with this status."
+        },
+        "error_category": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "validation",
+            "authentication",
+            "authorization",
+            "not_found",
+            "conflict",
+            "limit",
+            "unavailable",
+            "upstream",
+            "internal",
+            null
+          ],
+          "description": "Stable error category, or null when the status is not an error."
+        },
+        "retryable": {
+          "type": "boolean",
+          "description": "Whether the condition is transient and retryable under the retry policy."
+        }
+      },
+      "description": "One status response contract."
+    }
+  },
+  "description": "Machine-readable policy for every HTTP status the engine may emit. Each assigned entry defines the response body, headers, cache and retry behavior, and stable error semantics."
+}

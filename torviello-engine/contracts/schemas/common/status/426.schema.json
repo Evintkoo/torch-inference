@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/426.schema.json",
+  "title": "426 Upgrade Required",
+  "description": "RFC 9110 \u00a715.5.22; class client_error; engine use: conditional.\nTrigger: The profile requires TLS 1.3 or a protocol upgrade before the request can proceed.\nContent: application/problem+json (ErrorEnvelope).\nRequired headers: Upgrade.\nCache-Control: no-store; retry: never.",
+  "x-status": 426,
+  "x-engine-use": "conditional",
+  "x-response-body": "problem+json",
+  "x-response-contract": {
+    "content_type": "application/problem+json",
+    "schema": "ErrorEnvelope",
+    "required_headers": [
+      "Upgrade"
+    ],
+    "optional_headers": [],
+    "cache_control": "no-store",
+    "retry": "never",
+    "body_fields": [
+      "type",
+      "title",
+      "status",
+      "code",
+      "category",
+      "detail",
+      "instance",
+      "request_id",
+      "retryable"
+    ],
+    "forbidden_body_fields": [
+      "data"
+    ],
+    "error_codes": [],
+    "error_category": null,
+    "retryable": false,
+    "trigger": "The profile requires TLS 1.3 or a protocol upgrade before the request can proceed."
+  },
+  "$ref": "../ErrorEnvelope.schema.json",
+  "x-required-headers": [
+    "Upgrade"
+  ],
+  "x-header-rules": {
+    "Upgrade": {
+      "grammar": "1#protocol",
+      "value": "websocket for 101; the required protocol token for 426.",
+      "notes": "Must name a protocol the server is willing to switch to."
+    }
+  },
+  "examples": [
+    {
+      "type": "https://torviello.local/problems/status-426",
+      "title": "Upgrade Required",
+      "status": 426,
+      "code": "framework_error",
+      "category": "internal",
+      "detail": "The profile requires TLS 1.3 or a protocol upgrade before the request can proceed.",
+      "instance": "urn:torviello:request:00000000-0000-4000-8000-000000000000",
+      "request_id": "00000000-0000-4000-8000-000000000000",
+      "retryable": false
+    }
+  ]
+}

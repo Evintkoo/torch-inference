@@ -2,6 +2,10 @@
 
 Human-readable index of the routes in [openapi.yaml](openapi.yaml). The OpenAPI document is authoritative for request and response shape; this table is the review and traceability view.
 
+**Contract shape:** the OpenAPI document includes the canonical routes plus every versioned alias listed below. Standalone JSON Schema artifacts for every component and structured operation are generated under `schemas/`.
+
+**Implementation status:** this table is the full product target. The current scaffold implements `/health`, `/health/live`, `/health/ready`, `/models`, `/models/{modelId}`, `/models/{modelId}/download`, `/models/{modelId}/status`, `/models/{modelId}/download/progress`, `/models/{modelId}/load`, `/models/{modelId}/unload`, and `/metrics`, recorded in [openapi.first-slice.yaml](openapi.first-slice.yaml). The remaining rows are specified but not implemented; no parity claim is made for them.
+
 ## Route inventory
 
 | Capability | Method | Canonical path | Auth | Requirement | Check |

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/models/DownloadProgressEvent.schema.json",
+  "title": "DownloadProgressEvent",
+  "type": "object",
+  "required": [
+    "event_type",
+    "task_id",
+    "model_id",
+    "state"
+  ],
+  "properties": {
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "model.download_progress",
+        "model.download_verified",
+        "model.download_failed",
+        "model.activated"
+      ]
+    },
+    "event_id": {
+      "type": "string"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "task_id": {
+      "type": "string"
+    },
+    "model_id": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "bytes_transferred": {
+      "type": "integer"
+    },
+    "bytes_total": {
+      "type": "integer"
+    },
+    "error_code": {
+      "type": "string"
+    }
+  }
+}

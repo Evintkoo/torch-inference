@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/common/status/404.schema.json",
+  "title": "404 Not Found",
+  "description": "RFC 9110 \u00a715.5.5; class client_error; engine use: used.\nTrigger: The path, model, acquisition job, or loaded slot does not exist.\nContent: application/problem+json (ErrorEnvelope).\nRequired headers: none.\nCache-Control: no-store; retry: never.",
+  "x-status": 404,
+  "x-engine-use": "used",
+  "x-response-body": "problem+json",
+  "x-response-contract": {
+    "content_type": "application/problem+json",
+    "schema": "ErrorEnvelope",
+    "required_headers": [],
+    "optional_headers": [],
+    "cache_control": "no-store",
+    "retry": "never",
+    "body_fields": [
+      "type",
+      "title",
+      "status",
+      "code",
+      "category",
+      "detail",
+      "instance",
+      "request_id",
+      "retryable"
+    ],
+    "forbidden_body_fields": [
+      "data"
+    ],
+    "error_codes": [
+      "not_found",
+      "model.not_found"
+    ],
+    "error_category": "not_found",
+    "retryable": false,
+    "trigger": "The path, model, acquisition job, or loaded slot does not exist."
+  },
+  "$ref": "../ErrorEnvelope.schema.json",
+  "examples": [
+    {
+      "type": "https://torviello.local/problems/not_found",
+      "title": "Not Found",
+      "status": 404,
+      "code": "not_found",
+      "category": "not_found",
+      "detail": "The path, model, acquisition job, or loaded slot does not exist.",
+      "instance": "urn:torviello:request:00000000-0000-4000-8000-000000000000",
+      "request_id": "00000000-0000-4000-8000-000000000000",
+      "retryable": false
+    }
+  ]
+}

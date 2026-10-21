@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/contracts/schemas/models/DownloadJob.schema.json",
+  "title": "DownloadJob",
+  "type": "object",
+  "required": [
+    "task_id",
+    "model_id",
+    "state"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string"
+    },
+    "model_id": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "downloading",
+        "verifying",
+        "extracting",
+        "ready",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "bytes_transferred": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "bytes_total": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "percent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "safe_message": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "finished_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}
