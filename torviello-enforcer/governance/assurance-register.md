@@ -17,6 +17,7 @@ This file is the discoverable index required by [GOV-05](rules/05-exceptions-con
 
 | RULES-ENDPOINT-USAGE-2026-10-21 | 2026-10-21 | GOV-08.08; ED-052, ED-055 | Rule text, HTTP response standard, contract tooling, and router integration suite | Working tree on `manual-review`; uncommitted engine changes; macOS; CPython 3.15; pytest 9.1.1; Rust stable | pass (targeted contract and runtime evidence) | Added GOV-08.08 requiring every HTTP operation to be exercised against the running provider. `status_tester.py` enforces OpenAPI status usage and reports 32 operations: 13 implemented, 19 reserved. `endpoint_usage` calls all 32 and checks fallback rejection, declared status and media type, catalog headers/cache/body fields/error codes, and the reserved `501` contract. The check caught and drove fixes for undeclared `409` responses and the operation-specific `503` representations. This is targeted evidence, not independent acceptance. | This register’s “Endpoint usage evidence” section | Tool-assisted review; not independent acceptance | Before contract release and after any operation, status, or router change |
 | RULES-COMMIT-2026-10-21 | 2026-10-21 | CHG-05.07; ED-042, PA-024 | Rule text, rule index, requirement traces, and agent instructions | Working tree on `manual-review`; macOS; CPython 3.15; pytest 9.1.1 | pass (structural addition only) | Added CHG-05.07 requiring completed, verified work to be committed before handoff so every coherent change has a revertible revision. Updated the rule, change-management index, ED-042 and PA-024 traces, root and enforcer AGENTS.md, and the change-control record. Clause IDs are unique (1,055 total). This is a structural rule change, not evidence that future work will follow it. | This register’s “Commit rollback evidence” section | Tool-assisted document reviewer | Before rules publication, after version-control policy changes, and at the next major release |
+| ENG-CLASSIFY-2026-10-22 | 2026-10-22 | GOV-08.08; GOV-09; ADR 0002; ENG-007, ENG-010 | Rust engine, TorchScript CPU runtime, `/classify` contract, and bundled fixture | Working tree on `manual-review` after 12d7373; macOS arm64; Rust stable; tch/torch-sys 0.22.0; Homebrew libtorch 2.9.1 with version-check bypass (expected 2.9.0); CPython 3.15; pytest 9.1.1 | fail (first vertical slice only; HPA-4 gates unmet) | Recorded ADR 0002 selecting TorchScript on CPU behind `Runtime`, added registry input geometry and labels, a 3.3 KB traced fixture, multipart `/classify`, image decode/resize/normalize, ordered top-k results, and declared 404/409 responses. `classify` tests pass 3/3, `endpoint_usage` passes with 32 operations (15 implemented, 17 reserved), contract generation reports 322 current artifacts, and the status tester reports 73 checks/0 failures. AC-ENG-13 correlation/log consistency and AC-ENG-16 SSE streaming, decoder fuzzing, and exact `classify.*` error codes remain unmet; no independent acceptance and no full CI-matrix run. | This register’s “TorchScript classification slice evidence” section | Tool-assisted review; not independent acceptance | Before claiming inference conformance, after runtime/contract changes, and after the next CI matrix run |
 | ENG-CONTRACTS-2026-10-21 | 2026-10-21 | GOV-08; ED-052; HPA-4 | `torviello-engine/contracts`; working tree on `manual-review`; uncommitted engine changes; macOS; CPython 3.15; pytest 9.1.1 | fail (contract surface complete; producer/consumer agreement unverified) | Generated 320 contract artifacts including JSON Schema 2020-12 schemas and an HTTP status policy from `openapi.yaml` and the event catalog, added AsyncAPI streams and a 27-feature traceability map, and added a deterministic check. OpenAPI validates, all schemas validate against the 2020-12 metaschema, all file and `$id` references resolve, and generated files are current. Event payload fields were derived from prose and have no producer/consumer approval; no runtime payload validation or AsyncAPI linting exists, and the router routes all 30 contract paths: 13 operations are implemented and 19 return RFC 9457 `501 not_implemented`. | This register’s “Contract schema set evidence” section | Tool-assisted review; not independent acceptance | Before any contract is treated as agreed, and after producer/consumer review |
 
 Disposition is `pass`, `fail`, `not applicable`, or `unresolved`. `Not applicable` requires the condition and rationale; `unresolved` requires an owner and resolution trigger. Keep clause-level results where a control is only partly applicable.
@@ -167,6 +168,7 @@ GOV-08.08 makes operation usage a normative contract obligation, not a documenta
 Commands and results:
 
 - `uv run python torviello-engine/contracts/tools/status_tester.py` — 73 checks, 64 statuses, 51 examples, 0 failures; 32 operations, 13 implemented, 19 reserved.
+- Superseded 2026-10-22 by `ENG-CLASSIFY-2026-10-22`: 15 implemented, 17 reserved.
 - `cargo test --locked --test endpoint_usage` — 1 passed; 32 operations exercised.
 - `cargo test --workspace --locked` — 49 passed.
 - `uv run pytest -q torviello-enforcer/test_status_tester.py` — 4 passed.
@@ -204,7 +206,7 @@ Commands and results:
 - `cargo build --locked --no-default-features` and `cargo build --locked --features full` — pass.
 - Router parity: all 30 OpenAPI paths are routed; 19 unimplemented operations return problem+json `501`.
 - `http-status.yaml` v2.0.0 records trigger, content type, schema, required headers, cache/retry semantics, body fields, and error codes for all 64 assigned statuses; the catalog validates against `http-status.catalog.schema.json` and the standards document carries a detailed 64-row contract.
-- `status_tester.py` checks catalog/schema structure, complete `100`-`599` coverage, OpenAPI status usage, per-status contract drift, header-rule coverage, and validates all embedded examples against their own schemas. It reports 32 operations: 13 implemented and 19 reserved. CI and `just verify` run it.
+- `status_tester.py` checks catalog/schema structure, complete `100`–`599` coverage, OpenAPI status usage, per-status contract drift, header-rule coverage, and validates all embedded examples against their own schemas. It reported 32 operations: 13 implemented and 19 reserved at this revision. Superseded 2026-10-22 by `ENG-CLASSIFY-2026-10-22`: 15 implemented, 17 reserved. CI and `just verify` run it.
 - `endpoint_usage.rs` is the runtime integration check behind that count: every OpenAPI operation is called, must not fall through to the router fallback, must return a status declared for that operation, must use the operation-declared media type, and must satisfy the catalog's required headers, cache policy, body fields, and allowed error codes. It caught and drove fixes for undeclared `409` responses on download status/progress and the operation-specific `503` representations (readiness JSON, metrics text, and problem details).
 - Config file is validated against `services/engine/api/contracts/schema.json` before use; auth cannot be disabled.
 - `413` oversized bodies, `415` missing JSON content type, configured `429` rate limits, and configured CORS origins are covered by contract tests.
@@ -222,3 +224,27 @@ Limitations:
 - The OpenAPI document covers 32 operations across 30 paths. Every path is routed; 13 operations are implemented and the other 19 return `501 not_implemented`. Contract/router path parity is tested; capability parity remains unmet.
 - Operation schemas duplicate shared error shapes per status; deduplication is not performed.
 - `api-contract-versioning.feature` mentions `/classify/batch` and `/v1/classify/batch`, which are absent from the inventory and contract. The discrepancy remains unresolved.
+
+
+## TorchScript classification slice evidence: ENG-CLASSIFY-2026-10-22
+
+ADR 0002 selects TorchScript on CPU behind the existing `Runtime` port. The default profile still builds without libtorch; `torchscript` is included in `full`.
+
+Commands and results:
+
+- `cargo check -p torviello-engine` — pass (default profile).
+- `SDKROOT=$(xcrun --show-sdk-path) LIBTORCH=/opt/homebrew LIBTORCH_BYPASS_VERSION_CHECK=1 cargo test -p torviello-engine --features torchscript --test classify` — 3 passed.
+- `SDKROOT=$(xcrun --show-sdk-path) LIBTORCH=/opt/homebrew LIBTORCH_BYPASS_VERSION_CHECK=1 cargo test -p torviello-engine --features torchscript --test endpoint_usage` — 1 passed; 32 operations exercised.
+- `cargo test --workspace --locked` — pass (`classify` compiles with 0 tests in the default profile).
+- `SDKROOT=$(xcrun --show-sdk-path) LIBTORCH=/opt/homebrew LIBTORCH_BYPASS_VERSION_CHECK=1 cargo test --workspace --locked --features torchscript` — pass.
+- `SDKROOT=$(xcrun --show-sdk-path) LIBTORCH=/opt/homebrew LIBTORCH_BYPASS_VERSION_CHECK=1 cargo clippy --workspace --all-targets --all-features -- -D warnings` — pass.
+- `cargo build --locked --no-default-features` and `cargo build --locked --features full` — pass.
+- `uv run pytest -q` — 240 passed.
+- `uv run ruff check .` — pass.
+- `uv run python torviello-engine/contracts/tools/contracts.py generate` — 322 artifacts.
+- `uv run python torviello-engine/contracts/tools/contracts.py check` — current.
+- `uv run python torviello-engine/contracts/tools/status_tester.py` — 73 checks, 64 statuses, 51 examples, 0 failures; 32 operations, 15 implemented, 17 reserved.
+
+Observed behavior: two PNG inputs submitted red then green returned indices 0 and 1 with leading labels `red` and `green`; `top_k=3` returned three predictions in descending score order. Unknown models return 404 `model.not_found`; empty batches, `top_k=0`, and malformed images return 400; non-multipart requests return 415.
+
+Limitations: the local libtorch version is 2.9.1 while tch 0.22 expects 2.9.0, so the probe bypasses the version check. The clean-download path, Ubuntu build, full workspace tests, request correlation/log consistency, streaming, fuzzing, and exact AC-ENG-16 error codes are not recorded here.

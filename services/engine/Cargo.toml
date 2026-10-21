@@ -12,7 +12,8 @@ workspace = true
 argon2 = "0.5"
 jsonwebtoken = "9"
 jsonschema = { version = "0.59", default-features = false }
-axum = "0.8"
+image = { version = "0.25", default-features = false, features = ["jpeg", "png"] }
+axum = { version = "0.8", features = ["multipart"] }
 prometheus = "0.14"
 opentelemetry = { version = "0.31", optional = true }
 opentelemetry_sdk = { version = "0.31", optional = true }
@@ -21,6 +22,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
 sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "sqlite", "migrate", "macros"], optional = true }
+tch = { version = "0.22", optional = true }
 thiserror = "2"
 time = { version = "0.3", features = ["formatting"] }
 tokio = { version = "1", features = ["full"] }
@@ -34,7 +36,8 @@ default = ["engine"]
 engine = []
 persistence = ["dep:sqlx"]
 telemetry = ["dep:opentelemetry", "dep:opentelemetry_sdk"]
-full = ["persistence", "telemetry"]
+torchscript = ["dep:tch", "tch/download-libtorch"]
+full = ["persistence", "telemetry", "torchscript"]
 cuda = []
 metal = []
 vulkan = []
@@ -83,3 +86,7 @@ path = "tests/contract/test_endpoint_usage.rs"
 [[test]]
 name = "hardware_fallback"
 path = "tests/integration/test_hardware_fallback.rs"
+
+[[test]]
+name = "classify"
+path = "tests/contract/test_classify.rs"

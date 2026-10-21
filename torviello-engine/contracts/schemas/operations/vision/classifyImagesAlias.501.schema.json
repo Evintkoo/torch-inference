@@ -1,6 +1,0 @@
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://torviello.local/contracts/schemas/operations/vision/classifyImagesAlias.501.schema.json",
-  "title": "classifyImagesAlias response 501",
-  "$ref": "../../common/ErrorEnvelope.schema.json"
-}

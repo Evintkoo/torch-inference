@@ -25,6 +25,7 @@ use crate::runtime::ModelManager;
 use crate::security::RateLimiter;
 
 pub mod catalog;
+pub mod classify;
 pub mod health;
 pub mod metrics;
 pub mod models;
@@ -95,7 +96,7 @@ pub fn router(config: &Config) -> Router<AppState> {
         .route("/tts", post(not_implemented))
         .route("/tts/stream", post(not_implemented))
         .route("/stt", post(not_implemented))
-        .route("/classify", post(not_implemented))
+        .route("/classify", post(classify::classify))
         .route("/detect", post(not_implemented))
         .route("/v1/chat/completions", post(not_implemented))
         .route(
@@ -110,7 +111,7 @@ pub fn router(config: &Config) -> Router<AppState> {
         .route("/api/v1/tts", post(not_implemented))
         .route("/api/v1/tts/stream", post(not_implemented))
         .route("/api/v1/stt", post(not_implemented))
-        .route("/api/v1/classify", post(not_implemented))
+        .route("/api/v1/classify", post(classify::classify))
         .route("/api/v1/detect", post(not_implemented))
         .fallback(not_found)
         .method_not_allowed_fallback(method_not_allowed)

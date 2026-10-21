@@ -26,7 +26,7 @@ def test_status_contract_passes() -> None:
     assert report.ok, [failure.message for failure in report.failures]
     assert len(report.statuses) == 64
     assert report.examples_checked == 51
-    assert report.operations == {"total": 32, "implemented": 13, "reserved": 19}
+    assert report.operations == {"total": 32, "implemented": 15, "reserved": 17}
 
 
 def test_human_report_is_readable(capsys) -> None:
@@ -37,7 +37,7 @@ def test_human_report_is_readable(capsys) -> None:
     assert "PASS" in output
     assert "0 failures" in output
     assert "64 statuses" in output
-    assert "Operations: 32 (13 implemented, 19 reserved)" in output
+    assert "Operations: 32 (15 implemented, 17 reserved)" in output
     assert "FAIL" not in output
 
 
@@ -48,7 +48,7 @@ def test_json_report_is_machine_readable(capsys) -> None:
     assert payload["ok"] is True
     assert payload["failures"] == []
     assert len(payload["statuses"]) == 64
-    assert payload["operations"] == {"total": 32, "implemented": 13, "reserved": 19}
+    assert payload["operations"] == {"total": 32, "implemented": 15, "reserved": 17}
 
 
 def test_drift_is_reported_with_context(tmp_path, monkeypatch) -> None:

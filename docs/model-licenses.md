@@ -5,6 +5,7 @@ Copyright (c) 2026 Torviello.
 | Asset | Type | License | Source | Commercial use |
 |---|---|---|---|---|
 | engine-demo-classifier | model | Apache-2.0 | internal training run | allowed with commercial license |
+| engine-demo-torchscript | model | Apache-2.0 | synthetic TorchScript fixture | allowed with commercial license |
 | evaluation-fixtures | dataset | CC0-1.0 | synthetic | allowed |
 | console-font | font | SIL OFL 1.1 | vendor | allowed |
 | launch-stills | media | proprietary | internal | allowed with commercial license |

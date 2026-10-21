@@ -15,9 +15,12 @@ configuration validation, RFC 9457 errors, health/readiness, metrics, and
 version endpoints. It implements a validated model catalog, confined local
 acquisition with digest verification, acquisition status and SSE progress, and
 a model load lifecycle with single-flight initialization and reference-aware
-unload. It does not yet implement remote Hugging Face acquisition, managed-asset
-deletion, inference routes, SQLite persistence, OpenTelemetry export, WebSocket
-transport, or the 22-path canonical contract (23 canonical operations, 32 with aliases). The React console is a shell. Treat
+unload. `POST /classify` executes a TorchScript image classifier on CPU when the
+`torchscript` feature is enabled; the default profile keeps libtorch optional.
+It does not yet implement remote Hugging Face acquisition, managed-asset
+deletion, the remaining inference routes, SQLite persistence, OpenTelemetry
+export, WebSocket transport, or the 22-path canonical contract (23 canonical
+operations, 32 with aliases). The React console is a shell. Treat
 unimplemented boxes as planned, not as conformance evidence.
 
 ## System context

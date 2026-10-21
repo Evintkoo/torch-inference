@@ -37,3 +37,20 @@ source_url = "https://models.torviello.local/engine-demo-tensor-1.0.0.json"
 license = "Apache-2.0"
 description = "Reference CPU adapter fixture for the load lifecycle; not a PyTorch artifact."
 backend_requirements = ["cpu"]
+
+[[models]]
+id = "engine-demo-torchscript"
+display_name = "Engine demo TorchScript classifier"
+version = "1.0.0"
+task = "classification"
+format = "torchscript"
+size_bytes = 3305
+content_hash = "sha256:90deda385842988a8026a768b1f7aa68e544cffd01f5fb036b946aa1f5f693b8"
+source_url = "https://models.torviello.local/engine-demo-torchscript-1.0.0.pt"
+license = "Apache-2.0"
+description = "Bundled TorchScript image classifier used by the first CPU inference slice."
+backend_requirements = ["cpu"]
+labels = ["red", "green", "blue", "bright", "dark"]
+input_channels = 3
+input_height = 32
+input_width = 32

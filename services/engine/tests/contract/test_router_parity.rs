@@ -109,7 +109,7 @@ async fn unimplemented_routes_return_problem_details() {
         .oneshot(
             Request::builder()
                 .method(Method::POST)
-                .uri("/classify")
+                .uri("/detect")
                 .header("content-type", "application/json")
                 .body(Body::from("{}"))
                 .expect("request"),

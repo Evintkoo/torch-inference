@@ -121,9 +121,11 @@ async fn liveness_matches_contract() {
 async fn catalog_lists_configured_models() {
     let (status, body) = get("/models").await;
     assert_eq!(status, 200);
-    assert_eq!(body["data"].as_array().expect("data array").len(), 3);
+    assert_eq!(body["data"].as_array().expect("data array").len(), 4);
     assert_eq!(body["data"][0]["model_id"], "engine-demo-classifier");
     assert_eq!(body["data"][0]["locally_available"], false);
+    assert_eq!(body["data"][3]["model_id"], "engine-demo-torchscript");
+    assert_eq!(body["data"][3]["locally_available"], true);
     assert_eq!(body["meta"]["warnings"][0], "catalog_only");
 }
 

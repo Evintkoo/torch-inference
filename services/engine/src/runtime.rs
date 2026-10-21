@@ -10,10 +10,15 @@ use serde::{Deserialize, Serialize};
 use crate::asset::{AssetStore, digest_file};
 use crate::config::Config;
 use crate::error::{AppError, AppResult};
-use crate::model::ModelRegistry;
+use crate::model::{ModelRecord, ModelRegistry};
+
+#[cfg(feature = "torchscript")]
+mod torchscript;
 
 /// Reference adapter format. It is a small linear classifier, not `TorchScript`.
 pub const REFERENCE_FORMAT: &str = "torviello-tensor-v1";
+/// `TorchScript` format executed through libtorch on CPU.
+pub const TORCHSCRIPT_FORMAT: &str = "torchscript";
 const MAX_INPUT_DIM: usize = 4_096;
 const MAX_CLASSES: usize = 1_024;
 const DRAIN_POLL_MS: u64 = 10;
@@ -60,6 +65,25 @@ pub struct ModelSlot {
     pub error_code: Option<&'static str>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ImageSpec {
+    pub channels: u32,
+    pub height: u32,
+    pub width: u32,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct TensorInput<'a> {
+    pub data: &'a [f32],
+    pub shape: &'a [i64],
+}
+
+#[derive(Debug, Clone)]
+pub struct TensorOutput {
+    pub data: Vec<f32>,
+    pub shape: Vec<i64>,
+}
+
 pub trait Runtime: Send + Sync {
     fn backend(&self) -> &'static str {
         "cpu"
@@ -71,7 +95,13 @@ pub trait Runtime: Send + Sync {
 
     fn format(&self) -> &'static str;
 
-    fn infer(&self, input: &[f32]) -> AppResult<Vec<f32>>;
+    fn labels(&self) -> &[String];
+
+    fn image_spec(&self) -> Option<ImageSpec> {
+        None
+    }
+
+    fn infer(&self, input: TensorInput<'_>) -> AppResult<TensorOutput>;
 }
 
 #[derive(Debug, Deserialize)]
@@ -130,14 +160,22 @@ impl Runtime for LinearClassifier {
         REFERENCE_FORMAT
     }
 
-    fn infer(&self, input: &[f32]) -> AppResult<Vec<f32>> {
-        if input.len() != self.input_dim || input.iter().any(|value| !value.is_finite()) {
+    fn labels(&self) -> &[String] {
+        &self.classes
+    }
+
+    fn infer(&self, input: TensorInput<'_>) -> AppResult<TensorOutput> {
+        let expected: i64 = input.shape.iter().product();
+        if expected != i64::try_from(input.data.len()).map_err(|_| AppError::InvalidInput)?
+            || input.data.len() != self.input_dim
+            || input.data.iter().any(|value| !value.is_finite())
+        {
             return Err(AppError::InvalidInput);
         }
         let mut logits = Vec::with_capacity(self.classes.len());
         for (row, bias) in self.weights.iter().zip(&self.bias) {
             let mut score = *bias;
-            for (weight, value) in row.iter().zip(input) {
+            for (weight, value) in row.iter().zip(input.data) {
                 score += weight * value;
             }
             if !score.is_finite() {
@@ -145,7 +183,14 @@ impl Runtime for LinearClassifier {
             }
             logits.push(score);
         }
-        Ok(softmax(&logits))
+        let probabilities = softmax(&logits);
+        Ok(TensorOutput {
+            shape: vec![
+                1,
+                i64::try_from(probabilities.len()).map_err(|_| AppError::Internal)?,
+            ],
+            data: probabilities,
+        })
     }
 }
 
@@ -162,11 +207,30 @@ fn softmax(logits: &[f32]) -> Vec<f32> {
         .collect()
 }
 
-fn load_runtime(format: &str, path: &Path, max_bytes: u64) -> AppResult<Arc<dyn Runtime>> {
-    match format {
+fn load_runtime(record: &ModelRecord, path: &Path, max_bytes: u64) -> AppResult<Arc<dyn Runtime>> {
+    match record.format.as_str() {
         REFERENCE_FORMAT => Ok(Arc::new(LinearClassifier::load(path, max_bytes)?)),
+        TORCHSCRIPT_FORMAT => load_torchscript(record, path, max_bytes),
         _ => Err(AppError::BackendUnavailable),
     }
+}
+
+#[cfg(feature = "torchscript")]
+fn load_torchscript(
+    record: &ModelRecord,
+    path: &Path,
+    max_bytes: u64,
+) -> AppResult<Arc<dyn Runtime>> {
+    torchscript::load(record, path, max_bytes)
+}
+
+#[cfg(not(feature = "torchscript"))]
+fn load_torchscript(
+    _record: &ModelRecord,
+    _path: &Path,
+    _max_bytes: u64,
+) -> AppResult<Arc<dyn Runtime>> {
+    Err(AppError::BackendUnavailable)
 }
 
 struct SlotInner {
@@ -248,7 +312,17 @@ impl ModelGuard {
         self.slot.snapshot()
     }
 
-    pub fn infer(&self, input: &[f32]) -> AppResult<Vec<f32>> {
+    #[must_use]
+    pub fn labels(&self) -> &[String] {
+        self.runtime.labels()
+    }
+
+    #[must_use]
+    pub fn image_spec(&self) -> Option<ImageSpec> {
+        self.runtime.image_spec()
+    }
+
+    pub fn infer(&self, input: TensorInput<'_>) -> AppResult<TensorOutput> {
         self.runtime.infer(input)
     }
 }
@@ -341,14 +415,13 @@ impl ModelManager {
             inner.state = LoadState::Loading;
             inner.error_code = None;
         }
-        let format = record.format;
         let max_bytes = self.assets.max_bytes();
         let loaded = tokio::task::spawn_blocking(move || -> AppResult<Arc<dyn Runtime>> {
             let (digest, _) = digest_file(&path)?;
             if digest != manifest.digest {
                 return Err(AppError::DigestMismatch);
             }
-            load_runtime(&format, &path, max_bytes)
+            load_runtime(&record, &path, max_bytes)
         })
         .await
         .map_err(|_| AppError::Internal)?;
@@ -422,21 +495,4 @@ fn now_rfc3339() -> String {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::{LinearClassifier, softmax};
-    use std::path::Path;
-
-    #[test]
-    fn softmax_is_normalized_and_stable() {
-        let values = softmax(&[1.0, 1.0]);
-        assert!((values[0] - 0.5).abs() < f32::EPSILON);
-        assert!((values.iter().sum::<f32>() - 1.0).abs() < 1e-6);
-    }
-
-    #[test]
-    fn malformed_model_is_rejected() {
-        let path = std::env::temp_dir().join(format!("torviello-model-{}", uuid::Uuid::new_v4()));
-        std::fs::write(&path, b"{\"kind\":\"other\"}").expect("write");
-        assert!(LinearClassifier::load(Path::new(&path), 1_024).is_err());
-    }
-}
+mod tests;

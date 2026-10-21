@@ -4,7 +4,7 @@ Human-readable index of the routes in [openapi.yaml](openapi.yaml). The OpenAPI 
 
 **Contract shape:** the OpenAPI document includes the canonical routes plus every versioned alias listed below. Standalone JSON Schema artifacts for every component and structured operation are generated under `schemas/`.
 
-**Implementation status:** this table is the full product target. The current scaffold implements `/health`, `/health/live`, `/health/ready`, `/models`, `/models/{modelId}`, `/models/{modelId}/download`, `/models/{modelId}/status`, `/models/{modelId}/download/progress`, `/models/{modelId}/load`, `/models/{modelId}/unload`, and `/metrics`, recorded in [openapi.first-slice.yaml](openapi.first-slice.yaml). The remaining rows are specified but not implemented; no parity claim is made for them.
+**Implementation status:** this table is the full product target. The current scaffold implements `/health`, `/health/live`, `/health/ready`, `/models`, `/models/{modelId}`, `/models/{modelId}/download`, `/models/{modelId}/status`, `/models/{modelId}/download/progress`, `/models/{modelId}/load`, `/models/{modelId}/unload`, `/metrics`, and `/classify` (TorchScript CPU behind the `torchscript` feature), recorded in [openapi.first-slice.yaml](openapi.first-slice.yaml) and [openapi.yaml](openapi.yaml). The remaining rows are specified but not implemented; no parity claim is made for them. Implementation is not acceptance: the classify streaming, fuzzing, and exact `classify.*` error-code requirements in AC-ENG-16 remain unmet.
 
 ## Route inventory
 

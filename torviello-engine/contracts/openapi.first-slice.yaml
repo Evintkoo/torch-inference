@@ -1,7 +1,7 @@
 openapi: 3.2.1
 info:
   title: Torviello Engine API - implemented first slice
-  version: 1.0.0
+  version: 1.1.0
   summary: 'Implemented subset: health, catalog, model lifecycle, and metrics.'
   description: This file records the eleven routes implemented by the current scaffold.
     It is a subset of `openapi.yaml`, which remains the full product target. Routes
@@ -268,6 +268,50 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+  /classify:
+    post:
+      tags:
+      - Vision
+      operationId: classifyImages
+      summary: Classify one or more images with the loaded TorchScript model.
+      description: Preserves input order. Requires the `torchscript` build feature
+        and a ready CPU model. Applies top-k after per-image softmax.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ClassifyRequest'
+      responses:
+        '200':
+          description: Classification results in input order.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Envelope'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Classification'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/TooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/Unavailable'
   /metrics:
     get:
       tags:
@@ -332,6 +376,24 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ErrorEnvelope'
+    TooLarge:
+      description: Payload, item count, or dimension exceeds a limit.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    UnsupportedMediaType:
+      description: Payload encoding is not supported.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    InternalError:
+      description: Unhandled internal failure.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
     NotFound:
       description: Model or resource does not exist.
       content:
@@ -378,6 +440,49 @@ components:
           type: string
         request_id:
           type: string
+    ClassifyRequest:
+      type: object
+      required:
+      - images
+      - model_id
+      properties:
+        images:
+          type: array
+          minItems: 1
+          maxItems: 128
+          items:
+            type: string
+            format: binary
+        model_id:
+          type: string
+        top_k:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 5
+    Classification:
+      type: object
+      required:
+      - index
+      - predictions
+      properties:
+        index:
+          type: integer
+          minimum: 0
+        predictions:
+          type: array
+          items:
+            type: object
+            required:
+            - label
+            - score
+            properties:
+              label:
+                type: string
+              score:
+                type: number
+                minimum: 0
+                maximum: 1
     ErrorEnvelope:
       type: object
       description: 'RFC 9457 problem details with stable engine extensions. The response

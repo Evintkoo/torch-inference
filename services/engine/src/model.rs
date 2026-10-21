@@ -29,6 +29,14 @@ pub struct ModelRecord {
     pub license: Option<String>,
     #[serde(default)]
     pub backend_requirements: Vec<String>,
+    #[serde(default)]
+    pub labels: Vec<String>,
+    #[serde(default = "default_input_channels")]
+    pub input_channels: u32,
+    #[serde(default = "default_input_height")]
+    pub input_height: u32,
+    #[serde(default = "default_input_width")]
+    pub input_width: u32,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -129,6 +137,20 @@ impl ModelRegistry {
             || record.format.is_empty()
             || !valid_sha256(&record.content_hash)
             || !record.source_url.starts_with("https://")
+            || !(1..=4).contains(&record.input_channels)
+            || !(1..=4096).contains(&record.input_height)
+            || !(1..=4096).contains(&record.input_width)
+            || record.labels.len() > 1024
+            || record.labels.iter().any(String::is_empty)
+        {
+            return Err(AppError::InvalidInput);
+        }
+        if record
+            .labels
+            .iter()
+            .collect::<std::collections::BTreeSet<_>>()
+            .len()
+            != record.labels.len()
         {
             return Err(AppError::InvalidInput);
         }
@@ -142,6 +164,18 @@ fn default_task() -> String {
 
 fn default_format() -> String {
     "torchscript".to_owned()
+}
+
+fn default_input_channels() -> u32 {
+    3
+}
+
+fn default_input_height() -> u32 {
+    32
+}
+
+fn default_input_width() -> u32 {
+    32
 }
 
 pub fn validate_model_id(id: &str) -> AppResult<()> {

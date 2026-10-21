@@ -1,7 +1,7 @@
 openapi: 3.2.1
 info:
   title: Torviello Engine API
-  version: 1.0.0
+  version: 1.1.0
   summary: Local inference contract for the Torviello engine.
   description: |
     Contract for the local engine surface: catalog, model acquisition, text-to-speech,
@@ -383,7 +383,6 @@ paths:
           multipart/form-data:
             schema: { $ref: "#/components/schemas/ClassifyRequest" }
       responses:
-        "501": { $ref: "#/components/responses/NotImplemented" }
         "500": { $ref: "#/components/responses/InternalError" }
         "200":
           description: Classification results in input order.
@@ -399,6 +398,8 @@ paths:
                         items: { $ref: "#/components/schemas/Classification" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
         "413": { $ref: "#/components/responses/TooLarge" }
         "415": { $ref: "#/components/responses/UnsupportedMediaType" }
         "503": { $ref: "#/components/responses/Unavailable" }
@@ -630,11 +631,12 @@ paths:
       x-alias-of: /classify
       requestBody: { $ref: "#/paths/~1classify/post/requestBody" }
       responses:
-        "501": { $ref: "#/components/responses/NotImplemented" }
         "500": { $ref: "#/components/responses/InternalError" }
         "200": { $ref: "#/paths/~1classify/post/responses/200" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
         "413": { $ref: "#/components/responses/TooLarge" }
         "415": { $ref: "#/components/responses/UnsupportedMediaType" }
         "503": { $ref: "#/components/responses/Unavailable" }

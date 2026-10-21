@@ -30,7 +30,7 @@ These four decisions block the first vertical slice: load TOML configuration, va
 - **Recommendation:** start with one format behind a `ModelLoader` port, selected by the model descriptor, so additional formats do not change the domain or HTTP contract.
 - **Criteria:** PyTorch compatibility, CPU portability, offline installation, model-asset size, deterministic errors, available Rust bindings, and licensing.
 - **Unblocks:** RP-010–RP-014, PA-010–PA-012.
-- **Status:** open. Owner: engine technical owner.
+- **Status:** decided for the first slice by ADR 0002 (TorchScript via the `Runtime` port). Owner: engine technical owner.
 
 ### OD-002 — First execution backend
 
@@ -39,7 +39,7 @@ These four decisions block the first vertical slice: load TOML configuration, va
 - **Recommendation:** CPU is the mandatory baseline (RP-010). Select it explicitly, report it in capability output, and never fall back silently unless configuration allows it (RP-012).
 - **Criteria:** supported OS/architecture matrix, dependency footprint, observable selection, and failure behavior.
 - **Unblocks:** RP-010–RP-015, RP-020.
-- **Status:** partially constrained by RP-010; accelerator scope remains open. Owner: runtime owner.
+- **Status:** CPU-only baseline decided for the first slice by ADR 0002; accelerator scope remains open. Owner: runtime owner.
 
 ### OD-003 — Local and hosted authentication boundary
 
