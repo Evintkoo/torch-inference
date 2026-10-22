@@ -37,3 +37,13 @@ Model asset settings:
 
 The scaffold loads configuration at startup. Live reload is supervisor-driven;
 the SIGHUP hook is present but does not reload a running engine yet.
+
+## Logging
+
+The engine writes one JSON object per line to stdout and leaves collection to
+the container runtime or systemd journal. `RUST_LOG` sets the filter and
+defaults to `info`; use a crate or target filter such as
+`torviello_engine=debug` for diagnosis. Records carry `timestamp`, `level`,
+`target`, `fields`, and a `correlation_id` for the startup event. Do not place
+tokens, passwords, or key material in log fields; secrets are injected through
+the environment and are never written to the log stream.

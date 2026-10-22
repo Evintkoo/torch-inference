@@ -30,6 +30,7 @@ tokio-stream = "0.1"
 toml = "1"
 tracing = "0.1"
 uuid = { version = "1", features = ["v4", "serde"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 
 [features]
 default = ["engine"]
@@ -90,3 +91,7 @@ path = "tests/integration/test_hardware_fallback.rs"
 [[test]]
 name = "classify"
 path = "tests/contract/test_classify.rs"
+
+[[test]]
+name = "logging"
+path = "tests/integration/test_logging.rs"

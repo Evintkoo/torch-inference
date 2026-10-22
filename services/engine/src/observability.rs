@@ -3,6 +3,7 @@ use std::sync::OnceLock;
 
 use prometheus::{Encoder, TextEncoder};
 use tracing::info;
+use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 
 pub const RETENTION_MAX_AGE_DAYS: u64 = 7;
@@ -19,6 +20,25 @@ pub fn correlation_id() -> String {
 #[must_use]
 pub fn trace_context() -> impl opentelemetry::propagation::TextMapPropagator {
     opentelemetry_sdk::propagation::TraceContextPropagator::new()
+}
+
+/// Install the process-wide JSON log subscriber.
+///
+/// Level filtering comes from `RUST_LOG`; the default is `info`. Logs are
+/// written to stdout as one JSON object per line so a container runtime or
+/// service manager can collect them without parsing prose.
+pub fn init_logging() -> Result<(), Box<dyn std::error::Error>> {
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
+    let subscriber = tracing_subscriber::registry().with(filter).with(
+        tracing_subscriber::fmt::layer()
+            .json()
+            .with_ansi(false)
+            .with_current_span(true)
+            .with_span_list(false)
+            .with_writer(std::io::stdout),
+    );
+    subscriber.try_init()?;
+    Ok(())
 }
 
 pub fn record_startup(version: &str) {

@@ -6,10 +6,11 @@ use std::time::Duration;
 use tokio::net::TcpListener;
 use torviello_engine::api::{build_state, router};
 use torviello_engine::config::Config;
-use torviello_engine::observability::record_startup;
+use torviello_engine::observability::{init_logging, record_startup};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    init_logging()?;
     let config = Config::load()?;
     config.validate()?;
     let bind_address = config.bind_address();
