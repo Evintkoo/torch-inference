@@ -19,10 +19,25 @@ pub const COREML_ENABLED: bool = true;
 pub const DIRECTML_ENABLED: bool = true;
 
 #[must_use]
-#[allow(unused_mut, clippy::vec_init_then_push)]
 pub fn compiled_backends() -> Vec<&'static str> {
-    let mut backends = Vec::with_capacity(7);
-    backends.push("cpu");
+    #[cfg(any(
+        feature = "cuda",
+        feature = "metal",
+        feature = "vulkan",
+        feature = "rocm",
+        feature = "coreml",
+        feature = "directml"
+    ))]
+    let mut backends = vec!["cpu"];
+    #[cfg(not(any(
+        feature = "cuda",
+        feature = "metal",
+        feature = "vulkan",
+        feature = "rocm",
+        feature = "coreml",
+        feature = "directml"
+    )))]
+    let backends = vec!["cpu"];
     #[cfg(feature = "cuda")]
     backends.push("cuda");
     #[cfg(feature = "metal")]

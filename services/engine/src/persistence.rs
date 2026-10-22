@@ -21,12 +21,3 @@ pub async fn migrate(pool: &SqlitePool) -> AppResult<()> {
         .await
         .map_err(|_| AppError::Internal)
 }
-
-pub async fn transaction_example(pool: &SqlitePool) -> AppResult<()> {
-    let mut transaction = pool.begin().await.map_err(|_| AppError::Unavailable)?;
-    sqlx::query("UPDATE model_registry SET updated_at = CURRENT_TIMESTAMP")
-        .execute(&mut *transaction)
-        .await
-        .map_err(|_| AppError::Internal)?;
-    transaction.commit().await.map_err(|_| AppError::Internal)
-}
