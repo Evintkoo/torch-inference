@@ -23,6 +23,11 @@ export, WebSocket transport, or the 22-path canonical contract (23 canonical
 operations, 32 with aliases). The React console is a shell. Treat
 unimplemented boxes as planned, not as conformance evidence.
 
+The maintained machine-readable blueprint is
+[canvas/data.json](../canvas/data.json). It records runtime services, module
+boundaries, data stores, external dependencies, and delivery paths, and marks
+planned nodes so they are not mistaken for implemented behavior.
+
 ## System context
 
 ```mermaid

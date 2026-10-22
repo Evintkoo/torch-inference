@@ -1,29 +1,504 @@
 {
   "version": 1,
-  "title": "Torviello Engine runtime",
+  "title": "Torviello system blueprint",
+  "description": "Runtime services, module boundaries, data stores, external dependencies, and delivery paths. Planned nodes are scaffold targets, not conformance evidence.",
   "branches": [
     {
-      "id": "request-path",
-      "label": "Authenticated inference path",
+      "id": "clients-and-entry",
+      "label": "Clients and entry points",
       "nodes": [
-        { "id": "request", "label": "Inference request", "path": "services/engine/src/api.rs" },
-        { "id": "auth", "label": "Authentication", "path": "services/engine/src/auth.rs" },
-        { "id": "engine", "label": "Local engine", "path": "services/engine/src/domain.rs" }
+        {
+          "id": "operator_web",
+          "label": "Operator console",
+          "kind": "client",
+          "status": "implemented",
+          "path": "web/src"
+        },
+        {
+          "id": "landing",
+          "label": "Marketing site",
+          "kind": "client",
+          "status": "planned",
+          "path": "torviello-landing"
+        },
+        {
+          "id": "api_client",
+          "label": "API client",
+          "kind": "external",
+          "status": "implemented"
+        },
+        {
+          "id": "tls_proxy",
+          "label": "TLS 1.3 reverse proxy",
+          "kind": "deployment",
+          "status": "implemented",
+          "path": "docs/DEPLOYMENT.md"
+        },
+        {
+          "id": "docs_site",
+          "label": "Documentation site",
+          "kind": "docs",
+          "status": "implemented",
+          "path": "torviello-docs"
+        }
       ]
     },
     {
-      "id": "operations-path",
-      "label": "Operations path",
+      "id": "engine-runtime",
+      "label": "Engine runtime",
       "nodes": [
-        { "id": "metrics", "label": "Metrics and traces", "path": "services/engine/src/observability.rs" },
-        { "id": "store", "label": "Persistence", "path": "services/engine/src/persistence.rs" }
+        {
+          "id": "api_router",
+          "label": "HTTP router and limits",
+          "kind": "service",
+          "status": "implemented",
+          "path": "services/engine/src/api.rs"
+        },
+        {
+          "id": "auth",
+          "label": "JWT authentication and RBAC",
+          "kind": "module",
+          "status": "implemented",
+          "path": "services/engine/src/auth.rs"
+        },
+        {
+          "id": "catalog",
+          "label": "Catalog endpoints",
+          "kind": "module",
+          "status": "implemented",
+          "path": "services/engine/src/api/catalog.rs"
+        },
+        {
+          "id": "models_api",
+          "label": "Model lifecycle endpoints",
+          "kind": "module",
+          "status": "implemented",
+          "path": "services/engine/src/api/models.rs"
+        },
+        {
+          "id": "classify_api",
+          "label": "Classification endpoint",
+          "kind": "module",
+          "status": "implemented",
+          "path": "services/engine/src/api/classify.rs"
+        },
+        {
+          "id": "domain",
+          "label": "Inference policy",
+          "kind": "module",
+          "status": "implemented",
+          "path": "services/engine/src/domain.rs"
+        },
+        {
+          "id": "model_manager",
+          "label": "Model manager and single-flight load",
+          "kind": "module",
+          "status": "implemented",
+          "path": "services/engine/src/runtime.rs"
+        },
+        {
+          "id": "acquisition",
+          "label": "Confined model acquisition",
+          "kind": "module",
+          "status": "implemented",
+          "path": "services/engine/src/acquisition.rs"
+        },
+        {
+          "id": "asset_store",
+          "label": "Asset confinement and integrity",
+          "kind": "module",
+          "status": "implemented",
+          "path": "services/engine/src/asset.rs"
+        },
+        {
+          "id": "model_registry",
+          "label": "Catalog parsing",
+          "kind": "module",
+          "status": "implemented",
+          "path": "services/engine/src/model.rs"
+        },
+        {
+          "id": "error_envelope",
+          "label": "Problem details errors",
+          "kind": "module",
+          "status": "implemented",
+          "path": "services/engine/src/error.rs"
+        },
+        {
+          "id": "config",
+          "label": "TOML and environment configuration",
+          "kind": "module",
+          "status": "implemented",
+          "path": "services/engine/src/config.rs"
+        }
+      ]
+    },
+    {
+      "id": "operations",
+      "label": "Operations",
+      "nodes": [
+        {
+          "id": "health",
+          "label": "Liveness and readiness",
+          "kind": "module",
+          "status": "implemented",
+          "path": "services/engine/src/api/health.rs"
+        },
+        {
+          "id": "metrics_endpoint",
+          "label": "Prometheus exposition",
+          "kind": "module",
+          "status": "implemented",
+          "path": "services/engine/src/api/metrics.rs"
+        },
+        {
+          "id": "logging",
+          "label": "JSON logs and correlation IDs",
+          "kind": "service",
+          "status": "implemented",
+          "path": "services/engine/src/observability.rs"
+        },
+        {
+          "id": "prometheus",
+          "label": "Prometheus server",
+          "kind": "external",
+          "status": "implemented",
+          "path": "monitoring/prometheus/prometheus.yml"
+        },
+        {
+          "id": "alerts",
+          "label": "Alert rules",
+          "kind": "deployment",
+          "status": "implemented",
+          "path": "monitoring/prometheus/alerts.yml"
+        },
+        {
+          "id": "otel",
+          "label": "OpenTelemetry collector",
+          "kind": "external",
+          "status": "planned"
+        },
+        {
+          "id": "dashboards",
+          "label": "Grafana dashboards",
+          "kind": "deployment",
+          "status": "planned",
+          "path": "monitoring/dashboards"
+        }
+      ]
+    },
+    {
+      "id": "data-stores",
+      "label": "Data stores",
+      "nodes": [
+        {
+          "id": "registry_file",
+          "label": "Model registry TOML",
+          "kind": "datastore",
+          "status": "implemented",
+          "path": "config/model-registry.toml"
+        },
+        {
+          "id": "model_assets",
+          "label": "Model asset root",
+          "kind": "datastore",
+          "status": "implemented",
+          "path": "models"
+        },
+        {
+          "id": "sqlite",
+          "label": "SQLite metadata",
+          "kind": "datastore",
+          "status": "planned",
+          "path": "services/engine/src/persistence.rs"
+        },
+        {
+          "id": "migrations",
+          "label": "Forward-only migrations",
+          "kind": "datastore",
+          "status": "implemented",
+          "path": "services/engine/migrations"
+        }
+      ]
+    },
+    {
+      "id": "delivery",
+      "label": "Build and deployment",
+      "nodes": [
+        {
+          "id": "packaging_driver",
+          "label": "Packaging driver",
+          "kind": "pipeline",
+          "status": "implemented",
+          "path": "packaging/torviello_package.py"
+        },
+        {
+          "id": "engine_bundle",
+          "label": "Engine-only bundle",
+          "kind": "deployment",
+          "status": "implemented",
+          "path": "packaging/packaging.toml"
+        },
+        {
+          "id": "full_bundle",
+          "label": "Full bundle",
+          "kind": "deployment",
+          "status": "planned",
+          "path": "packaging/packaging.toml"
+        },
+        {
+          "id": "systemd",
+          "label": "systemd unit",
+          "kind": "deployment",
+          "status": "implemented",
+          "path": "packaging/systemd/torviello-engine.service"
+        },
+        {
+          "id": "container",
+          "label": "Non-root container",
+          "kind": "deployment",
+          "status": "implemented",
+          "path": "containers/Dockerfile"
+        },
+        {
+          "id": "ci_pipeline",
+          "label": "CI and release workflows",
+          "kind": "pipeline",
+          "status": "implemented",
+          "path": ".github/workflows"
+        }
+      ]
+    },
+    {
+      "id": "cloud-and-external",
+      "label": "Cloud and external dependencies",
+      "nodes": [
+        {
+          "id": "cloud_accounts",
+          "label": "Accounts and licensing service",
+          "kind": "service",
+          "status": "planned",
+          "path": "torviello-cloud"
+        },
+        {
+          "id": "platform_auth",
+          "label": "Hosted login and entitlement check",
+          "kind": "external",
+          "status": "planned"
+        },
+        {
+          "id": "huggingface",
+          "label": "Hugging Face model host",
+          "kind": "external",
+          "status": "implemented"
+        },
+        {
+          "id": "secret_manager",
+          "label": "Secret manager",
+          "kind": "external",
+          "status": "implemented"
+        }
+      ]
+    },
+    {
+      "id": "repo-areas",
+      "label": "Repository areas",
+      "nodes": [
+        {
+          "id": "benchmarks",
+          "label": "Benchmarks and evaluations",
+          "kind": "pipeline",
+          "status": "implemented",
+          "path": "benchmarks"
+        },
+        {
+          "id": "enforcer",
+          "label": "Requirement controls",
+          "kind": "docs",
+          "status": "implemented",
+          "path": "torviello-enforcer"
+        },
+        {
+          "id": "media",
+          "label": "Demo and marketing media",
+          "kind": "docs",
+          "status": "planned",
+          "path": "torviello-media"
+        },
+        {
+          "id": "design",
+          "label": "Design system",
+          "kind": "module",
+          "status": "planned",
+          "path": "torviello-design"
+        }
       ]
     }
   ],
   "edges": [
-    { "from": "request", "to": "auth" },
-    { "from": "auth", "to": "engine" },
-    { "from": "engine", "to": "metrics" },
-    { "from": "metrics", "to": "store" }
+    {
+      "from": "operator_web",
+      "to": "tls_proxy"
+    },
+    {
+      "from": "api_client",
+      "to": "tls_proxy"
+    },
+    {
+      "from": "landing",
+      "to": "docs_site"
+    },
+    {
+      "from": "tls_proxy",
+      "to": "api_router"
+    },
+    {
+      "from": "api_router",
+      "to": "auth"
+    },
+    {
+      "from": "auth",
+      "to": "domain"
+    },
+    {
+      "from": "auth",
+      "to": "platform_auth"
+    },
+    {
+      "from": "api_router",
+      "to": "catalog"
+    },
+    {
+      "from": "api_router",
+      "to": "models_api"
+    },
+    {
+      "from": "api_router",
+      "to": "classify_api"
+    },
+    {
+      "from": "api_router",
+      "to": "error_envelope"
+    },
+    {
+      "from": "api_router",
+      "to": "health"
+    },
+    {
+      "from": "api_router",
+      "to": "metrics_endpoint"
+    },
+    {
+      "from": "api_router",
+      "to": "logging"
+    },
+    {
+      "from": "classify_api",
+      "to": "domain"
+    },
+    {
+      "from": "domain",
+      "to": "model_manager"
+    },
+    {
+      "from": "models_api",
+      "to": "model_manager"
+    },
+    {
+      "from": "models_api",
+      "to": "acquisition"
+    },
+    {
+      "from": "model_manager",
+      "to": "asset_store"
+    },
+    {
+      "from": "model_manager",
+      "to": "model_registry"
+    },
+    {
+      "from": "acquisition",
+      "to": "asset_store"
+    },
+    {
+      "from": "acquisition",
+      "to": "huggingface"
+    },
+    {
+      "from": "catalog",
+      "to": "model_registry"
+    },
+    {
+      "from": "model_registry",
+      "to": "registry_file"
+    },
+    {
+      "from": "asset_store",
+      "to": "model_assets"
+    },
+    {
+      "from": "model_manager",
+      "to": "sqlite"
+    },
+    {
+      "from": "sqlite",
+      "to": "migrations"
+    },
+    {
+      "from": "api_router",
+      "to": "config"
+    },
+    {
+      "from": "config",
+      "to": "secret_manager"
+    },
+    {
+      "from": "metrics_endpoint",
+      "to": "prometheus"
+    },
+    {
+      "from": "prometheus",
+      "to": "alerts"
+    },
+    {
+      "from": "prometheus",
+      "to": "dashboards"
+    },
+    {
+      "from": "logging",
+      "to": "otel"
+    },
+    {
+      "from": "ci_pipeline",
+      "to": "packaging_driver"
+    },
+    {
+      "from": "packaging_driver",
+      "to": "engine_bundle"
+    },
+    {
+      "from": "packaging_driver",
+      "to": "full_bundle"
+    },
+    {
+      "from": "engine_bundle",
+      "to": "systemd"
+    },
+    {
+      "from": "engine_bundle",
+      "to": "container"
+    },
+    {
+      "from": "cloud_accounts",
+      "to": "platform_auth"
+    },
+    {
+      "from": "benchmarks",
+      "to": "domain"
+    },
+    {
+      "from": "enforcer",
+      "to": "ci_pipeline"
+    }
   ]
 }
