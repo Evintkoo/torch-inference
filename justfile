@@ -33,3 +33,9 @@ package-prepare profile="engine":
 
 package-verify manifest:
     uv run python packaging/torviello_package.py verify {{manifest}}
+
+docs:
+    mdbook build docs
+
+docs-serve:
+    mdbook serve docs

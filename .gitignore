@@ -12,3 +12,6 @@ coverage/
 
 # Packaging output
 /dist/
+
+# Generated documentation site
+/docs/book/
