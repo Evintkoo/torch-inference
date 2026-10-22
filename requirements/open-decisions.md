@@ -75,6 +75,7 @@ These four decisions block the first vertical slice: load TOML configuration, va
 - **Recommendation:** version the reference workload and hardware manifest, publish p50/p95/p99 plus footprint metrics, and set release-gating budgets only after the first honest baseline run (RP-017, PERF-06.04). Do not publish a "lightest" claim before the minimal-profile artifact and idle budgets are measured.
 - **Criteria:** reproducibility, statistical stability, shipping-default representativeness, regression sensitivity, and cost of running the gate in CI.
 - **Unblocks:** RP-017, ED-012, PA-021.
+- **Progress (2026-10-22):** the CPU TorchScript demo workload and versioned budgets are recorded in `benchmarks/budgets/classify-cpu.json`, with three clean-revision runs in `torviello-bench/evaluations/reports/2026-10-22-classify-cpu/`. Other reference models, GPU profiles, competitor-derived budgets, and a same-hardware regression baseline remain open. No "fastest" or "lightest" claim is authorized.
 - **Status:** open. Owner: benchmark owner with release owner.
 
 ## Suggested discovery order

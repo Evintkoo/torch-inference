@@ -1,0 +1,276 @@
+{
+  "artifacts": {
+    "artifact_bytes": 7420092,
+    "binary_bytes": 7416816,
+    "dependency_count": 222,
+    "model_bytes": 3276,
+    "runtime_libraries": [
+      "/opt/homebrew/Cellar/pytorch/2.9.1_2/libexec/lib/python3.14/site-packages/torch/lib/libc10.dylib",
+      "/opt/homebrew/Cellar/pytorch/2.9.1_2/libexec/lib/python3.14/site-packages/torch/lib/libtorch.dylib",
+      "/opt/homebrew/Cellar/pytorch/2.9.1_2/libexec/lib/python3.14/site-packages/torch/lib/libtorch_cpu.dylib"
+    ],
+    "runtime_libraries_bytes": 169134352
+  },
+  "budget": {
+    "file": "benchmarks/budgets/classify-cpu.json",
+    "owner": "Evint Koo",
+    "review_date": "2026-10-22"
+  },
+  "budget_checks": [
+    {
+      "actual": 0.446,
+      "comparison": "max",
+      "limit": 10,
+      "metric": "p50_latency_ms",
+      "passed": true
+    },
+    {
+      "actual": 1.016,
+      "comparison": "max",
+      "limit": 250,
+      "metric": "p95_latency_ms",
+      "passed": true
+    },
+    {
+      "actual": 1.811,
+      "comparison": "max",
+      "limit": 50,
+      "metric": "p99_latency_ms",
+      "passed": true
+    },
+    {
+      "actual": 5.104,
+      "comparison": "max",
+      "limit": 250,
+      "metric": "max_latency_ms",
+      "passed": true
+    },
+    {
+      "actual": 3412.247,
+      "comparison": "min",
+      "limit": 500,
+      "metric": "throughput_rps",
+      "passed": true
+    },
+    {
+      "actual": 874.778,
+      "comparison": "max",
+      "limit": 5000,
+      "metric": "cold_start_ms",
+      "passed": true
+    },
+    {
+      "actual": 912.205,
+      "comparison": "max",
+      "limit": 5000,
+      "metric": "ready_ms",
+      "passed": true
+    },
+    {
+      "actual": 36.533,
+      "comparison": "max",
+      "limit": 2000,
+      "metric": "load_ms",
+      "passed": true
+    },
+    {
+      "actual": 105889792,
+      "comparison": "max",
+      "limit": 268435456,
+      "metric": "idle_rss_bytes",
+      "passed": true
+    },
+    {
+      "actual": 0.0,
+      "comparison": "max",
+      "limit": 5,
+      "metric": "idle_cpu_percent",
+      "passed": true
+    },
+    {
+      "actual": 107560960,
+      "comparison": "max",
+      "limit": 536870912,
+      "metric": "peak_rss_bytes",
+      "passed": true
+    },
+    {
+      "actual": 7420092,
+      "comparison": "max",
+      "limit": 33554432,
+      "metric": "artifact_bytes",
+      "passed": true
+    },
+    {
+      "actual": 7416816,
+      "comparison": "max",
+      "limit": 16777216,
+      "metric": "binary_bytes",
+      "passed": true
+    },
+    {
+      "actual": 3276,
+      "comparison": "max",
+      "limit": 1048576,
+      "metric": "model_bytes",
+      "passed": true
+    },
+    {
+      "actual": 222,
+      "comparison": "max",
+      "limit": 300,
+      "metric": "dependency_count",
+      "passed": true
+    },
+    {
+      "actual": 169134352,
+      "comparison": "max",
+      "limit": 1073741824,
+      "metric": "runtime_libraries_bytes",
+      "passed": true
+    },
+    {
+      "actual": 1.0,
+      "comparison": "min",
+      "limit": 1.0,
+      "metric": "quality_accuracy",
+      "passed": true
+    }
+  ],
+  "cold_start": {
+    "load_ms": 36.533,
+    "process_to_live_ms": 874.778,
+    "process_to_ready_ms": 912.205,
+    "ready_after_load_ms": 0.894
+  },
+  "command": "benchmarks/classify_bench.py --requests 1000 --warmup 30 --idle-seconds 3 --budget benchmarks/budgets/classify-cpu.json --output torviello-bench/evaluations/reports/2026-10-22-classify-cpu/run-1.json",
+  "config": {
+    "auth": "HS256 bearer",
+    "file": "config/default.toml",
+    "overrides": [
+      "TORCH_CONFIG",
+      "TORCH_PORT",
+      "TORCH_AUTH_JWT_SECRET",
+      "TORCH_RATE_LIMIT_PER_MINUTE"
+    ],
+    "rate_limit_per_minute": 100000
+  },
+  "environment": {
+    "captured_at": "2026-10-22T03:15:47.458538+00:00",
+    "cargo": "cargo 1.96.1 (356927216 2026-06-26)",
+    "cpu": "Apple M4",
+    "cpu_count": 10,
+    "libtorch": "/opt/homebrew",
+    "machine": "arm64",
+    "os": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "os_build": "25G83",
+    "os_version": "26.6.2",
+    "physical_memory_bytes": 25769803776,
+    "python": "3.15.0",
+    "runtime_libraries": [
+      "/opt/homebrew/Cellar/pytorch/2.9.1_2/libexec/lib/python3.14/site-packages/torch/lib/libc10.dylib",
+      "/opt/homebrew/Cellar/pytorch/2.9.1_2/libexec/lib/python3.14/site-packages/torch/lib/libtorch.dylib",
+      "/opt/homebrew/Cellar/pytorch/2.9.1_2/libexec/lib/python3.14/site-packages/torch/lib/libtorch_cpu.dylib"
+    ],
+    "runtime_libraries_bytes": 169134352,
+    "rustc": "rustc 1.96.1 (31fca3adb 2026-06-26)"
+  },
+  "generated_at": "2026-10-22T03:15:47.072135+00:00",
+  "idle": {
+    "cpu_percent": 0.0,
+    "cpu_seconds_delta": 0.0,
+    "rss_before_bytes": 105889792,
+    "rss_bytes": 105889792,
+    "window_seconds": 3.011
+  },
+  "latency": {
+    "concurrency_1": {
+      "concurrency": 1,
+      "error_count": 0,
+      "errors": [],
+      "max_ms": 5.104,
+      "p50_ms": 0.446,
+      "p95_ms": 1.016,
+      "p99_ms": 1.811,
+      "requests": 1000,
+      "throughput_rps": 1811.767,
+      "wall_seconds": 0.551947
+    },
+    "concurrency_8": {
+      "concurrency": 8,
+      "error_count": 0,
+      "errors": [],
+      "max_ms": 14.515,
+      "p50_ms": 1.641,
+      "p95_ms": 5.645,
+      "p99_ms": 10.449,
+      "requests": 1000,
+      "throughput_rps": 3412.247,
+      "wall_seconds": 0.293062
+    }
+  },
+  "memory": {
+    "peak_rss_bytes": 107560960
+  },
+  "passed": true,
+  "profile": "minimal-cpu-torchscript",
+  "quality": {
+    "accuracy": 1.0,
+    "cases": [
+      {
+        "actual": "red",
+        "expected": "red",
+        "name": "red",
+        "passed": true,
+        "status": 200
+      },
+      {
+        "actual": "green",
+        "expected": "green",
+        "name": "green",
+        "passed": true,
+        "status": 200
+      },
+      {
+        "actual": "blue",
+        "expected": "blue",
+        "name": "blue",
+        "passed": true,
+        "status": 200
+      },
+      {
+        "actual": "bright",
+        "expected": "bright",
+        "name": "bright",
+        "passed": true,
+        "status": 200
+      },
+      {
+        "actual": "dark",
+        "expected": "dark",
+        "name": "dark",
+        "passed": true,
+        "status": 200
+      }
+    ],
+    "passed": 5,
+    "total": 5
+  },
+  "revision": {
+    "binary_sha256": "e2c8e2d97555488459d337441af92d916ab1fadc36289e9b1266095f94c6ab8e",
+    "commit": "5e58f0def4b38816898670047410e2e1239e4710",
+    "dirty": false,
+    "model_sha256": "5bb25630b7e6c0ecb7ad7ad232c320499f38104ab9f68166160d7272e8e2fb22"
+  },
+  "schema_version": 1,
+  "server_log": "torviello-bench/evaluations/reports/2026-10-22-classify-cpu/server.log",
+  "workload": {
+    "batch_size": 1,
+    "description": "32x32 PNG, batch 1, top_k 1, one warm model",
+    "image_height": 32,
+    "image_width": 32,
+    "model_id": "engine-demo-torchscript",
+    "top_k": 1,
+    "warmup_requests": 30
+  }
+}

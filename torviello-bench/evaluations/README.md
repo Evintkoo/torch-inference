@@ -16,4 +16,6 @@ Every critical requirement resolves to recorded evaluation evidence.
 
 ## Status
 
-Repository shape only. No artifact, implementation, or evaluation evidence is recorded here yet.
+CPU classifier evidence is recorded in
+`reports/2026-10-22-classify-cpu/`. The report is local CPU evidence, not a
+release decision; competitor, GPU, and true cold-start measurements remain open.

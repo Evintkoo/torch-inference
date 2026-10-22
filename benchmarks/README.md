@@ -28,6 +28,9 @@ uv run python benchmarks/classify_bench.py \
   --budget benchmarks/budgets/classify-cpu.json
 ```
 
+`just bench` runs one gate. For an evaluation report, run the harness three
+times on the same clean revision and report the median and spread.
+
 Set `LIBTORCH` and, when using a libtorch patch version different from the one
 expected by `tch`, `LIBTORCH_BYPASS_VERSION_CHECK=1`. The harness records the
 binary and model digests, revision, dirty state, environment, command, and the

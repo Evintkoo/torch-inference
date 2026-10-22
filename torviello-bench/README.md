@@ -13,8 +13,13 @@ Performance benchmarking. Brand message: Measure execution without unsupported c
 
 ## Validation
 
-Run this unit's test categories from `tests/`, then record evaluation evidence in `evaluations/`. Follow `GOV-06` through `GOV-10` in `torviello-enforcer/governance/`.
+The CPU classifier harness lives in `benchmarks/classify_bench.py`; run `just bench`
+from the repository root. Record dated evidence in `evaluations/` and follow
+`GOV-06` through `GOV-10` in `torviello-enforcer/governance/`.
 
 ## Status
 
-Repository shape only. No implementation, contract, test, or evaluation evidence exists yet.
+The CPU `engine-demo-torchscript` benchmark and three clean-revision reports exist
+in `evaluations/reports/2026-10-22-classify-cpu/`. Competitor, GPU, and other
+reference-workload coverage is not implemented. Other unit directories remain
+repository shape only.

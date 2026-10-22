@@ -16,4 +16,6 @@ A named owner records the decision; unmet thresholds block release.
 
 ## Status
 
-Repository shape only. No artifact, implementation, or evaluation evidence is recorded here yet.
+`2026-10-22-classify-cpu/` contains three raw runs, per-run summaries, an
+aggregate analysis, and the limitations for the local CPU TorchScript profile.
+No release decision is recorded.

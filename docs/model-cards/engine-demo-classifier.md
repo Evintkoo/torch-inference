@@ -16,9 +16,13 @@ medical, safety-critical, or surveillance decisions.
 
 ## Evaluation
 
-Top-1 accuracy on the synthetic evaluation set is 0.93. Latency p95 on the CPU
-profile is 42 ms at batch size 1. Limitations include limited class coverage
-and sensitivity to unusual lighting.
+This registry entry is a catalog-only scaffold: no model asset is bundled, so
+load fails with `model.backend_unavailable` when the asset is absent. No current
+accuracy, latency, or memory measurement exists for this entry. Do not cite the
+former 0.93 accuracy or 42 ms p95 claims; they had no retained evidence.
+
+The measured CPU evidence covers the separate `engine-demo-torchscript` fixture
+and is recorded in `torviello-bench/evaluations/reports/2026-10-22-classify-cpu/`.
 
 ## Release
 
