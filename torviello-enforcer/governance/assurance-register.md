@@ -265,6 +265,7 @@ and Homebrew libtorch 2.9.1:
 - `uv run ruff check .` — pass.
 - `uv run pytest -q benchmarks/tests` — 7 passed.
 - Repository test paths run in four grouped invocations: 184 enforcer-domain tests and 63 enforcer-root, `services/engine-py`, and benchmark tests — 247 passed. The single-process full command exceeded the local tool window; the grouped runs cover the same configured `testpaths`.
+- Local CI-parity checks at `6574f2f`: `actionlint .github/workflows/ci.yml` — pass; `cargo clippy --workspace --all-targets --all-features -- -D warnings` — pass; `cargo build --locked --no-default-features` — pass; `cargo build --locked --features full` — pass, 1m 28s; `contracts.py check` — artifacts current; `status_tester.py` — 73 checks, 0 failures; `npm run lint` and `npm test` — pass. These narrow, but do not replace, the unrun GitHub Ubuntu matrix.
 
 Limitations:
 
