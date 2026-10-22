@@ -53,6 +53,10 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 **Requirement:** Before reporting completion, the agent MUST inspect the final diff for scope, secrets, generated files, accidental changes, formatting, references, and consistency. The report MUST state what changed, why, evidence gathered, limitations, and any follow-up decision without overstating certainty or completion.
 
+### GOV-04.10 — A CPU-intensive local command MUST run within an explicit resource budget
+
+**Requirement:** Before a local Rust build, Cargo test suite, benchmark, or other CPU-intensive command, the agent MUST check current system load and MUST run at most two Cargo jobs (`-j 2`), at reduced scheduling priority (`nice -n 10`), with a wall-clock limit of 10 minutes for an incremental check and 20 minutes for a clean or release build. It MUST NOT run overlapping Cargo commands. If load exceeds twice the logical CPU count or a limit is reached, it MUST stop, preserve completed output where possible, and report the limit; it MUST NOT retry without a new bound. It MUST NOT terminate Docker, editor, Node, or other user-owned processes without explicit approval.
+
 ## Prohibited conditions
 
 - Do not claim a test, browser lookup, source review, or tool action occurred unless it actually did.
