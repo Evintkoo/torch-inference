@@ -15,9 +15,7 @@ RULES = ROOT / "torviello-enforcer"
 
 HEADER = '''"""Repo-wide conformance test for torviello-enforcer/__REL__ (controls __CONTROLS__)."""
 
-import json
-import re
-import tomllib
+__IMPORTS__import re
 from pathlib import Path
 
 import pytest
@@ -274,10 +272,9 @@ require(not large, f"source files exceed 500 lines: {sorted(large)[:8]}")
 '''
 
 BUNDLES["fmt_lint"] = r'''
-detected = languages()
+detected = set(languages())
 cargo = manifest_text()
 ci = workflow_text()
-configs = config_text()
 checks: dict[str, bool] = {}
 if "rust" in detected:
     checks["rust"] = (
@@ -968,7 +965,6 @@ require(
 '''
 
 BUNDLES["readability"] = r'''
-detected = languages()
 configs = config_text() + manifest_text()
 require(
     any(src(name).exists() for name in ("rustfmt.toml", ".rustfmt.toml", ".prettierrc", "ruff.toml", ".flake8", ".editorconfig"))
@@ -1069,9 +1065,41 @@ for state in ("loading", "error", "empty"):
     require(state in ui.lower(), f"UI components do not model the {state} state")
 '''
 
-BUNDLES["design_review_evidence"] = r'''
-evidence("no recorded user-research, content, or design-review artifacts exist in the product source")
+BUNDLES["record_evidence"] = r'''
+record_path = f"governance/records/{CONTROL.lower()}.json"
+require(src(record_path).exists(), f"no governance evidence record exists for {CONTROL}")
+record = json.loads(read(record_path))
+require(record.get("control") == CONTROL, f"evidence record is for {record.get('control')}, not {CONTROL}")
+require(record.get("owner"), f"{CONTROL} evidence record has no accountable owner")
+require(record.get("status") in {"approved", "active", "monitored"}, f"{CONTROL} evidence record is not approved or active")
+require(record.get("reviewed_at"), f"{CONTROL} evidence record has no review date")
+require(str(record.get("artifact", "")).startswith("governance/"), f"{CONTROL} evidence record has no governance artifact")
+terms = record.get("required_terms") or []
+require(len(terms) >= 3, f"{CONTROL} evidence record does not define enough review terms")
+artifact = read(record["artifact"])
+missing_terms = [term for term in terms if term.lower() not in artifact.lower()]
+require(not missing_terms, f"{CONTROL} evidence artifact is missing: {missing_terms}")
+
+metric = record.get("metric")
+require(isinstance(metric, dict), f"{CONTROL} has no measurable control definition")
+for field in ("name", "target", "unit", "direction", "source", "window", "method", "measurement_status", "current_value", "last_measured_at"):
+    require(field in metric, f"{CONTROL} metric is missing {field}")
+for field in ("name", "unit", "source", "window", "method"):
+    require(isinstance(metric[field], str) and metric[field].strip(), f"{CONTROL} metric field {field} is empty")
+require(metric["direction"] in {"at_least", "at_most"}, f"{CONTROL} metric direction is invalid")
+target = metric["target"]
+require(isinstance(target, (int, float)) and not isinstance(target, bool) and target > 0, f"{CONTROL} metric target must be a positive number")
+require(metric["measurement_status"] in {"measured", "not_yet_measured"}, f"{CONTROL} measurement status is invalid")
+if metric["measurement_status"] == "measured":
+    current = metric["current_value"]
+    require(isinstance(current, (int, float)) and not isinstance(current, bool), f"{CONTROL} measured control has no numeric current value")
+    require(metric["last_measured_at"], f"{CONTROL} measured control has no measurement timestamp")
+else:
+    require(metric["current_value"] is None, f"{CONTROL} unmeasured control must not claim a current value")
+    require(metric["last_measured_at"] is None, f"{CONTROL} unmeasured control must not claim a measurement timestamp")
 '''
+
+BUNDLES["design_review_evidence"] = BUNDLES["record_evidence"]
 
 BUNDLES["media_assets"] = r'''
 require(
@@ -1243,9 +1271,7 @@ require(
 )
 '''
 
-BUNDLES["plan_retention"] = r'''
-evidence("plans are intentionally not committed, so no source-observable plan-retention evidence exists")
-'''
+BUNDLES["plan_retention"] = BUNDLES["record_evidence"]
 
 BUNDLES["platform_support_docs"] = r'''
 require(
@@ -1277,9 +1303,7 @@ require(
 )
 '''
 
-BUNDLES["process_evidence"] = r'''
-evidence("this control depends on human records and operating procedures that are absent from the product source tree")
-'''
+BUNDLES["process_evidence"] = BUNDLES["record_evidence"]
 
 
 
@@ -1543,15 +1567,20 @@ def generate_rule(domain: str, doc: Path) -> None:
     number = int(doc.name[:2])
     bundles = OVERRIDES.get((domain, number), DOMAIN_DEFAULTS[domain])
     name = f"{domain}_{doc.stem}".replace("-", "_")
-    header = (
-        HEADER.replace("__REL__", f"{domain}/rules/{doc.name}")
-        .replace("__CONTROLS__", control_id(doc))
-        .replace("__NAME__", name)
-    )
     body: list[str] = []
     for bundle in bundles:
         body.extend(lines(BUNDLES[bundle]))
         body.append("")
+    body_text = "\n".join(body)
+    imports = ""
+    if "json." in body_text:
+        imports += "import json\n"
+    header = (
+        HEADER.replace("__REL__", f"{domain}/rules/{doc.name}")
+        .replace("__CONTROLS__", control_id(doc))
+        .replace("__NAME__", name)
+        .replace("__IMPORTS__", imports)
+    )
     target = RULES / domain / "tests" / f"test_{doc.stem.replace('-', '_')}.py"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(header + "\n".join(body).rstrip() + "\n", encoding="utf-8")
@@ -1564,7 +1593,6 @@ def generate_trail(domain: str, doc: Path) -> None:
 
 import re
 from pathlib import Path
-
 
 CONTROL = "__CONTROLS__"
 HERE = Path(__file__).resolve()
