@@ -19,3 +19,7 @@ verify:
 
 release features="engine":
     cargo build --release --locked --no-default-features --features {{features}}
+
+bench:
+    cargo build --release --locked --no-default-features --features torchscript
+    uv run python benchmarks/classify_bench.py --requests 1000 --warmup 30 --idle-seconds 3 --budget benchmarks/budgets/classify-cpu.json

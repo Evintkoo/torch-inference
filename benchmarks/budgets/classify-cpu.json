@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "profile": "minimal-cpu-torchscript",
+  "owner": "Evint Koo",
+  "review_date": "2026-10-22",
+  "workload": {
+    "model_id": "engine-demo-torchscript",
+    "input": "32x32 PNG",
+    "batch_size": 1,
+    "top_k": 1,
+    "concurrency": 1,
+    "throughput_concurrency": 8
+  },
+  "metrics": {
+    "p50_latency_ms_max": 10,
+    "p95_latency_ms_max": 250,
+    "p99_latency_ms_max": 50,
+    "max_latency_ms_max": 250,
+    "throughput_rps_min": 500,
+    "cold_start_ms_max": 5000,
+    "ready_ms_max": 5000,
+    "load_ms_max": 2000,
+    "idle_rss_bytes_max": 268435456,
+    "idle_cpu_percent_max": 5,
+    "peak_rss_bytes_max": 536870912,
+    "artifact_bytes_max": 33554432,
+    "binary_bytes_max": 16777216,
+    "model_bytes_max": 1048576,
+    "dependency_count_max": 300,
+    "runtime_libraries_bytes_max": 1073741824,
+    "quality_accuracy_min": 0.8
+  },
+  "quality": {
+    "dataset": "five deterministic 32x32 PNG color cases",
+    "known_failures": [
+      "bright: pure white returns red because the fixture's linear head ties the three channel scores and does not make bright reachable"
+    ]
+  },
+  "cold_start": {
+    "method": "process-to-live after launch",
+    "limitation": "the local run has a warm OS file cache; true post-reboot cold start remains unmeasured"
+  },
+  "regression_tolerance_percent": 20
+}
