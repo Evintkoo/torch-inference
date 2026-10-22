@@ -107,7 +107,7 @@ def summary_markdown(result: dict[str, Any]) -> str:
             "",
             *rows,
             "",
-            "Raw measurements are in `results.json`. Reproduction command is recorded there.",
+            "Raw measurements are in the JSON report. Reproduction command is recorded there.",
             "",
         ]
     )
