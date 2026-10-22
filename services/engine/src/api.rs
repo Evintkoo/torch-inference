@@ -5,7 +5,7 @@ use std::time::Instant;
 
 use axum::Router;
 use axum::body::{Body, to_bytes};
-use axum::extract::{Request, State};
+use axum::extract::{MatchedPath, Request, State};
 use axum::http::header::{
     ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
     ACCESS_CONTROL_REQUEST_METHOD, CONTENT_ENCODING, CONTENT_LENGTH, ORIGIN, VARY,
@@ -21,6 +21,7 @@ use crate::auth::{Principal, authenticate};
 use crate::config::Config;
 use crate::error::{AppError, AppResult};
 use crate::model::ModelRegistry;
+use crate::observability::{request_finished, request_started};
 use crate::runtime::ModelManager;
 use crate::security::RateLimiter;
 
@@ -123,6 +124,25 @@ pub fn router(config: &Config) -> Router<AppState> {
             async move { apply_cors(&origin, request, next).await }
         }))
         .layer(middleware::from_fn(no_store))
+        .layer(middleware::from_fn(record_metrics))
+}
+
+async fn record_metrics(request: Request, next: Next) -> Response {
+    let method = request.method().as_str().to_owned();
+    let path = request.extensions().get::<MatchedPath>().map_or_else(
+        || "unmatched".to_owned(),
+        |matched| matched.as_str().to_owned(),
+    );
+    request_started();
+    let started = Instant::now();
+    let response = next.run(request).await;
+    request_finished(
+        &method,
+        &path,
+        response.status().as_u16(),
+        started.elapsed().as_secs_f64(),
+    );
+    response
 }
 
 async fn not_implemented(State(state): State<AppState>, headers: HeaderMap) -> AppResult<AppError> {

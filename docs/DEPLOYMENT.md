@@ -20,6 +20,10 @@ SQLite persistence, telemetry, and TorchScript. Deploy with the signed release
 bundle and verify the checksum and SBOM before starting the service. The default bind is `127.0.0.1`; remote deployments
 must terminate TLS 1.3 at the reverse proxy and set an allowed CORS origin.
 
+Scrape `GET /metrics` from the private interface; the endpoint is unauthenticated
+and must not be exposed publicly. The exported series, alert rules, and local
+run command are documented in [monitoring/README.md](../monitoring/README.md).
+
 ## Rollback
 
 1. Stop the service with SIGTERM and wait for the graceful shutdown timeout.

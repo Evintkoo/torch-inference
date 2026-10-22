@@ -95,3 +95,7 @@ path = "tests/contract/test_classify.rs"
 [[test]]
 name = "logging"
 path = "tests/integration/test_logging.rs"
+
+[[test]]
+name = "metrics_contract"
+path = "tests/contract/test_metrics.rs"

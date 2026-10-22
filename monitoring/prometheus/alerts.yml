@@ -16,3 +16,19 @@ groups:
           severity: S3
         annotations:
           summary: p95 inference latency exceeds the SLO
+      - alert: EngineHighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m]))
+            / clamp_min(sum(rate(http_requests_total[5m])), 1) > 0.05
+        for: 10m
+        labels:
+          severity: S3
+        annotations:
+          summary: Engine 5xx rate exceeds 5 percent
+      - alert: EngineRequestsInFlightHigh
+        expr: http_requests_in_flight > 100
+        for: 5m
+        labels:
+          severity: S3
+        annotations:
+          summary: Engine is holding more than 100 in-flight requests
