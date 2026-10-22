@@ -1,0 +1,24 @@
+# Copyright (c) 2026 Torviello.
+# Run from the repository root:
+#   docker compose -f containers/compose.yaml --profile cpu up --build
+services:
+  engine:
+    build:
+      context: ..
+      dockerfile: containers/Dockerfile
+      args:
+        CARGO_FEATURES: engine
+    image: torviello/engine:1.0.0
+    profiles: ["cpu"]
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      TORCH_CONFIG: /opt/torviello/config/default.toml
+      TORCH_HOST: 0.0.0.0
+      TORCH_AUTH_ENABLED: "true"
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped

@@ -10,7 +10,7 @@ These questions affect architecture or product promises. Resolve them in a speci
 | Persistence | Which records must persist locally or centrally? What are expected scale, availability, backup, encryption, and offline needs? Should local mode use an embedded database, files, or no database? | RP-032–RP-034, SO-033 |
 | Registry service | Is the registry a local file-backed catalog, hosted API, or both? Who can edit it, how are changes approved, and how do clients receive updates safely? | RP-031, PA-012, SO-031 |
 | Licensing | What license permits personal use and requires a commercial license? Which code and model assets can use that policy? What entity owns and grants those rights? | ED-040–ED-041 |
-| Packaging workflow | Which candidate automation frameworks can build Windows, macOS, and Linux artifacts offline, including signing/notarization where required? Does Ansible meet the cross-platform build needs or should it only handle deployment? | RP-021–RP-023, ED-020–ED-023 |
+| Packaging workflow | Which candidate automation frameworks can build Windows, macOS, and Linux artifacts offline, including signing/notarization where required? Does Ansible meet the cross-platform build needs or should it only handle deployment? | RP-021–RP-023, ED-020–ED-023 (see OD-007) |
 | Deployment targets | Which service managers and orchestration systems are supported at launch? Is Kubernetes a product commitment or only an example? | RP-024, RP-030, SO-030–SO-033 |
 | Observability profile | Which metrics, alerts, retention periods, and dashboard integrations are required for a single node and for enterprise installations? What telemetry is opt-in? | SO-022–SO-024 |
 | Documentation and media | What site generator and publishing host are acceptable? Are demo and marketing media workflows part of this repository's maintained scope? | PA-024, PA-031–PA-032, ED-030–ED-033 |
@@ -78,6 +78,15 @@ These four decisions block the first vertical slice: load TOML configuration, va
 - **Progress (2026-10-22):** the CPU TorchScript demo workload and versioned budgets are recorded in `benchmarks/budgets/classify-cpu.json`, with three clean-revision runs in `torviello-bench/evaluations/reports/2026-10-22-classify-cpu/`. Other reference models, GPU profiles, competitor-derived budgets, and a same-hardware regression baseline remain open. No "fastest" or "lightest" claim is authorized.
 - **Status:** open. Owner: benchmark owner with release owner.
 
+### OD-007 — Packaging automation
+
+- **Question:** Which cross-platform automation builds Windows, macOS, and Linux artifacts offline, and where do signing and notarization sit?
+- **Options:** Ansible; Task/Earthly/Nix; a standard-library Python driver over a TOML manifest.
+- **Recommendation:** use the stdlib Python driver with a declarative manifest so the same entry point runs on every supported build host without an extra framework; keep signing and notarization as separate platform steps after the unsigned bundle is produced.
+- **Criteria:** native cross-platform support, offline buildability, reproducible inputs, no shell-script-only path, and low contributor setup cost.
+- **Unblocks:** ED-020–ED-024, RP-021–RP-023, REL-01, REL-02.
+- **Status:** decided by ADR 0003. Owner: release owner. Remaining work: Windows/Linux bundle and install tests, and a prepared libtorch cache contract for the `full` profile; the macOS engine bundle build, deterministic rebuild, digest verification, and first-start/health/stop checks are complete.
+
 ## Suggested discovery order
 
 0. Resolve OD-001–OD-004 for the first slice and OD-005–OD-006 before any public "fastest" or "lightest" claim: model format, baseline backend, local/hosted auth boundary, API style, competitor set, and footprint budgets.
@@ -85,7 +94,7 @@ These four decisions block the first vertical slice: load TOML configuration, va
 2. Set supported hardware and OS commitments, since they constrain build and backend choices.
 3. Gather auth requirements and map persistent data before selecting a database or hosted architecture.
 4. Decide licensing and artifact distribution before making commercial claims.
-5. Compare packaging automation options against offline reproducibility and each supported OS.
+5. Resolved: packaging automation uses the stdlib driver in `packaging/` (OD-007); verify Windows/Linux bundle builds before claiming the full build matrix.
 6. Define service operations and monitoring targets for the first production profile.
 7. Assign named owners for required organizational functions, identify supported jurisdictions, and obtain qualified review for employment, privacy, safety, and compliance policies before operating those workflows.
 

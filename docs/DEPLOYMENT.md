@@ -13,8 +13,11 @@ Copyright (c) 2026 Torviello.
   yet; enabling one without a provider fails startup with
   `model.backend_unavailable` rather than silently claiming support.
 
-Deploy with the signed release bundle. Verify the checksum and SBOM before
-starting the service. The default bind is `127.0.0.1`; remote deployments
+Build the bundle with `python packaging/torviello_package.py build --profile
+engine --offline` (or `full` for the complete package). The engine-only bundle
+contains the backend binary and operator documents; the full bundle adds
+SQLite persistence, telemetry, and TorchScript. Deploy with the signed release
+bundle and verify the checksum and SBOM before starting the service. The default bind is `127.0.0.1`; remote deployments
 must terminate TLS 1.3 at the reverse proxy and set an allowed CORS origin.
 
 ## Rollback

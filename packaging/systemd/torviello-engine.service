@@ -8,6 +8,10 @@ Wants=network-online.target
 Type=simple
 User=torviello
 Group=torviello
+WorkingDirectory=/opt/torviello/share/torviello
+Environment=TORCH_CONFIG=/opt/torviello/share/torviello/config/default.toml
+Environment=TORCH_MODEL_REGISTRY=/opt/torviello/share/torviello/config/model-registry.toml
+Environment=TORCH_MODEL_ROOT=/var/lib/torviello/models
 ExecStart=/opt/torviello/bin/torviello-engine
 EnvironmentFile=/etc/torviello/engine.env
 Restart=on-failure

@@ -9,3 +9,6 @@ coverage/
 *.pyc
 .DS_Store
 /notes/
+
+# Packaging output
+/dist/

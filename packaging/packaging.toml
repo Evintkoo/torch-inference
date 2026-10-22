@@ -1,0 +1,49 @@
+# Copyright (c) 2026 Torviello.
+# Declarative release definition consumed by packaging/torviello_package.py.
+schema = 1
+
+[product]
+name = "torviello-engine"
+version_source = "Cargo.toml"
+version_table = "workspace.package"
+output_dir = "dist"
+
+[profiles.engine]
+description = "Engine-only inference backend without persistence, telemetry, or accelerators."
+features = ["engine"]
+binary = "torviello-engine"
+include = [
+  "LICENSE",
+  "NOTICE",
+  "COMMERCIAL_LICENSE.md",
+  "SECURITY.md",
+  "config/default.toml",
+  "config/model-registry.toml",
+  "containers/compose.yaml",
+  "docs/DEPLOYMENT.md",
+  "docs/INSTALL.md",
+  "docs/PRIVACY.md",
+  "docs/SUPPORTED_PLATFORMS.md",
+  "packaging/systemd/torviello-engine.service",
+  "services/engine/api/contracts/schema.json",
+]
+
+[profiles.full]
+description = "Full package with SQLite persistence, telemetry, and TorchScript execution."
+features = ["full"]
+binary = "torviello-engine"
+include = [
+  "LICENSE",
+  "NOTICE",
+  "COMMERCIAL_LICENSE.md",
+  "SECURITY.md",
+  "config/default.toml",
+  "config/model-registry.toml",
+  "containers/compose.yaml",
+  "docs/DEPLOYMENT.md",
+  "docs/INSTALL.md",
+  "docs/PRIVACY.md",
+  "docs/SUPPORTED_PLATFORMS.md",
+  "packaging/systemd/torviello-engine.service",
+  "services/engine/api/contracts/schema.json",
+]

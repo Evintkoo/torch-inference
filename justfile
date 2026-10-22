@@ -12,6 +12,7 @@ verify:
     npm run build
     npm test
     uv sync --locked
+    uv run python packaging/torviello_package.py validate
     uv run python torviello-engine/contracts/tools/contracts.py check
     uv run python torviello-engine/contracts/tools/status_tester.py
     uv run pytest
@@ -23,3 +24,12 @@ release features="engine":
 bench:
     cargo build --release --locked --no-default-features --features torchscript
     uv run python benchmarks/classify_bench.py --requests 1000 --warmup 30 --idle-seconds 3 --budget benchmarks/budgets/classify-cpu.json
+
+package profile="engine":
+    uv run python packaging/torviello_package.py build --profile {{profile}} --offline
+
+package-prepare profile="engine":
+    uv run python packaging/torviello_package.py prepare --profile {{profile}}
+
+package-verify manifest:
+    uv run python packaging/torviello_package.py verify {{manifest}}

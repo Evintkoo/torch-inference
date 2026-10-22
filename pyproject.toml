@@ -15,7 +15,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["torviello-enforcer", "services/engine-py", "benchmarks/tests"]
+testpaths = ["torviello-enforcer", "services/engine-py", "benchmarks/tests", "packaging/tests"]
 python_files = ["test_*.py"]
 addopts = ["-ra"]
 pythonpath = ["services/engine-py", "benchmarks"]
