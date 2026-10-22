@@ -41,12 +41,12 @@ backend_requirements = ["cpu"]
 [[models]]
 id = "engine-demo-torchscript"
 display_name = "Engine demo TorchScript classifier"
-version = "1.0.0"
+version = "1.0.1"
 task = "classification"
 format = "torchscript"
-size_bytes = 3305
-content_hash = "sha256:90deda385842988a8026a768b1f7aa68e544cffd01f5fb036b946aa1f5f693b8"
-source_url = "https://models.torviello.local/engine-demo-torchscript-1.0.0.pt"
+size_bytes = 3276
+content_hash = "sha256:5bb25630b7e6c0ecb7ad7ad232c320499f38104ab9f68166160d7272e8e2fb22"
+source_url = "https://models.torviello.local/engine-demo-torchscript-1.0.1.pt"
 license = "Apache-2.0"
 description = "Bundled TorchScript image classifier used by the first CPU inference slice."
 backend_requirements = ["cpu"]

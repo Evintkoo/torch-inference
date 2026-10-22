@@ -175,6 +175,18 @@ async fn classifies_images_in_input_order() {
 }
 
 #[tokio::test]
+async fn classifies_bright_and_dark_inputs() {
+    let app = app();
+    load(&app).await;
+
+    let body = multipart(&[png([255, 255, 255]), png([0, 0, 0])], MODEL_ID, Some(1));
+    let (status, _, response) = send_multipart(&app, "brightness", body).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(response["data"][0]["predictions"][0]["label"], "bright");
+    assert_eq!(response["data"][1]["predictions"][0]["label"], "dark");
+}
+
+#[tokio::test]
 async fn rejects_invalid_batches_before_inference() {
     let app = app();
     load(&app).await;

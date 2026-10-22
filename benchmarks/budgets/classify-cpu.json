@@ -28,13 +28,7 @@
     "model_bytes_max": 1048576,
     "dependency_count_max": 300,
     "runtime_libraries_bytes_max": 1073741824,
-    "quality_accuracy_min": 0.8
-  },
-  "quality": {
-    "dataset": "five deterministic 32x32 PNG color cases",
-    "known_failures": [
-      "bright: pure white returns red because the fixture's linear head ties the three channel scores and does not make bright reachable"
-    ]
+    "quality_accuracy_min": 1.0
   },
   "cold_start": {
     "method": "process-to-live after launch",
