@@ -1,0 +1,122 @@
+/*
+ * Copyright (c) 2026 Torviello.
+ * Slice-one atoms (design sheets A1–A6). Consumes ONLY the semantic tokens
+ * from tokens.css; a raw value here is a review finding.
+ * The landing entry imports this file; components carry the class names.
+ */
+
+/* A1 Button — primary: the single primary action of a view */
+.tv-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tv-space-2);
+  min-height: 44px;
+  padding: var(--tv-space-2) var(--tv-space-4);
+  border: 1px solid transparent;
+  border-radius: var(--tv-radius-control);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-body);
+  font-weight: var(--tv-weight-semibold);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    transform 120ms ease;
+}
+
+.tv-button:active:not([aria-disabled="true"]) {
+  transform: scale(0.98);
+}
+
+.tv-button[aria-disabled="true"] {
+  cursor: default;
+}
+
+.tv-button--primary {
+  background: var(--tv-action-primary);
+  color: var(--tv-action-label);
+}
+
+.tv-button--primary:hover:not([aria-disabled="true"]) {
+  background: var(--tv-action-primary-hover);
+}
+
+/* A2 Button — ghost: secondary pairing with a glass hairline */
+.tv-button--ghost {
+  background: transparent;
+  border-color: var(--tv-border-glass);
+  color: var(--tv-text-primary);
+}
+
+.tv-button--ghost:hover:not([aria-disabled="true"]) {
+  background: var(--tv-surface-glass);
+}
+
+.tv-button[aria-disabled="true"],
+.tv-button[data-state="loading"] {
+  background: var(--tv-surface-raised);
+  border-color: var(--tv-border-glass);
+  color: var(--tv-text-muted);
+}
+
+/* A3 NavLink */
+.tv-navlink {
+  color: var(--tv-text-primary);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-label);
+  text-decoration: none;
+  padding: var(--tv-space-2) var(--tv-space-3);
+  border-radius: var(--tv-radius-control);
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tv-navlink:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--tv-action-primary);
+  text-underline-offset: 4px;
+}
+
+.tv-navlink[aria-current="true"] {
+  text-decoration: underline;
+  text-decoration-color: var(--tv-action-primary);
+  text-underline-offset: 4px;
+}
+
+/* A4 SectionLabel — the all-caps eyebrow */
+.tv-section-label {
+  margin: 0 0 var(--tv-space-3);
+  color: var(--tv-text-muted);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-label);
+  font-weight: var(--tv-weight-semibold);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.tv-section-label--accent {
+  color: var(--tv-action-primary);
+}
+
+/* A6 TerminalLine — mono transcript line */
+.tv-terminal-line {
+  display: flex;
+  gap: var(--tv-space-3);
+  font-family: var(--tv-font-mono);
+  font-size: var(--tv-size-body);
+  line-height: 1.6;
+}
+
+.tv-terminal-line__marker {
+  color: var(--tv-accent-secondary);
+  user-select: none;
+}
+
+.tv-terminal-line--prompt .tv-terminal-line__text {
+  color: var(--tv-text-primary);
+}
+
+.tv-terminal-line--status .tv-terminal-line__text {
+  color: var(--tv-text-muted);
+}
