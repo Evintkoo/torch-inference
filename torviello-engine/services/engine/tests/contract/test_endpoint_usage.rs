@@ -55,7 +55,7 @@ fn app() -> axum::Router {
 }
 
 fn contract_path(name: &str) -> PathBuf {
-    PathBuf::from(format!("../../torviello-engine/contracts/{name}"))
+    PathBuf::from(format!("../../../torviello-engine/contracts/{name}"))
 }
 
 fn yaml(name: &str) -> serde_yaml::Value {

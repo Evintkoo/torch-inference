@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use torviello_engine::config::{AccessControl, Config};
 
 fn schema_path() -> PathBuf {
-    std::fs::canonicalize("../../services/engine/api/contracts/schema.json").expect("schema")
+    std::fs::canonicalize("api/contracts/schema.json").expect("schema")
 }
 
 fn write_config(root: &Path, body: &str) -> PathBuf {

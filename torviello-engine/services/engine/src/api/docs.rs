@@ -16,7 +16,7 @@ const SCALAR_HTML: &str = r#"<!doctype html>
 </html>
 "#;
 
-const OPENAPI: &str = include_str!("../../../../torviello-engine/contracts/openapi.yaml");
+const OPENAPI: &str = include_str!("../../../../../torviello-engine/contracts/openapi.yaml");
 const SCALAR_JS: &[u8] = include_bytes!("../../assets/scalar.bundle");
 
 pub async fn scalar() -> Html<&'static str> {

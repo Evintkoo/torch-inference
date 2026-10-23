@@ -54,7 +54,7 @@ fn app() -> axum::Router {
 }
 
 fn contract_path() -> PathBuf {
-    PathBuf::from("../../torviello-engine/contracts/openapi.yaml")
+    PathBuf::from("../../../torviello-engine/contracts/openapi.yaml")
 }
 
 #[tokio::test]

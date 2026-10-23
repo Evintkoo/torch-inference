@@ -88,7 +88,8 @@ impl Config {
     /// Load typed TOML, then overlay namespaced environment variables. Secret
     /// values are injected from the environment only.
     pub fn load() -> AppResult<Self> {
-        let path = env::var("TORCH_CONFIG").unwrap_or_else(|_| "torviello-engine/config/default.toml".to_owned());
+        let path = env::var("TORCH_CONFIG")
+            .unwrap_or_else(|_| "torviello-engine/config/default.toml".to_owned());
         let path_ref = Path::new(&path);
         if path_ref.exists() {
             return Self::from_path(path_ref);
@@ -166,7 +167,7 @@ impl Config {
         let model_root = env::var("TORCH_MODEL_ROOT")
             .ok()
             .or(file.model_root)
-            .unwrap_or_else(|| "models".to_owned());
+            .unwrap_or_else(|| "torviello-engine/models".to_owned());
         let max_model_bytes = env_parse("TORCH_MAX_MODEL_BYTES")?
             .or(file.max_model_bytes)
             .unwrap_or(1_073_741_824);
@@ -459,7 +460,7 @@ mod tests {
             max_queue_depth: 4,
             model_registry: "registry.toml".to_owned(),
             database_url: "sqlite://data/engine.db".to_owned(),
-            model_root: "models".to_owned(),
+            model_root: "torviello-engine/models".to_owned(),
             max_model_bytes: 1024,
             max_loaded_models: 2,
             download_concurrency: 2,
@@ -654,9 +655,12 @@ mod tests {
         assert_eq!(config.max_queue_depth, 32);
         assert_eq!(config.timeout_ms, 30_000);
         assert_eq!(config.retention_max_age_days, 7);
-        assert_eq!(config.model_registry, "torviello-engine/config/model-registry.toml");
+        assert_eq!(
+            config.model_registry,
+            "torviello-engine/config/model-registry.toml"
+        );
         assert_eq!(config.database_url, "sqlite://data/engine.db");
-        assert_eq!(config.model_root, "models");
+        assert_eq!(config.model_root, "torviello-engine/models");
         assert_eq!(config.max_model_bytes, 1_073_741_824);
         assert_eq!(config.max_loaded_models, 2);
         assert_eq!(config.download_concurrency, 2);

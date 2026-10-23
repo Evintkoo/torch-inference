@@ -3,7 +3,7 @@ use std::fs;
 
 #[test]
 fn openapi_contract_declares_the_registered_route() {
-    let contract = fs::read_to_string("../../torviello-engine/contracts/openapi.yaml")
+    let contract = fs::read_to_string("../../../torviello-engine/contracts/openapi.yaml")
         .expect("openapi.yaml must be readable");
     assert!(contract.contains("openapi: 3.2.1"));
     assert!(contract.contains("/classify:"));
@@ -13,7 +13,7 @@ fn openapi_contract_declares_the_registered_route() {
 
 #[test]
 fn implemented_subset_is_twelve_routes() {
-    let contract = fs::read_to_string("../../torviello-engine/contracts/openapi.first-slice.yaml")
+    let contract = fs::read_to_string("../../../torviello-engine/contracts/openapi.first-slice.yaml")
         .expect("first-slice contract must be readable");
     assert!(contract.contains("openapi: 3.2.1"));
     assert_eq!(contract.matches("\n  /").count(), 12);
