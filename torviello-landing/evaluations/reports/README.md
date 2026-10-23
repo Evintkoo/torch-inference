@@ -16,4 +16,6 @@ A named owner records the decision; unmet thresholds block release.
 
 ## Status
 
-Repository shape only. No artifact, implementation, or evaluation evidence is recorded here yet.
+Active — dated reports are recorded here. First report:
+[2026-10-24-landing-slice-one-qa.md](2026-10-24-landing-slice-one-qa.md) with
+screenshot evidence under `2026-10-24-landing-slice-one-qa/`.

@@ -13,10 +13,14 @@
 
 .tv-hero__ribbon {
   position: absolute;
-  inset: 0;
-  width: 100%;
+  inset: 0 0 0 12%;
+  width: 88%;
   height: 100%;
   pointer-events: none;
+  /* Alpha mask fades every edge so the artwork never hard-clips; the mask
+     color is irrelevant (alpha-only), so it borrows an opaque token. */
+  -webkit-mask-image: radial-gradient(120% 90% at 65% 45%, var(--tv-surface-base) 55%, transparent 88%);
+  mask-image: radial-gradient(120% 90% at 65% 45%, var(--tv-surface-base) 55%, transparent 88%);
 }
 
 /* The ribbon drifts subtly on load; static under reduced motion */

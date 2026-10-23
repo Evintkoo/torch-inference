@@ -1,0 +1,10 @@
+<!-- Copyright (c) 2026 Torviello. -->
+<!-- Torviello brand mark — vector interpretation of the approved board logo
+     (torviello-design/brand/reference-board.png): a swept angular flag bar
+     over a slanted stem, in Torviello Orange with the hover tone as the fold
+     accent. Geometry is mirrored inline in the landing Logo component; swap
+     both together if the official brand files supersede this asset. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <path fill="#FF683B" d="M6 12.5 40 5l-7.2 14.6L13 21.8Z"/>
+  <path fill="#FF855F" d="m14.6 23.6 15.1-2.1-4.3 20.7H13.4Z"/>
+</svg>

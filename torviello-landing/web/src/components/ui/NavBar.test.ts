@@ -72,8 +72,10 @@ test("navbar menu button opens the link list state", () => {
   expect(html).toContain('data-menu="open"');
 });
 
-test("navbar brand links home with the wordmark carrying the name", () => {
+test("navbar brand renders the A5 logo lockup as the home link", () => {
   const html = render(NavBar, { props: base }).html;
   expect(html).toContain('href="#top" aria-label="Torviello home"');
-  expect(html).toContain(">torviello</a>");
+  expect(html).toContain('class="tv-logo__mark"');
+  expect(html).toContain('aria-hidden="true"');
+  expect(html).toContain(">torviello</span>");
 });

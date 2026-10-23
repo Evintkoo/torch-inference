@@ -3,6 +3,7 @@
      toggles the link list below 768px with aria-expanded. The A5 logo lockup is
      deferred pending the brand SVG asset, so the wordmark carries the name. -->
 <script lang="ts">
+  import Logo from "./Logo.svelte";
   import NavLink from "./NavLink.svelte";
 
   interface NavBarLink {
@@ -38,7 +39,7 @@
 
 <header class="tv-navbar">
   <div class="tv-navbar__inner">
-    <a class="tv-navbar__brand" href="#top" aria-label="Torviello home">torviello</a>
+    <Logo />
     <button
       type="button"
       class="tv-navbar__menu"

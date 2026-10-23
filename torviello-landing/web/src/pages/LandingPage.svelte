@@ -84,7 +84,11 @@
 
 <LandingTemplate>
   {#snippet nav()}
-    <NavBar links={navLinks} getStartedHref="#install" githubHref="https://github.com/torviello" />
+    <NavBar
+      links={navLinks}
+      getStartedHref="https://docs.torviello.dev/install"
+      githubHref="https://github.com/torviello"
+    />
   {/snippet}
 
   {#snippet children()}
@@ -96,7 +100,7 @@
         accent="infer."
         body="An AI-native inference engine for the next generation of builders. From experimentation to production, Torviello gives you the speed, control, and flexibility to run AI your way."
         primaryLabel="Get Started →"
-        primaryHref="#install"
+        primaryHref="https://docs.torviello.dev/install"
         ghostLabel="View on GitHub"
         githubHref="https://github.com/torviello"
         cards={heroCards}

@@ -12,6 +12,7 @@ coverage/
 
 # Packaging output
 /dist/
+/torviello-landing/web/qa-out/
 
 # Generated documentation site
 /torviello-docs/target/

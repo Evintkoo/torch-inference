@@ -21,9 +21,8 @@ Public landing page and marketing site. Brand message: The execution layer for A
   `web/src/styles/` consume semantic `--tv-*` tokens only; a raw value where a
   token exists is a review finding.
 - Components: `web/src/components/ui/` — slice-one atoms (Button, NavLink,
-  SectionLabel, TerminalLine) and molecules (NavBar, GlassCard, FeatureItem,
-  AudienceCard), each with Bun server-render tests. The A5 logo lockup is
-  deferred pending the brand SVG asset.
+  SectionLabel, TerminalLine, Logo) and molecules (NavBar, GlassCard,
+  FeatureItem, AudienceCard), each with Bun server-render tests.
 - Page: `web/src/components/organisms/` (HeroSection, FeatureStrip,
   AudienceRow), `web/src/components/sections/` (TerminalDemo, SiteFooter),
   `web/src/template/LandingTemplate.svelte`, and `web/src/pages/LandingPage.svelte`
@@ -43,15 +42,22 @@ Per [GOV-12](../torviello-enforcer/governance/rules/12-independent-unit-packagin
 From `web/`:
 
 - `bun test` — component suite (server-render semantics and class contracts).
+- `bun run test:interaction` — DOM interaction category; requires the dev
+  dependencies of the stack only, runs with `SVELTE_COMPILE_MODE=client`.
 - `bun run typecheck` — `tsc --noEmit` over the app sources.
 - `bun run build` — Vite production build.
+- `bun run scripts/visual-qa.ts <out-dir>` — visual and overflow QA against a
+  running dev server on :5173 (drives the locally installed Chrome).
 
+Evaluation reports with screenshot evidence live in `evaluations/reports/`.
 Repository-wide: `uv run --locked pytest torviello-design/tests torviello-engine/packaging/tests torviello-roles`, `uv run ruff check .`, and `uv run python -m torviello_roles check`. The React console demo has its own suite wired into the repository-root `npm test`.
 
 ## Status
 
-Slice one implemented end to end: design tokens, atoms, molecules, organisms,
-template, and the assembled page with tests and a green build — the site
-renders from `bun run dev`. Follow-ups: the A5 logo lockup awaits the brand
-SVG asset, audience-card photos await media assets, and the F-02 install route
-(#install) must resolve to the docs install page when routing lands.
+Slice one implemented end to end and QA-passed: design tokens, atoms (including
+the A5 logo lockup), molecules, organisms, template, and the assembled page —
+see [evaluations/reports/2026-10-24-landing-slice-one-qa.md](evaluations/reports/2026-10-24-landing-slice-one-qa.md).
+Follow-ups: confirm the placeholder domains (docs.torviello.dev,
+github.com/torviello), replace the vector-interpreted logo mark when official
+brand files exist, add audience-card photography, and run the screen-reader
+pass (designer role evidence).

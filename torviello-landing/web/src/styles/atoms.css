@@ -17,6 +17,7 @@
   font-family: var(--tv-font-sans);
   font-size: var(--tv-size-body);
   font-weight: var(--tv-weight-semibold);
+  text-decoration: none;
   cursor: pointer;
   transition:
     background-color 120ms ease,

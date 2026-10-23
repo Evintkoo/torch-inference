@@ -31,9 +31,9 @@ test("page renders the full board composition in order", () => {
   expect(html).toContain("The execution layer for AI.");
 });
 
-test("page primary actions navigate to the install route", () => {
+test("page primary actions navigate to the docs install page", () => {
   expect(html.match(/tv-button--primary/g)?.length).toBe(2);
-  expect(html.match(/href="#install"/g)?.length).toBe(2);
+  expect(html.match(/href="https:\/\/docs\.torviello\.dev\/install"/g)?.length).toBe(2);
 });
 
 test("page keeps the board composition order", () => {

@@ -10,6 +10,8 @@ Brand identity, design tokens, UI components, and visual assets. Brand message: 
 - `src/` — production implementation.
 - `tests/` — unit, contract, and integration tests.
 - `evaluations/` — plans, datasets, reports, and release decisions.
+- `brand/` — approved brand board (`reference-board.png`) and brand assets
+  (`logo-mark.svg` — vector interpretation of the board logo).
 
 ## Packaging
 
@@ -21,4 +23,6 @@ Run this unit's test categories from `tests/`, then record evaluation evidence i
 
 ## Status
 
-Repository shape only. No implementation, contract, test, or evaluation evidence exists yet.
+Active: the brand board, the design-token contract with parity and contrast
+tests, the landing functional design, and the slice-one design sheets exist.
+The landing implementation lives in torviello-landing.

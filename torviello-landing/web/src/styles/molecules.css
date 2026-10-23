@@ -25,15 +25,25 @@
   padding: var(--tv-space-4) var(--tv-space-16);
 }
 
-.tv-navbar__brand {
+/* A5 Logo lockup — mark + wordmark as the single home link */
+.tv-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tv-space-2);
+  min-height: 44px;
+  text-decoration: none;
+}
+
+.tv-logo__mark {
+  width: 32px;
+  height: 32px;
+}
+
+.tv-logo__wordmark {
   color: var(--tv-text-primary);
   font-family: var(--tv-font-sans);
   font-size: var(--tv-size-body);
   font-weight: var(--tv-weight-semibold);
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
 }
 
 /* Menu button: hidden at desktop widths, the sole nav control below 768px */
@@ -159,6 +169,12 @@
   font-size: var(--tv-size-heading);
 }
 
+/* Inline-svg icons carry no intrinsic size; pin them to icon scale */
+.tv-glass-card__icon svg {
+  width: 40px;
+  height: 40px;
+}
+
 .tv-glass-card__title {
   margin: var(--tv-space-3) 0 var(--tv-space-2);
   color: var(--tv-text-primary);
@@ -179,6 +195,12 @@
   display: block;
   color: var(--tv-action-primary);
   font-size: var(--tv-size-heading);
+}
+
+/* Inline-svg icons carry no intrinsic size; pin them to icon scale */
+.tv-feature-item__icon svg {
+  width: 28px;
+  height: 28px;
 }
 
 .tv-feature-item__title {
