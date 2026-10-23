@@ -1130,7 +1130,18 @@ require(re.search(r"TraceContextPropagator|TextMapPropagator|\btraceparent\b", b
 
 BUNDLES["dashboards"] = r'''
 require(
-    any((SOURCE / name).is_dir() for name in ("monitoring/grafana", "monitoring/dashboards", "dashboards", "grafana")),
+    any(
+        (SOURCE / name).is_dir()
+        for name in (
+            "monitoring/grafana",
+            "monitoring/dashboards",
+            "torviello-serve/monitoring/grafana",
+            "torviello-serve/monitoring/dashboards",
+            "torviello-serve/monitoring",
+            "dashboards",
+            "grafana",
+        )
+    ),
     "no dashboards directory for operator SLOs",
 )
 '''

@@ -226,6 +226,17 @@ def test_observability_04_alerts_slos_dashboards_and_operator_actions() -> None:
     require(source_files(), "no product source files found in the repository")
     require(languages(), "no product source language detected")
     require(
-        any((SOURCE / name).is_dir() for name in ("monitoring/grafana", "monitoring/dashboards", "dashboards", "grafana")),
+        any(
+            (SOURCE / name).is_dir()
+            for name in (
+                "monitoring/grafana",
+                "monitoring/dashboards",
+                "torviello-serve/monitoring/grafana",
+                "torviello-serve/monitoring/dashboards",
+                "torviello-serve/monitoring",
+                "dashboards",
+                "grafana",
+            )
+        ),
         "no dashboards directory for operator SLOs",
     )

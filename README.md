@@ -45,11 +45,12 @@ Every artifact lives inside its owning unit:
 If no unit owns an artifact, record an owner decision on a ticket before
 creating a home for it — the root is never the default. Pre-existing loose
 root directories (for example `assets/`, `media/`, `canvas/`, `notes/`, and
-the deployment locations `config/`, `containers/`, `monitoring/`, `models/`)
-are legacy or scaffold locations: they receive no new deployment content, and
-their consolidation into a unit is an owner decision recorded on a ticket.
-Generated build outputs (`dist/`, `target/`, `node_modules/`) are gitignored
-and never committed.
+the deployment locations `config/`, `containers/`, `benchmarks/`, `models/`,
+`services/`, `web/`) are legacy or scaffold locations: they receive no new
+deployment content, and their consolidation into a unit is an owner decision
+recorded on a ticket. `torviello-serve/monitoring/` holds the consolidated
+monitoring artifacts. Generated build outputs (`dist/`, `target/`,
+`node_modules/`) are gitignored and never committed.
 
 ## Start here
 
