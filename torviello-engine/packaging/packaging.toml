@@ -34,6 +34,13 @@ include = [
 description = "Full package with SQLite persistence, telemetry, and TorchScript execution."
 features = ["full"]
 binary = "torviello-engine"
+# Required by GOV-12-validated packaging: the libtorch cache layout that lets
+# `build --offline` reproduce the full profile without network access.
+cache = [
+  "cargo registry and git caches warmed by `packaging prepare --profile full` (cargo fetch --locked plus one networked release build)",
+  "target/<target>/release holding the warmed full-profile build plan for the declared target triple",
+  "torch-sys libtorch cache (downloaded bundle, or LIBTORCH / LIBTORCH_BUNDLE_PATH when pinned) so offline builds never fetch libtorch",
+]
 include = [
   "LICENSE",
   "NOTICE",

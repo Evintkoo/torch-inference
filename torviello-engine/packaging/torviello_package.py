@@ -135,6 +135,17 @@ def validate(data: dict) -> str:
             raise PackagingError(f"profile {name!r} includes missing files: {missing}")
         if not spec["binary"].strip():
             raise PackagingError(f"profile {name!r} has an empty binary name")
+        if "full" in spec["features"]:
+            layout = spec.get("cache")
+            if (
+                not isinstance(layout, list)
+                or not layout
+                or not all(isinstance(entry, str) and entry.strip() for entry in layout)
+            ):
+                raise PackagingError(
+                    f"profile {name!r} must document its libtorch cache layout as a "
+                    "non-empty list of cache locations for offline builds"
+                )
     return version
 
 
@@ -204,6 +215,7 @@ def plan(data: dict, name: str, *, target: str | None = None) -> dict:
         "target": target or target_triple(),
         "output_dir": product["output_dir"],
         "include": spec["include"],
+        "cache": spec.get("cache", []),
         "source_revision": source_revision(),
         "source_state": source_state(),
     }
@@ -263,7 +275,7 @@ def write_tar_gz(path: Path, entries: list[tuple[str, bytes, int]], epoch: int) 
 
 
 def write_zip(path: Path, entries: list[tuple[str, bytes, int]], epoch: int) -> None:
-    moment = datetime.fromtimestamp(max(epoch, 315532800), tz=UTC)[:6]
+    moment = datetime.fromtimestamp(max(epoch, 315532800), tz=UTC).timetuple()[:6]
     with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
         for name, payload, mode in entries:
             info = zipfile.ZipInfo(name, date_time=moment)
