@@ -5,14 +5,15 @@ name is the role id used by `owner` in a ticket. Numbered documents inside the
 directory describe that role's accountability, working agreement, and evidence
 rules.
 
-| Role id | Accountable for | Documents |
+| Role id | Executes | Documents |
 |---|---|---|
-| [`product-manager`](product-manager/) | ticket store, priorities, session memory, honest status | 4 |
-| [`engineer`](engineer/) | implementing and verifying a ticket within its scope | 3 |
-| [`reviewer`](reviewer/) | independent review before closure | 3 |
+| [`product-manager`](product-manager/) | ticket craft, prioritization, dependency graph, evidence audit, session memory | 4 |
+| [`engineer`](engineer/) | failing test, implementation, bounded verification, handoff | 3 |
+| [`reviewer`](reviewer/) | independent diff review, reproduced checks, verdict | 3 |
 
-Roles are functional, not job titles. One person may hold several roles when the
-governing control allows it; a required independent review still needs a
+Roles are hands-on: each one names the artifacts it produces and the commands it
+runs. Roles are functional, not job titles. One person may hold several roles
+when the governing control allows it; a required independent review still needs a
 different reviewer.
 
 ## Structure

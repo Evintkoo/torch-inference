@@ -1,10 +1,11 @@
 # Reviewer
 
 **Role id:** `reviewer`  
-**Accountable for:** independent review of a ticket's change before closure.
+**Accountable for:** independent technical review of a ticket's change before
+closure.
 
 ## Documents
 
-1. [Accountability](01-accountability.md)
-2. [Review procedure](02-review-procedure.md)
-3. [Separation and escalation](03-separation-and-escalation.md)
+1. [Execution contract](01-execution-contract.md)
+2. [Technical review checklist](02-technical-review-checklist.md)
+3. [Verdict and escalation](03-verdict-and-escalation.md)

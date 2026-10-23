@@ -32,3 +32,5 @@ starts from `brief` instead of reconstructing context from chat.
 - 2026-10-23 — evidence: `uv run pytest torviello-roles` passed; `uv run python -m torviello_roles check` passed
 - 2026-10-23 — roles are now directories: roles/<role-id>/NN-<topic>.md
 - 2026-10-23 — evidence: uv run pytest torviello-roles torviello-enforcer/test_ticket_store.py (27 passed); uv run --directory torviello-roles python -m torviello_roles check (ok: 4 tickets); uv run ruff check torviello-roles passed
+- 2026-10-23 — role definitions rewritten as hands-on execution contracts: runbooks, commands, technical checklists, evidence rules
+- 2026-10-23 — evidence: uv run pytest torviello-roles torviello-enforcer/test_ticket_store.py governance/test_11 (19 passed); ticket check ok

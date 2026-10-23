@@ -5,7 +5,8 @@ Durable work memory and role definitions for the Torviello delivery process.
 A ticket is one Markdown file with TOML front matter under
 [`tickets/`](tickets/). The standard-library CLI derives every view from those
 files, so there is no index to keep in sync. Role definitions under
-[`roles/`](roles/) name the accountable function for each ticket.
+[`roles/`](roles/) are execution contracts: each role names the artifacts it
+produces, the commands it runs, and the evidence it must leave behind.
 
 ## Why it exists
 

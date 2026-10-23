@@ -18,7 +18,7 @@ Torviello aims to be the fastest and lightest inference engine in a declared, re
 - `torviello-landing/` — public landing page and marketing site.
 - `torviello-docs/` — documentation site.
 - `torviello-media/` — product demo and marketing video production.
-- `torviello-roles/` — functional role definitions and the agentic ticket store; tracked work starts here.
+- `torviello-roles/` — hands-on role execution contracts and the agentic ticket store; tracked work starts here.
 
 Each unit carries the same lifecycle shape: `domain/`, `specifications/`, `contracts/`, `src/`, `tests/`, and `evaluations/`, with `README.md` and `AGENTS.md` in every directory.
 
