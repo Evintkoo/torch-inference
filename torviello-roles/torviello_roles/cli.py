@@ -6,6 +6,7 @@ Run from the repository root::
     uv run python -m torviello_roles brief
     uv run python -m torviello_roles new "Short outcome" --owner engineer
     uv run python -m torviello_roles start 0007
+    uv run python -m torviello_roles report --since 2026-10-16
     uv run python -m torviello_roles done 0007 --evidence "uv run pytest passed"
 
 The CLI writes only to the ticket store. It never edits requirements, rules, or
@@ -17,7 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 from . import store
@@ -178,6 +179,66 @@ def cmd_brief(args: argparse.Namespace) -> int:
     return 0
 
 
+def report_since(args: argparse.Namespace) -> tuple[str, str]:
+    today = args.today or date.today().isoformat()
+    if args.since:
+        try:
+            date.fromisoformat(args.since)
+        except ValueError as error:
+            raise TicketError(f"--since must be an ISO date, got {args.since!r}") from error
+        return args.since, today
+    start = date.fromisoformat(today) - timedelta(days=7)
+    return start.isoformat(), today
+
+
+def render_report(payload: dict[str, object]) -> str:
+    counts = payload["counts"]
+    lines = [
+        f"# Ticket report — {payload['generated']}",
+        "",
+        f"Done work counted since {payload['since']}.",
+        "",
+        "## Summary",
+        "",
+        f"- Total: {payload['total']}; open: {payload['open']}; done: {counts['done']}",
+        f"- In progress: {counts['in_progress']}; review: {counts['review']}; "
+        f"blocked: {counts['blocked']}; ready: {counts['ready']}",
+    ]
+    sections = (
+        ("Active work", payload["active"], "last_log"),
+        ("Blocked", payload["blocked"], "last_log"),
+        ("Next", payload["next"], None),
+        (f"Done since {payload['since']}", payload["done_since"], "evidence"),
+        ("Recently updated", payload["recent"], None),
+    )
+    for heading, rows, detail in sections:
+        lines.extend(["", f"## {heading}", ""])
+        if not rows:
+            lines.append("_None._")
+            continue
+        for row in rows:
+            status = row.get("status", "")
+            updated = f"{row['updated']}  " if "updated" in row else ""
+            line = (
+                f"- {updated}{row['id']}  {row.get('priority', '')}  {status:<11} "
+                f"{row.get('owner', '')}  {row['title']}"
+            )
+            if detail and row.get(detail):
+                line += f"\n  {row[detail]}"
+            lines.append(line)
+    return "\n".join(lines)
+
+
+def cmd_report(args: argparse.Namespace) -> int:
+    since, today = report_since(args)
+    payload = store.report(load(args), since, today)
+    if args.format == "json":
+        emit(json.dumps(payload, indent=2, ensure_ascii=False))
+        return 0
+    emit(render_report(payload))
+    return 0
+
+
 def cmd_start(args: argparse.Namespace) -> int:
     ticket = store.find(load(args), args.id)
     store.check_transition(ticket, "in_progress")
@@ -278,6 +339,11 @@ def build_parser() -> argparse.ArgumentParser:
     brief = subparsers.add_parser("brief", help="print the session brief")
     brief.add_argument("--json", action="store_true")
     brief.set_defaults(func=cmd_brief)
+
+    report = subparsers.add_parser("report", help="build a status report from the store")
+    report.add_argument("--format", choices=("markdown", "json"), default="markdown")
+    report.add_argument("--since", help="ISO date for completed work (default: today - 7 days)")
+    report.set_defaults(func=cmd_report)
 
     start = subparsers.add_parser("start", help="move a ticket to in_progress")
     start.add_argument("id")

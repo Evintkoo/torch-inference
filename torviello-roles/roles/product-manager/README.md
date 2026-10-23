@@ -10,6 +10,7 @@ dependency graph, evidence audit, and session memory.
 2. [Session runbook](02-session-runbook.md)
 3. [Ticket craft and prioritization](03-ticket-craft-and-prioritization.md)
 4. [Verification and handoff](04-verification-and-handoff.md)
+5. [Report builder](05-report-builder.md)
 
 This is an execution role. The PM writes tickets, traces IDs, runs the store
 checks, reproduces evidence, and produces decision-ready briefs. It does not

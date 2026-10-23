@@ -122,6 +122,37 @@ def test_summary_ranks_ready_work_and_keeps_recent_activity(store_root: Path) ->
     assert brief["recent"][0]["id"] == "0005"
 
 
+def test_report_separates_completed_work_by_window() -> None:
+    tickets = [
+        make_ticket(id="0001", status="in_progress", priority="P0"),
+        make_ticket(
+            id="0002",
+            status="blocked",
+            body="\n## Log\n\n- 2026-10-22 — blocked: waiting for the API decision\n",
+        ),
+        make_ticket(
+            id="0003",
+            status="done",
+            updated="2026-10-20",
+            body="\n## Log\n\n- 2026-10-20 — evidence: pytest -q — 12 passed\n",
+        ),
+        make_ticket(
+            id="0004",
+            status="done",
+            updated="2026-08-01",
+            body="\n## Log\n\n- 2026-08-01 — evidence: pytest -q — 9 passed\n",
+        ),
+    ]
+
+    payload = store.report(tickets, "2026-10-01", "2026-10-23")
+
+    assert payload["total"] == 4
+    assert payload["open"] == 2
+    assert [row["id"] for row in payload["done_since"]] == ["0003"]
+    assert payload["blocked"][0]["last_log"].endswith("blocked: waiting for the API decision")
+    assert "evidence: pytest -q — 12 passed" in payload["done_since"][0]["evidence"]
+
+
 def test_append_log_keeps_history_in_order() -> None:
     ticket = make_ticket(body="\n## Log\n\n- 2026-10-22 — created\n")
 

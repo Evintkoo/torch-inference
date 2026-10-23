@@ -38,15 +38,20 @@ uv run python -m torviello_roles show 0001
 uv run python -m torviello_roles start 0001
 uv run python -m torviello_roles log 0001 "Ran the contract tests"
 uv run python -m torviello_roles block 0001 --reason "Waiting for the API decision"
+uv run python -m torviello_roles report --since 2026-10-16
 uv run python -m torviello_roles done 0001 --evidence "uv run pytest passed"
 uv run python -m torviello_roles check
 ```
 
 `brief` is the session start: open counts, in-progress and blocked work, ready
-work in priority order, the next ticket, and recent activity. `check` validates
+work in priority order, the next ticket, and recent activity. `report` builds a
+shareable Markdown (or `--format json`) status report: summary counts, active
+and blocked work, the next ticket, and completed work since `--since` (default:
+seven days back from today) with its evidence lines. `check` validates
 the store and exits non-zero on a defect.
 
-Use `--json` on `list`, `show`, and `brief` for agent consumption.
+Use `--json` on `list`, `show`, `brief`, and `report --format json` for agent
+consumption.
 
 ## Ticket lifecycle
 

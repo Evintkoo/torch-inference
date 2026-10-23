@@ -123,3 +123,60 @@ def test_json_output_is_machine_readable(
     assert code == 0
     payload = json.loads(output)
     assert payload[0]["title"] == "JSON view"
+
+
+def test_report_renders_blocked_next_and_completed_sections(
+    store_root: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    run(store_root, capsys, "new", "Blocked item", "--owner", "engineer", "--status", "ready")
+    run(store_root, capsys, "block", "0001", "--reason", "waiting for the owner")
+    run(
+        store_root,
+        capsys,
+        "new",
+        "Next item",
+        "--owner",
+        "engineer",
+        "--status",
+        "ready",
+        "--priority",
+        "P1",
+    )
+    run(store_root, capsys, "new", "Finished item", "--owner", "engineer")
+    run(store_root, capsys, "start", "0003")
+    run(store_root, capsys, "done", "0003", "--evidence", "pytest -q — 9 passed")
+
+    code, output = run(store_root, capsys, "report")
+
+    assert code == 0
+    assert "## Blocked" in output
+    assert "waiting for the owner" in output
+    assert "## Next" in output
+    assert "Next item" in output
+    assert "## Done since 2026-10-16" in output
+    assert "pytest -q — 9 passed" in output
+
+
+def test_report_json_respects_the_since_window(
+    store_root: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    run(store_root, capsys, "new", "Closed work", "--owner", "engineer")
+    run(store_root, capsys, "start", "0001")
+    run(store_root, capsys, "done", "0001", "--evidence", "ruff check — clean")
+
+    code, output = run(store_root, capsys, "report", "--format", "json", "--since", "2026-10-24")
+
+    assert code == 0
+    payload = json.loads(output)
+    assert payload["since"] == "2026-10-24"
+    assert payload["done_since"] == []
+
+
+def test_report_rejects_an_invalid_since_date(
+    store_root: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    run(store_root, capsys, "new", "Any work", "--owner", "engineer")
+
+    code, _ = run(store_root, capsys, "report", "--since", "last-week")
+
+    assert code == 1

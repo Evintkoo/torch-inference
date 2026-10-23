@@ -7,8 +7,10 @@ rules.
 
 | Role id | Executes | Documents |
 |---|---|---|
-| [`product-manager`](product-manager/) | ticket craft, prioritization, dependency graph, evidence audit, session memory | 4 |
+| [`product-manager`](product-manager/) | ticket craft, prioritization, dependency graph, evidence audit, report building, session memory | 5 |
 | [`engineer`](engineer/) | failing test, implementation, bounded verification, handoff | 3 |
+| [`designer`](designer/) | interface states and flows, acceptance copy, accessibility and usability evidence | 3 |
+| [`qa`](qa/) | test matrix design and execution, defect reproduction and reporting | 4 |
 | [`reviewer`](reviewer/) | independent diff review, reproduced checks, verdict | 3 |
 
 Roles are hands-on: each one names the artifacts it produces and the commands it

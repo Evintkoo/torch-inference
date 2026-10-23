@@ -110,6 +110,12 @@ class Ticket:
         entries = self.log_entries()
         return entries[-1][2:] if entries else ""
 
+    def evidence(self) -> str:
+        for entry in reversed(self.log_entries()):
+            if "evidence:" in entry.lower():
+                return entry[2:]
+        return ""
+
     def append_log(self, message: str, today: str) -> None:
         entry = f"- {today} — {message.strip()}"
         if "## Log" in self.body:
@@ -326,17 +332,7 @@ def summary(tickets: list[Ticket]) -> dict[str, object]:
     open_tickets = [ticket for ticket in tickets if ticket.is_open]
 
     def ranked(items: list[Ticket]) -> list[dict[str, str]]:
-        ordered = sorted(items, key=lambda item: (PRIORITIES.index(item.priority), item.id))
-        return [
-            {
-                "id": item.id,
-                "priority": item.priority,
-                "status": item.status,
-                "owner": item.owner,
-                "title": item.title,
-            }
-            for item in ordered
-        ]
+        return _ranked(items)
 
     return {
         "total": len(tickets),
@@ -357,5 +353,52 @@ def summary(tickets: list[Ticket]) -> dict[str, object]:
                 "last_log": item.last_log(),
             }
             for item in sorted(tickets, key=lambda item: (item.updated, item.id), reverse=True)[:5]
+        ],
+    }
+
+
+def _ranked(items: list[Ticket]) -> list[dict[str, str]]:
+    ordered = sorted(items, key=lambda item: (PRIORITIES.index(item.priority), item.id))
+    return [
+        {
+            "id": item.id,
+            "priority": item.priority,
+            "status": item.status,
+            "owner": item.owner,
+            "title": item.title,
+            "last_log": item.last_log(),
+            "evidence": item.evidence(),
+        }
+        for item in ordered
+    ]
+
+
+def report(tickets: list[Ticket], since: str, today: str) -> dict[str, object]:
+    """Build an audience-neutral report from the same store state as the brief."""
+    open_tickets = [ticket for ticket in tickets if ticket.is_open]
+    done_since = [
+        ticket for ticket in tickets if ticket.status == "done" and ticket.updated >= since
+    ]
+    return {
+        "generated": today,
+        "since": since,
+        "total": len(tickets),
+        "open": len(open_tickets),
+        "counts": {
+            status: sum(1 for item in tickets if item.status == status) for status in STATUSES
+        },
+        "active": _ranked([item for item in open_tickets if item.status in ACTIVE_STATUSES]),
+        "blocked": _ranked([item for item in open_tickets if item.status == "blocked"]),
+        "ready": _ranked([item for item in open_tickets if item.status == "ready"]),
+        "next": _ranked([item for item in open_tickets if item.status == "ready"])[:1],
+        "done_since": _ranked(done_since),
+        "recent": [
+            {
+                "id": item.id,
+                "updated": item.updated,
+                "status": item.status,
+                "title": item.title,
+            }
+            for item in sorted(tickets, key=lambda item: (item.updated, item.id), reverse=True)[:10]
         ],
     }
