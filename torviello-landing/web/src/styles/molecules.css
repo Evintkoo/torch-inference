@@ -1,0 +1,282 @@
+/*
+ * Copyright (c) 2026 Torviello.
+ * Slice-one molecules (design sheets M1–M4). Consumes ONLY the semantic tokens
+ * from tokens.css; a raw value here is a review finding. Token-derived
+ * composition (color-mix over var()) keeps every value traceable to the
+ * contract in torviello-design/contracts/design-tokens.json.
+ */
+
+/* M1 NavBar — sticky glass bar over the surface base */
+.tv-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: color-mix(in srgb, var(--tv-surface-base) 90%, transparent);
+  border-bottom: 1px solid var(--tv-border-glass);
+}
+
+.tv-navbar__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tv-space-4);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--tv-space-4) var(--tv-space-16);
+}
+
+.tv-navbar__brand {
+  color: var(--tv-text-primary);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-body);
+  font-weight: var(--tv-weight-semibold);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+/* Menu button: hidden at desktop widths, the sole nav control below 768px */
+.tv-navbar__menu {
+  display: none;
+  min-height: 44px;
+  min-width: 44px;
+  padding: var(--tv-space-2) var(--tv-space-4);
+  background: transparent;
+  border: 1px solid var(--tv-border-glass);
+  border-radius: var(--tv-radius-control);
+  color: var(--tv-text-primary);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-label);
+  cursor: pointer;
+}
+
+.tv-navbar__menu:hover {
+  background: var(--tv-surface-glass);
+}
+
+.tv-navbar__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--tv-space-4);
+  flex: 1;
+  justify-content: space-between;
+}
+
+.tv-navbar__list {
+  display: flex;
+  align-items: center;
+  gap: var(--tv-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tv-navbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--tv-space-3);
+}
+
+/* F-08: below 768px the nav collapses; the menu button drives visibility */
+@media (max-width: 767px) {
+  .tv-navbar__menu {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .tv-navbar__nav {
+    display: none;
+  }
+
+  .tv-navbar__nav[data-menu="open"] {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    padding-bottom: var(--tv-space-4);
+  }
+
+  .tv-navbar__list {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--tv-space-2);
+  }
+
+  .tv-navbar__actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--tv-space-2);
+  }
+}
+
+/* M2 GlassCard — decorative glass panel with a hover lift and glow */
+.tv-glass-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--tv-surface-glass);
+  border: 1px solid var(--tv-border-glass);
+  border-radius: var(--tv-radius-glass);
+  padding: var(--tv-space-6);
+  cursor: default;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.tv-glass-card:hover {
+  background: var(--tv-surface-raised);
+  border-color: var(--tv-action-primary);
+}
+
+.tv-glass-card__glow {
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 24px color-mix(in srgb, var(--tv-action-primary) 25%, transparent);
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.tv-glass-card:hover .tv-glass-card__glow {
+  opacity: 1;
+}
+
+/* The glow is decorative; reduced motion suppresses it entirely */
+@media (prefers-reduced-motion: reduce) {
+  .tv-glass-card,
+  .tv-glass-card__glow {
+    transition: none;
+  }
+
+  .tv-glass-card:hover .tv-glass-card__glow {
+    opacity: 0;
+  }
+}
+
+.tv-glass-card__icon {
+  display: block;
+  color: var(--tv-action-primary);
+  font-size: var(--tv-size-heading);
+}
+
+.tv-glass-card__title {
+  margin: var(--tv-space-3) 0 var(--tv-space-2);
+  color: var(--tv-text-primary);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-body);
+  font-weight: var(--tv-weight-semibold);
+}
+
+.tv-glass-card__caption {
+  margin: 0;
+  color: var(--tv-text-muted);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-body);
+}
+
+/* M3 FeatureItem — one value-strip entry */
+.tv-feature-item__icon {
+  display: block;
+  color: var(--tv-action-primary);
+  font-size: var(--tv-size-heading);
+}
+
+.tv-feature-item__title {
+  margin: var(--tv-space-2) 0 var(--tv-space-1);
+  color: var(--tv-text-primary);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-body);
+  font-weight: var(--tv-weight-semibold);
+}
+
+.tv-feature-item__subcopy {
+  margin: 0;
+  color: var(--tv-text-muted);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-body);
+}
+
+/* Sheet M3 grid: 4-up at 1024px and above, 2x2 below, stacked under 560px */
+.tv-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--tv-space-6);
+}
+
+@media (max-width: 1023px) {
+  .tv-feature-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 559px) {
+  .tv-feature-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* M4 AudienceCard — copy over a decorative photo with a gradient scrim */
+.tv-audience-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--tv-surface-glass);
+  border: 1px solid var(--tv-border-glass);
+  border-radius: var(--tv-radius-glass);
+}
+
+.tv-audience-card__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tv-audience-card__content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 280px;
+  justify-content: flex-end;
+  padding: var(--tv-space-6);
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--tv-surface-base) 0%, transparent),
+    color-mix(in srgb, var(--tv-surface-base) 85%, transparent)
+  );
+  transition: opacity 120ms ease;
+}
+
+/* Decorative hover: the scrim raises slightly; suppressed under reduced motion */
+.tv-audience-card:hover .tv-audience-card__content {
+  opacity: 0.94;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-audience-card__content {
+    transition: none;
+  }
+
+  .tv-audience-card:hover .tv-audience-card__content {
+    opacity: 1;
+  }
+}
+
+.tv-audience-card__eyebrow {
+  margin-bottom: var(--tv-space-2);
+}
+
+.tv-audience-card__heading {
+  margin: 0 0 var(--tv-space-3);
+  color: var(--tv-text-primary);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-heading);
+  font-weight: var(--tv-weight-semibold);
+}
+
+.tv-audience-card__body {
+  margin: 0;
+  color: var(--tv-text-muted);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-body);
+}

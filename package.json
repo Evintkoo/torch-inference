@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "tsx --test torviello-landing/web/src/components/ui/Button.test.tsx torviello-landing/web/src/components/ui/NavLink.test.tsx torviello-landing/web/src/components/ui/SectionLabel.test.tsx torviello-landing/web/src/components/ui/TerminalLine.test.tsx"
+    "test": "tsx --test torviello-landing/web/src/console/Button.test.tsx"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

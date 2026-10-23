@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Torviello.
 import { useState } from "react";
 
-import { Button } from "../../components/ui/Button";
-import { StatePanel } from "../../components/ui/StatePanel";
+import { Button } from "./Button";
+import { StatePanel } from "./StatePanel";
 
 type Status = "loading" | "error" | "empty" | "ready";
 

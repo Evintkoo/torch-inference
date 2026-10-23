@@ -10,15 +10,40 @@ Public landing page and marketing site. Brand message: The execution layer for A
 - `src/` — production implementation.
 - `tests/` — unit, contract, and integration tests.
 - `evaluations/` — plans, datasets, reports, and release decisions.
+- `web/` — the landing web app: Svelte 5 components, Bun tooling, Vite build.
+
+## Web app
+
+- Stack: Svelte 5 (runes), Bun 1.3 (test and scripts), Vite 8 (build),
+  TypeScript 7 for typechecking, happy-dom for future interaction tests.
+- Design source of truth: `torviello-design/contracts/design-tokens.json` and the
+  slice-one design sheets in `torviello-design/specifications/`. Stylesheets in
+  `web/src/styles/` consume semantic `--tv-*` tokens only; a raw value where a
+  token exists is a review finding.
+- Components: `web/src/components/ui/` — slice-one atoms (Button, NavLink,
+  SectionLabel, TerminalLine) and molecules (NavBar, GlassCard, FeatureItem,
+  AudienceCard), each with Bun server-render tests. The A5 logo lockup is
+  deferred pending the brand SVG asset.
+- `web/src/console/` — React inference-demo scaffold inherited from the engine
+  scaffold. It is not landing scope; relocation to a console unit awaits an
+  owner decision.
 
 ## Packaging
 
-Per [GOV-12](../torviello-enforcer/governance/rules/12-independent-unit-packaging.md), this unit is packageable as an independent, versioned artifact (site build artifact); its packaging manifest, version, and build command live inside this unit, never at the repository root. Status: shape only — no packaging manifest or package evidence exists yet.
+Per [GOV-12](../torviello-enforcer/governance/rules/12-independent-unit-packaging.md), this unit is packageable as an independent, versioned artifact (site build artifact); its packaging manifest, version, and build command live inside this unit, never at the repository root. Status: partial — the web app builds inside the unit (`web/` manifest, `bun run build` to `web/dist/`), but no versioned package manifest or packaging evidence exists yet.
 
 ## Validation
 
-Run this unit's test categories from `tests/`, then record evaluation evidence in `evaluations/`. Follow `GOV-06` through `GOV-10` in `torviello-enforcer/governance/`.
+From `web/`:
+
+- `bun test` — component suite (server-render semantics and class contracts).
+- `bun run typecheck` — `tsc --noEmit` over the app sources.
+- `bun run build` — Vite production build.
+
+Repository-wide: `uv run --locked pytest torviello-design/tests torviello-engine/packaging/tests torviello-roles`, `uv run ruff check .`, and `uv run python -m torviello_roles check`. The React console demo has its own suite wired into the repository-root `npm test`.
 
 ## Status
 
-Repository shape only. No implementation, contract, test, or evaluation evidence exists yet.
+Slice one implemented: design tokens, atoms, and molecules with tests and a
+green build. Organisms, the template, and the page (O1–O3, T1, P1) are the next
+implementation slices per the design sheets.
