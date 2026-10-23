@@ -14,5 +14,5 @@ coverage/
 /dist/
 
 # Generated documentation site
-/torviello-docs/docs/book/
+/torviello-docs/target/
 /data/
