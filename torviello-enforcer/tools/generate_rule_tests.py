@@ -1305,6 +1305,25 @@ require(
 
 BUNDLES["process_evidence"] = BUNDLES["record_evidence"]
 
+BUNDLES["ticket_workflow"] = r'''
+roles = src("torviello-roles")
+require(roles.is_dir(), "no torviello-roles directory exists")
+require((roles / "roles").is_dir(), "no role definitions exist")
+require(any(path.is_dir() for path in (roles / "roles").iterdir()), "no role directory exists")
+require(any((roles / "roles").glob("*/[0-9][0-9]-*.md")), "no numbered role document exists")
+tickets = sorted((roles / "tickets").glob("[0-9][0-9][0-9][0-9]-*.md"))
+require(tickets, "no tracked tickets exist")
+ticket_text = read_all(tickets)
+require(re.search(r"\b[A-Z]{2,3}-\d{3}\b", ticket_text), "tickets cite no requirement IDs")
+require("## Acceptance" in ticket_text, "tickets have no acceptance checks")
+require("## Log" in ticket_text, "tickets have no evidence log")
+cli = roles / "torviello_roles"
+require(cli.is_dir(), "no ticket CLI package exists")
+require(any(cli.glob("*.py")), "ticket CLI has no implementation")
+agents = read("AGENTS.md")
+require("torviello_roles" in agents, "repository agent instructions do not require the ticket workflow")
+'''
+
 
 
 BUNDLES["ddd_artifacts"] = r"""
@@ -1490,6 +1509,7 @@ OVERRIDES: dict[tuple[str, int], list[str]] = {
     ("governance", 8): ["cdd_artifacts", "traceability"],
     ("governance", 9): ["tdd_artifacts", "traceability"],
     ("governance", 10): ["edd_artifacts", "traceability"],
+    ("governance", 11): ["ticket_workflow"],
     ("licensing", 1): ["license"],
     ("licensing", 2): ["third_party_notices"],
     ("licensing", 3): ["copyright_headers"],

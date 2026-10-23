@@ -30,7 +30,7 @@ def read(path: Path) -> str:
 
 
 def test_all_rule_documents_have_metadata_and_sections() -> None:
-    assert len(NUMBERED) == 154, f"expected 154 numbered rule documents, found {len(NUMBERED)}"
+    assert len(NUMBERED) == 155, f"expected 155 numbered rule documents, found {len(NUMBERED)}"
     for doc in NUMBERED:
         text = read(doc)
         assert re.search(r"^\*\*Control family:\*\* ", text, re.M), f"{doc}: missing control family"

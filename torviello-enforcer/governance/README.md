@@ -2,7 +2,7 @@
 
 **Development stage:** EDD
 
-This directory contains 10 normative control document(s) and the generated enforcement tests for the **governance** domain (Rule governance and agent standards). The rule documents are normative; the tests enforce them against the repository's product source.
+This directory contains 11 normative control document(s) and the generated enforcement tests for the **governance** domain (Rule governance and agent standards). The rule documents are normative; the tests enforce them against the repository's product source.
 
 ## Layout
 
@@ -24,6 +24,7 @@ This directory contains 10 normative control document(s) and the generated enfor
 | GOV-08 | [08-contract-driven-development.md](rules/08-contract-driven-development.md) | CSC-005, ED-052, ED-055 | [tests/test_08_contract_driven_development.py](tests/test_08_contract_driven_development.py) | Contract-Driven Development (CDD) |
 | GOV-09 | [09-test-driven-development.md](rules/09-test-driven-development.md) | CSC-009, ED-010, ED-011, ED-053, ED-055 | [tests/test_09_test_driven_development.py](tests/test_09_test_driven_development.py) | Test-Driven Development (TDD) |
 | GOV-10 | [10-evaluation-driven-development.md](rules/10-evaluation-driven-development.md) | ED-014, ED-042, ED-054, ED-055 | [tests/test_10_evaluation_driven_development.py](tests/test_10_evaluation_driven_development.py) | Evaluation-Driven Development (EDD) |
+| GOV-11 | [11-work-item-tracking-and-role-memory.md](rules/11-work-item-tracking-and-role-memory.md) | CSC-005, ED-011, ED-042, ORG-001, ORG-002, PDL-010, PDL-011, PDL-013, PDL-014 | [tests/test_11_work_item_tracking_and_role_memory.py](tests/test_11_work_item_tracking_and_role_memory.py) | Work item tracking and role memory |
 
 ## Detailed controls
 
@@ -300,6 +301,45 @@ This directory contains 10 normative control document(s) and the generated enfor
 - Approved exceptions with expiry and owner for any unmet threshold.
 - Finding-to-stage routing and the re-evaluation record.
 - Trace from critical requirements to their evaluation evidence.
+
+### GOV-11 — Work item tracking and role memory
+
+**Objective.** Work must have one durable, current, and reviewable record of what is intended, who owns it, what is blocked, what decision was made, and what evidence exists. The record must survive session restarts, agent handoffs, and context loss without becoming a substitute for approved requirements, specifications, contracts, decision records, or release approval.
+
+**Requirements traced:** CSC-005, ED-011, ED-042, ORG-001, ORG-002, PDL-010, PDL-011, PDL-013, PDL-014
+
+**Normative requirements:**
+
+- **GOV-11.01 — A work item that changes a committed artifact MUST have a ticket before implementation.** The ticket names its owner, outcome, acceptance checks, and constraining requirement, control, and dependent ticket IDs.
+- **GOV-11.02 — A ticket MUST state an observable outcome and acceptance checks.** Completion must be reproducible by another actor and must not be satisfied by document presence alone.
+- **GOV-11.03 — The ticket store MUST be the durable memory of status, decisions, blockers, and evidence.** Entries are dated and append-only; corrections add a new entry instead of rewriting history.
+- **GOV-11.04 — A session or handoff MUST begin from the recorded state rather than from recollection.** The responsible role reads the brief and the log of every in-progress or blocked ticket before acting.
+- **GOV-11.05 — Ticket status MUST follow the defined lifecycle and closure MUST require evidence.** The store rejects undefined transitions; done requires evidence and any required independent review.
+- **GOV-11.06 — A ticket MUST NOT replace the governing artifact or grant authority.** Behavior, contracts, thresholds, exceptions, security decisions, and release decisions stay with their authorized owners.
+- **GOV-11.07 — Ticket ownership MUST resolve to a documented role, and required independence MUST be preserved.** A reviewer required by another control must differ from the author.
+- **GOV-11.08 — Ticket changes MUST be committed with the work they describe.** The record and the artifact share a rollback point, and reported status describes committed evidence.
+- **GOV-11.09 — The ticket store MUST be validated by tooling in the required checks.** Validation detects malformed records, unknown values, unknown owners, unresolvable requirement IDs, dangling or cyclic dependencies, and unevidenced closure.
+- **GOV-11.10 — Detailed plans MAY remain outside the repository while commitments stay recorded.** The ticket still records the outcome, acceptance checks, owner, dependencies, and evidence links.
+
+**Rule document:** [rules/11-work-item-tracking-and-role-memory.md](rules/11-work-item-tracking-and-role-memory.md)
+
+**Enforcement:** [tests/test_11_work_item_tracking_and_role_memory.py](tests/test_11_work_item_tracking_and_role_memory.py)
+
+**Prohibited conditions:**
+
+- Starting committed work without a ticket, or creating one after the fact for appearance.
+- Closing work without recorded evidence or required independent review.
+- Rewriting, deleting, or backdating ticket history.
+- Treating a ticket as a specification, contract, exception, or release approval.
+- Maintaining a second status source that contradicts the store.
+- Storing credentials, personal data, or customer content in a ticket.
+
+**Required evidence:**
+
+- Ticket records with owner roles, outcomes, acceptance checks, linked IDs, and dated evidence.
+- The validation command and its result for the current revision.
+- Commit history showing ticket updates with their artifacts.
+- Review records where independence is required.
 
 ## Verification
 

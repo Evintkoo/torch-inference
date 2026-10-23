@@ -18,6 +18,7 @@ Torviello aims to be the fastest and lightest inference engine in a declared, re
 - `torviello-landing/` — public landing page and marketing site.
 - `torviello-docs/` — documentation site.
 - `torviello-media/` — product demo and marketing video production.
+- `torviello-roles/` — functional role definitions and the agentic ticket store; tracked work starts here.
 
 Each unit carries the same lifecycle shape: `domain/`, `specifications/`, `contracts/`, `src/`, `tests/`, and `evaluations/`, with `README.md` and `AGENTS.md` in every directory.
 
@@ -33,6 +34,17 @@ The first vertical slice is specified in [load-config-and-list-models.feature](t
 ## Development workflow
 
 Behavior-changing work follows the five development-workflow controls ([GOV-06](torviello-enforcer/governance/rules/06-domain-driven-design.md), [GOV-07](torviello-enforcer/governance/rules/07-specification-driven-development.md), [GOV-08](torviello-enforcer/governance/rules/08-contract-driven-development.md), [GOV-09](torviello-enforcer/governance/rules/09-test-driven-development.md), [GOV-10](torviello-enforcer/governance/rules/10-evaluation-driven-development.md)) as one connected, iterative flow: DDD establishes the domain model and invariants, SDD defines testable requirements and acceptance criteria, CDD fixes machine-readable contracts, TDD drives implementation from failing tests, and EDD evaluates the result against pre-established release thresholds. Implementation and tests must trace to a contract, specification, or business rule, and tests, specifications, contracts, and thresholds must not be weakened to make a change pass.
+
+## Work tracking
+
+Tracked work lives in [torviello-roles](torviello-roles/README.md). Start a
+session with `uv run --directory torviello-roles python -m torviello_roles brief`,
+then create or select a ticket before committed work and record dated evidence in
+its log, per [GOV-11](torviello-enforcer/governance/rules/11-work-item-tracking-and-role-memory.md).
+A ticket is durable memory for status, owners, blockers, and evidence; it does
+not replace requirements, specifications, contracts, decision records, or release
+approval. Run `uv run --directory torviello-roles python -m torviello_roles check`
+to validate the store.
 
 ## Documentation assurance
 

@@ -48,6 +48,7 @@ The control structure uses outcome-focused requirements and assessment methods i
 | [08-contract-driven-development.md](../rules/08-contract-driven-development.md) | CSC-005, ED-052, ED-055 | R5 |
 | [09-test-driven-development.md](../rules/09-test-driven-development.md) | CSC-009, ED-010, ED-011, ED-053, ED-055 | R2,R6 |
 | [10-evaluation-driven-development.md](../rules/10-evaluation-driven-development.md) | ED-014, ED-042, ED-054, ED-055 | R1,R2 |
+| [11-work-item-tracking-and-role-memory.md](../rules/11-work-item-tracking-and-role-memory.md) | CSC-005, ED-011, ED-042, ORG-001, ORG-002, PDL-010, PDL-011, PDL-013, PDL-014 | R2,R3 |
 
 ## Coverage review
 
@@ -64,6 +65,7 @@ The control structure uses outcome-focused requirements and assessment methods i
 | Contract-Driven Development | GOV-08 | Applicable; require machine-readable contracts and contract tests |
 | Test-Driven Development | GOV-09 | Applicable; require failing-first tests, categorized suites, and no weakening |
 | Evaluation-Driven Development | GOV-10 | Applicable; require pre-established thresholds, dated report, and release decision |
+| Work item tracking and role memory | GOV-11 | Applicable; require a ticket before committed work, append-only evidence, role ownership, and validated state |
 
 
 ## Lifecycle coverage map (assessed status)
@@ -83,6 +85,7 @@ This map is a rules-text coverage inventory only; it does not establish that pro
 | Operation | unresolved | No dated coverage review or dry-run is recorded; risk is omitting a control at this lifecycle stage | All requirement IDs mapped above; scenario: work crosses this stage without a named owner, control, or evidence | Apply clearly relevant controls; do not pass release-critical gates while applicability is unresolved | Domain owner | Before the next material change and each major release |
 | Incident response | unresolved | No dated coverage review or dry-run is recorded; risk is omitting a control at this lifecycle stage | All requirement IDs mapped above; scenario: work crosses this stage without a named owner, control, or evidence | Apply clearly relevant controls; do not pass release-critical gates while applicability is unresolved | Domain owner | Before the next material change and each major release |
 | Development workflow (DDD → SDD → CDD → TDD → EDD) | unresolved | No dated coverage review or dry-run is recorded; risk is running stages in isolation or skipping traceability | ED-050–ED-055; scenario: a change ships without stage artifacts, traceability, or evaluation evidence | Apply GOV-06–GOV-10; do not pass a release gate while stage evidence is missing | Domain owner | Before the next material change and each major release |
+| Work item tracking and session memory | unresolved | No dated coverage review or dry-run is recorded; risk is untracked work, stale status, or lost handoff context | CSC-005, ED-011, ED-042, ORG-001, ORG-002, PDL-010–PDL-014; scenario: a session reports progress that the store and committed evidence do not support | Apply GOV-11 and validate the ticket store before relying on a status | Domain owner | Before the next material change and each major release |
 | Retirement | unresolved | No dated coverage review or dry-run is recorded; risk is omitting a control at this lifecycle stage | All requirement IDs mapped above; scenario: work crosses this stage without a named owner, control, or evidence | Apply clearly relevant controls; do not pass release-critical gates while applicability is unresolved | Domain owner | Before the next material change and each major release |
 
 ## Maintenance
