@@ -8,9 +8,9 @@ rules.
 | Role id | Executes | Documents |
 |---|---|---|
 | [`product-manager`](product-manager/) | ticket craft, prioritization, dependency graph, evidence audit, report building, session memory | 5 |
-| [`engineer`](engineer/) | failing test, implementation, bounded verification, handoff | 3 |
-| [`designer`](designer/) | interface states and flows, acceptance copy, accessibility and usability evidence | 3 |
-| [`qa`](qa/) | test matrix design and execution, defect reproduction and reporting | 4 |
+| [`engineer`](engineer/) | design before code, implementation craftsmanship, reliability and security, verification, handoff | 5 |
+| [`designer`](designer/) | interface states and flows, acceptance copy, WCAG 2.2 AA and usability evidence | 3 |
+| [`quality-assurance`](quality-assurance/) | test strategy and execution, ISO 25010 mapping, defect reproduction and reporting | 4 |
 | [`reviewer`](reviewer/) | independent diff review, reproduced checks, verdict | 3 |
 
 Roles are hands-on: each one names the artifacts it produces and the commands it

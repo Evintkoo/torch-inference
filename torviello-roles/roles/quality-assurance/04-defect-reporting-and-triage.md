@@ -1,6 +1,6 @@
-# QA defect reporting and triage
+# Quality assurance defect reporting and triage
 
-**Role:** qa  
+**Role:** quality-assurance  
 **Document:** 04 of 04
 
 ## Reproduce first
@@ -39,16 +39,33 @@ the report invalid:
 Open the report as a ticket (`new "..." --label bug --status ready`) and link
 the requirement or contract id the behavior violates.
 
+## Severity and priority
+
+Propose severity by impact and priority by urgency, independently — a severe
+bug with a workaround can be low priority; a trivial bug on a release path can
+be high:
+
+| Severity | Definition |
+|---|---|
+| S1 | data loss, security exposure, safety issue, or the product is unusable |
+| S2 | core flow broken; workaround exists but is costly |
+| S3 | degraded behavior or an unhandled edge; workaround is cheap |
+| S4 | cosmetic or documentation drift |
+
+The human owner sets the final severity and priority; the report proposes,
+it does not decide.
+
 ## Triage rules
 
-- Severity follows impact, not embarrassment: data loss or security exposure is
-  the top tier; cosmetic drift is the bottom.
 - Every defect has one owner role and one linked ticket; duplicates are merged,
   not deleted.
 - A defect found in review returns the ticket to `in_progress` with the report
   attached; it does not silently ride along in the next change.
 - A defect that questions an approved contract, threshold, or decision is
   escalated to the accountable owner, not argued to closure in the ticket.
+- An escaped defect (found after release or closure) gets a brief root-cause
+  note on its report: why the existing tests did not catch it, and which
+  technique (boundary, state transition, failure injection) now covers it.
 
 ## Regression control
 

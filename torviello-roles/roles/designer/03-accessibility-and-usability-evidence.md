@@ -5,14 +5,15 @@
 
 ## Accessibility criteria per element
 
-Every interactive element carries, in the ticket:
+The baseline is WCAG 2.2 Level AA for every user-facing surface. Every
+interactive element carries, in the ticket:
 
 - a name reachable by assistive technology (label or accessible name, not
   placeholder-only);
 - one reachable keyboard path, including focus order and where focus lands
   after dialogs open, close, or fail;
 - a visible focus indicator that survives the design;
-- a target size and spacing that meets the adopted standard;
+- a target size and spacing that meets WCAG 2.2 AA;
 - contrast ratios for text, disabled text, and indicators, with the measured
   values (tool output, not "looks fine");
 - announced feedback for async outcomes (loading, success, failure) so state
@@ -40,7 +41,8 @@ A criterion without its evidence row is unverified and is reported as such.
 2. Run the task with the interface as built — not the mock — on the revision
    under test; record the revision.
 3. Note where users stall, backtrack, or misread; each stall is a finding with
-   the state it occurred in.
+   the state it occurred in, checked against Nielsen's usability heuristics
+   (visibility of status, error recovery, recognition over recall).
 4. Log findings on the ticket with severity and the suggested state change;
    do not redesign inside the review.
 

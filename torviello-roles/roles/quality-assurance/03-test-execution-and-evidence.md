@@ -1,6 +1,6 @@
-# QA test execution and evidence
+# Quality assurance test execution and evidence
 
-**Role:** qa  
+**Role:** quality-assurance  
 **Document:** 03 of 04
 
 ## Before the first run
@@ -50,6 +50,16 @@ A cell is one of exactly five states:
 
 `passed` means the command ran on this revision in this session. Reusing a
 previous session's output is `not-run` plus a citation, never `passed`.
+
+## Measurement rigor
+
+For performance or resource cells:
+
+- Fix the baseline revision and the comparison revision; change one thing.
+- Warm up, repeat, and report the distribution (median and tail), not a single
+  best run.
+- Record the hardware class and load conditions; a measurement without them is
+  an anecdote.
 
 ## Flake handling
 

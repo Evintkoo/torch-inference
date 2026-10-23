@@ -29,10 +29,13 @@
 ## Security
 
 - [ ] Authentication and authorization are enforced at the boundary the control
-      requires; not only in a UI or wrapper.
+      requires; not only in a UI or wrapper (OWASP ASVS L2 for auth surfaces).
 - [ ] Input is validated and bounded before allocation or execution.
 - [ ] Logs redact secrets and avoid unnecessary personal data.
-- [ ] New dependencies are pinned, licensed, and justified.
+- [ ] New dependencies are pinned, licensed, justified, and pass the audit
+      step.
+- [ ] WCAG 2.2 AA criteria hold for user-facing changes (with the designer's
+      evidence).
 
 ## Data and compatibility
 

@@ -62,6 +62,8 @@ Generated from torviello-roles@<revision> on <date>.
 - Never report intent as progress: "in review" is not "done".
 - Blocked work is reported with its owner and age, never hidden in a footnote.
 - Numbers come from one command run, quoted verbatim; do not sum counts by hand.
+- Throughput or reliability metrics (for example the DORA four keys) are
+  reported with their measurement window and source system, never estimated.
 - No secrets, tokens, personal data, or customer content in a report.
 - If the store cannot support the question being asked, say that and open the
   ticket that would make it answerable.

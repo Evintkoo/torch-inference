@@ -1,6 +1,6 @@
-# QA test strategy and coverage
+# Quality assurance test strategy and coverage
 
-**Role:** qa  
+**Role:** quality-assurance  
 **Document:** 02 of 04
 
 ## Trace the matrix before running anything
@@ -17,6 +17,7 @@ to wave through.
 | The documented workflow completes end to end | end-to-end | scenario suites |
 | Degraded, denied, or timed-out dependencies fail safely | failure injection | unit or integration |
 | A claimed measurement (latency, memory, throughput) | benchmark | dated run with revision |
+| A security property holds | security | OWASP WSTG-aligned checks on the touched surface |
 
 ## Coverage rules
 
@@ -30,6 +31,29 @@ to wave through.
 - Platform- or hardware-dependent code is tested with the feature disabled and
   enabled; the disabled path asserts the fallback, not just the absence of a
   crash.
+- Where the build supports it, mutation-style spot checks are welcome evidence:
+  flip the condition, watch the test fail, restore it. A suite that survives a
+  deliberate bug is measuring execution, not correctness.
+
+## Test design techniques
+
+Use the ISTQB catalog deliberately, not by habit:
+
+- Equivalence partitioning for ranges and formats — one representative per
+  class, plus the class edges.
+- Boundary value analysis at every limit: min, min+1, max-1, max, max+1.
+- Decision tables for rule combinations (feature flag × role × state).
+- State transition tests for anything with a lifecycle (session, job, ticket):
+  every transition, and at least one attempted illegal transition.
+- Error guessing informed by the design note's failure modes.
+
+## Quality characteristics
+
+For each ISO/IEC 25010 characteristic the change claims to affect, name the
+check: performance efficiency (measured, with baseline), compatibility
+(platform/feature matrix), reliability (failure injection), security (WSTG
+checks), usability (with the designer's evidence), portability (disabled-path
+fallbacks). A characteristic nobody tests is a claim nobody verified.
 
 ## Test design standards
 
