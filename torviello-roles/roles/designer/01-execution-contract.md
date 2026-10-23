@@ -1,7 +1,7 @@
 # Designer execution contract
 
 **Role:** designer  
-**Document:** 01 of 04
+**Document:** 01 of 05
 
 ## What this role is
 
@@ -29,6 +29,10 @@ that tests can assert.
 
 ## Outputs
 
+- Functional design in the ticket before any visual work: capability
+  statement, numbered functions, and interaction contracts (document 05).
+- A completed design sheet for every atom, molecule, organism, template, and
+  page that enters a specification (document 04).
 - State and flow specification in the ticket: states, triggers, transitions,
   terminal states, and the copy for each message.
 - Acceptance checks written as Given/When/Then with the exact visible result.

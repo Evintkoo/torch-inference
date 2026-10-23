@@ -1,7 +1,7 @@
 # Designer UI principles and atomic composition
 
 **Role:** designer  
-**Document:** 04 of 04
+**Document:** 04 of 05
 
 Every layout, component, and screen specification this role produces follows
 these principles. They are checkable criteria, not taste: an acceptance check
@@ -72,6 +72,39 @@ Rules:
   contract-first discipline the engineer role applies to APIs.
 - The atomic breakdown appears in the design note so the implementation can be
   verified against the same structure.
+
+## Every level is designed: the design sheet
+
+Designing is a deliverable, not an implication: each atom, molecule, organism,
+template, and page that enters a specification has a completed **design
+sheet** on the ticket. A component without its sheet does not enter a spec, a
+review, or a build.
+
+Every sheet carries: name and level, one-sentence purpose, anatomy (its parts
+and the levels they come from), the tokens it consumes (semantic names, never
+raw values), every state it can be in, its contract (props in, events out),
+its accessibility criteria, and usage guidance with at least one "do" and one
+"don't".
+
+Level-specific requirements:
+
+| Level | The sheet must additionally define |
+|---|---|
+| Atom | the base element; every visual property bound to a semantic token; all interactive states (default, hover, focus, active, disabled, loading) with per-state contrast evidence; accessible name; target size |
+| Molecule | the composed atoms (by name and version); arrangement and spacing as tokens; the one job it performs; the events it emits upward |
+| Organism | the molecules and atoms it composes; grid placement; responsive behavior per breakpoint; the data it needs and displays; its empty, loading, error, and degraded variants |
+| Template | the grid regions; the organism slots; breakpoint behavior; no real content |
+| Page | the template used; real content; every state from the states document (loading, empty, partial, error, degraded, unauthorized); entry and exit points of each flow |
+
+Sheet discipline:
+
+- Sheets live on the ticket, next to the acceptance checks they feed.
+- Changing a sheet is a logged change: what moved, why, and which acceptance
+  checks and downstream compositions it affects.
+- A molecule or organism may not consume a raw value where a semantic token
+  exists; that is a finding.
+- Review verifies the build against the sheet, cell by cell — the sheet is the
+  testable form of the design.
 
 ## Configurability through tokens
 
