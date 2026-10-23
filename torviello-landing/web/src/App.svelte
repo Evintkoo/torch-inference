@@ -1,3 +1,7 @@
 <!-- Copyright (c) 2026 Torviello. -->
-<!-- Slice-one shell: the brand anchor target only; sections arrive with P1. -->
-<main id="top"></main>
+<!-- Slice-one app: the assembled landing page. -->
+<script lang="ts">
+  import LandingPage from "./pages/LandingPage.svelte";
+</script>
+
+<LandingPage />

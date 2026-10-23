@@ -15,7 +15,7 @@
 </script>
 
 <div class="tv-feature-item">
-  <span class="tv-feature-item__icon" aria-hidden="true">{icon}</span>
+  <span class="tv-feature-item__icon" aria-hidden="true">{@html icon}</span>
   <h3 class="tv-feature-item__title">{title}</h3>
   <p class="tv-feature-item__subcopy">{subcopy}</p>
 </div>

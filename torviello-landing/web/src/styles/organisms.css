@@ -1,0 +1,112 @@
+/*
+ * Copyright (c) 2026 Torviello.
+ * Slice-one organisms (design sheets O1–O3). Consumes ONLY the semantic
+ * tokens from tokens.css; a raw value here is a review finding. Layout math
+ * (percent viewport clamps, breakpoints) is not token territory.
+ */
+
+/* O1 HeroSection */
+.tv-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.tv-hero__ribbon {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* The ribbon drifts subtly on load; static under reduced motion */
+@media (prefers-reduced-motion: no-preference) {
+  .tv-hero__ribbon {
+    animation: tv-ribbon-drift 12s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes tv-ribbon-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-2%, 2%, 0) scale(1.04);
+  }
+}
+
+.tv-hero__layout {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--tv-space-12);
+  padding-top: var(--tv-space-16);
+  padding-bottom: var(--tv-space-16);
+}
+
+@media (min-width: 1024px) {
+  .tv-hero__layout {
+    grid-template-columns: 1.1fr 1fr;
+    align-items: center;
+  }
+}
+
+.tv-hero__heading {
+  margin: 0 0 var(--tv-space-6);
+  color: var(--tv-text-primary);
+  font-family: var(--tv-font-sans);
+  /* Never below the heading size, never above the display size */
+  font-size: clamp(var(--tv-size-heading), 9vw, var(--tv-size-display));
+  font-weight: var(--tv-weight-semibold);
+  line-height: 1.05;
+}
+
+.tv-hero__line {
+  display: block;
+}
+
+.tv-hero__accent {
+  color: var(--tv-action-primary);
+  font-style: normal;
+}
+
+.tv-hero__body {
+  margin: 0 0 var(--tv-space-8);
+  max-width: 46ch;
+  color: var(--tv-text-muted);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-body);
+  line-height: 1.6;
+}
+
+.tv-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tv-space-3);
+  margin-bottom: var(--tv-space-12);
+}
+
+.tv-hero__cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--tv-space-4);
+}
+
+@media (min-width: 560px) {
+  .tv-hero__cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* O3 AudienceRow — three cards; three-up from 900px, stacked below */
+.tv-audience-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--tv-space-6);
+}
+
+@media (min-width: 900px) {
+  .tv-audience-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

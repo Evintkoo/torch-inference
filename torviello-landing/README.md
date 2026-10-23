@@ -24,6 +24,12 @@ Public landing page and marketing site. Brand message: The execution layer for A
   SectionLabel, TerminalLine) and molecules (NavBar, GlassCard, FeatureItem,
   AudienceCard), each with Bun server-render tests. The A5 logo lockup is
   deferred pending the brand SVG asset.
+- Page: `web/src/components/organisms/` (HeroSection, FeatureStrip,
+  AudienceRow), `web/src/components/sections/` (TerminalDemo, SiteFooter),
+  `web/src/template/LandingTemplate.svelte`, and `web/src/pages/LandingPage.svelte`
+  assemble the full board composition with verbatim copy and product /
+  use-cases / community anchors. Webfonts (Inter, JetBrains Mono) load locally
+  via fontsource.
 - `web/src/console/` — React inference-demo scaffold inherited from the engine
   scaffold. It is not landing scope; relocation to a console unit awaits an
   owner decision.
@@ -44,6 +50,8 @@ Repository-wide: `uv run --locked pytest torviello-design/tests torviello-engine
 
 ## Status
 
-Slice one implemented: design tokens, atoms, and molecules with tests and a
-green build. Organisms, the template, and the page (O1–O3, T1, P1) are the next
-implementation slices per the design sheets.
+Slice one implemented end to end: design tokens, atoms, molecules, organisms,
+template, and the assembled page with tests and a green build — the site
+renders from `bun run dev`. Follow-ups: the A5 logo lockup awaits the brand
+SVG asset, audience-card photos await media assets, and the F-02 install route
+(#install) must resolve to the docs install page when routing lands.

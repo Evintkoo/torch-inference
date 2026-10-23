@@ -15,7 +15,7 @@
 
 <div class="tv-glass-card">
   <span class="tv-glass-card__glow" aria-hidden="true"></span>
-  <span class="tv-glass-card__icon" aria-hidden="true">{icon}</span>
+  <span class="tv-glass-card__icon" aria-hidden="true">{@html icon}</span>
   <p class="tv-glass-card__title">{title}</p>
   <p class="tv-glass-card__caption">{caption}</p>
 </div>

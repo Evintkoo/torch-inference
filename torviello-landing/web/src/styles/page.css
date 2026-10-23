@@ -1,0 +1,153 @@
+/*
+ * Copyright (c) 2026 Torviello.
+ * Slice-one template and page (design sheets T1, P1) plus the terminal demo
+ * and footer sections. Consumes ONLY the semantic tokens from tokens.css.
+ */
+
+/* T1 LandingTemplate — single dark theme, centered 1200px content rhythm */
+.tv-template__nav {
+  border-bottom: 1px solid var(--tv-border-glass);
+  background: color-mix(in srgb, var(--tv-surface-base) 90%, transparent);
+}
+
+.tv-template__main {
+  display: block;
+}
+
+.tv-template__footer {
+  border-top: 1px solid var(--tv-border-glass);
+}
+
+/* Shared section rhythm: stacked slots with space-16 vertical beats */
+.tv-section {
+  padding-top: var(--tv-space-16);
+  padding-bottom: var(--tv-space-16);
+}
+
+.tv-section--hero {
+  padding-top: var(--tv-space-12);
+}
+
+/* Content container: 1200px centered with space-16 side padding (T1) */
+.tv-container {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--tv-space-16);
+  padding-right: var(--tv-space-16);
+}
+
+@media (max-width: 559px) {
+  .tv-container {
+    padding-left: var(--tv-space-4);
+    padding-right: var(--tv-space-4);
+  }
+}
+
+/* Terminal demo — decorative window around the A6 transcript */
+.tv-section--terminal {
+  display: flex;
+  justify-content: center;
+}
+
+.tv-terminal {
+  width: 100%;
+  max-width: 720px;
+  background: var(--tv-surface-glass);
+  border: 1px solid var(--tv-border-glass);
+  border-radius: var(--tv-radius-glass);
+  overflow: hidden;
+}
+
+.tv-terminal__chrome {
+  display: flex;
+  gap: var(--tv-space-2);
+  padding: var(--tv-space-3) var(--tv-space-4);
+  border-bottom: 1px solid var(--tv-border-glass);
+}
+
+.tv-terminal__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--tv-radius-control);
+  background: var(--tv-border-glass);
+}
+
+.tv-terminal__body {
+  padding: var(--tv-space-6);
+  overflow-x: auto;
+}
+
+/* Status lines fade in only where motion is welcome; the text itself is
+   always present, selectable, and complete (F-07 invariant) */
+@media (prefers-reduced-motion: no-preference) {
+  .tv-terminal .tv-terminal-line--status {
+    animation: tv-status-in 400ms ease both;
+  }
+}
+
+@keyframes tv-status-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* Footer */
+.tv-footer {
+  padding: var(--tv-space-12) 0;
+}
+
+.tv-footer__layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tv-space-6);
+}
+
+.tv-footer__wordmark {
+  color: var(--tv-text-primary);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-body);
+  font-weight: var(--tv-weight-semibold);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.tv-footer__tagline {
+  margin: var(--tv-space-1) 0 0;
+  color: var(--tv-text-muted);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-label);
+}
+
+.tv-footer__links {
+  display: flex;
+  gap: var(--tv-space-4);
+}
+
+.tv-footer__link {
+  color: var(--tv-text-primary);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-label);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.tv-footer__link:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--tv-action-primary);
+  text-underline-offset: 4px;
+}
+
+.tv-footer__copyright {
+  margin: 0;
+  color: var(--tv-text-muted);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-label);
+}
