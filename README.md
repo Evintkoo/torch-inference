@@ -40,12 +40,16 @@ Every artifact lives inside its owning unit:
 | Benchmark harnesses and performance evidence | `torviello-bench/` |
 | Inference runtime and serving work | `torviello-engine/`, `torviello-serve/` |
 | Role contracts and tickets | `torviello-roles/` |
+| Deployment and operations artifacts — container images, compose or deploy manifests, environment and runtime configuration, monitoring dashboards, packaged outputs | the owning unit (`torviello-engine/` or `torviello-serve/` for the components they deploy) — never the root |
 
 If no unit owns an artifact, record an owner decision on a ticket before
 creating a home for it — the root is never the default. Pre-existing loose
-root directories (for example `assets/`, `media/`, `canvas/`, `notes/`) are
-legacy: they receive no new content, and their consolidation into a unit is an
-owner decision.
+root directories (for example `assets/`, `media/`, `canvas/`, `notes/`, and
+the deployment locations `config/`, `containers/`, `monitoring/`, `models/`)
+are legacy or scaffold locations: they receive no new deployment content, and
+their consolidation into a unit is an owner decision recorded on a ticket.
+Generated build outputs (`dist/`, `target/`, `node_modules/`) are gitignored
+and never committed.
 
 ## Start here
 

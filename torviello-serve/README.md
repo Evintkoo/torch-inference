@@ -2,6 +2,11 @@
 
 Model serving layer. Brand message: Serve models with predictable behavior.
 
+Deployment and serving artifacts for this unit — container images, compose or
+deploy manifests, environment and runtime configuration, monitoring dashboards
+— live inside this unit, never at the repository root. See the root `README.md`
+root-hygiene section and root `AGENTS.md`.
+
 ## Layout
 
 - `domain/` — domain model, invariants, and ownership.
