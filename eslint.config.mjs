@@ -7,7 +7,7 @@ export default tseslint.config(
   },
   ...tseslint.configs.recommended,
   {
-    files: ["web/**/*.{ts,tsx}"],
+    files: ["torviello-landing/web/**/*.{ts,tsx}"],
     rules: {
       "max-lines": ["warn", 300],
       "max-params": ["warn", 5],

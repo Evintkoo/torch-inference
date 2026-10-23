@@ -226,7 +226,10 @@ def test_directory_03_layout_naming_and_ownership_contracts() -> None:
     require(source_files(), "no product source files found in the repository")
     require(languages(), "no product source language detected")
     require(
-        any((SOURCE / name).is_dir() for name in ("src", "app", "packages", "services", "web")),
+        any(
+            (SOURCE / name).is_dir()
+            for name in ("src", "app", "packages", "torviello-engine", "torviello-serve", "torviello-landing")
+        ),
         "no main module directory exists",
     )
     require(

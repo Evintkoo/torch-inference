@@ -226,15 +226,24 @@ def test_media_production_04_production_code_and_web_integration() -> None:
     require(source_files(), "no product source files found in the repository")
     require(languages(), "no product source language detected")
     require(
-        any((SOURCE / name).is_dir() for name in ("web/src/components/ui", "src/components/ui", "app/components/ui", "components/ui")),
+        any(
+            (SOURCE / name).is_dir()
+            for name in ("torviello-landing/web/src/components/ui", "web/src/components/ui", "src/components/ui", "app/components/ui", "components/ui")
+        ),
         "no shared UI component layer",
     )
     require(
-        any((SOURCE / name).is_dir() for name in ("web/src/features", "src/features", "app/features")),
+        any(
+            (SOURCE / name).is_dir()
+            for name in ("torviello-landing/web/src/features", "web/src/features", "src/features", "app/features")
+        ),
         "no feature-module layer",
     )
 
     require(
-        any((SOURCE / name).is_dir() for name in ("media", "marketing", "assets/media", "content/media")),
+        any(
+            (SOURCE / name).is_dir()
+            for name in ("torviello-media", "media", "marketing", "assets/media", "content/media")
+        ),
         "no media/marketing asset area exists in the monorepo",
     )

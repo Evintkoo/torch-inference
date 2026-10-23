@@ -871,7 +871,10 @@ require(
 
 BUNDLES["layout_contract"] = r'''
 require(
-    any((SOURCE / name).is_dir() for name in ("src", "app", "packages", "services", "web")),
+    any(
+        (SOURCE / name).is_dir()
+        for name in ("src", "app", "packages", "torviello-engine", "torviello-serve", "torviello-landing")
+    ),
     "no main module directory exists",
 )
 require(
@@ -1044,11 +1047,17 @@ require(
 
 BUNDLES["atomic_components"] = r'''
 require(
-    any((SOURCE / name).is_dir() for name in ("web/src/components/ui", "src/components/ui", "app/components/ui", "components/ui")),
+    any(
+        (SOURCE / name).is_dir()
+        for name in ("torviello-landing/web/src/components/ui", "web/src/components/ui", "src/components/ui", "app/components/ui", "components/ui")
+    ),
     "no shared UI component layer",
 )
 require(
-    any((SOURCE / name).is_dir() for name in ("web/src/features", "src/features", "app/features")),
+    any(
+        (SOURCE / name).is_dir()
+        for name in ("torviello-landing/web/src/features", "web/src/features", "src/features", "app/features")
+    ),
     "no feature-module layer",
 )
 '''
@@ -1103,13 +1112,16 @@ BUNDLES["design_review_evidence"] = BUNDLES["record_evidence"]
 
 BUNDLES["media_assets"] = r'''
 require(
-    any((SOURCE / name).is_dir() for name in ("media", "marketing", "assets/media", "content/media")),
+    any(
+        (SOURCE / name).is_dir()
+        for name in ("torviello-media", "media", "marketing", "assets/media", "content/media")
+    ),
     "no media/marketing asset area exists in the monorepo",
 )
 '''
 
 BUNDLES["monorepo"] = r'''
-for area in ("services", "web", "docs", "packaging"):
+for area in ("torviello-engine", "torviello-serve", "torviello-landing", "torviello-docs"):
     require((SOURCE / area).is_dir(), f"monorepo area is missing: {area}")
 '''
 

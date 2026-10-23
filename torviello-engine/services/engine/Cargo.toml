@@ -1,0 +1,106 @@
+# Copyright (c) 2026 Torviello.
+[package]
+name = "torviello-engine"
+version = "1.0.0"
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+argon2 = "0.5"
+jsonwebtoken = "9"
+jsonschema = { version = "0.59", default-features = false }
+image = { version = "0.25", default-features = false, features = ["jpeg", "png"] }
+axum = { version = "0.8", features = ["multipart"] }
+prometheus = "0.14"
+opentelemetry = { version = "0.31", optional = true }
+opentelemetry_sdk = { version = "0.31", optional = true }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "sqlite", "migrate", "macros"], optional = true }
+tch = { version = "0.22", optional = true }
+thiserror = "2"
+time = { version = "0.3", features = ["formatting"] }
+tokio = { version = "1", features = ["full"] }
+tokio-stream = "0.1"
+toml = "1"
+tracing = "0.1"
+uuid = { version = "1", features = ["v4", "serde"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+[features]
+default = ["engine"]
+engine = []
+persistence = ["dep:sqlx"]
+telemetry = ["dep:opentelemetry", "dep:opentelemetry_sdk"]
+torchscript = ["dep:tch", "tch/download-libtorch"]
+full = ["persistence", "telemetry", "torchscript"]
+metal = ["torchscript"]
+vulkan = ["torchscript"]
+
+[dev-dependencies]
+http-body-util = "0.1"
+proptest = "1"
+serde_yaml = "0.9"
+tower = { version = "0.5", features = ["util"] }
+
+[[test]]
+name = "security"
+path = "tests/unit/test_security.rs"
+
+[[test]]
+name = "contract"
+path = "tests/contract/test_contract.rs"
+
+[[test]]
+name = "first_slice"
+path = "tests/contract/test_first_slice.rs"
+
+[[test]]
+name = "model_lifecycle"
+path = "tests/contract/test_model_lifecycle.rs"
+
+[[test]]
+name = "router_parity"
+path = "tests/contract/test_router_parity.rs"
+
+[[test]]
+name = "config_schema"
+path = "tests/contract/test_config_schema.rs"
+
+[[test]]
+name = "transport_limits"
+path = "tests/contract/test_transport_limits.rs"
+
+[[test]]
+name = "endpoint_usage"
+path = "tests/contract/test_endpoint_usage.rs"
+
+[[test]]
+name = "hardware_fallback"
+path = "tests/integration/test_hardware_fallback.rs"
+
+[[test]]
+name = "oidc"
+path = "tests/contract/test_oidc.rs"
+
+[[test]]
+name = "classify"
+path = "tests/contract/test_classify.rs"
+
+[[test]]
+name = "persistence"
+path = "tests/integration/test_persistence.rs"
+required-features = ["persistence"]
+
+[[test]]
+name = "logging"
+path = "tests/integration/test_logging.rs"
+
+[[test]]
+name = "metrics_contract"
+path = "tests/contract/test_metrics.rs"

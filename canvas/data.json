@@ -52,84 +52,84 @@
           "label": "HTTP router and limits",
           "kind": "service",
           "status": "implemented",
-          "path": "services/engine/src/api.rs"
+          "path": "torviello-engine/services/engine/src/api.rs"
         },
         {
           "id": "auth",
           "label": "JWT authentication and RBAC",
           "kind": "module",
           "status": "implemented",
-          "path": "services/engine/src/auth.rs"
+          "path": "torviello-engine/services/engine/src/auth.rs"
         },
         {
           "id": "catalog",
           "label": "Catalog endpoints",
           "kind": "module",
           "status": "implemented",
-          "path": "services/engine/src/api/catalog.rs"
+          "path": "torviello-engine/services/engine/src/api/catalog.rs"
         },
         {
           "id": "models_api",
           "label": "Model lifecycle endpoints",
           "kind": "module",
           "status": "implemented",
-          "path": "services/engine/src/api/models.rs"
+          "path": "torviello-engine/services/engine/src/api/models.rs"
         },
         {
           "id": "classify_api",
           "label": "Classification endpoint",
           "kind": "module",
           "status": "implemented",
-          "path": "services/engine/src/api/classify.rs"
+          "path": "torviello-engine/services/engine/src/api/classify.rs"
         },
         {
           "id": "domain",
           "label": "Inference policy",
           "kind": "module",
           "status": "implemented",
-          "path": "services/engine/src/domain.rs"
+          "path": "torviello-engine/services/engine/src/domain.rs"
         },
         {
           "id": "model_manager",
           "label": "Model manager and single-flight load",
           "kind": "module",
           "status": "implemented",
-          "path": "services/engine/src/runtime.rs"
+          "path": "torviello-engine/services/engine/src/runtime.rs"
         },
         {
           "id": "acquisition",
           "label": "Confined model acquisition",
           "kind": "module",
           "status": "implemented",
-          "path": "services/engine/src/acquisition.rs"
+          "path": "torviello-engine/services/engine/src/acquisition.rs"
         },
         {
           "id": "asset_store",
           "label": "Asset confinement and integrity",
           "kind": "module",
           "status": "implemented",
-          "path": "services/engine/src/asset.rs"
+          "path": "torviello-engine/services/engine/src/asset.rs"
         },
         {
           "id": "model_registry",
           "label": "Catalog parsing",
           "kind": "module",
           "status": "implemented",
-          "path": "services/engine/src/model.rs"
+          "path": "torviello-engine/services/engine/src/model.rs"
         },
         {
           "id": "error_envelope",
           "label": "Problem details errors",
           "kind": "module",
           "status": "implemented",
-          "path": "services/engine/src/error.rs"
+          "path": "torviello-engine/services/engine/src/error.rs"
         },
         {
           "id": "config",
           "label": "TOML and environment configuration",
           "kind": "module",
           "status": "implemented",
-          "path": "services/engine/src/config.rs"
+          "path": "torviello-engine/services/engine/src/config.rs"
         }
       ]
     },
@@ -142,35 +142,35 @@
           "label": "Liveness and readiness",
           "kind": "module",
           "status": "implemented",
-          "path": "services/engine/src/api/health.rs"
+          "path": "torviello-engine/services/engine/src/api/health.rs"
         },
         {
           "id": "metrics_endpoint",
           "label": "Prometheus exposition",
           "kind": "module",
           "status": "implemented",
-          "path": "services/engine/src/api/metrics.rs"
+          "path": "torviello-engine/services/engine/src/api/metrics.rs"
         },
         {
           "id": "logging",
           "label": "JSON logs and correlation IDs",
           "kind": "service",
           "status": "implemented",
-          "path": "services/engine/src/observability.rs"
+          "path": "torviello-engine/services/engine/src/observability.rs"
         },
         {
           "id": "prometheus",
           "label": "Prometheus server",
           "kind": "external",
           "status": "implemented",
-          "path": "monitoring/prometheus/prometheus.yml"
+          "path": "torviello-serve/monitoring/prometheus/prometheus.yml"
         },
         {
           "id": "alerts",
           "label": "Alert rules",
           "kind": "deployment",
           "status": "implemented",
-          "path": "monitoring/prometheus/alerts.yml"
+          "path": "torviello-serve/monitoring/prometheus/alerts.yml"
         },
         {
           "id": "otel",
@@ -183,7 +183,7 @@
           "label": "Grafana dashboards",
           "kind": "deployment",
           "status": "planned",
-          "path": "monitoring/dashboards"
+          "path": "torviello-serve/monitoring/dashboards"
         }
       ]
     },
@@ -196,28 +196,28 @@
           "label": "Model registry TOML",
           "kind": "datastore",
           "status": "implemented",
-          "path": "config/model-registry.toml"
+          "path": "torviello-engine/config/model-registry.toml"
         },
         {
           "id": "model_assets",
           "label": "Model asset root",
           "kind": "datastore",
           "status": "implemented",
-          "path": "models"
+          "path": "torviello-engine/models"
         },
         {
           "id": "sqlite",
           "label": "SQLite metadata",
           "kind": "datastore",
           "status": "planned",
-          "path": "services/engine/src/persistence.rs"
+          "path": "torviello-engine/services/engine/src/persistence.rs"
         },
         {
           "id": "migrations",
           "label": "Forward-only migrations",
           "kind": "datastore",
           "status": "implemented",
-          "path": "services/engine/migrations"
+          "path": "torviello-engine/services/engine/migrations"
         }
       ]
     },
@@ -230,35 +230,35 @@
           "label": "Packaging driver",
           "kind": "pipeline",
           "status": "implemented",
-          "path": "packaging/torviello_package.py"
+          "path": "torviello-engine/packaging/torviello_package.py"
         },
         {
           "id": "engine_bundle",
           "label": "Engine-only bundle",
           "kind": "deployment",
           "status": "implemented",
-          "path": "packaging/packaging.toml"
+          "path": "torviello-engine/packaging/packaging.toml"
         },
         {
           "id": "full_bundle",
           "label": "Full bundle",
           "kind": "deployment",
           "status": "planned",
-          "path": "packaging/packaging.toml"
+          "path": "torviello-engine/packaging/packaging.toml"
         },
         {
           "id": "systemd",
           "label": "systemd unit",
           "kind": "deployment",
           "status": "implemented",
-          "path": "packaging/systemd/torviello-engine.service"
+          "path": "torviello-engine/packaging/systemd/torviello-engine.service"
         },
         {
           "id": "container",
           "label": "Non-root container",
           "kind": "deployment",
           "status": "implemented",
-          "path": "containers/Dockerfile"
+          "path": "torviello-engine/containers/Dockerfile"
         },
         {
           "id": "ci_pipeline",
@@ -309,7 +309,7 @@
           "label": "Benchmarks and evaluations",
           "kind": "pipeline",
           "status": "implemented",
-          "path": "benchmarks"
+          "path": "torviello-bench/benchmarks"
         },
         {
           "id": "enforcer",

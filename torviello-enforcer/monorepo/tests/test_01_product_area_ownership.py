@@ -225,7 +225,7 @@ def test_monorepo_01_product_area_ownership() -> None:
         pytest.fail(f"[{CONTROL}] source tree not found: {SOURCE}")
     require(source_files(), "no product source files found in the repository")
     require(languages(), "no product source language detected")
-    for area in ("services", "web", "docs", "packaging"):
+    for area in ("torviello-engine", "torviello-serve", "torviello-landing", "torviello-docs"):
         require((SOURCE / area).is_dir(), f"monorepo area is missing: {area}")
 
     require(src("docs/ARCHITECTURE.md").exists(), "no architecture documentation")

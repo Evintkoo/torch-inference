@@ -14,7 +14,7 @@ boundary.
 | API or contract | OpenAPI validation; contract tests; router parity check |
 | Configuration | schema test; example config parse; environment override test |
 | Persistence | migration test; rollback or downgrade note; integration test with the feature enabled |
-| Packaging or release | `uv run python packaging/torviello_package.py validate`; bundle plan or verify |
+| Packaging or release | `uv run python torviello-engine/packaging/torviello_package.py validate`; bundle plan or verify |
 | Python tooling | `uv run pytest <path>`; `uv run ruff check <path>` |
 | Security-relevant | the audit step; auth surface tests for the touched boundary |
 | Cross-cutting rule | the generated conformance tests for the affected control |

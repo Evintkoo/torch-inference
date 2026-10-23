@@ -1,0 +1,24 @@
+# Copyright (c) 2026 Torviello.
+# Run from the repository root on a Linux host with host networking:
+#   TORCH_AUTH_JWT_SECRET=<secret> docker compose -f torviello-engine/containers/compose.yaml --profile cpu up --build
+services:
+  engine:
+    build:
+      context: ..
+      dockerfile: torviello-engine/containers/Dockerfile
+      args:
+        CARGO_FEATURES: engine
+    image: torviello/engine:1.0.0
+    profiles: ["cpu"]
+    network_mode: host
+    environment:
+      TORCH_CONFIG: /opt/torviello/config/default.toml
+      TORCH_HOST: 127.0.0.1
+      TORCH_AUTH_ENABLED: "true"
+      TORCH_AUTH_JWT_SECRET: ${TORCH_AUTH_JWT_SECRET:?set TORCH_AUTH_JWT_SECRET}
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped

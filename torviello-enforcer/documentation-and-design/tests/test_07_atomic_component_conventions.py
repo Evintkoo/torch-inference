@@ -226,10 +226,16 @@ def test_documentation_and_design_07_atomic_component_conventions() -> None:
     require(source_files(), "no product source files found in the repository")
     require(languages(), "no product source language detected")
     require(
-        any((SOURCE / name).is_dir() for name in ("web/src/components/ui", "src/components/ui", "app/components/ui", "components/ui")),
+        any(
+            (SOURCE / name).is_dir()
+            for name in ("torviello-landing/web/src/components/ui", "web/src/components/ui", "src/components/ui", "app/components/ui", "components/ui")
+        ),
         "no shared UI component layer",
     )
     require(
-        any((SOURCE / name).is_dir() for name in ("web/src/features", "src/features", "app/features")),
+        any(
+            (SOURCE / name).is_dir()
+            for name in ("torviello-landing/web/src/features", "web/src/features", "src/features", "app/features")
+        ),
         "no feature-module layer",
     )

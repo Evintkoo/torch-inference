@@ -228,5 +228,5 @@ def test_monorepo_02_independent_products_and_releases() -> None:
     release = workflow_text().lower()
     require("engine" in release and "full" in release, "no engine-only and full release variants")
 
-    for area in ("services", "web", "docs", "packaging"):
+    for area in ("torviello-engine", "torviello-serve", "torviello-landing", "torviello-docs"):
         require((SOURCE / area).is_dir(), f"monorepo area is missing: {area}")

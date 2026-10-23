@@ -2,7 +2,7 @@
 
 The execution layer for AI. Torviello is an AI-native engineering infrastructure brand; its initial product is a PyTorch-based inference engine designed for AI workloads.
 
-This repository contains product requirements, the repository shape for the product units, normative engineering rules, and a non-production scaffold under `services/` and `web/`. The presence of a directory, requirement, rule, or buildable scaffold does not establish product implementation or conformance.
+This repository contains product requirements, the repository shape for the product units, normative engineering rules, and a non-production scaffold under [`torviello-engine/services/`](torviello-engine/services/) and [`torviello-landing/web/`](torviello-landing/web/). The presence of a directory, requirement, rule, or buildable scaffold does not establish product implementation or conformance.
 
 ## Competitive target
 
@@ -43,14 +43,14 @@ Every artifact lives inside its owning unit:
 | Deployment and operations artifacts — container images, compose or deploy manifests, environment and runtime configuration, monitoring dashboards, packaged outputs | the owning unit (`torviello-engine/` or `torviello-serve/` for the components they deploy) — never the root |
 
 If no unit owns an artifact, record an owner decision on a ticket before
-creating a home for it — the root is never the default. Pre-existing loose
-root directories (for example `assets/`, `media/`, `canvas/`, `notes/`, and
-the deployment locations `config/`, `containers/`, `benchmarks/`, `models/`,
-`services/`, `web/`) are legacy or scaffold locations: they receive no new
-deployment content, and their consolidation into a unit is an owner decision
-recorded on a ticket. `torviello-serve/monitoring/` holds the consolidated
-monitoring artifacts. Generated build outputs (`dist/`, `target/`,
-`node_modules/`) are gitignored and never committed.
+creating a home for it — the root is never the default. The legacy root
+directories have been consolidated into their units (`monitoring/` into
+`torviello-serve/`, `benchmarks/` into `torviello-bench/`, `web/` into
+`torviello-landing/`, and `models/`, `config/`, `containers/`, `packaging/`,
+and `services/` into `torviello-engine/`). What remains at the root is the
+fixed file set, the product units, the normative layer (`requirements/`,
+`docs/`, `governance/`), the named `canvas/` blueprint exception, and
+gitignored build outputs (`dist/`, `target/`, `node_modules/`, `notes/`).
 
 ## Start here
 

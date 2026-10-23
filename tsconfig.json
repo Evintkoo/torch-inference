@@ -9,5 +9,5 @@
     "noEmit": true,
     "types": ["node", "react", "react-dom"]
   },
-  "include": ["web/src/**/*"]
+  "include": ["torviello-landing/web/src/**/*"]
 }

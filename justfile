@@ -12,27 +12,30 @@ verify:
     npm run build
     npm test
     uv sync --locked
-    uv run python packaging/torviello_package.py validate
+    uv run python torviello-engine/packaging/torviello_package.py validate
     uv run python torviello-engine/contracts/tools/contracts.py check
     uv run python torviello-engine/contracts/tools/status_tester.py
     uv run pytest
     uv run ruff check .
+
+coverage:
+    cargo llvm-cov --workspace --all-features --fail-under-lines 95 --summary-only
 
 release features="engine":
     cargo build --release --locked --no-default-features --features {{features}}
 
 bench:
     cargo build --release --locked --no-default-features --features torchscript
-    uv run python benchmarks/classify_bench.py --requests 1000 --warmup 30 --idle-seconds 3 --budget benchmarks/budgets/classify-cpu.json
+    uv run python torviello-bench/benchmarks/classify_bench.py --requests 1000 --warmup 30 --idle-seconds 3 --budget torviello-bench/benchmarks/budgets/classify-cpu.json
 
 package profile="engine":
-    uv run python packaging/torviello_package.py build --profile {{profile}} --offline
+    uv run python torviello-engine/packaging/torviello_package.py build --profile {{profile}} --offline
 
 package-prepare profile="engine":
-    uv run python packaging/torviello_package.py prepare --profile {{profile}}
+    uv run python torviello-engine/packaging/torviello_package.py prepare --profile {{profile}}
 
 package-verify manifest:
-    uv run python packaging/torviello_package.py verify {{manifest}}
+    uv run python torviello-engine/packaging/torviello_package.py verify {{manifest}}
 
 docs:
     mdbook build docs

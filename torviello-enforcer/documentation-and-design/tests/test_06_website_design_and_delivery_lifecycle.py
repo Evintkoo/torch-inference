@@ -242,6 +242,9 @@ def test_documentation_and_design_06_website_design_and_delivery_lifecycle() -> 
     require(engines, "no documentation rendering engine is configured")
 
     require(
-        any((SOURCE / name).is_dir() for name in ("media", "marketing", "assets/media", "content/media")),
+        any(
+            (SOURCE / name).is_dir()
+            for name in ("torviello-media", "media", "marketing", "assets/media", "content/media")
+        ),
         "no media/marketing asset area exists in the monorepo",
     )

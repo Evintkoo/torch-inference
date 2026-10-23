@@ -15,10 +15,10 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["torviello-enforcer", "services/engine-py", "benchmarks/tests", "packaging/tests", "torviello-roles"]
+testpaths = ["torviello-enforcer", "torviello-engine/services/engine-py", "torviello-bench/benchmarks/tests", "torviello-engine/packaging/tests", "torviello-roles"]
 python_files = ["test_*.py"]
 addopts = ["-ra"]
-pythonpath = ["services/engine-py", "benchmarks", "torviello-roles"]
+pythonpath = ["torviello-engine/services/engine-py", "torviello-bench/benchmarks", "torviello-roles"]
 
 [tool.uv]
 package = false

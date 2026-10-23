@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://torviello.local/config.schema.json",
+  "title": "Torviello Engine configuration",
+  "type": "object",
+  "required": [
+    "host",
+    "port",
+    "require_auth",
+    "max_body_bytes",
+    "timeout_ms",
+    "schema",
+    "model_registry"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string"
+    },
+    "host": {
+      "type": "string",
+      "default": "127.0.0.1"
+    },
+    "port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "require_auth": {
+      "type": "boolean",
+      "const": true
+    },
+    "auth_mode": {
+      "type": "string",
+      "enum": ["local", "oidc"],
+      "default": "local",
+      "description": "local uses the loopback HS256 secret; oidc validates asymmetric tokens against JWKS."
+    },
+    "oidc_issuer": {
+      "type": "string",
+      "pattern": "^(|https://.+)$"
+    },
+    "oidc_audience": {
+      "type": "string"
+    },
+    "oidc_jwks_url": {
+      "type": "string",
+      "pattern": "^(|https?://.+)$",
+      "description": "HTTPS JWKS endpoint; plain HTTP is accepted only for loopback tests."
+    },
+    "oidc_clock_skew_seconds": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 300,
+      "default": 60
+    },
+    "auth_enabled": {
+      "type": "boolean",
+      "const": true,
+      "deprecated": true,
+      "description": "Deprecated alias for require_auth; it cannot disable authentication."
+    },
+    "max_body_bytes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "max_frame_bytes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "max_batch_size": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "max_queue_depth": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "timeout_ms": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "shutdown_timeout_ms": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "retention_max_age_days": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "max_size_bytes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "rate_limit_per_minute": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "decompression_max_expansion_bytes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "tls_min_version": {
+      "type": "string"
+    },
+    "cors_allowed_origin": {
+      "type": "string"
+    },
+    "accelerator_fallback": {
+      "type": "string"
+    },
+    "accelerators": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cuda": {
+          "type": "boolean"
+        },
+        "metal": {
+          "type": "boolean"
+        },
+        "vulkan": {
+          "type": "boolean"
+        },
+        "rocm": {
+          "type": "boolean"
+        },
+        "coreml": {
+          "type": "boolean"
+        },
+        "directml": {
+          "type": "boolean"
+        }
+      }
+    },
+    "access_control": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "default_public": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, routes not listed in either list are public."
+        },
+        "public_routes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^/"
+          }
+        },
+        "private_routes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^/"
+          }
+        }
+      }
+    },
+    "secrets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "variables"
+      ],
+      "properties": {
+        "source": {
+          "type": "string",
+          "enum": [
+            "environment"
+          ]
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "model_registry": {
+      "type": "string",
+      "minLength": 1
+    },
+    "database_url": {
+      "type": "string",
+      "pattern": "^sqlite:",
+      "description": "Embedded SQLite URL used by the persistence feature."
+    },
+    "model_root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "max_model_bytes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "max_loaded_models": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "0 disables the capacity limit explicitly."
+    },
+    "download_concurrency": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "download_timeout_ms": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "model_source_allowlist": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
+    }
+  },
+  "additionalProperties": false
+}

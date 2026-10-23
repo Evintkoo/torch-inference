@@ -227,7 +227,10 @@ def test_media_production_03_media_design_system_and_content_templates() -> None
     require(source_files(), "no product source files found in the repository")
     require(languages(), "no product source language detected")
     require(
-        any((SOURCE / name).is_dir() for name in ("media", "marketing", "assets/media", "content/media")),
+        any(
+            (SOURCE / name).is_dir()
+            for name in ("torviello-media", "media", "marketing", "assets/media", "content/media")
+        ),
         "no media/marketing asset area exists in the monorepo",
     )
 

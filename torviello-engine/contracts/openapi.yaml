@@ -28,9 +28,50 @@ tags:
   - name: Assistant
   - name: Observability
   - name: Administration
+  - name: Documentation
 security:
   - bearerAuth: []
 paths:
+  /docs:
+    get:
+      tags: [Documentation]
+      operationId: getApiReference
+      summary: Serve the embedded Scalar API reference.
+      description: Self-contained HTML that loads the bundled Scalar asset and the OpenAPI document from this server.
+      security: []
+      responses:
+        "500": { $ref: "#/components/responses/InternalError" }
+        "200":
+          description: Scalar API reference page.
+          content:
+            text/html:
+              schema: { type: string }
+  /openapi.yaml:
+    get:
+      tags: [Documentation]
+      operationId: getOpenApiDocument
+      summary: Serve the OpenAPI contract.
+      security: []
+      responses:
+        "500": { $ref: "#/components/responses/InternalError" }
+        "200":
+          description: OpenAPI 3.2 document.
+          content:
+            application/yaml:
+              schema: { type: string }
+  /assets/scalar.js:
+    get:
+      tags: [Documentation]
+      operationId: getScalarAsset
+      summary: Serve the bundled Scalar JavaScript.
+      security: []
+      responses:
+        "500": { $ref: "#/components/responses/InternalError" }
+        "200":
+          description: Scalar standalone bundle.
+          content:
+            text/javascript:
+              schema: { type: string }
   /health:
     get:
       tags: [Health]
@@ -662,7 +703,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: HS256, HS384, or HS512. Disabled by default in local mode.
+      description: Local mode uses HS256; hosted OIDC mode accepts ES256, RS256, or PS256 and rejects shared-secret algorithms.
   parameters:
     ModelId:
       name: modelId
