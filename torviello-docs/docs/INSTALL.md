@@ -4,6 +4,21 @@ Copyright (c) 2026 Torviello.
 
 ## Install
 
+### Windows
+
+1. Download the MSI from the release artifacts
+   (`torviello-engine-<version>-engine-x86_64-pc-windows-msvc.msi`), produced by
+   the `windows-installer` CI job.
+2. Verify the SHA-256 checksum published next to the artifact.
+3. Run the MSI (double-click, or `msiexec /i <file> /qn` for silent install).
+   The installer copies the engine to `Program Files\Torviello Engine` and adds
+   its `bin\` directory to the system `PATH`.
+4. Verify: open a new terminal and run `torviello-engine --help`.
+5. Configure via environment variables (`TORCH_CONFIG`, `TORCH_AUTH_JWT_SECRET`,
+   `TORCH_PORT`, …) exactly as documented for the compose deployment.
+
+### Linux and macOS
+
 1. Download the signed release artifact for your platform.
 2. Verify the SHA-256 checksum and signature.
 3. Extract the bundle to `/opt/torviello`, preserving the `bin/` and

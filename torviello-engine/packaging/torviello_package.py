@@ -17,13 +17,16 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import functools
 import gzip
 import hashlib
+import importlib.util
 import io
 import json
 import logging
 import os
 import platform
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -252,7 +255,7 @@ def deterministic_bytes(data: bytes) -> bytes:
 
 
 def archive_entries(binary: Path, spec: dict, provenance: dict) -> list[tuple[str, bytes, int]]:
-    entries = [(f"bin/{spec['binary']}", binary.read_bytes(), 0o755)]
+    entries = [(f"bin/{binary.name}", binary.read_bytes(), 0o755)]
     for item in spec["include"]:
         entries.append((f"share/torviello/{item}", (ROOT / item).read_bytes(), 0o644))
     entries.append(("share/torviello/MANIFEST.json", deterministic_bytes(provenance), 0o644))
@@ -291,6 +294,18 @@ def serialize(path: Path, entries: list[tuple[str, bytes, int]], epoch: int) -> 
         write_tar_gz(path, entries, epoch)
 
 
+@functools.lru_cache(maxsize=1)
+def _load_wix_installer():
+    """Load the sibling WiX generator module (the driver runs as a plain script)."""
+    location = Path(__file__).resolve().parent / "wix_installer.py"
+    spec = importlib.util.spec_from_file_location("torviello_wix_installer", location)
+    if spec is None or spec.loader is None:
+        raise PackagingError(f"cannot load installer generator: {location}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def command_validate(args: argparse.Namespace) -> int:
     data = load_manifest()
     version = validate(data)
@@ -326,7 +341,7 @@ def command_build(args: argparse.Namespace) -> int:
     epoch = source_epoch()
     revision = source_revision()
     files = [
-        {"path": f"bin/{spec['binary']}", "sha256": sha256_file(binary), "mode": "0755"},
+        {"path": f"bin/{binary.name}", "sha256": sha256_file(binary), "mode": "0755"},
     ]
     for item in spec["include"]:
         files.append(
@@ -402,6 +417,24 @@ def command_verify(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_installer(args: argparse.Namespace) -> int:
+    wix_installer = _load_wix_installer()
+    summary = wix_installer.installer_document(args.manifest, args.archive, args.out)
+    definition = Path(summary["definition"])
+    emit(json.dumps(summary, indent=2))
+    if not args.wix:
+        return 0
+    wix = shutil.which("wix")
+    if not wix:
+        raise PackagingError(
+            "wix toolset not found on PATH; install with `dotnet tool install --global wix`"
+        )
+    msi = definition.with_suffix(".msi")
+    run([wix, "build", "-arch", "x64", "-out", str(msi), str(definition)])
+    emit(f"installer: {msi}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
@@ -434,6 +467,17 @@ def build_parser() -> argparse.ArgumentParser:
     verify = commands.add_parser("verify", help="verify an artifact against its release manifest")
     verify.add_argument("manifest")
     verify.set_defaults(handler=command_verify)
+
+    installer = commands.add_parser(
+        "installer", help="generate a Windows WiX installer definition from a release artifact"
+    )
+    installer.add_argument("--manifest", required=True)
+    installer.add_argument("--archive", required=True)
+    installer.add_argument("--out", required=True, help="output directory for payload and .wxs")
+    installer.add_argument(
+        "--wix", action="store_true", help="run `wix build` to produce the .msi (requires WiX)"
+    )
+    installer.set_defaults(handler=command_installer)
     return parser
 
 

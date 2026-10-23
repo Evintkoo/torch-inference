@@ -104,6 +104,27 @@ jobs:
       - run: uv run pytest
       - run: uv run ruff check .
 
+  windows-installer:
+    name: windows-installer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - run: uv sync --locked
+      - run: uv run python torviello-engine/packaging/torviello_package.py build --profile engine
+      - run: |
+          $manifest = (Get-ChildItem dist -Filter *.manifest.json | Select-Object -First 1).FullName
+          $archive = (Get-ChildItem dist -Filter *.zip | Select-Object -First 1).FullName
+          dotnet tool install --global wix --version 6.0.1
+          uv run python torviello-engine/packaging/torviello_package.py installer `
+            --manifest $manifest --archive $archive --out dist/installer --wix
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: torviello-engine-windows-installer
+          path: dist/installer/*.msi
+          if-no-files-found: error
+
   docs:
     name: docs
     runs-on: ubuntu-latest
