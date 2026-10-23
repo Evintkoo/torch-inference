@@ -22,6 +22,31 @@ Torviello aims to be the fastest and lightest inference engine in a declared, re
 
 Each unit carries the same lifecycle shape: `domain/`, `specifications/`, `contracts/`, `src/`, `tests/`, and `evaluations/`, with `README.md` and `AGENTS.md` in every directory.
 
+### Root hygiene
+
+The repository root stays clean. Its committed file set is fixed: license and
+legal files, `AGENTS.md`, `README.md`, `CODEOWNERS`, `CONTRIBUTING.md`,
+`SECURITY.md`, `NOTICE`, `justfile`, build manifests and lockfiles, tool
+configs, and dotfiles. Nothing else is created at the root.
+
+Every artifact lives inside its owning unit:
+
+| Artifact | Home |
+|---|---|
+| Product demo, marketing video, brand media | `torviello-media/` |
+| Brand identity, design tokens, UI components, visual assets | `torviello-design/` |
+| Documentation site content | `torviello-docs/` |
+| Landing page and marketing site content | `torviello-landing/` |
+| Benchmark harnesses and performance evidence | `torviello-bench/` |
+| Inference runtime and serving work | `torviello-engine/`, `torviello-serve/` |
+| Role contracts and tickets | `torviello-roles/` |
+
+If no unit owns an artifact, record an owner decision on a ticket before
+creating a home for it — the root is never the default. Pre-existing loose
+root directories (for example `assets/`, `media/`, `canvas/`, `notes/`) are
+legacy: they receive no new content, and their consolidation into a unit is an
+owner decision.
+
 ## Start here
 
 The first vertical slice is specified in [load-config-and-list-models.feature](torviello-engine/specifications/features/load-config-and-list-models.feature): load TOML configuration, validate it, and expose health and the configured model catalog. Its domain model and rules live in [torviello-engine/domain](torviello-engine/domain/README.md). Resolve OD-001–OD-004 in [open decisions](requirements/open-decisions.md) before implementation proceeds beyond the current scaffold.

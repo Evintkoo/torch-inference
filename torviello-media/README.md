@@ -2,6 +2,10 @@
 
 Product demo and marketing video production. Brand message: Show real behavior, not simulated capability.
 
+All media, brand, and demo artifacts live in this unit — never at the
+repository root. See the root `README.md` root-hygiene section and root
+`AGENTS.md`.
+
 ## Layout
 
 - `domain/` — domain model, invariants, and ownership.
