@@ -1,6 +1,6 @@
 # Engine capability evaluation plan
 
-Status: planned. No measurement in this document is evidence; it defines the measurements that must be recorded before a capability is claimed. The evaluation is governed by [HPA-4](../../requirements/assurance-standard.md).
+Status: planned. No measurement in this document is evidence; it defines the measurements that must be recorded before a capability is claimed. The evaluation is governed by [HPA-4](../../torviello-enforcer/requirements/assurance-standard.md).
 
 ## Purpose
 

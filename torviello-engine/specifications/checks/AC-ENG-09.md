@@ -19,7 +19,7 @@
 ### ENG-003 — Detect execution backends and report capabilities truthfully
 
 **Priority:** MUST  
-**Requirement document:** [ENG-003](../../../requirements/items/ENG-003.md)
+**Requirement document:** [ENG-003](../../../torviello-enforcer/requirements/items/ENG-003.md)
 
 The engine MUST select an execution backend from the providers the running build can actually execute, make an explicit selection observable, fail an explicit unavailable request instead of silently changing provider, and report capabilities that distinguish available, configured, compiled, and active providers.
 
@@ -227,7 +227,7 @@ The project MUST preserve a CPU-only baseline and validate inference correctness
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - The backend-by-target matrix with probe transcripts and driver versions.
 - Selection and fallback event records with reasons.
@@ -243,7 +243,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-003](../../../requirements/items/ENG-003.md) |
+| Requirement | [ENG-003](../../../torviello-enforcer/requirements/items/ENG-003.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [backend-selection.feature](../features/backend-selection.feature) |
 | Rule controls | PERF-04, ARC-02, PERF-02 |

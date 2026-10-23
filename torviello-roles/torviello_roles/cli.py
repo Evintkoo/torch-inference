@@ -45,7 +45,7 @@ def split_values(values: list[str] | None) -> list[str]:
 
 def store_paths(args: argparse.Namespace) -> tuple[Path, Path, Path | None]:
     root = Path(args.root).resolve() if args.root else ROOT
-    requirements = root.parent / "requirements"
+    requirements = root.parent / "torviello-enforcer" / "requirements"
     return root / "tickets", root / "roles", requirements if requirements.is_dir() else None
 
 

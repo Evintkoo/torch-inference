@@ -20,7 +20,7 @@ def store_root(tmp_path: Path) -> Path:
     ):
         (roles / role).mkdir(parents=True)
         (roles / role / document).write_text(f"# {role}\n", encoding="utf-8")
-    requirements = tmp_path / "requirements" / "items"
+    requirements = tmp_path / "torviello-enforcer" / "requirements" / "items"
     requirements.mkdir(parents=True)
     for requirement in ("PDL-010", "PDL-011"):
         (requirements / f"{requirement}.md").write_text("# Requirement\n", encoding="utf-8")

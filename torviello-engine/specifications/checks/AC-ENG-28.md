@@ -19,7 +19,7 @@
 ### ENG-022 — Keep concurrency, streaming, and shutdown responsive
 
 **Priority:** MUST  
-**Requirement document:** [ENG-022](../../../requirements/items/ENG-022.md)
+**Requirement document:** [ENG-022](../../../torviello-enforcer/requirements/items/ENG-022.md)
 
 The engine MUST keep blocking inference off the request reactor, bound worker and stream queues, apply backpressure to producers and slow consumers, cancel work on disconnect, and terminate workers within the shutdown deadline.
 
@@ -237,7 +237,7 @@ The project MUST use rate limits and concurrency controls at the API boundary fo
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - Formal and Loom reports, sanitizer logs, and Miri results.
 - The blocking-detector report.
@@ -253,7 +253,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-022](../../../requirements/items/ENG-022.md) |
+| Requirement | [ENG-022](../../../torviello-enforcer/requirements/items/ENG-022.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [concurrency-and-streaming.feature](../features/concurrency-and-streaming.feature) |
 | Rule controls | ARC-04, PERF-02, API-02 |

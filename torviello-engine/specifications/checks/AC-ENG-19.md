@@ -19,7 +19,7 @@
 ### ENG-013 — Serve realtime WebSocket sessions with bounded framing
 
 **Priority:** SHOULD  
-**Requirement document:** [ENG-013](../../../requirements/items/ENG-013.md)
+**Requirement document:** [ENG-013](../../../torviello-enforcer/requirements/items/ENG-013.md)
 
 Realtime WebSocket sessions MUST negotiate capabilities explicitly, validate control and binary frames, bound per-session buffers, preserve response ordering, and release all session resources on disconnect or error.
 
@@ -238,7 +238,7 @@ The project MUST use rate limits and concurrency controls at the API boundary fo
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - The RFC 6455 conformance report.
 - Fuzz logs and the session resource timeline.
@@ -254,7 +254,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-013](../../../requirements/items/ENG-013.md) |
+| Requirement | [ENG-013](../../../torviello-enforcer/requirements/items/ENG-013.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [realtime-transports.feature](../features/realtime-transports.feature) |
 | Rule controls | API-02, API-04, ARC-04 |

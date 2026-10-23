@@ -19,7 +19,7 @@
 ### ENG-023 — Sanitize inputs and postprocess outputs deterministically
 
 **Priority:** MUST  
-**Requirement document:** [ENG-023](../../../requirements/items/ENG-023.md)
+**Requirement document:** [ENG-023](../../../torviello-enforcer/requirements/items/ENG-023.md)
 
 The engine MUST bound text and image inputs before inference, apply documented postprocessing to outputs, report every applied step and warning, preserve raw output when postprocessing is skipped, and keep results deterministic for identical inputs and configuration.
 
@@ -233,7 +233,7 @@ The project MUST apply bounded concurrency, request size, queue depth, and timeo
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - The adversarial corpus and validate-before-infer evidence.
 - The determinism report with tolerances.
@@ -249,7 +249,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-023](../../../requirements/items/ENG-023.md) |
+| Requirement | [ENG-023](../../../torviello-enforcer/requirements/items/ENG-023.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [postprocessing-and-sanitization.feature](../features/postprocessing-and-sanitization.feature) |
 | Rule controls | API-01, SEC-04, MOD-05 |

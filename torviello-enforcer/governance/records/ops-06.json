@@ -5,7 +5,7 @@
   "status": "active",
   "reviewed_at": "2026-10-01",
   "review_cycle": "quarterly",
-  "artifact": "governance/on-call.md",
+  "artifact": "torviello-enforcer/governance/policies/on-call.md",
   "required_terms": [
     "on-call",
     "handover",

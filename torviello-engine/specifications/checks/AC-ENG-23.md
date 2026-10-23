@@ -19,7 +19,7 @@
 ### ENG-017 — Map failures to one stable error contract
 
 **Priority:** MUST  
-**Requirement document:** [ENG-017](../../../requirements/items/ENG-017.md)
+**Requirement document:** [ENG-017](../../../torviello-enforcer/requirements/items/ENG-017.md)
 
 Every failure MUST return one stable error envelope containing a safe code, message, status, and request identifier; status selection MUST distinguish validation, identity, absence, size, capacity, dependency, timeout, and internal failure.
 
@@ -247,7 +247,7 @@ The project SHOULD generate reference documentation from the contract when pract
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - The failure matrix with status, code, category, retryability, and request ID.
 - Schema-validation results for every error response.
@@ -263,7 +263,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-017](../../../requirements/items/ENG-017.md) |
+| Requirement | [ENG-017](../../../torviello-enforcer/requirements/items/ENG-017.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [error-model.feature](../features/error-model.feature) |
 | Rule controls | API-01, API-03, ARC-04 |

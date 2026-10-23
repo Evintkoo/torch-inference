@@ -18,7 +18,7 @@ Establish the business concepts and invariants that specifications, contracts, t
 
 ## Traceability
 
-Every rule in [business-rules.md](business-rules.md) maps to a requirement in `requirements/engine-runtime.md`, a feature in [`../specifications/features/`](../specifications/features/), a check in [`../specifications/checks/`](../specifications/checks/), and an evidence obligation under [HPA-4](../../requirements/assurance-standard.md). A rule without verification is incomplete, not satisfied.
+Every rule in [business-rules.md](business-rules.md) maps to a requirement in `requirements/engine-runtime.md`, a feature in [`../specifications/features/`](../specifications/features/), a check in [`../specifications/checks/`](../specifications/checks/), and an evidence obligation under [HPA-4](../../torviello-enforcer/requirements/assurance-standard.md). A rule without verification is incomplete, not satisfied.
 
 ## Ownership
 

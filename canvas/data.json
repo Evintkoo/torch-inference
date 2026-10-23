@@ -32,7 +32,7 @@
           "label": "TLS 1.3 reverse proxy",
           "kind": "deployment",
           "status": "implemented",
-          "path": "docs/DEPLOYMENT.md"
+          "path": "torviello-docs/docs/DEPLOYMENT.md"
         },
         {
           "id": "docs_site",

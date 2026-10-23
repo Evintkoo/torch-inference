@@ -1,6 +1,6 @@
 # Specification-to-contract traceability
 
-Every engine feature specification maps to machine-readable contract elements. This artifact is governed by [HPA-4](../../requirements/assurance-standard.md): its mapping is acceptance-relevant, and presence alone is not conformance evidence. The Markdown feature files and acceptance checks remain the normative behavior source; the OpenAPI, AsyncAPI, and JSON Schema artifacts are the machine-readable projection that tests and implementations consume.
+Every engine feature specification maps to machine-readable contract elements. This artifact is governed by [HPA-4](../../torviello-enforcer/requirements/assurance-standard.md): its mapping is acceptance-relevant, and presence alone is not conformance evidence. The Markdown feature files and acceptance checks remain the normative behavior source; the OpenAPI, AsyncAPI, and JSON Schema artifacts are the machine-readable projection that tests and implementations consume.
 
 | Feature | Requirement | Acceptance | HTTP operations | Events | Schema artifacts |
 |---|---|---|---|---|---|

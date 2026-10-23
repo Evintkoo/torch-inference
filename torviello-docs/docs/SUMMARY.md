@@ -33,6 +33,10 @@
 - [0001 Local-first Rust engine](adr/0001-local-first-rust-engine.md)
 - [0002 TorchScript CPU-first runtime](adr/0002-torchscript-cpu-first-runtime.md)
 - [0003 Packaging automation](adr/0003-packaging-automation.md)
+- [0004 Hosted authentication boundary](adr/0004-hosted-authentication-boundary.md)
+- [0005 Vulkan-first accelerator](adr/0005-vulkan-first-accelerator.md)
+- [0006 Licensing and offline entitlement](adr/0006-licensing-and-offline-entitlement.md)
+- [0007 Local SQLite audit store](adr/0007-local-sqlite-audit-store.md)
 
 # Model cards
 

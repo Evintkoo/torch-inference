@@ -8,7 +8,7 @@ Evaluation plans, metrics, datasets, reports, and release decisions.
 
 ## Contents
 
-- [engine-capability-evaluation.md](engine-capability-evaluation.md) — gates E1–E8, [HPA-4](../../requirements/assurance-standard.md) assurance gates A1–A11, workloads, thresholds, procedure, evidence layout, and per-requirement coverage.
+- [engine-capability-evaluation.md](engine-capability-evaluation.md) — gates E1–E8, [HPA-4](../../torviello-enforcer/requirements/assurance-standard.md) assurance gates A1–A11, workloads, thresholds, procedure, evidence layout, and per-requirement coverage.
 
 ## Expected contents
 

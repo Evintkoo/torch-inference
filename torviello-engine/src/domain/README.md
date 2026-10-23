@@ -16,7 +16,7 @@ Unit tests cover invariants and rejection paths.
 
 ## Assurance
 
-This directory is governed by [HPA-4](../../../requirements/assurance-standard.md) and the binary [engine acceptance criteria](../../specifications/acceptance-criteria.md). Its artifacts are acceptance-relevant; absence of evidence is a failure, not a pass.
+This directory is governed by [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md) and the binary [engine acceptance criteria](../../specifications/acceptance-criteria.md). Its artifacts are acceptance-relevant; absence of evidence is a failure, not a pass.
 - **Subject:** domain types and invariants.
 - **Required evidence:** Invariants MUST have executable property tests and rejection-path tests; domain code MUST be independent of transport, database, and ML provider types.
 - **Failure:** An unenforced invariant, a provider type in the domain, or a nondeterministic domain test fails acceptance. No waiver or conditional pass is permitted.

@@ -7,9 +7,9 @@ These questions affect architecture or product promises. Resolve them in a speci
 | Product boundary | Is the primary product a local inference engine, a hosted platform, or both? Which functions require an account? What exactly belongs in the full package? | PA-001–PA-004, PA-024 |
 | Supported hardware | Which OS versions, CPU architectures, GPU generations, drivers, and runtime providers are release commitments? Is Vulkan required for the first release? Which AMD runtime is intended on each OS? | RP-010–RP-015, RP-020 |
 | Authentication | Who are the actors? Are accounts local, hosted, or both? How do engine devices enroll, authenticate, rotate credentials, and work offline? Which routes are public? | SO-001–SO-005 |
-| Persistence | Which records must persist locally or centrally? What are expected scale, availability, backup, encryption, and offline needs? Should local mode use an embedded database, files, or no database? | RP-032–RP-034, SO-033 |
+| Persistence | Which records must persist locally or centrally? What are expected scale, availability, backup, encryption, and offline needs? Should local mode use an embedded database, files, or no database? ADR 0007 selects embedded SQLite for audit events; central/hosted persistence, encryption at rest, and backup automation remain open. | RP-032–RP-034, SO-033 |
 | Registry service | Is the registry a local file-backed catalog, hosted API, or both? Who can edit it, how are changes approved, and how do clients receive updates safely? | RP-031, PA-012, SO-031 |
-| Licensing | What license permits personal use and requires a commercial license? Which code and model assets can use that policy? What entity owns and grants those rights? | ED-040–ED-041 |
+| Licensing | What license permits personal use and requires a commercial license? Which code and model assets can use that policy? What entity owns and grants those rights? ADR 0006 proposes PolyForm Noncommercial 1.0.0 plus commercial terms and an Ed25519 offline entitlement; legal review and the copyright owner entity remain open. | ED-040–ED-041 |
 | Packaging workflow | Which candidate automation frameworks can build Windows, macOS, and Linux artifacts offline, including signing/notarization where required? Does Ansible meet the cross-platform build needs or should it only handle deployment? | RP-021–RP-023, ED-020–ED-023 (see OD-007) |
 | Deployment targets | Which service managers and orchestration systems are supported at launch? Is Kubernetes a product commitment or only an example? | RP-024, RP-030, SO-030–SO-033 |
 | Observability profile | Which metrics, alerts, retention periods, and dashboard integrations are required for a single node and for enterprise installations? What telemetry is opt-in? | SO-022–SO-024 |
@@ -39,7 +39,7 @@ These four decisions block the first vertical slice: load TOML configuration, va
 - **Recommendation:** CPU is the mandatory baseline (RP-010). Select it explicitly, report it in capability output, and never fall back silently unless configuration allows it (RP-012).
 - **Criteria:** supported OS/architecture matrix, dependency footprint, observable selection, and failure behavior.
 - **Unblocks:** RP-010–RP-015, RP-020.
-- **Status:** CPU-only baseline decided for the first slice by ADR 0002; accelerator scope remains open. Owner: runtime owner.
+- **Status:** CPU-only baseline decided for the first slice by ADR 0002; Vulkan and Metal are the first accelerator targets by ADR 0005. Owner: runtime owner. Remaining work: accelerator build caches, GPU/driver commitment, and benchmark evidence before any throughput claim.
 
 ### OD-003 — Local and hosted authentication boundary
 
@@ -48,7 +48,7 @@ These four decisions block the first vertical slice: load TOML configuration, va
 - **Recommendation:** local mode requires no account or control plane (PA-002); `/health` is public; `/v1/models` and inference are protected when bound beyond loopback or when hosted (PA-003, SO-001–SO-005).
 - **Criteria:** offline operation, least privilege, credential rotation, and a clear hosted boundary.
 - **Unblocks:** SO-001–SO-005, PA-002–PA-003.
-- **Status:** open. Owner: security owner.
+- **Status:** decided by ADR 0004: local mode has no account; hosted login is delegated to an OIDC provider and the engine validates asymmetric JWTs as a resource server. Owner: security owner. Remaining work: device flow, hosted provider choice, and offline license verification.
 
 ### OD-004 — External API style and error contract
 

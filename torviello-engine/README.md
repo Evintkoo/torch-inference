@@ -17,13 +17,13 @@ The engine serves local inference across speech synthesis, speech transcription,
 
 ## Requirements and contracts
 
-- Requirements: [`../requirements/engine-runtime.md`](../requirements/engine-runtime.md) (`ENG-001`…`ENG-026`).
+- Requirements: [`../torviello-enforcer/requirements/engine-runtime.md`](../torviello-enforcer/requirements/engine-runtime.md) (`ENG-001`…`ENG-026`).
 - Acceptance checks: [`specifications/acceptance-criteria.md`](specifications/acceptance-criteria.md) (`AC-ENG-07`…`AC-ENG-32`).
 - HTTP target contract: [`contracts/openapi.yaml`](contracts/openapi.yaml) and [`contracts/api-inventory.md`](contracts/api-inventory.md).
 - Implemented subset: [`contracts/openapi.first-slice.yaml`](contracts/openapi.first-slice.yaml) (health, catalog, acquisition, load lifecycle, classification, metrics).
 - Domain rules: [`domain/business-rules.md`](domain/business-rules.md) (`ENG-RULE-001`…`ENG-RULE-042`).
 - Evaluation plan: [`evaluations/engine-capability-evaluation.md`](evaluations/engine-capability-evaluation.md) (gates E1–E8).
-- Assurance standard: [`../requirements/assurance-standard.md`](../requirements/assurance-standard.md) (HPA-4).
+- Assurance standard: [`../torviello-enforcer/requirements/assurance-standard.md`](../torviello-enforcer/requirements/assurance-standard.md) (HPA-4).
 
 ## Packaging
 

@@ -225,4 +225,4 @@ def test_security_09_privacy_data_minimization_and_inference_boundaries() -> Non
         pytest.fail(f"[{CONTROL}] source tree not found: {SOURCE}")
     require(source_files(), "no product source files found in the repository")
     require(languages(), "no product source language detected")
-    require(any(src(name).exists() for name in ("docs/PRIVACY.md", "PRIVACY.md", "docs/privacy.md")), "no privacy/data-minimization record")
+    require(any(src(name).exists() for name in ("torviello-docs/docs/PRIVACY.md", "PRIVACY.md", "torviello-docs/docs/privacy.md")), "no privacy/data-minimization record")

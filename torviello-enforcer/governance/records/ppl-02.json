@@ -5,7 +5,7 @@
   "status": "active",
   "reviewed_at": "2026-10-01",
   "review_cycle": "quarterly",
-  "artifact": "governance/people.md",
+  "artifact": "torviello-enforcer/governance/policies/people.md",
   "required_terms": [
     "training",
     "competence",

@@ -19,7 +19,7 @@
 ### ENG-002 — Start, signal readiness, and stop in bounded stages
 
 **Priority:** MUST  
-**Requirement document:** [ENG-002](../../../requirements/items/ENG-002.md)
+**Requirement document:** [ENG-002](../../../torviello-enforcer/requirements/items/ENG-002.md)
 
 The engine MUST separate process start, dependency initialization, readiness, and shutdown; readiness MUST reflect the ability to serve the configured workload, and shutdown MUST stop admission, drain or cancel in-flight work within a deadline, and report a terminal status.
 
@@ -238,7 +238,7 @@ Alerts MUST focus on user-visible symptoms, saturation, and recovery failure. Ea
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - The TLA+ specification, model-checking log, and invariant-to-requirement map.
 - The signal-injection matrix with observed transitions, exit codes, and forced-exit records.
@@ -254,7 +254,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-002](../../../requirements/items/ENG-002.md) |
+| Requirement | [ENG-002](../../../torviello-enforcer/requirements/items/ENG-002.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [startup-lifecycle.feature](../features/startup-lifecycle.feature) |
 | Rule controls | OPS-01, ARC-04, OBS-02 |

@@ -233,6 +233,6 @@ def test_code_quality_05_maintainability_and_technical_debt() -> None:
     require(not large, f"source files exceed 500 lines: {sorted(large)[:8]}")
 
     require(
-        any(src(name).exists() for name in ("docs/TECHNICAL_DEBT.md", "docs/technical-debt.md", "TECHNICAL_DEBT.md")),
+        any(src(name).exists() for name in ("torviello-docs/docs/TECHNICAL_DEBT.md", "torviello-docs/docs/technical-debt.md", "TECHNICAL_DEBT.md")),
         "no tracked technical-debt register",
     )

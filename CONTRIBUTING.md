@@ -13,7 +13,7 @@ Copyright (c) 2026 Torviello.
 
 ## Bug filing
 
-Use `.github/ISSUE_TEMPLATE/bug_report.md` and the canonical 12-section standard in [bug-report-standard.md](docs/operations/bug-report-standard.md). Include:
+Use `.github/ISSUE_TEMPLATE/bug_report.md` and the canonical 12-section standard in [bug-report-standard.md](torviello-docs/docs/operations/bug-report-standard.md). Include:
 
 - affected version and platform;
 - minimal reproduction;
@@ -25,7 +25,7 @@ The `triage` workflow validates required sections, labels incomplete reports
 `needs-info`, and routes complete reports to triage. Automation never sets
 final severity or closes a defect. Severity, priority, response targets, and
 closure evidence are defined in
-[docs/operations/bug-triage.md](docs/operations/bug-triage.md) and CHG-06.13.
+[docs/operations/bug-triage.md](torviello-docs/docs/operations/bug-triage.md) and CHG-06.13.
 
 ## Review rules
 

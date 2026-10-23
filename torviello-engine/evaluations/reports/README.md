@@ -16,7 +16,7 @@ A named owner records the decision; unmet thresholds block release.
 
 ## Assurance
 
-This directory is governed by [HPA-4](../../../requirements/assurance-standard.md) and the binary [engine acceptance criteria](../../specifications/acceptance-criteria.md). Its artifacts are acceptance-relevant; absence of evidence is a failure, not a pass.
+This directory is governed by [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md) and the binary [engine acceptance criteria](../../specifications/acceptance-criteria.md). Its artifacts are acceptance-relevant; absence of evidence is a failure, not a pass.
 - **Subject:** evaluation reports.
 - **Required evidence:** Reports MUST be reproducible from pinned inputs, record all thresholds and observations, include failures and confidence intervals, and be integrity-protected.
 - **Failure:** A cherry-picked, non-reproducible, unsigned, or threshold-free report fails acceptance. No waiver or conditional pass is permitted.

@@ -19,7 +19,7 @@
 ### ENG-006 — Load models with bounded lifecycle, isolation, and capacity policy
 
 **Priority:** MUST  
-**Requirement document:** [ENG-006](../../../requirements/items/ENG-006.md)
+**Requirement document:** [ENG-006](../../../torviello-enforcer/requirements/items/ENG-006.md)
 
 Model loading MUST have an explicit lifecycle, coalesce concurrent loads, confine model paths to the configured root, prevent eviction of models with in-flight work, and enforce or explicitly disable a documented capacity policy.
 
@@ -241,7 +241,7 @@ The project MUST preserve a CPU-only baseline and validate inference correctness
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - The TLA+ and Loom reports with invariant coverage.
 - Reference-count accounting before and after cancellation, error, unload, and eviction.
@@ -257,7 +257,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-006](../../../requirements/items/ENG-006.md) |
+| Requirement | [ENG-006](../../../torviello-enforcer/requirements/items/ENG-006.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [model-loading.feature](../features/model-loading.feature) |
 | Rule controls | MOD-05, ARC-04, PERF-02 |

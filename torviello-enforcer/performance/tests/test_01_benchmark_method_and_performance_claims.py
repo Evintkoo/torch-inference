@@ -233,6 +233,6 @@ def test_performance_01_benchmark_method_and_performance_claims() -> None:
     require(benchmarks, "no benchmarks exist")
 
     require(
-        any(src(name).exists() for name in ("docs/BENCHMARKS.md", "benches/README.md", "benchmarks/README.md")),
+        any(src(name).exists() for name in ("torviello-docs/docs/BENCHMARKS.md", "benches/README.md", "benchmarks/README.md")),
         "no benchmark method or performance-claim documentation",
     )

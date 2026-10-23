@@ -32,11 +32,11 @@ Checklist:
 
 ## Requirement and control trace
 
-- Cite only IDs that exist in `requirements/items/` and control documents.
+- Cite only IDs that exist in `torviello-enforcer/requirements/items/` and control documents.
 - Verify before saving:
 
 ```sh
-rg -l "PDL-010" requirements/items
+rg -l "PDL-010" torviello-enforcer/requirements/items
 rg -n "GOV-11" torviello-enforcer/governance/rules
 ```
 

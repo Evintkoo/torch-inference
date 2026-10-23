@@ -52,7 +52,7 @@ uv run --directory torviello-roles python -m torviello_roles check
 uv run --directory torviello-roles python -m torviello_roles list --all
 git status --short
 git log --oneline -5
-rg -n "PDL-010" requirements/items
+rg -n "PDL-010" torviello-enforcer/requirements/items
 ```
 
 ## Authority boundary

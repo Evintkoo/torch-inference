@@ -226,6 +226,6 @@ def test_change_management_06_change_execution_and_closure_runbook() -> None:
     require(source_files(), "no product source files found in the repository")
     require(languages(), "no product source language detected")
     require(
-        any(src(name).exists() for name in ("docs/CONTRIBUTING.md", "CONTRIBUTING.md", "docs/change-management.md")),
+        any(src(name).exists() for name in ("torviello-docs/docs/CONTRIBUTING.md", "CONTRIBUTING.md", "torviello-docs/docs/change-management.md")),
         "no contribution/change-execution runbook",
     )

@@ -19,7 +19,7 @@
 ### ENG-025 — Administer the registry with authorization and audit
 
 **Priority:** SHOULD  
-**Requirement document:** [ENG-025](../../../requirements/items/ENG-025.md)
+**Requirement document:** [ENG-025](../../../torviello-enforcer/requirements/items/ENG-025.md)
 
 Registry mutation MUST require administrative authority, validate descriptors and paths, confine scans to the configured root, record actor, action, target, and result for every mutation, and expose an export that preserves stable identity without secrets or host paths.
 
@@ -221,7 +221,7 @@ The project MUST review build workflows and credentials as production security b
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - The authorization matrix and denied-case records.
 - The audit-chain integrity report.
@@ -237,7 +237,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-025](../../../requirements/items/ENG-025.md) |
+| Requirement | [ENG-025](../../../torviello-enforcer/requirements/items/ENG-025.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [registry-administration.feature](../features/registry-administration.feature) |
 | Rule controls | MOD-03, SEC-03, SEC-06 |

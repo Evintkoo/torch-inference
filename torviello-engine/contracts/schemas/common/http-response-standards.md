@@ -2,7 +2,7 @@
 
 **Status:** Approved for contract use by the project owner on 2026-10-21. This is policy, not evidence that a handler emits the status.
 
-This document defines the complete response content contract for every engine HTTP and WebSocket response. It is governed by [HPA-4](../../../../requirements/assurance-standard.md). The machine-readable source is [http-status.yaml](http-status.yaml) (`version 2.0.0`), validated by [http-status.catalog.schema.json](../../http-status.catalog.schema.json). The generated per-status JSON Schemas are under [`status/`](status/).
+This document defines the complete response content contract for every engine HTTP and WebSocket response. It is governed by [HPA-4](../../../../torviello-enforcer/requirements/assurance-standard.md). The machine-readable source is [http-status.yaml](http-status.yaml) (`version 2.0.0`), validated by [http-status.catalog.schema.json](../../http-status.catalog.schema.json). The generated per-status JSON Schemas are under [`status/`](status/).
 
 ## 1. Scope and conformance
 

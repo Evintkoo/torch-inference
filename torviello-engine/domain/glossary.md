@@ -54,7 +54,7 @@ Ubiquitous language for the engine bounded context. Terms are normative for spec
 
 ## Assurance
 
-Governed by [HPA-4](../../requirements/assurance-standard.md) and the [engine acceptance criteria](../specifications/acceptance-criteria.md).
+Governed by [HPA-4](../../torviello-enforcer/requirements/assurance-standard.md) and the [engine acceptance criteria](../specifications/acceptance-criteria.md).
 - **Subject:** Ubiquitous language.
 - **Required evidence:** Each term MUST have one normative meaning, an owner, and explicit non-examples; conflicting or overloaded terms MUST be resolved before use.
 - **Failure:** An ambiguous term used in a normative clause, or two meanings for one term, fails acceptance. No waiver is permitted.

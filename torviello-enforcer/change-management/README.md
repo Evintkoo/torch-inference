@@ -34,7 +34,7 @@ For full discovery, requirement-quality, alternatives, experiment, acceptance, a
 **Normative requirements:**
 
 - **CHG-01.01 — Start feature work with a specification that states.** The project MUST start feature work with a specification that states the user or operational problem, intended outcomes, scope, exclusions, constraints, affected product profiles, and measurable acceptance criteria.
-- **CHG-01.02 — Trace each requirement to a stable ID in requirements/.** The project MUST trace each requirement to a stable ID in requirements/. Identify which IDs are addressed, deferred, or out of scope. The project MUST also record unresolved product, legal, security, and architecture decisions rather than guessing them in code.
+- **CHG-01.02 — Trace each requirement to a stable ID in torviello-enforcer/requirements/.** The project MUST trace each requirement to a stable ID in torviello-enforcer/requirements/. Identify which IDs are addressed, deferred, or out of scope. The project MUST also record unresolved product, legal, security, and architecture decisions rather than guessing them in code.
 - **CHG-01.03 — Describe public interface changes, data flows, trust boundaries, compatibility.** The project MUST describe public interface changes, data flows, trust boundaries, compatibility, migration, and rollback needs before implementation.
 - **CHG-01.04 — Keep plans in the repository's agreed private planning location.** The project MUST keep plans in the repository's agreed private planning location and do not publish them when repository policy says plans remain local. The specification and requirement IDs MAY still be referenced in review metadata without exposing private plan content.
 

@@ -19,7 +19,7 @@
 ### ENG-026 — Declare and enforce supported build and platform profiles
 
 **Priority:** MUST  
-**Requirement document:** [ENG-026](../../../requirements/items/ENG-026.md)
+**Requirement document:** [ENG-026](../../../torviello-enforcer/requirements/items/ENG-026.md)
 
 The engine MUST publish a supported platform matrix, provide minimal, CPU, and accelerator build profiles with explicit contents, keep optional providers out of the minimal profile, and fail unsupported targets or unavailable providers with a documented reason.
 
@@ -221,7 +221,7 @@ The project MUST record architecture decisions for module boundaries, backend in
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - SLSA v1.2 provenance attestations and signature-verification logs.
 - The signed CycloneDX SBOM and dependency inventory.
@@ -237,7 +237,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-026](../../../requirements/items/ENG-026.md) |
+| Requirement | [ENG-026](../../../torviello-enforcer/requirements/items/ENG-026.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [platform-and-build-profiles.feature](../features/platform-and-build-profiles.feature) |
 | Rule controls | PORT-01, PORT-02, ARC-02 |

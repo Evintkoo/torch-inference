@@ -19,7 +19,7 @@
 ### ENG-010 — Classify images with bounded batches and progressive results
 
 **Priority:** MUST  
-**Requirement document:** [ENG-010](../../../requirements/items/ENG-010.md)
+**Requirement document:** [ENG-010](../../../torviello-enforcer/requirements/items/ENG-010.md)
 
 The engine MUST validate image batches, bound batch and per-image size, preserve submission order, return ordered top-k predictions, and optionally stream one progressive event per image with a terminal done event.
 
@@ -250,7 +250,7 @@ The project MUST use rate limits and concurrency controls at the API boundary fo
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - The order-preservation property report.
 - Fuzz logs and the malformed-image corpus.
@@ -266,7 +266,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-010](../../../requirements/items/ENG-010.md) |
+| Requirement | [ENG-010](../../../torviello-enforcer/requirements/items/ENG-010.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [image-classification.feature](../features/image-classification.feature) |
 | Rule controls | API-02, API-03, PERF-05 |

@@ -16,7 +16,7 @@ Builds and passes the unit's required checks.
 
 ## Assurance
 
-This directory is governed by [HPA-4](../../requirements/assurance-standard.md) and the binary [engine acceptance criteria](../specifications/acceptance-criteria.md). Its artifacts are acceptance-relevant; absence of evidence is a failure, not a pass.
+This directory is governed by [HPA-4](../../torviello-enforcer/requirements/assurance-standard.md) and the binary [engine acceptance criteria](../specifications/acceptance-criteria.md). Its artifacts are acceptance-relevant; absence of evidence is a failure, not a pass.
 - **Subject:** source and build artifacts.
 - **Required evidence:** Build MUST pass formatting, linting, compilation, and tests with warnings denied; the release artifact MUST have verified SLSA v1.2 Build Level 3 provenance and a signed SBOM.
 - **Failure:** A build without reproducible provenance, a signed SBOM, or a clean warning-denied build fails acceptance. No waiver or conditional pass is permitted.

@@ -18,6 +18,6 @@ This directory is the source of enforceable engineering rules for Torviello and 
 - Record exceptions and material conformance assessments in the shared `governance/assurance-register.md` using its required fields. A ticket or change record may hold the detailed evidence, but the register must link to it and show status, accountable approver, owner, scope, and expiry/review date. No exception is effective until the register entry exists and approval is recorded.
 - Distinguish project rules from external standards; do not claim formal compliance or certification without an assessment and evidence.
 - Update the root README when rule domains are added, renamed, split, or removed.
-- Keep unresolved product or architecture choices in `../requirements/open-decisions.md` until they are decided.
+- Keep unresolved product or architecture choices in `requirements/open-decisions.md` until they are decided.
 - Commit completed, verified changes before handoff in coherent revisions so each change has a rollback point; leave no task-owned change uncommitted unless the user explicitly requests it, and report the commit hashes. Do not commit secrets or unrelated user changes. Do not push or publish without explicit authorization.
 - Do not add product implementation code under `torviello-enforcer/`.

@@ -6,7 +6,7 @@ Part of **torviello-engine** — Core PyTorch inference runtime.
 
 One JSON Schema per assigned HTTP status code, derived from the approved status policy.
 
-This directory is governed by [HPA-4](../../../../../requirements/assurance-standard.md); presence of generated artifacts is not evidence of handler behavior or conformance.
+This directory is governed by [HPA-4](../../../../../torviello-enforcer/requirements/assurance-standard.md); presence of generated artifacts is not evidence of handler behavior or conformance.
 
 ## Contents
 

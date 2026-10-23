@@ -226,7 +226,7 @@ def test_releases_05_install_upgrade_migration_and_rollback() -> None:
     require(source_files(), "no product source files found in the repository")
     require(languages(), "no product source language detected")
     require(
-        any(src(name).exists() for name in ("docs/guides/installation.md", "docs/INSTALL.md", "INSTALL.md")),
+        any(src(name).exists() for name in ("torviello-docs/docs/guides/installation.md", "torviello-docs/docs/INSTALL.md", "INSTALL.md")),
         "no installation guide",
     )
     install_text = read_all(

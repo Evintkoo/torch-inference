@@ -19,7 +19,7 @@
 ### ENG-004 — Maintain stable model identity and a truthful catalog
 
 **Priority:** MUST  
-**Requirement document:** [ENG-004](../../../requirements/items/ENG-004.md)
+**Requirement document:** [ENG-004](../../../torviello-enforcer/requirements/items/ENG-004.md)
 
 Every model MUST have a stable, unique ID within a profile; the catalog MUST distinguish registry, availability, download, and load state, and MUST report only capabilities and metadata that match the running engine.
 
@@ -211,7 +211,7 @@ The standalone engine MUST operate with a local registry/cache and MUST NOT requ
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - The formal state model and the property-test report.
 - A state-combination response matrix validated against the contract.
@@ -227,7 +227,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-004](../../../requirements/items/ENG-004.md) |
+| Requirement | [ENG-004](../../../torviello-enforcer/requirements/items/ENG-004.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [model-catalog.feature](../features/model-catalog.feature) |
 | Rule controls | MOD-01, API-01, MOD-03 |

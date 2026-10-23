@@ -40,11 +40,11 @@ One document per check ID (32 total). Each document states the observable check,
 - [AC-ENG-31](AC-ENG-31.md) — authorized, audited registry administration.
 - [AC-ENG-32](AC-ENG-32.md) — explicit build profiles and platform limits.
 
-The source [acceptance-criteria.md](../acceptance-criteria.md) is authoritative. Each check document links to its requirement under `requirements/items/`, its rule clauses, and its feature scenarios.
+The source [acceptance-criteria.md](../acceptance-criteria.md) is authoritative. Each check document links to its requirement under `torviello-enforcer/requirements/items/`, its rule clauses, and its feature scenarios.
 
 ## Assurance
 
-This directory is governed by [HPA-4](../../../requirements/assurance-standard.md) and the binary [engine acceptance criteria](../acceptance-criteria.md). Its artifacts are acceptance-relevant; absence of evidence is a failure, not a pass.
+This directory is governed by [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md) and the binary [engine acceptance criteria](../acceptance-criteria.md). Its artifacts are acceptance-relevant; absence of evidence is a failure, not a pass.
 - **Subject:** acceptance-check evidence.
 - **Required evidence:** Every check MUST retain revision-pinned, reproducible evidence for all universal gates and its numeric threshold; a skipped or stale check is not a pass.
 - **Failure:** Any section 4 fatal criterion, missing threshold, or stale evidence fails the check. No waiver or conditional pass is permitted.

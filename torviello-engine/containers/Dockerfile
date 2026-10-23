@@ -22,7 +22,7 @@ COPY torviello-engine/config ./config
 COPY torviello-engine/services/engine/api/contracts/schema.json ./torviello-engine/services/engine/api/contracts/schema.json
 COPY LICENSE NOTICE COMMERCIAL_LICENSE.md /usr/share/doc/torviello/
 COPY torviello-engine/services/engine/assets/scalar.LICENSE.txt /usr/share/doc/torviello/scalar.LICENSE.txt
-COPY docs/INSTALL.md docs/DEPLOYMENT.md docs/SUPPORTED_PLATFORMS.md ./docs/
+COPY torviello-docs/docs/INSTALL.md torviello-docs/docs/DEPLOYMENT.md torviello-docs/docs/SUPPORTED_PLATFORMS.md ./docs/
 RUN mkdir -p /var/lib/torviello && chown -R torviello:torviello /opt/torviello /var/lib/torviello
 USER torviello
 ENV TORCH_CONFIG=/opt/torviello/config/default.toml \

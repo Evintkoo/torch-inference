@@ -26,7 +26,7 @@ Every event documented in `../../domain/events.md` must appear in `catalog.yaml`
 
 ## Assurance
 
-This directory is governed by [HPA-4](../../../requirements/assurance-standard.md) and the binary [engine acceptance criteria](../../specifications/acceptance-criteria.md). Its artifacts are acceptance-relevant; absence of evidence is a failure, not a pass.
+This directory is governed by [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md) and the binary [engine acceptance criteria](../../specifications/acceptance-criteria.md). Its artifacts are acceptance-relevant; absence of evidence is a failure, not a pass.
 - **Subject:** event contracts.
 - **Required evidence:** Event schemas MUST be versioned, validated in CI, backward-compatible under the declared policy, redacted, and aligned with OpenTelemetry 1.44.0 names.
 - **Failure:** An unversioned event, a sensitive payload, a breaking change, or an unvalidated schema fails acceptance. No waiver or conditional pass is permitted.

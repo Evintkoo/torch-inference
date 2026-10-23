@@ -19,7 +19,7 @@
 ### ENG-015 — Bound requests and degrade predictably under pressure
 
 **Priority:** MUST  
-**Requirement document:** [ENG-015](../../../requirements/items/ENG-015.md)
+**Requirement document:** [ENG-015](../../../torviello-enforcer/requirements/items/ENG-015.md)
 
 Every inbound boundary MUST enforce a configured limit, every dependency call MUST have a deadline, overload MUST produce an explicit retryable or non-retryable status, and failure isolation MUST prevent one failing backend from consuming all capacity.
 
@@ -247,7 +247,7 @@ The project MUST use rate limits and concurrency controls at the API boundary fo
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - The load/soak report with hardware, configuration, and percentiles.
 - The saturation and recovery timeline.
@@ -263,7 +263,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-015](../../../requirements/items/ENG-015.md) |
+| Requirement | [ENG-015](../../../torviello-enforcer/requirements/items/ENG-015.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [resilience-and-limits.feature](../features/resilience-and-limits.feature) |
 | Rule controls | PERF-02, SEC-10, API-02 |

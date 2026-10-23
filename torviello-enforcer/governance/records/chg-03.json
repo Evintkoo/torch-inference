@@ -5,7 +5,7 @@
   "status": "active",
   "reviewed_at": "2026-10-01",
   "review_cycle": "quarterly",
-  "artifact": "governance/change-control.md",
+  "artifact": "torviello-enforcer/governance/policies/change-control.md",
   "required_terms": [
     "change control",
     "review evidence",

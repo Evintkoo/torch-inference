@@ -19,7 +19,7 @@
 ### ENG-018 — Expose health, readiness, liveness, and bounded metrics
 
 **Priority:** MUST  
-**Requirement document:** [ENG-018](../../../requirements/items/ENG-018.md)
+**Requirement document:** [ENG-018](../../../torviello-enforcer/requirements/items/ENG-018.md)
 
 The engine MUST expose distinct liveness, readiness, and subsystem health, a Prometheus-compatible metrics endpoint with bounded cardinality, and a live dashboard stream, and it MUST keep probes available when inference traffic is saturated or rate limited.
 
@@ -237,7 +237,7 @@ The project MUST keep the local engine usable without a hosted account, hosted r
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - The scrape output, naming/units report, and cardinality analysis.
 - Probe latency and status under saturation.
@@ -253,7 +253,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-018](../../../requirements/items/ENG-018.md) |
+| Requirement | [ENG-018](../../../torviello-enforcer/requirements/items/ENG-018.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [health-and-metrics.feature](../features/health-and-metrics.feature) |
 | Rule controls | OBS-02, OPS-01, SEC-10 |

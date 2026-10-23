@@ -10,7 +10,7 @@ from torviello_roles import store
 ROOT = Path(__file__).resolve().parents[1]
 ROLES = ROOT / "torviello-roles" / "roles"
 TICKETS = ROOT / "torviello-roles" / "tickets"
-REQUIREMENTS = ROOT / "requirements"
+REQUIREMENTS = ROOT / "torviello-enforcer" / "requirements"
 
 
 def test_ticket_store_is_valid() -> None:

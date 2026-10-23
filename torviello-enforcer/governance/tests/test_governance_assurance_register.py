@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
+GOVERNANCE = Path(__file__).resolve().parents[1]
 REGISTER = Path(__file__).resolve().parents[1] / "assurance-register.md"
 
 
@@ -49,7 +50,7 @@ def test_register_keeps_exceptions_evidence_based() -> None:
 
 
 def test_control_records_do_not_claim_operational_approval_without_measurement() -> None:
-    records = sorted((ROOT / "governance" / "records").glob("*.json"))
+    records = sorted(GOVERNANCE.joinpath("records").glob("*.json"))
     assert len(records) == 38, "unexpected governance record count"
     for path in records:
         record = json.loads(path.read_text(encoding="utf-8"))

@@ -19,7 +19,7 @@
 ### ENG-024 — Preserve local offline operation and optional service boundaries
 
 **Priority:** MUST  
-**Requirement document:** [ENG-024](../../../requirements/items/ENG-024.md)
+**Requirement document:** [ENG-024](../../../torviello-enforcer/requirements/items/ENG-024.md)
 
 The core engine MUST start and serve supported local inference with no account, control plane, or outbound network once required assets exist; optional upstream services MUST be explicit, disabled by default, and isolated so their failure cannot degrade local inference.
 
@@ -237,7 +237,7 @@ The project MUST record architecture decisions for module boundaries, backend in
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - The egress capture and blocked-network results.
 - The endpoint inventory mapped to configuration gates.
@@ -253,7 +253,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-024](../../../requirements/items/ENG-024.md) |
+| Requirement | [ENG-024](../../../torviello-enforcer/requirements/items/ENG-024.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [local-offline-and-boundaries.feature](../features/local-offline-and-boundaries.feature) |
 | Rule controls | ARC-02, SEC-08, OPS-03 |

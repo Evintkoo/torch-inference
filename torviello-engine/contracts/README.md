@@ -28,7 +28,7 @@ Machine-readable interface and event contracts with versioning.
 3. Adding a capability requires its requirement, check, route, schema, limit, and error mapping in the same change.
 4. Event payloads are described in [`../domain/events.md`](../domain/events.md) and must not carry secrets or payload content.
 5. Contract changes that remove a field, change a status, or rename an error code require a new version and a recorded decision.
-6. The contract MUST be OpenAPI 3.2.1, pass lint and router parity, and produce zero unintended breaking diffs. Errors MUST be RFC 9457 `application/problem+json`; remote listeners MUST use TLS 1.3 and RFC 8725 asymmetric JWT algorithms. Evidence follows [HPA-4](../../requirements/assurance-standard.md).
+6. The contract MUST be OpenAPI 3.2.1, pass lint and router parity, and produce zero unintended breaking diffs. Errors MUST be RFC 9457 `application/problem+json`; remote listeners MUST use TLS 1.3 and RFC 8725 asymmetric JWT algorithms. Evidence follows [HPA-4](../../torviello-enforcer/requirements/assurance-standard.md).
 7. Every OpenAPI operation MUST be exercised against the running router by `cargo test --test endpoint_usage`. The test fails on an unrouted operation, an undeclared status or media type, or a catalog header/body/error-code violation. Operations declaring `501` are reserved and MUST return `not_implemented`; all others MUST NOT.
 
 ## Validation

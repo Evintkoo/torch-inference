@@ -19,7 +19,7 @@
 ### RP-001 — TOML shall be the one canonical human-edited application configuration format, consistent with the current Rust stack and existing `config.toml`
 
 **Priority:** MUST  
-**Requirement document:** [RP-001](../../../requirements/items/RP-001.md)
+**Requirement document:** [RP-001](../../../torviello-enforcer/requirements/items/RP-001.md)
 
 TOML shall be the one canonical human-edited application configuration format, consistent with the current Rust stack and existing `config.toml`.
 
@@ -251,7 +251,7 @@ The project MUST separate user-editable settings from generated runtime state an
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this first-slice check additionally requires a reproducible run against the shipping artifact, schema validation where a contract is involved, and a retained report naming the revision, configuration, command, observed result, and limitation. Security-relevant cases MUST be assessed against OWASP ASVS 5.0.0 Level 3. A happy-path-only result or a summary without retained measurements fails the check.
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this first-slice check additionally requires a reproducible run against the shipping artifact, schema validation where a contract is involved, and a retained report naming the revision, configuration, command, observed result, and limitation. Security-relevant cases MUST be assessed against OWASP ASVS 5.0.0 Level 3. A happy-path-only result or a summary without retained measurements fails the check.
 
 ## 10. Related checks
 
@@ -261,7 +261,7 @@ Under [HPA-4](../../../requirements/assurance-standard.md), this first-slice che
 
 | Type | Reference |
 |---|---|
-| Requirement | [RP-001](../../../requirements/items/RP-001.md) |
+| Requirement | [RP-001](../../../torviello-enforcer/requirements/items/RP-001.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Rule controls | CFG-01, CFG-02, CFG-03, CFG-04 |
 | Unit | torviello-engine |

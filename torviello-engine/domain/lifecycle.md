@@ -146,7 +146,7 @@ A component that hangs must not prevent health, logging, or the forced-exit path
 
 ## Assurance
 
-Governed by [HPA-4](../../requirements/assurance-standard.md) and the [engine acceptance criteria](../specifications/acceptance-criteria.md).
+Governed by [HPA-4](../../torviello-enforcer/requirements/assurance-standard.md) and the [engine acceptance criteria](../specifications/acceptance-criteria.md).
 - **Subject:** Lifecycle and state transitions.
 - **Required evidence:** States, guards, transitions, terminal states, and recovery paths MUST be modeled and exhaustively checked, including invalid-transition rejection.
 - **Failure:** An unmodeled transition, an unreachable state, or a state that violates an invariant fails acceptance. No waiver is permitted.

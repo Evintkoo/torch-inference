@@ -103,6 +103,8 @@ The security-critical module set is fixed for this baseline: authentication and 
 
 Coverage and mutation thresholds are floors, not quality claims. A high score on trivial code does not offset an untested security boundary.
 
+CI enforces engine line coverage at ≥ 95% with `cargo llvm-cov --workspace --all-features --fail-under-lines 95`. Branch coverage instrumentation is unstable and requires a nightly toolchain; it remains a release-evidence threshold rather than part of the stable CI line job.
+
 ## 5. Evidence integrity
 
 Every evidence bundle MUST identify:

@@ -34,7 +34,7 @@ def test_plan_resolves_features_and_target() -> None:
     assert resolved["features"] == ["engine"]
     assert resolved["target"] == "x86_64-unknown-linux-gnu"
     assert resolved["profile"] == "engine"
-    assert "docs/INSTALL.md" in resolved["include"]
+    assert "torviello-docs/docs/INSTALL.md" in resolved["include"]
 
 
 def test_profile_without_features_is_rejected() -> None:

@@ -7,7 +7,7 @@ CONTROL = "__CONTROLS__"
 HERE = Path(__file__).resolve()
 RULES_ROOT = HERE.parents[3]
 DOCUMENT = HERE.parents[1] / "trails" / "00-references-trails.md"
-REQUIREMENTS = RULES_ROOT / "requirements"
+REQUIREMENTS = RULES_ROOT / "torviello-enforcer" / "requirements"
 
 
 def test_configuration_reference_trail_resolves() -> None:

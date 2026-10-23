@@ -226,6 +226,6 @@ def test_security_01_threat_model_and_security_requirements() -> None:
     require(source_files(), "no product source files found in the repository")
     require(languages(), "no product source language detected")
     require(
-        any(src(name).exists() for name in ("docs/THREAT_MODEL.md", "docs/security/threat-model.md", "THREAT_MODEL.md")),
+        any(src(name).exists() for name in ("torviello-docs/docs/THREAT_MODEL.md", "torviello-docs/docs/security/threat-model.md", "THREAT_MODEL.md")),
         "no threat model",
     )

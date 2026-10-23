@@ -19,7 +19,7 @@
 ### ENG-007 — Attach one inference envelope to every successful result
 
 **Priority:** MUST  
-**Requirement document:** [ENG-007](../../../requirements/items/ENG-007.md)
+**Requirement document:** [ENG-007](../../../torviello-enforcer/requirements/items/ENG-007.md)
 
 Every successful inference response MUST use one envelope that carries the result, the model ID actually used, the selected backend or engine, latency, engine version, postprocessing state, warnings, and the request correlation identifier.
 
@@ -234,7 +234,7 @@ The project SHOULD make telemetry export explicitly configurable and off by defa
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - The schema-validation report across all capability routes.
 - The envelope property-test and mutation reports.
@@ -250,7 +250,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-007](../../../requirements/items/ENG-007.md) |
+| Requirement | [ENG-007](../../../torviello-enforcer/requirements/items/ENG-007.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [inference-envelope.feature](../features/inference-envelope.feature) |
 | Rule controls | API-01, API-03, OBS-01 |

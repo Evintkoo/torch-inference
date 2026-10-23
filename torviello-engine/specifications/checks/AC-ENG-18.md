@@ -19,7 +19,7 @@
 ### ENG-012 — Proxy assistant traffic without inventing compatibility
 
 **Priority:** SHOULD  
-**Requirement document:** [ENG-012](../../../requirements/items/ENG-012.md)
+**Requirement document:** [ENG-012](../../../torviello-enforcer/requirements/items/ENG-012.md)
 
 The optional assistant surface MUST forward declared OpenAI-compatible requests to a configured upstream with bounded bodies and deadlines, preserve streaming framing, distinguish upstream failure from local inference failure, and remain absent or explicitly unconfigured when no upstream exists.
 
@@ -235,7 +235,7 @@ Scenario: Proxy routes are absent when no upstream is configured
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - The SSRF and redirect test report with blocked destinations.
 - The upstream chaos matrix and local readiness timeline.
@@ -251,7 +251,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-012](../../../requirements/items/ENG-012.md) |
+| Requirement | [ENG-012](../../../torviello-enforcer/requirements/items/ENG-012.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [llm-proxy.feature](../features/llm-proxy.feature) |
 | Rule controls | API-05, API-03, SEC-08 |

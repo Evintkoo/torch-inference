@@ -228,8 +228,8 @@ def test_monorepo_01_product_area_ownership() -> None:
     for area in ("torviello-engine", "torviello-serve", "torviello-landing", "torviello-docs"):
         require((SOURCE / area).is_dir(), f"monorepo area is missing: {area}")
 
-    require(src("docs/ARCHITECTURE.md").exists(), "no architecture documentation")
+    require(src("torviello-docs/docs/ARCHITECTURE.md").exists(), "no architecture documentation")
     require(
-        any(src(name).exists() for name in ("docs/modules/README.md", "docs/OWNERSHIP.md", "CODEOWNERS", ".github/CODEOWNERS")),
+        any(src(name).exists() for name in ("torviello-docs/docs/modules/README.md", "torviello-docs/docs/OWNERSHIP.md", "CODEOWNERS", ".github/CODEOWNERS")),
         "no module ownership documentation",
     )

@@ -19,7 +19,7 @@
 ### ENG-019 — Make runtime, hardware, and performance inspectable
 
 **Priority:** SHOULD  
-**Requirement document:** [ENG-019](../../../requirements/items/ENG-019.md)
+**Requirement document:** [ENG-019](../../../torviello-enforcer/requirements/items/ENG-019.md)
 
 The engine MUST expose effective runtime, hardware, GPU, and performance information with stated measurement windows, cache expensive sampling, redact secrets, and bound profiling to an explicit request or interval.
 
@@ -229,7 +229,7 @@ Every comparison of a secret-derived authenticator, including a password verifie
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - The configuration diff report.
 - The redaction report and sampling-cost measurements.
@@ -245,7 +245,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-019](../../../requirements/items/ENG-019.md) |
+| Requirement | [ENG-019](../../../torviello-enforcer/requirements/items/ENG-019.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [system-introspection.feature](../features/system-introspection.feature) |
 | Rule controls | OBS-02, PERF-01, SEC-05 |

@@ -232,6 +232,6 @@ def test_architecture_03_system_context_and_architecture_views() -> None:
     require(nodes, "canvas blueprint has no nodes")
     require(any(node.get("path") for node in nodes), "canvas nodes do not map to source paths")
 
-    require(any(src(name).exists() for name in ("docs/ARCHITECTURE.md", "docs/architecture.md")), "no architecture document")
+    require(any(src(name).exists() for name in ("torviello-docs/docs/ARCHITECTURE.md", "torviello-docs/docs/architecture.md")), "no architecture document")
     arch = read_all([path for path in all_files({".md"}) if "architecture" in path.name.lower()])
     require(re.search(r"mermaid|diagram|component|context", arch, re.I), "architecture document has no views/diagrams")

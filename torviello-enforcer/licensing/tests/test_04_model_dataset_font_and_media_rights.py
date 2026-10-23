@@ -226,6 +226,6 @@ def test_licensing_04_model_dataset_font_and_media_rights() -> None:
     require(source_files(), "no product source files found in the repository")
     require(languages(), "no product source language detected")
     require(
-        any(src(name).exists() for name in ("docs/model-licenses.md", "MODEL_LICENSES.md", "docs/models/licenses.md")),
+        any(src(name).exists() for name in ("torviello-docs/docs/model-licenses.md", "MODEL_LICENSES.md", "torviello-docs/docs/models/licenses.md")),
         "no model/dataset/font/media rights record",
     )

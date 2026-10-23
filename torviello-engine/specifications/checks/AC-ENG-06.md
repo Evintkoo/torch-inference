@@ -19,7 +19,7 @@
 ### ED-011 — Every feature specification shall define observable acceptance checks before implementation
 
 **Priority:** MUST  
-**Requirement document:** [ED-011](../../../requirements/items/ED-011.md)
+**Requirement document:** [ED-011](../../../torviello-enforcer/requirements/items/ED-011.md)
 
 Every feature specification shall define observable acceptance checks before implementation.
 
@@ -848,7 +848,7 @@ The project MUST use deterministic fixtures and safe test data. CI artifacts MUS
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this first-slice check additionally requires a reproducible run against the shipping artifact, schema validation where a contract is involved, and a retained report naming the revision, configuration, command, observed result, and limitation. Security-relevant cases MUST be assessed against OWASP ASVS 5.0.0 Level 3. A happy-path-only result or a summary without retained measurements fails the check.
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this first-slice check additionally requires a reproducible run against the shipping artifact, schema validation where a contract is involved, and a retained report naming the revision, configuration, command, observed result, and limitation. Security-relevant cases MUST be assessed against OWASP ASVS 5.0.0 Level 3. A happy-path-only result or a summary without retained measurements fails the check.
 
 ## 10. Related checks
 
@@ -858,7 +858,7 @@ Under [HPA-4](../../../requirements/assurance-standard.md), this first-slice che
 
 | Type | Reference |
 |---|---|
-| Requirement | [ED-011](../../../requirements/items/ED-011.md) |
+| Requirement | [ED-011](../../../torviello-enforcer/requirements/items/ED-011.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Rule controls | CHG-01, CHG-02, CHG-03, CHG-06, CQ-09, CQ-11, COL-01, COL-03, GOV-04, GOV-07, GOV-09, PPL-04, PDL-02, PDL-05, SEC-11, VER-01, VER-02, VER-03, VER-04, VER-06 |
 | Unit | torviello-engine |

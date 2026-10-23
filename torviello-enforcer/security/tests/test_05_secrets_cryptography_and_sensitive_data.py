@@ -240,7 +240,7 @@ def test_security_05_secrets_cryptography_and_sensitive_data() -> None:
         "secrets are not injectable from the environment",
     )
     require(
-        any(src(name).exists() for name in (".env.example", "docs/CONFIGURATION.md", "docs/configuration.md")),
+        any(src(name).exists() for name in (".env.example", "torviello-docs/docs/CONFIGURATION.md", "torviello-docs/docs/configuration.md")),
         "no documented secret-injection path",
     )
 

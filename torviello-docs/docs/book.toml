@@ -6,5 +6,5 @@ language = "en"
 src = "."
 
 [build]
-build-dir = "book"
+build-dir = "../target/docs-book"
 create-missing = false

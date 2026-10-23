@@ -226,6 +226,6 @@ def test_operations_04_incident_response_and_operational_recovery() -> None:
     require(source_files(), "no product source files found in the repository")
     require(languages(), "no product source language detected")
     require(
-        any(src(name).exists() for name in ("docs/INCIDENT_RESPONSE.md", "docs/operations/incident-response.md", "INCIDENT_RESPONSE.md")),
+        any(src(name).exists() for name in ("torviello-docs/docs/INCIDENT_RESPONSE.md", "torviello-docs/docs/operations/incident-response.md", "INCIDENT_RESPONSE.md")),
         "no incident-response runbook",
     )

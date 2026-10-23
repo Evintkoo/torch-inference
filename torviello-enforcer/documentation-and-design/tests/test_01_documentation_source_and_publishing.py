@@ -233,8 +233,8 @@ def test_documentation_and_design_01_documentation_source_and_publishing() -> No
             "docusaurus.config.ts",
             "astro.config.mjs",
             "vitepress.config.ts",
-            "docs/conf.py",
-            "docs/book.toml",
+            "torviello-docs/docs/conf.py",
+            "torviello-docs/docs/book.toml",
             "nextra.config.js",
         )
         if src(name).exists()

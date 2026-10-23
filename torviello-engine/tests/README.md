@@ -18,7 +18,7 @@ Independently selectable test categories with documented prerequisites:
 
 ## Traceability
 
-Tests name the acceptance check they satisfy (`AC-ENG-01`…`AC-ENG-32`) and the requirement (`ENG-001`…`ENG-026`). A check backed by a manual procedure states the recorded evidence location instead. Tests must not encode weaker limits than the requirement or the contract. Under [HPA-4](../../requirements/assurance-standard.md), security and correctness-critical tests MUST include negative, boundary, and failure cases; untrusted parsers require fuzz corpora; lifecycle and concurrency invariants require formal or Loom-derived tests; and critical modules must meet the coverage and mutation floors.
+Tests name the acceptance check they satisfy (`AC-ENG-01`…`AC-ENG-32`) and the requirement (`ENG-001`…`ENG-026`). A check backed by a manual procedure states the recorded evidence location instead. Tests must not encode weaker limits than the requirement or the contract. Under [HPA-4](../../torviello-enforcer/requirements/assurance-standard.md), security and correctness-critical tests MUST include negative, boundary, and failure cases; untrusted parsers require fuzz corpora; lifecycle and concurrency invariants require formal or Loom-derived tests; and critical modules must meet the coverage and mutation floors.
 
 ## Validation
 

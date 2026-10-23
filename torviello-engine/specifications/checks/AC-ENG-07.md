@@ -19,7 +19,7 @@
 ### ENG-001 — Resolve, validate, and report one effective configuration
 
 **Priority:** MUST  
-**Requirement document:** [ENG-001](../../../requirements/items/ENG-001.md)
+**Requirement document:** [ENG-001](../../../torviello-enforcer/requirements/items/ENG-001.md)
 
 The engine MUST load one typed TOML configuration, apply the documented precedence of built-in defaults, file values, environment overrides, and command-line overrides, validate the complete candidate before binding a listener, and report the effective values with their sources while redacting secrets.
 
@@ -258,7 +258,7 @@ Every comparison of a secret-derived authenticator, including a password verifie
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - A precedence truth table and the reference-model property report.
 - The fuzz corpus, 24-hour run log, and the redaction report with zero findings.
@@ -275,7 +275,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-001](../../../requirements/items/ENG-001.md) |
+| Requirement | [ENG-001](../../../torviello-enforcer/requirements/items/ENG-001.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [configuration.feature](../features/configuration.feature) |
 | Rule controls | CFG-01, CFG-03, CFG-04, SEC-05 |

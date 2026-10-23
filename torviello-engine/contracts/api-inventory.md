@@ -90,7 +90,7 @@ Every error body is an RFC 9457 `application/problem+json` document with `type`,
 - Error responses MUST use RFC 9457 `application/problem+json`; a JSON error envelope is not conformant.
 - Remote listeners MUST use TLS 1.3 and asymmetric JWT algorithms under RFC 8725. Shared-secret HS algorithms are permitted only for loopback-only profiles.
 - Every change MUST run a breaking-change diff against the released baseline. An unintended removal, type change, or status change fails the gate.
-- Evidence follows [HPA-4](../../requirements/assurance-standard.md): contract validation, lint, parity, alias, and diff reports are retained.
+- Evidence follows [HPA-4](../../torviello-enforcer/requirements/assurance-standard.md): contract validation, lint, parity, alias, and diff reports are retained.
 
 ## Contract rules
 

@@ -5,7 +5,7 @@
   "status": "active",
   "reviewed_at": "2026-10-01",
   "review_cycle": "quarterly",
-  "artifact": "governance/vendor-management.md",
+  "artifact": "torviello-enforcer/governance/policies/vendor-management.md",
   "required_terms": [
     "provider selection",
     "contract",

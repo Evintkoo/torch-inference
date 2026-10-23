@@ -234,9 +234,9 @@ def test_architecture_01_module_ownership_and_dependencies() -> None:
             leaks.append(str(path.relative_to(SOURCE)))
     require(not leaks, f"core modules depend on the API layer: {leaks}")
 
-    require(src("docs/ARCHITECTURE.md").exists(), "no architecture documentation")
+    require(src("torviello-docs/docs/ARCHITECTURE.md").exists(), "no architecture documentation")
     require(
-        any(src(name).exists() for name in ("docs/modules/README.md", "docs/OWNERSHIP.md", "CODEOWNERS", ".github/CODEOWNERS")),
+        any(src(name).exists() for name in ("torviello-docs/docs/modules/README.md", "torviello-docs/docs/OWNERSHIP.md", "CODEOWNERS", ".github/CODEOWNERS")),
         "no module ownership documentation",
     )
 

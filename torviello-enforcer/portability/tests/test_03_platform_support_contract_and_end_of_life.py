@@ -226,6 +226,6 @@ def test_portability_03_platform_support_contract_and_end_of_life() -> None:
     require(source_files(), "no product source files found in the repository")
     require(languages(), "no product source language detected")
     require(
-        any(src(name).exists() for name in ("docs/SUPPORTED_PLATFORMS.md", "docs/PLATFORM_SUPPORT.md", "SUPPORTED_PLATFORMS.md")),
+        any(src(name).exists() for name in ("torviello-docs/docs/SUPPORTED_PLATFORMS.md", "torviello-docs/docs/PLATFORM_SUPPORT.md", "SUPPORTED_PLATFORMS.md")),
         "no supported-platform and end-of-life contract",
     )

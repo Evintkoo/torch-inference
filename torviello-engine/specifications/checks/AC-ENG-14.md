@@ -19,7 +19,7 @@
 ### ENG-008 — Synthesize speech with bounded streaming and deterministic selection
 
 **Priority:** MUST  
-**Requirement document:** [ENG-008](../../../requirements/items/ENG-008.md)
+**Requirement document:** [ENG-008](../../../torviello-enforcer/requirements/items/ENG-008.md)
 
 The engine MUST validate TTS text and parameters, select an engine and voice deterministically, return playable full audio or framed PCM streaming audio, bound gaps between chunks, and report engine and voice metadata without silent fallback.
 
@@ -242,7 +242,7 @@ The project MUST use rate limits and concurrency controls at the API boundary fo
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - Audio validation reports for every supported format.
 - A stream timeline showing monotonic frames and terminal behavior.
@@ -258,7 +258,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-008](../../../requirements/items/ENG-008.md) |
+| Requirement | [ENG-008](../../../torviello-enforcer/requirements/items/ENG-008.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [text-to-speech.feature](../features/text-to-speech.feature) |
 | Rule controls | API-02, PERF-05, API-03 |

@@ -112,7 +112,7 @@ jobs:
       - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2
         with:
           tool: mdbook
-      - run: mdbook build docs
+      - run: mdbook build torviello-docs/docs
 
   audit:
     name: dependency-audit

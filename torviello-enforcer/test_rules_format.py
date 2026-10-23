@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 
 RULES = Path(__file__).resolve().parent
-REQUIREMENTS = Path(__file__).resolve().parents[1] / "requirements"
+REQUIREMENTS = Path(__file__).resolve().parents[1] / "torviello-enforcer" / "requirements"
 
 NUMBERED = sorted(
     doc

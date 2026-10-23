@@ -19,7 +19,7 @@
 ### RP-014 — Model loading and execution shall be isolated behind stable module interfaces
 
 **Priority:** MUST  
-**Requirement document:** [RP-014](../../../requirements/items/RP-014.md)
+**Requirement document:** [RP-014](../../../torviello-enforcer/requirements/items/RP-014.md)
 
 Model loading and execution shall be isolated behind stable module interfaces.
 
@@ -618,7 +618,7 @@ The project MUST keep build caches and generated artifacts target-specific. The 
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this first-slice check additionally requires a reproducible run against the shipping artifact, schema validation where a contract is involved, and a retained report naming the revision, configuration, command, observed result, and limitation. Security-relevant cases MUST be assessed against OWASP ASVS 5.0.0 Level 3. A happy-path-only result or a summary without retained measurements fails the check.
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this first-slice check additionally requires a reproducible run against the shipping artifact, schema validation where a contract is involved, and a retained report naming the revision, configuration, command, observed result, and limitation. Security-relevant cases MUST be assessed against OWASP ASVS 5.0.0 Level 3. A happy-path-only result or a summary without retained measurements fails the check.
 
 ## 10. Related checks
 
@@ -628,7 +628,7 @@ Under [HPA-4](../../../requirements/assurance-standard.md), this first-slice che
 
 | Type | Reference |
 |---|---|
-| Requirement | [RP-014](../../../requirements/items/RP-014.md) |
+| Requirement | [RP-014](../../../torviello-enforcer/requirements/items/RP-014.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Rule controls | ARC-01, ARC-02, ARC-04, ARC-05, MOD-01, MOD-02, MOD-03, MOD-04, MOD-05, PERF-01, PERF-02, PERF-04, PORT-01, PORT-02, PORT-05, VER-05 |
 | Unit | torviello-engine |

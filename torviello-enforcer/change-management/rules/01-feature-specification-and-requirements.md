@@ -25,7 +25,7 @@ The project MUST start feature work with a specification that states the user or
 
 ### CHG-01.02 — Trace each requirement to a stable ID in requirements/
 
-The project MUST trace each requirement to a stable ID in requirements/. Identify which IDs are addressed, deferred, or out of scope. The project MUST also record unresolved product, legal, security, and architecture decisions rather than guessing them in code.
+The project MUST trace each requirement to a stable ID in torviello-enforcer/requirements/. Identify which IDs are addressed, deferred, or out of scope. The project MUST also record unresolved product, legal, security, and architecture decisions rather than guessing them in code.
 
 ### CHG-01.03 — Describe public interface changes, data flows, trust boundaries, compatibility
 

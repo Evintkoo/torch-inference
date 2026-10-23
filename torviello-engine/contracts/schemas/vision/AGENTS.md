@@ -14,7 +14,7 @@ torviello-engine — Core PyTorch inference runtime.
 
 ## Assurance gates
 
-- Apply [HPA-4](../../../../requirements/assurance-standard.md) to every change in this directory.
+- Apply [HPA-4](../../../../torviello-enforcer/requirements/assurance-standard.md) to every change in this directory.
 - Update the affected requirement, feature, check, contract, schema, test, and evidence together; never weaken a threshold to make a change pass.
 - Reject any change when a fatal criterion in `../../../specifications/acceptance-criteria.md` applies when reachable from this unit. No waiver, skipped gate, or conditional pass is permitted.
 - Run the applicable contract checks and report the actual commands, results, skips, assumptions, and limitations.

@@ -19,7 +19,7 @@
 ### ENG-011 — Detect objects with validated model selection and thresholds
 
 **Priority:** MUST  
-**Requirement document:** [ENG-011](../../../requirements/items/ENG-011.md)
+**Requirement document:** [ENG-011](../../../torviello-enforcer/requirements/items/ENG-011.md)
 
 The engine MUST validate detection model version and size, resolve thresholds from request or configuration, bound upload size and image dimensions, reject missing models and invalid images before inference, and return boxes with stable class labels and applied thresholds.
 
@@ -233,7 +233,7 @@ The project MUST preserve immutable version history. Updating a model means crea
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - The model-family and size validation matrix.
 - The differential report with corpus digest and tolerance.
@@ -249,7 +249,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-011](../../../requirements/items/ENG-011.md) |
+| Requirement | [ENG-011](../../../torviello-enforcer/requirements/items/ENG-011.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [object-detection.feature](../features/object-detection.feature) |
 | Rule controls | API-02, API-03, MOD-01 |

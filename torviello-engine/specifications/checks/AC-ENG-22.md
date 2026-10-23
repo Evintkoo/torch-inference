@@ -19,7 +19,7 @@
 ### ENG-016 — Authenticate and harden the serving edge
 
 **Priority:** MUST  
-**Requirement document:** [ENG-016](../../../requirements/items/ENG-016.md)
+**Requirement document:** [ENG-016](../../../torviello-enforcer/requirements/items/ENG-016.md)
 
 The engine MUST default to a safe local edge, require valid credentials on protected routes when authentication is enabled, separate administrative authority from inference access, emit security headers, and apply rate limiting with a non-spoofable client identity policy.
 
@@ -258,7 +258,7 @@ The project MUST keep health and metrics routes minimally informative and explic
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - The ASVS Level 3 control record with evidence links.
 - The token attack corpus results and key-rotation/revocation records.
@@ -274,7 +274,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-016](../../../requirements/items/ENG-016.md) |
+| Requirement | [ENG-016](../../../torviello-enforcer/requirements/items/ENG-016.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [auth-and-security.feature](../features/auth-and-security.feature) |
 | Rule controls | SEC-02, SEC-03, SEC-08, SEC-10 |

@@ -19,7 +19,7 @@
 ### ENG-020 — Correlate requests through structured, redacted logs
 
 **Priority:** MUST  
-**Requirement document:** [ENG-020](../../../requirements/items/ENG-020.md)
+**Requirement document:** [ENG-020](../../../torviello-enforcer/requirements/items/ENG-020.md)
 
 The engine MUST assign or validate a correlation identifier at ingress, propagate it through logs and optional upstream calls, emit structured records for accepted and rejected requests, and exclude secrets, prompts, audio, images, and full payloads from logs and diagnostic access.
 
@@ -262,7 +262,7 @@ Every comparison of a secret-derived authenticator, including a password verifie
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - Injection and redaction reports with zero findings.
 - The trace-propagation record.
@@ -278,7 +278,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-020](../../../requirements/items/ENG-020.md) |
+| Requirement | [ENG-020](../../../torviello-enforcer/requirements/items/ENG-020.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [logging-and-correlation.feature](../features/logging-and-correlation.feature) |
 | Rule controls | OBS-01, OBS-03, SEC-05, OBS-05 |

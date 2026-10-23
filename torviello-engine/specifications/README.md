@@ -6,7 +6,7 @@ Behavior specifications for the engine unit.
 
 Turn the engine domain rules into testable use cases, functional requirements with stable IDs, edge cases, and acceptance criteria before implementation.
 
-Every acceptance check must be **SMART**: specific about the actor, action, and observable outcome; measurable with a numeric threshold or exact state; achievable with a declared evidence method and environment; relevant to a linked requirement and release gate; and time-bound to the revision, measurement window, and re-acceptance trigger. The normative contract is in [`requirements/assurance-standard.md`](../../requirements/assurance-standard.md) §2.1 and [`acceptance-criteria.md`](acceptance-criteria.md) §1.1.
+Every acceptance check must be **SMART**: specific about the actor, action, and observable outcome; measurable with a numeric threshold or exact state; achievable with a declared evidence method and environment; relevant to a linked requirement and release gate; and time-bound to the revision, measurement window, and re-acceptance trigger. The normative contract is in [`requirements/assurance-standard.md`](../../torviello-enforcer/requirements/assurance-standard.md) §2.1 and [`acceptance-criteria.md`](acceptance-criteria.md) §1.1.
 
 ## Contents
 
@@ -49,11 +49,11 @@ Every acceptance check must be **SMART**: specific about the actor, action, and 
 
 - [../contracts/openapi.yaml](../contracts/openapi.yaml) — authoritative HTTP contract.
 - [../contracts/api-inventory.md](../contracts/api-inventory.md) — route, auth, limit, and error traceability.
-- [../../requirements/assurance-standard.md](../../requirements/assurance-standard.md) — HPA-4 requirement quality and evidence bar.
+- [../../requirements/assurance-standard.md](../../torviello-enforcer/requirements/assurance-standard.md) — HPA-4 requirement quality and evidence bar.
 
 ## Validation
 
-Each requirement ID resolves in [`requirements/engine-runtime.md`](../../requirements/engine-runtime.md). Acceptance checks map to tests in `../tests/` or to a recorded manual check. Run `python3 ../../torviello-enforcer/test_requirement_documents.py` and the engine tests after implementation.
+Each requirement ID resolves in [`requirements/engine-runtime.md`](../../torviello-enforcer/requirements/engine-runtime.md). Acceptance checks map to tests in `../tests/` or to a recorded manual check. Run `python3 ../../torviello-enforcer/test_requirement_documents.py` and the engine tests after implementation.
 
 ## Status
 

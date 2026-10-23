@@ -226,6 +226,6 @@ def test_operations_05_capacity_readiness_and_operator_change_management() -> No
     require(source_files(), "no product source files found in the repository")
     require(languages(), "no product source language detected")
     require(
-        any(src(name).exists() for name in ("docs/CAPACITY.md", "docs/operations/capacity.md", "CAPACITY.md")),
+        any(src(name).exists() for name in ("torviello-docs/docs/CAPACITY.md", "torviello-docs/docs/operations/capacity.md", "CAPACITY.md")),
         "no capacity/readiness documentation",
     )

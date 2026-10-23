@@ -19,7 +19,7 @@
 ### ENG-021 — Publish and evolve a validated HTTP contract
 
 **Priority:** MUST  
-**Requirement document:** [ENG-021](../../../requirements/items/ENG-021.md)
+**Requirement document:** [ENG-021](../../../torviello-enforcer/requirements/items/ENG-021.md)
 
 The engine MUST publish a machine-readable OpenAPI contract for its public HTTP surface, keep the router and document synchronized, make versioned aliases behaviorally identical, and follow an explicit deprecation and compatibility process for breaking changes.
 
@@ -229,7 +229,7 @@ The project SHOULD generate reference documentation from the contract when pract
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - Contract validation and lint reports.
 - The bidirectional route-parity report.
@@ -245,7 +245,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-021](../../../requirements/items/ENG-021.md) |
+| Requirement | [ENG-021](../../../torviello-enforcer/requirements/items/ENG-021.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [api-contract-versioning.feature](../features/api-contract-versioning.feature) |
 | Rule controls | API-01, API-04, GOV-08 |

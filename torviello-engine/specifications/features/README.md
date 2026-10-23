@@ -39,7 +39,7 @@ Executable or reviewable scenarios that specify observable engine behavior.
 - Keep scenarios free of implementation detail that belongs in contracts or design.
 - Every engine capability feature maps to exactly one requirement in `requirements/engine-runtime.md` and one assessment in `../acceptance-criteria.md`. The first-slice feature maps its source requirements and `AC-ENG-06`.
 - A scenario that cannot be observed through the contract, logs, metrics, events, or a recorded manual procedure is not a valid acceptance scenario.
-- Under [HPA-4](../../../requirements/assurance-standard.md), every feature MUST include at least one negative, boundary, or failure scenario in addition to its success paths.
+- Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), every feature MUST include at least one negative, boundary, or failure scenario in addition to its success paths.
 
 ## Validation
 

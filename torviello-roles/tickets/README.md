@@ -42,7 +42,7 @@ What becomes true.
 - `owner` must resolve to a role directory under `roles/` with numbered documents.
 - `done` requires a log entry containing `evidence:`.
 - `depends_on` must reference existing tickets and must not form a cycle.
-- `requirements` must resolve to `requirements/items/<ID>.md`.
+- `requirements` must resolve to `torviello-enforcer/requirements/items/<ID>.md`.
 - Append to the log; never delete an earlier entry.
 - No secrets, tokens, personal data, or customer content.
 

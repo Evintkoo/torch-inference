@@ -234,7 +234,7 @@ def test_operations_02_reliability_slos_and_recovery() -> None:
     require(re.search(r"readiness|ready|startup", code, re.I), "health surface exposes no readiness/liveness distinction")
 
     require(
-        any(src(name).exists() for name in ("docs/SLO.md", "docs/RELIABILITY.md", "SLO.md"))
+        any(src(name).exists() for name in ("torviello-docs/docs/SLO.md", "torviello-docs/docs/RELIABILITY.md", "SLO.md"))
         or re.search(r"\bSLO\b|error budget|service level", code_text() + read_all([p for p in all_files({".md"}) if "architecture" in p.name.lower()]), re.I),
         "no service-level objectives or error-budget record",
     )

@@ -109,7 +109,7 @@ Events MUST NOT contain prompts, transcripts, audio, images, tokens, credentials
 
 ## Assurance
 
-Governed by [HPA-4](../../requirements/assurance-standard.md) and the [engine acceptance criteria](../specifications/acceptance-criteria.md).
+Governed by [HPA-4](../../torviello-enforcer/requirements/assurance-standard.md) and the [engine acceptance criteria](../specifications/acceptance-criteria.md).
 - **Subject:** Domain and integration events.
 - **Required evidence:** Every event MUST have a versioned schema, stable name, producer/consumer contract, redaction rule, ordering semantics, and idempotency rule.
 - **Failure:** An unversioned event, sensitive payload, undefined ordering, or non-idempotent consumer fails acceptance. No waiver is permitted.

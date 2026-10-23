@@ -19,7 +19,7 @@
 ### ENG-014 — Batch, cache, and coalesce work without changing results
 
 **Priority:** MUST  
-**Requirement document:** [ENG-014](../../../requirements/items/ENG-014.md)
+**Requirement document:** [ENG-014](../../../torviello-enforcer/requirements/items/ENG-014.md)
 
 Batching, caching, and request coalescing MUST be opt-in by configuration, MUST preserve the result identity and ordering of each caller, and MUST keep memory, queue depth, and wait time within configured bounds with observable statistics.
 
@@ -251,7 +251,7 @@ The project MUST preserve a CPU-only baseline and validate inference correctness
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - The cache-key property and collision reports.
 - The linearizability or Loom report.
@@ -267,7 +267,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-014](../../../requirements/items/ENG-014.md) |
+| Requirement | [ENG-014](../../../torviello-enforcer/requirements/items/ENG-014.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [batching-and-caching.feature](../features/batching-and-caching.feature) |
 | Rule controls | PERF-05, PERF-02, ARC-04 |

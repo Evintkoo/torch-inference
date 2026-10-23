@@ -59,7 +59,7 @@ Each rule has a stable identifier. A rule is satisfied only when a specification
 
 ## Assurance
 
-Governed by [HPA-4](../../requirements/assurance-standard.md) and the [engine acceptance criteria](../specifications/acceptance-criteria.md).
+Governed by [HPA-4](../../torviello-enforcer/requirements/assurance-standard.md) and the [engine acceptance criteria](../specifications/acceptance-criteria.md).
 - **Subject:** Business rules.
 - **Required evidence:** Every rule MUST have a stable ID, normative statement, trace, and executable evidence; rules MUST NOT contradict requirements or invariants.
 - **Failure:** A rule without a trace or check, or a contradiction with a requirement or invariant, fails acceptance. No waiver is permitted.

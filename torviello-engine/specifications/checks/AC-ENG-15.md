@@ -19,7 +19,7 @@
 ### ENG-009 — Transcribe and validate audio within explicit ingress bounds
 
 **Priority:** MUST  
-**Requirement document:** [ENG-009](../../../requirements/items/ENG-009.md)
+**Requirement document:** [ENG-009](../../../torviello-enforcer/requirements/items/ENG-009.md)
 
 The engine MUST bound audio upload size and duration before decoding, support declared audio formats, reject undecodable input with a stable error, transcribe with optional timestamp segments, and expose validation metadata without executing a model.
 
@@ -237,7 +237,7 @@ The project MUST apply bounded concurrency, request size, queue depth, and timeo
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - Fuzz logs and the malicious audio corpus.
 - Boundary results showing rejection before model execution.
@@ -253,7 +253,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-009](../../../requirements/items/ENG-009.md) |
+| Requirement | [ENG-009](../../../torviello-enforcer/requirements/items/ENG-009.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [speech-to-text.feature](../features/speech-to-text.feature) |
 | Rule controls | API-02, SEC-04, API-03 |

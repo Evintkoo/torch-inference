@@ -10,7 +10,8 @@ is split into independently releasable areas: `services`, `web`, `docs`,
 ## Scaffold status
 
 The component and runtime views below are the **target architecture**. The
-current Rust scaffold implements an HTTP shell with HS256 authentication,
+current Rust scaffold implements an HTTP shell with local HS256 authentication
+and hosted OIDC asymmetric token validation,
 configuration validation, RFC 9457 errors, health/readiness, metrics, and
 version endpoints. It implements a validated model catalog, confined local
 acquisition with digest verification, acquisition status and SSE progress, and
@@ -18,9 +19,9 @@ a model load lifecycle with single-flight initialization and reference-aware
 unload. `POST /classify` executes a TorchScript image classifier on CPU when the
 `torchscript` feature is enabled; the default profile keeps libtorch optional.
 It does not yet implement remote Hugging Face acquisition, managed-asset
-deletion, the remaining inference routes, SQLite persistence, OpenTelemetry
-export, WebSocket transport, or the 22-path canonical contract (23 canonical
-operations, 32 with aliases). The React console is a shell. Treat
+deletion, the remaining inference routes, OpenTelemetry export, WebSocket
+transport, or the full 33-path, 35-operation canonical contract (18 implemented,
+17 reserved). The React console is a shell. Treat
 unimplemented boxes as planned, not as conformance evidence.
 
 The maintained machine-readable blueprint is
@@ -68,8 +69,8 @@ ports declared by the domain. Shared contracts live under `contracts/` and
 
 ## Runtime boundaries
 
-- Authentication is enabled by default and binds to loopback unless an
-  operator opts into a remote profile.
+- Authentication is enabled by default. Local HS256 is restricted to loopback;
+  non-loopback binds require OIDC.
 - Request bodies, WebSocket frames, batches, decompression, and queues have
   explicit maximums and timeouts.
 - Bulkheads, circuit breakers, and retries isolate model, storage, and
@@ -78,6 +79,13 @@ ports declared by the domain. Shared contracts live under `contracts/` and
 - Model downloads require HTTPS and a SHA-256 checksum before activation.
 
 ## Quality attributes
+
+TorchScript runs on CPU by default and uses Vulkan or Metal first when the
+feature is compiled and the device is present. If the requested device is
+unavailable, the adapter logs the fallback and the model slot, readiness body,
+and inference envelope report the actual backend. API reference HTML and Scalar assets are embedded in the
+binary. Hosted authentication is delegated to OIDC; the engine validates
+asymmetric tokens as a resource server (ADR 0004).
 
 Availability, latency, isolation, auditability, and recoverability are
 evaluated against the thresholds in [SLO.md](SLO.md). Architecture decisions

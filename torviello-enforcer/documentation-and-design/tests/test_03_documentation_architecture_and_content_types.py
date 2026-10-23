@@ -225,6 +225,6 @@ def test_documentation_and_design_03_documentation_architecture_and_content_type
         pytest.fail(f"[{CONTROL}] source tree not found: {SOURCE}")
     require(source_files(), "no product source files found in the repository")
     require(languages(), "no product source language detected")
-    require(any(src(name).exists() for name in ("docs/ARCHITECTURE.md", "docs/architecture.md")), "no architecture document")
+    require(any(src(name).exists() for name in ("torviello-docs/docs/ARCHITECTURE.md", "torviello-docs/docs/architecture.md")), "no architecture document")
     arch = read_all([path for path in all_files({".md"}) if "architecture" in path.name.lower()])
     require(re.search(r"mermaid|diagram|component|context", arch, re.I), "architecture document has no views/diagrams")

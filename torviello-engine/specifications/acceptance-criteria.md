@@ -1,6 +1,6 @@
 # Engine acceptance criteria
 
-**Assurance level:** HPA-4 (Highest Practical Assurance), defined in [`requirements/assurance-standard.md`](../../requirements/assurance-standard.md).
+**Assurance level:** HPA-4 (Highest Practical Assurance), defined in [`requirements/assurance-standard.md`](../../torviello-enforcer/requirements/assurance-standard.md).
 **Scope:** configuration, lifecycle, backends, catalog, acquisition, model loading, inference capabilities, realtime transports, batching, resilience, security, errors, observability, contracts, registry administration, and platform profiles.
 **Decision rule:** acceptance is binary. A check passes only when every applicable MUST, every threshold below, every negative case, and every evidence requirement pass on the recorded revision. Partial credit, best-run reporting, and conditional acceptance are prohibited.
 

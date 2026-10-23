@@ -6,7 +6,7 @@ This repository contains product requirements, the repository shape for the prod
 
 ## Competitive target
 
-Torviello aims to be the fastest and lightest inference engine in a declared, reproducible benchmark envelope. That claim is earned, not asserted: [RP-016–RP-017](requirements/runtime-and-platform.md) require a pinned competitor set, identical hardware and workloads, one harness, published latency/throughput/memory/startup/artifact evidence, and enforced footprint budgets. [PERF-06](torviello-enforcer/performance/rules/06-competitive-performance-and-footprint.md) governs the claim, and [OD-005–OD-006](requirements/open-decisions.md) must be resolved before any public "fastest" or "lightest" statement.
+Torviello aims to be the fastest and lightest inference engine in a declared, reproducible benchmark envelope. That claim is earned, not asserted: [RP-016–RP-017](torviello-enforcer/requirements/runtime-and-platform.md) require a pinned competitor set, identical hardware and workloads, one harness, published latency/throughput/memory/startup/artifact evidence, and enforced footprint budgets. [PERF-06](torviello-enforcer/performance/rules/06-competitive-performance-and-footprint.md) governs the claim, and [OD-005–OD-006](torviello-enforcer/requirements/open-decisions.md) must be resolved before any public "fastest" or "lightest" statement.
 
 ## Product architecture
 
@@ -46,19 +46,22 @@ If no unit owns an artifact, record an owner decision on a ticket before
 creating a home for it — the root is never the default. The legacy root
 directories have been consolidated into their units (`monitoring/` into
 `torviello-serve/`, `benchmarks/` into `torviello-bench/`, `web/` into
-`torviello-landing/`, and `models/`, `config/`, `containers/`, `packaging/`,
-and `services/` into `torviello-engine/`). What remains at the root is the
-fixed file set, the product units, the normative layer (`requirements/`,
-`docs/`, `governance/`), the named `canvas/` blueprint exception, and
-gitignored build outputs (`dist/`, `target/`, `node_modules/`, `notes/`).
+`torviello-landing/`, `models/`, `config/`, `containers/`, `packaging/`, and
+`services/` into `torviello-engine/`, `docs/` into
+[`torviello-docs/docs/`](torviello-docs/docs/), and organizational policies
+and evidence records into [`torviello-enforcer/governance/`](torviello-enforcer/governance/)).
+What remains at the root is the fixed file set, the product units, the
+normative layer (`torviello-enforcer/`, `requirements/`), the named `canvas/`
+blueprint exception, and gitignored build outputs (`dist/`, `target/`,
+`node_modules/`, `notes/`).
 
 ## Start here
 
-The first vertical slice is specified in [load-config-and-list-models.feature](torviello-engine/specifications/features/load-config-and-list-models.feature): load TOML configuration, validate it, and expose health and the configured model catalog. Its domain model and rules live in [torviello-engine/domain](torviello-engine/domain/README.md). Resolve OD-001–OD-004 in [open decisions](requirements/open-decisions.md) before implementation proceeds beyond the current scaffold.
+The first vertical slice is specified in [load-config-and-list-models.feature](torviello-engine/specifications/features/load-config-and-list-models.feature): load TOML configuration, validate it, and expose health and the configured model catalog. Its domain model and rules live in [torviello-engine/domain](torviello-engine/domain/README.md). Resolve OD-001–OD-004 in [open decisions](torviello-enforcer/requirements/open-decisions.md) before implementation proceeds beyond the current scaffold.
 
 ## Project guidance
 
-- Read [requirements](requirements/README.md) for product and engineering outcomes, acceptance criteria, and unresolved decisions.
+- Read [requirements](torviello-enforcer/requirements/README.md) for product and engineering outcomes, acceptance criteria, and unresolved decisions.
 - Read [enforcer](torviello-enforcer/README.md) for enforceable contributor and agent controls, their enforcement tests, domain indexes, and lifecycle coverage.
 
 ## Development workflow
@@ -78,7 +81,7 @@ to validate the store.
 
 ## Documentation assurance
 
-Every engine requirement, feature, check, contract, domain document, evaluation, README, and `AGENTS.md` is governed by the [HPA-4 assurance standard](requirements/assurance-standard.md). Acceptance is binary: a single fatal criterion in the [engine acceptance criteria](torviello-engine/specifications/acceptance-criteria.md) fails the artifact, with no waiver or conditional pass. Document presence is not evidence; evidence is revision-pinned, reproducible, and retained.
+Every engine requirement, feature, check, contract, domain document, evaluation, README, and `AGENTS.md` is governed by the [HPA-4 assurance standard](torviello-enforcer/requirements/assurance-standard.md). Acceptance is binary: a single fatal criterion in the [engine acceptance criteria](torviello-engine/specifications/acceptance-criteria.md) fails the artifact, with no waiver or conditional pass. Document presence is not evidence; evidence is revision-pinned, reproducible, and retained.
 
 ## Checks
 

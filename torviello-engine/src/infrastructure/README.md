@@ -16,7 +16,7 @@ Adapter behavior is verified without leaking infrastructure types into the domai
 
 ## Assurance
 
-This directory is governed by [HPA-4](../../../requirements/assurance-standard.md) and the binary [engine acceptance criteria](../../specifications/acceptance-criteria.md). Its artifacts are acceptance-relevant; absence of evidence is a failure, not a pass.
+This directory is governed by [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md) and the binary [engine acceptance criteria](../../specifications/acceptance-criteria.md). Its artifacts are acceptance-relevant; absence of evidence is a failure, not a pass.
 - **Subject:** infrastructure adapters.
 - **Required evidence:** Adapters MUST pass contract tests against the real external boundary, including timeout, retry, cancellation, malformed-response, and resource-exhaustion cases.
 - **Failure:** An untested adapter failure mode, an unbounded retry, or a contract mismatch fails acceptance. No waiver or conditional pass is permitted.

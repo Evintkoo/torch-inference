@@ -86,7 +86,7 @@ Invariants are conditions that must hold in every reachable engine state. They a
 
 ## Assurance
 
-Governed by [HPA-4](../../requirements/assurance-standard.md) and the [engine acceptance criteria](../specifications/acceptance-criteria.md). An invariant that is not checked at the boundary where it can be violated is not enforced; a violation without a defined failure response fails acceptance.
+Governed by [HPA-4](../../torviello-enforcer/requirements/assurance-standard.md) and the [engine acceptance criteria](../specifications/acceptance-criteria.md). An invariant that is not checked at the boundary where it can be violated is not enforced; a violation without a defined failure response fails acceptance.
 
 | ID | Invariant | Trace |
 |---|---|---|

@@ -527,7 +527,7 @@ require(
     "secrets are not injectable from the environment",
 )
 require(
-    any(src(name).exists() for name in (".env.example", "docs/CONFIGURATION.md", "docs/configuration.md")),
+    any(src(name).exists() for name in (".env.example", "torviello-docs/docs/CONFIGURATION.md", "torviello-docs/docs/configuration.md")),
     "no documented secret-injection path",
 )
 '''
@@ -647,7 +647,7 @@ require(
 
 BUNDLES["rollback"] = r'''
 require(
-    any(src(name).exists() for name in ("docs/DEPLOYMENT.md", "docs/deployment.md", "docs/operations/rollback.md")),
+    any(src(name).exists() for name in ("torviello-docs/docs/DEPLOYMENT.md", "torviello-docs/docs/deployment.md", "torviello-docs/docs/operations/rollback.md")),
     "no deployment documentation for rollback",
 )
 rollback_text = read_all(
@@ -667,7 +667,7 @@ require(
 
 BUNDLES["install_upgrade"] = r'''
 require(
-    any(src(name).exists() for name in ("docs/guides/installation.md", "docs/INSTALL.md", "INSTALL.md")),
+    any(src(name).exists() for name in ("torviello-docs/docs/guides/installation.md", "torviello-docs/docs/INSTALL.md", "INSTALL.md")),
     "no installation guide",
 )
 install_text = read_all(
@@ -708,14 +708,14 @@ require(not missing, f"source files lack copyright headers: {missing[:8]}")
 
 BUNDLES["model_rights"] = r'''
 require(
-    any(src(name).exists() for name in ("docs/model-licenses.md", "MODEL_LICENSES.md", "docs/models/licenses.md")),
+    any(src(name).exists() for name in ("torviello-docs/docs/model-licenses.md", "MODEL_LICENSES.md", "torviello-docs/docs/models/licenses.md")),
     "no model/dataset/font/media rights record",
 )
 '''
 
 BUNDLES["license_policy"] = r'''
 require(
-    any(src(name).exists() for name in ("docs/LICENSE_POLICY.md", "LICENSING.md", "docs/licensing.md")),
+    any(src(name).exists() for name in ("torviello-docs/docs/LICENSE_POLICY.md", "LICENSING.md", "torviello-docs/docs/licensing.md")),
     "no license policy or commercial-use record",
 )
 '''
@@ -800,7 +800,7 @@ require(benchmarks, "no benchmarks exist")
 
 BUNDLES["bench_docs"] = r'''
 require(
-    any(src(name).exists() for name in ("docs/BENCHMARKS.md", "benches/README.md", "benchmarks/README.md")),
+    any(src(name).exists() for name in ("torviello-docs/docs/BENCHMARKS.md", "benches/README.md", "benchmarks/README.md")),
     "no benchmark method or performance-claim documentation",
 )
 '''
@@ -862,9 +862,9 @@ require(not leaks, f"core modules depend on the API layer: {leaks}")
 '''
 
 BUNDLES["ownership_docs"] = r'''
-require(src("docs/ARCHITECTURE.md").exists(), "no architecture documentation")
+require(src("torviello-docs/docs/ARCHITECTURE.md").exists(), "no architecture documentation")
 require(
-    any(src(name).exists() for name in ("docs/modules/README.md", "docs/OWNERSHIP.md", "CODEOWNERS", ".github/CODEOWNERS")),
+    any(src(name).exists() for name in ("torviello-docs/docs/modules/README.md", "torviello-docs/docs/OWNERSHIP.md", "CODEOWNERS", ".github/CODEOWNERS")),
     "no module ownership documentation",
 )
 '''
@@ -986,7 +986,7 @@ require(
 
 BUNDLES["debt_register"] = r'''
 require(
-    any(src(name).exists() for name in ("docs/TECHNICAL_DEBT.md", "docs/technical-debt.md", "TECHNICAL_DEBT.md")),
+    any(src(name).exists() for name in ("torviello-docs/docs/TECHNICAL_DEBT.md", "torviello-docs/docs/technical-debt.md", "TECHNICAL_DEBT.md")),
     "no tracked technical-debt register",
 )
 '''
@@ -1015,7 +1015,7 @@ require(any(node.get("path") for node in nodes), "canvas nodes do not map to sou
 '''
 
 BUNDLES["docs_architecture"] = r'''
-require(any(src(name).exists() for name in ("docs/ARCHITECTURE.md", "docs/architecture.md")), "no architecture document")
+require(any(src(name).exists() for name in ("torviello-docs/docs/ARCHITECTURE.md", "torviello-docs/docs/architecture.md")), "no architecture document")
 arch = read_all([path for path in all_files({".md"}) if "architecture" in path.name.lower()])
 require(re.search(r"mermaid|diagram|component|context", arch, re.I), "architecture document has no views/diagrams")
 '''
@@ -1029,8 +1029,8 @@ engines = [
         "docusaurus.config.ts",
         "astro.config.mjs",
         "vitepress.config.ts",
-        "docs/conf.py",
-        "docs/book.toml",
+        "torviello-docs/docs/conf.py",
+        "torviello-docs/docs/book.toml",
         "nextra.config.js",
     )
     if src(name).exists()
@@ -1040,7 +1040,7 @@ require(engines, "no documentation rendering engine is configured")
 
 BUNDLES["adr"] = r'''
 require(
-    any((SOURCE / name).is_dir() for name in ("docs/adr", "docs/decisions", "adr", "decisions")),
+    any((SOURCE / name).is_dir() for name in ("torviello-docs/docs/adr", "torviello-docs/docs/decisions", "adr", "decisions")),
     "no architecture decision records directory",
 )
 '''
@@ -1075,14 +1075,14 @@ for state in ("loading", "error", "empty"):
 '''
 
 BUNDLES["record_evidence"] = r'''
-record_path = f"governance/records/{CONTROL.lower()}.json"
+record_path = f"torviello-enforcer/governance/records/{CONTROL.lower()}.json"
 require(src(record_path).exists(), f"no governance evidence record exists for {CONTROL}")
 record = json.loads(read(record_path))
 require(record.get("control") == CONTROL, f"evidence record is for {record.get('control')}, not {CONTROL}")
 require(record.get("owner"), f"{CONTROL} evidence record has no accountable owner")
 require(record.get("status") in {"approved", "active", "monitored"}, f"{CONTROL} evidence record is not approved or active")
 require(record.get("reviewed_at"), f"{CONTROL} evidence record has no review date")
-require(str(record.get("artifact", "")).startswith("governance/"), f"{CONTROL} evidence record has no governance artifact")
+require(str(record.get("artifact", "")).startswith("torviello-enforcer/governance/"), f"{CONTROL} evidence record has no governance artifact")
 terms = record.get("required_terms") or []
 require(len(terms) >= 3, f"{CONTROL} evidence record does not define enough review terms")
 artifact = read(record["artifact"])
@@ -1185,21 +1185,21 @@ require(re.search(r"gpu|cpu", compose, re.I), "compose does not distinguish CPU 
 
 BUNDLES["incident_docs"] = r'''
 require(
-    any(src(name).exists() for name in ("docs/INCIDENT_RESPONSE.md", "docs/operations/incident-response.md", "INCIDENT_RESPONSE.md")),
+    any(src(name).exists() for name in ("torviello-docs/docs/INCIDENT_RESPONSE.md", "torviello-docs/docs/operations/incident-response.md", "INCIDENT_RESPONSE.md")),
     "no incident-response runbook",
 )
 '''
 
 BUNDLES["capacity_docs"] = r'''
 require(
-    any(src(name).exists() for name in ("docs/CAPACITY.md", "docs/operations/capacity.md", "CAPACITY.md")),
+    any(src(name).exists() for name in ("torviello-docs/docs/CAPACITY.md", "torviello-docs/docs/operations/capacity.md", "CAPACITY.md")),
     "no capacity/readiness documentation",
 )
 '''
 
 BUNDLES["threat_model_docs"] = r'''
 require(
-    any(src(name).exists() for name in ("docs/THREAT_MODEL.md", "docs/security/threat-model.md", "THREAT_MODEL.md")),
+    any(src(name).exists() for name in ("torviello-docs/docs/THREAT_MODEL.md", "torviello-docs/docs/security/threat-model.md", "THREAT_MODEL.md")),
     "no threat model",
 )
 '''
@@ -1228,7 +1228,7 @@ require(re.search(r"cors|allowed[_-]?origin|reverse[_-]?proxy", blob, re.I), "no
 '''
 
 BUNDLES["privacy"] = r'''
-require(any(src(name).exists() for name in ("docs/PRIVACY.md", "PRIVACY.md", "docs/privacy.md")), "no privacy/data-minimization record")
+require(any(src(name).exists() for name in ("torviello-docs/docs/PRIVACY.md", "PRIVACY.md", "torviello-docs/docs/privacy.md")), "no privacy/data-minimization record")
 '''
 
 BUNDLES["secure_defaults"] = r'''
@@ -1289,7 +1289,7 @@ require(
 
 BUNDLES["change_runbook"] = r'''
 require(
-    any(src(name).exists() for name in ("docs/CONTRIBUTING.md", "CONTRIBUTING.md", "docs/change-management.md")),
+    any(src(name).exists() for name in ("torviello-docs/docs/CONTRIBUTING.md", "CONTRIBUTING.md", "torviello-docs/docs/change-management.md")),
     "no contribution/change-execution runbook",
 )
 '''
@@ -1298,7 +1298,7 @@ BUNDLES["plan_retention"] = BUNDLES["record_evidence"]
 
 BUNDLES["platform_support_docs"] = r'''
 require(
-    any(src(name).exists() for name in ("docs/SUPPORTED_PLATFORMS.md", "docs/PLATFORM_SUPPORT.md", "SUPPORTED_PLATFORMS.md")),
+    any(src(name).exists() for name in ("torviello-docs/docs/SUPPORTED_PLATFORMS.md", "torviello-docs/docs/PLATFORM_SUPPORT.md", "SUPPORTED_PLATFORMS.md")),
     "no supported-platform and end-of-life contract",
 )
 '''
@@ -1320,7 +1320,7 @@ require(re.search(r"\b(audit|actor|principal)\b", code, re.I), "registry adminis
 
 BUNDLES["slo"] = r'''
 require(
-    any(src(name).exists() for name in ("docs/SLO.md", "docs/RELIABILITY.md", "SLO.md"))
+    any(src(name).exists() for name in ("torviello-docs/docs/SLO.md", "torviello-docs/docs/RELIABILITY.md", "SLO.md"))
     or re.search(r"\bSLO\b|error budget|service level", code_text() + read_all([p for p in all_files({".md"}) if "architecture" in p.name.lower()]), re.I),
     "no service-level objectives or error-budget record",
 )
@@ -1658,7 +1658,7 @@ CONTROL = "__CONTROLS__"
 HERE = Path(__file__).resolve()
 RULES_ROOT = HERE.parents[3]
 DOCUMENT = HERE.parents[1] / "trails" / "00-references-trails.md"
-REQUIREMENTS = RULES_ROOT / "requirements"
+REQUIREMENTS = RULES_ROOT / "torviello-enforcer" / "requirements"
 
 
 def test_{domain.replace("-", "_")}_reference_trail_resolves() -> None:

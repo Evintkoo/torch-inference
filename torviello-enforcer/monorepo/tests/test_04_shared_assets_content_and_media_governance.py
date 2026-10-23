@@ -225,9 +225,9 @@ def test_monorepo_04_shared_assets_content_and_media_governance() -> None:
         pytest.fail(f"[{CONTROL}] source tree not found: {SOURCE}")
     require(source_files(), "no product source files found in the repository")
     require(languages(), "no product source language detected")
-    require(src("docs/ARCHITECTURE.md").exists(), "no architecture documentation")
+    require(src("torviello-docs/docs/ARCHITECTURE.md").exists(), "no architecture documentation")
     require(
-        any(src(name).exists() for name in ("docs/modules/README.md", "docs/OWNERSHIP.md", "CODEOWNERS", ".github/CODEOWNERS")),
+        any(src(name).exists() for name in ("torviello-docs/docs/modules/README.md", "torviello-docs/docs/OWNERSHIP.md", "CODEOWNERS", ".github/CODEOWNERS")),
         "no module ownership documentation",
     )
 

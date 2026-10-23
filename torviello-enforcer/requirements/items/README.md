@@ -2,7 +2,7 @@
 
 One document per requirement ID (168 total). Each document carries the normative statement, purpose, priority interpretation, scope, the full clauses of every mapped rule control, implementation guidance, assessment determination, exceptions, acceptance criteria, feature scenarios, prohibited conditions, verification procedure, evidence, failure conditions, related requirements, open decisions, and traceability.
 
-All requirement documents are governed by [HPA-4](../assurance-standard.md); engine requirements additionally carry binary acceptance and failure gates from [`acceptance-criteria.md`](../../torviello-engine/specifications/acceptance-criteria.md). The source tables in `../` are authoritative; these documents are stable per-ID views and must be updated with the source row.
+All requirement documents are governed by [HPA-4](../assurance-standard.md); engine requirements additionally carry binary acceptance and failure gates from [`acceptance-criteria.md`](../../../torviello-engine/specifications/acceptance-criteria.md). The source tables in `../` are authoritative; these documents are stable per-ID views and must be updated with the source row.
 
 ## README.md
 

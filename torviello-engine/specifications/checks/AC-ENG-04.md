@@ -19,7 +19,7 @@
 ### PA-002 — The system shall support standalone local inference without requiring a Torviello hosted account or remote control plane
 
 **Priority:** MUST  
-**Requirement document:** [PA-002](../../../requirements/items/PA-002.md)
+**Requirement document:** [PA-002](../../../torviello-enforcer/requirements/items/PA-002.md)
 
 The system shall support standalone local inference without requiring a Torviello hosted account or remote control plane.
 
@@ -405,7 +405,7 @@ The project MUST classify which external services are required for build, releas
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this first-slice check additionally requires a reproducible run against the shipping artifact, schema validation where a contract is involved, and a retained report naming the revision, configuration, command, observed result, and limitation. Security-relevant cases MUST be assessed against OWASP ASVS 5.0.0 Level 3. A happy-path-only result or a summary without retained measurements fails the check.
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this first-slice check additionally requires a reproducible run against the shipping artifact, schema validation where a contract is involved, and a retained report naming the revision, configuration, command, observed result, and limitation. Security-relevant cases MUST be assessed against OWASP ASVS 5.0.0 Level 3. A happy-path-only result or a summary without retained measurements fails the check.
 
 ## 10. Related checks
 
@@ -415,7 +415,7 @@ Under [HPA-4](../../../requirements/assurance-standard.md), this first-slice che
 
 | Type | Reference |
 |---|---|
-| Requirement | [PA-002](../../../requirements/items/PA-002.md) |
+| Requirement | [PA-002](../../../torviello-enforcer/requirements/items/PA-002.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Rule controls | MON-01, MON-02, ORG-04, EXT-01, VEND-01, VEND-02, VEND-03, VEND-04, VEND-05 |
 | Unit | torviello-engine |

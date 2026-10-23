@@ -11,7 +11,7 @@
 ### RP-016 — The engine shall substantiate any "fastest" claim against a declared competitor set, on identical hardware and workloads, for latency, throughput, memory, startup, idle cost, and artifact size
 
 **Priority:** MUST  
-**Requirement document:** [RP-016](../../../requirements/items/RP-016.md)
+**Requirement document:** [RP-016](../../../torviello-enforcer/requirements/items/RP-016.md)
 
 The engine shall substantiate any "fastest" claim against a declared competitor set, on identical hardware and workloads, for latency, throughput, memory, startup, idle cost, and artifact size.
 
@@ -165,7 +165,7 @@ The project MUST link every public "fastest" or "lightest" statement to its evid
 
 | Type | Reference |
 |---|---|
-| Requirement | [RP-016](../../../requirements/items/RP-016.md) |
+| Requirement | [RP-016](../../../torviello-enforcer/requirements/items/RP-016.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Rule controls | PERF-06 |
 | Unit | torviello-bench |

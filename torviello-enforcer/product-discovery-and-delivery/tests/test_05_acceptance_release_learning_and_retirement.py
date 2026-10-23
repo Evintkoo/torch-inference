@@ -226,14 +226,14 @@ def test_product_discovery_and_delivery_05_acceptance_release_learning_and_retir
         pytest.fail(f"[{CONTROL}] source tree not found: {SOURCE}")
     require(source_files(), "no product source files found in the repository")
     require(languages(), "no product source language detected")
-    record_path = f"governance/records/{CONTROL.lower()}.json"
+    record_path = f"torviello-enforcer/governance/records/{CONTROL.lower()}.json"
     require(src(record_path).exists(), f"no governance evidence record exists for {CONTROL}")
     record = json.loads(read(record_path))
     require(record.get("control") == CONTROL, f"evidence record is for {record.get('control')}, not {CONTROL}")
     require(record.get("owner"), f"{CONTROL} evidence record has no accountable owner")
     require(record.get("status") in {"approved", "active", "monitored"}, f"{CONTROL} evidence record is not approved or active")
     require(record.get("reviewed_at"), f"{CONTROL} evidence record has no review date")
-    require(str(record.get("artifact", "")).startswith("governance/"), f"{CONTROL} evidence record has no governance artifact")
+    require(str(record.get("artifact", "")).startswith("torviello-enforcer/governance/"), f"{CONTROL} evidence record has no governance artifact")
     terms = record.get("required_terms") or []
     require(len(terms) >= 3, f"{CONTROL} evidence record does not define enough review terms")
     artifact = read(record["artifact"])

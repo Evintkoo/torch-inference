@@ -170,7 +170,7 @@ The engine technical owner owns the profile, catalog, slots, capabilities, and r
 
 ## Assurance
 
-Governed by [HPA-4](../../requirements/assurance-standard.md) and the [engine acceptance criteria](../specifications/acceptance-criteria.md).
+Governed by [HPA-4](../../torviello-enforcer/requirements/assurance-standard.md) and the [engine acceptance criteria](../specifications/acceptance-criteria.md).
 - **Subject:** Entities and value objects.
 - **Required evidence:** Identity, immutability, equality, and lifecycle rules MUST be stated and tested; provider or transport types MUST NOT appear in the domain model.
 - **Failure:** An ambiguous identity, a mutable value object, or a leaked provider type fails acceptance. No waiver is permitted.

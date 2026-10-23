@@ -6,7 +6,7 @@ Part of **torviello-engine** — Core PyTorch inference runtime.
 
 Shared success envelopes, metadata, RFC 9457 errors, HTTP status policy, and one response schema per assigned status.
 
-This directory is governed by [HPA-4](../../../../requirements/assurance-standard.md); presence of generated artifacts is not evidence of handler behavior or conformance.
+This directory is governed by [HPA-4](../../../../torviello-enforcer/requirements/assurance-standard.md); presence of generated artifacts is not evidence of handler behavior or conformance.
 
 ## Contents
 

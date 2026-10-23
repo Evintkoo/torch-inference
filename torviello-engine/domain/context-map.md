@@ -48,7 +48,7 @@ The engine technical owner owns Engine Core, Execution Backends, and Inference C
 
 ## Assurance
 
-Governed by [HPA-4](../../requirements/assurance-standard.md) and the [engine acceptance criteria](../specifications/acceptance-criteria.md).
+Governed by [HPA-4](../../torviello-enforcer/requirements/assurance-standard.md) and the [engine acceptance criteria](../specifications/acceptance-criteria.md).
 - **Subject:** Bounded-context boundaries.
 - **Required evidence:** Context boundaries MUST be explicit, dependency direction MUST be acyclic, and every cross-context interaction MUST name its contract and owner.
 - **Failure:** An implicit boundary, a dependency cycle, or an unowned cross-context interaction fails acceptance. No waiver is permitted.

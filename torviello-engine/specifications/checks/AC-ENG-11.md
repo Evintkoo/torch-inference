@@ -19,7 +19,7 @@
 ### ENG-005 — Acquire, verify, and remove model assets safely
 
 **Priority:** MUST  
-**Requirement document:** [ENG-005](../../../requirements/items/ENG-005.md)
+**Requirement document:** [ENG-005](../../../torviello-enforcer/requirements/items/ENG-005.md)
 
 Model acquisition MUST run as bounded, observable jobs; validate source schemes, names, and destinations; verify provenance and integrity before activation; and delete only managed assets inside the configured cache root.
 
@@ -258,7 +258,7 @@ The project MUST apply bounded concurrency, request size, queue depth, and timeo
 
 ### 9.1 Highest-standard evidence
 
-Under [HPA-4](../../../requirements/assurance-standard.md), this check additionally requires:
+Under [HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md), this check additionally requires:
 
 - Fuzz logs, the malicious corpus, and zero-finding reports.
 - Digest and signature verification records tied to the activated bytes.
@@ -274,7 +274,7 @@ The evidence MUST be reproducible, tied to the source revision and configuration
 
 | Type | Reference |
 |---|---|
-| Requirement | [ENG-005](../../../requirements/items/ENG-005.md) |
+| Requirement | [ENG-005](../../../torviello-enforcer/requirements/items/ENG-005.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Feature | [model-acquisition.feature](../features/model-acquisition.feature) |
 | Rule controls | MOD-02, MOD-06, SEC-06, SEC-04 |

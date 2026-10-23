@@ -226,6 +226,6 @@ def test_code_quality_10_technical_debt_and_maintainability_operations() -> None
     require(source_files(), "no product source files found in the repository")
     require(languages(), "no product source language detected")
     require(
-        any(src(name).exists() for name in ("docs/TECHNICAL_DEBT.md", "docs/technical-debt.md", "TECHNICAL_DEBT.md")),
+        any(src(name).exists() for name in ("torviello-docs/docs/TECHNICAL_DEBT.md", "torviello-docs/docs/technical-debt.md", "TECHNICAL_DEBT.md")),
         "no tracked technical-debt register",
     )

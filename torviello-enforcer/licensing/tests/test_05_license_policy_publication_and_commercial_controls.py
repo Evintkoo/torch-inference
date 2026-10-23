@@ -226,6 +226,6 @@ def test_licensing_05_license_policy_publication_and_commercial_controls() -> No
     require(source_files(), "no product source files found in the repository")
     require(languages(), "no product source language detected")
     require(
-        any(src(name).exists() for name in ("docs/LICENSE_POLICY.md", "LICENSING.md", "docs/licensing.md")),
+        any(src(name).exists() for name in ("torviello-docs/docs/LICENSE_POLICY.md", "LICENSING.md", "torviello-docs/docs/licensing.md")),
         "no license policy or commercial-use record",
     )

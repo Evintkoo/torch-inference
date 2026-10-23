@@ -39,7 +39,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 ### GOV-12.06 — Approved root exceptions MUST be named and bounded
 
-**Requirement:** An artifact MAY remain at the repository root only if this rule or a recorded owner decision names it and bounds its scope. Approved named exceptions retain their root location until an owner decision moves them; they MUST NOT absorb content that belongs to a unit.
+**Requirement:** An artifact MAY remain at the repository root only if this rule or a recorded owner decision names it and bounds its scope. The named exception is the `canvas/` system blueprint. The normative corpus — rules and requirements — lives in `torviello-enforcer/`; operational documentation lives in `torviello-docs/docs/`; organizational policies and evidence records live in `torviello-enforcer/governance/`. Named exceptions retain their root location until an owner decision moves them; they MUST NOT absorb content that belongs to a unit.
 
 ## Prohibited conditions
 

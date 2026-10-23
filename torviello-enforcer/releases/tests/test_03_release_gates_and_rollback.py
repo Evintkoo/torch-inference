@@ -231,7 +231,7 @@ def test_releases_03_release_gates_and_rollback() -> None:
     require(re.search(r"test|audit|verify|sign", release, re.I), "release workflow does not gate on tests, audit, or signing")
 
     require(
-        any(src(name).exists() for name in ("docs/DEPLOYMENT.md", "docs/deployment.md", "docs/operations/rollback.md")),
+        any(src(name).exists() for name in ("torviello-docs/docs/DEPLOYMENT.md", "torviello-docs/docs/deployment.md", "torviello-docs/docs/operations/rollback.md")),
         "no deployment documentation for rollback",
     )
     rollback_text = read_all(

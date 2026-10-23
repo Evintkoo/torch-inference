@@ -18,7 +18,7 @@ Do not file intermittent behavior as deterministic.
 ## The 12-section report
 
 File every defect with all twelve sections (repository standard:
-`docs/operations/bug-report-standard.md`, `CHG-06.13`). A missing section makes
+`torviello-docs/docs/operations/bug-report-standard.md`, `CHG-06.13`). A missing section makes
 the report invalid:
 
 1. Title — one line: area, behavior, deviation.

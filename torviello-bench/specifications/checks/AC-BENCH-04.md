@@ -11,7 +11,7 @@
 ### RP-017 — The default installation and idle runtime shall be the lightest configuration that preserves supported behavior, with enforced footprint budgets
 
 **Priority:** MUST  
-**Requirement document:** [RP-017](../../../requirements/items/RP-017.md)
+**Requirement document:** [RP-017](../../../torviello-enforcer/requirements/items/RP-017.md)
 
 The default installation and idle runtime shall be the lightest configuration that preserves supported behavior, with enforced footprint budgets.
 
@@ -162,7 +162,7 @@ The project MUST link every public "fastest" or "lightest" statement to its evid
 
 | Type | Reference |
 |---|---|
-| Requirement | [RP-017](../../../requirements/items/RP-017.md) |
+| Requirement | [RP-017](../../../torviello-enforcer/requirements/items/RP-017.md) |
 | Specification | [acceptance-criteria.md](../acceptance-criteria.md) |
 | Rule controls | PERF-06 |
 | Unit | torviello-bench |
