@@ -1,0 +1,182 @@
+{
+  "$description": "Torviello design tokens, sliced from the approved brand board (torviello-design/brand/reference-board.png). W3C Design Tokens Community Group draft format. Primitives are the board values; semantic aliases are the only tokens components may consume.",
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "color": {
+    "midnight": {
+      "$type": "color",
+      "$value": "#0b1020",
+      "$description": "Board: Midnight. Base surface of every dark surface."
+    },
+    "orange": {
+      "$type": "color",
+      "$value": "#ff683b",
+      "$description": "Board: Torviello Orange. Primary action and highlight. 6.58:1 on midnight (AA normal text, AAA large)."
+    },
+    "warm-white": {
+      "$type": "color",
+      "$value": "#f7f8fa",
+      "$description": "Board: Warm White. Primary text on dark surfaces. 17.82:1 on midnight (AAA)."
+    },
+    "signal-teal": {
+      "$type": "color",
+      "$value": "#22d3c5",
+      "$description": "Board: Signal Teal. Secondary accent for status and data highlights. 10.09:1 on midnight (AAA)."
+    },
+    "orange-hover": {
+      "$type": "color",
+      "$value": "#ff855f",
+      "$description": "Derived: orange lightened for hover states. 7.91:1 on midnight (AAA)."
+    }
+  },
+  "semantic": {
+    "surface-base": {
+      "$type": "color",
+      "$value": "#0b1020",
+      "$description": "Page background."
+    },
+    "surface-glass": {
+      "$type": "color",
+      "$value": "rgba(247, 248, 250, 0.06)",
+      "$description": "Translucent glass card fill over midnight, as in the board hero cards."
+    },
+    "surface-raised": {
+      "$type": "color",
+      "$value": "rgba(247, 248, 250, 0.10)",
+      "$description": "Raised glass surface (cards on hover, terminal block)."
+    },
+    "border-glass": {
+      "$type": "color",
+      "$value": "rgba(247, 248, 250, 0.14)",
+      "$description": "Glass card hairline border."
+    },
+    "text-primary": {
+      "$type": "color",
+      "$value": "#f7f8fa",
+      "$description": "Primary text on dark surfaces."
+    },
+    "text-muted": {
+      "$type": "color",
+      "$value": "rgba(247, 248, 250, 0.72)",
+      "$description": "Secondary text. Blended over midnight: #b5b7bd at 9.44:1 (AAA)."
+    },
+    "action-primary": {
+      "$type": "color",
+      "$value": "#ff683b",
+      "$description": "Primary button and link accent."
+    },
+    "action-primary-hover": {
+      "$type": "color",
+      "$value": "#ff855f",
+      "$description": "Primary action hover."
+    },
+    "action-label": {
+      "$type": "color",
+      "$value": "#0b1020",
+      "$description": "Label on primary actions. 6.58:1 on orange (AA)."
+    },
+    "accent-secondary": {
+      "$type": "color",
+      "$value": "#22d3c5",
+      "$description": "Status-ready accent, data highlights, terminal prompt bullets."
+    },
+    "focus-ring": {
+      "$type": "color",
+      "$value": "#22d3c5",
+      "$description": "Visible focus indicator on dark surfaces. 10.09:1 against midnight."
+    }
+  },
+  "font": {
+    "family-sans": {
+      "$type": "fontFamily",
+      "$value": [
+        "Inter",
+        "-apple-system",
+        "Segoe UI",
+        "sans-serif"
+      ],
+      "$description": "Board: Inter. Headings and UI."
+    },
+    "family-mono": {
+      "$type": "fontFamily",
+      "$value": [
+        "JetBrains Mono",
+        "SFMono-Regular",
+        "Consolas",
+        "monospace"
+      ],
+      "$description": "Board: JetBrains Mono. Code and technical content."
+    },
+    "size-display": {
+      "$type": "dimension",
+      "$value": "64px"
+    },
+    "size-heading": {
+      "$type": "dimension",
+      "$value": "32px"
+    },
+    "size-body": {
+      "$type": "dimension",
+      "$value": "16px"
+    },
+    "size-label": {
+      "$type": "dimension",
+      "$value": "13px"
+    },
+    "weight-semibold": {
+      "$type": "fontWeight",
+      "$value": 600
+    },
+    "weight-regular": {
+      "$type": "fontWeight",
+      "$value": 400
+    }
+  },
+  "space": {
+    "1": {
+      "$type": "dimension",
+      "$value": "4px"
+    },
+    "2": {
+      "$type": "dimension",
+      "$value": "8px"
+    },
+    "3": {
+      "$type": "dimension",
+      "$value": "12px"
+    },
+    "4": {
+      "$type": "dimension",
+      "$value": "16px"
+    },
+    "6": {
+      "$type": "dimension",
+      "$value": "24px"
+    },
+    "8": {
+      "$type": "dimension",
+      "$value": "32px"
+    },
+    "12": {
+      "$type": "dimension",
+      "$value": "48px"
+    },
+    "16": {
+      "$type": "dimension",
+      "$value": "64px"
+    }
+  },
+  "radius": {
+    "control": {
+      "$type": "dimension",
+      "$value": "8px"
+    },
+    "card": {
+      "$type": "dimension",
+      "$value": "16px"
+    },
+    "glass": {
+      "$type": "dimension",
+      "$value": "20px"
+    }
+  }
+}

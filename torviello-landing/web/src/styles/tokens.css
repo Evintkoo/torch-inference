@@ -1,0 +1,70 @@
+/*
+ * Copyright (c) 2026 Torviello.
+ * Mirrors torviello-design/contracts/design-tokens.json — do not edit values
+ * here; the contract is the source of truth and a unit test checks parity.
+ * Sliced from the approved brand board (Midnight / Torviello Orange / Warm
+ * White / Signal Teal, Inter + JetBrains Mono).
+ */
+
+:root {
+  /* primitives */
+  --tv-color-midnight: #0b1020;
+  --tv-color-orange: #ff683b;
+  --tv-color-warm-white: #f7f8fa;
+  --tv-color-signal-teal: #22d3c5;
+  --tv-color-orange-hover: #ff855f;
+
+  /* semantic surfaces */
+  --tv-surface-base: var(--tv-color-midnight);
+  --tv-surface-glass: rgba(247, 248, 250, 0.06);
+  --tv-surface-raised: rgba(247, 248, 250, 0.1);
+  --tv-border-glass: rgba(247, 248, 250, 0.14);
+
+  /* semantic text */
+  --tv-text-primary: var(--tv-color-warm-white);
+  --tv-text-muted: rgba(247, 248, 250, 0.72);
+
+  /* semantic actions and accents */
+  --tv-action-primary: var(--tv-color-orange);
+  --tv-action-primary-hover: var(--tv-color-orange-hover);
+  --tv-action-label: var(--tv-color-midnight);
+  --tv-accent-secondary: var(--tv-color-signal-teal);
+  --tv-focus-ring: var(--tv-color-signal-teal);
+
+  /* typography */
+  --tv-font-sans: "Inter", -apple-system, "Segoe UI", sans-serif;
+  --tv-font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  --tv-size-display: 64px;
+  --tv-size-heading: 32px;
+  --tv-size-body: 16px;
+  --tv-size-label: 13px;
+  --tv-weight-semibold: 600;
+  --tv-weight-regular: 400;
+
+  /* spacing */
+  --tv-space-1: 4px;
+  --tv-space-2: 8px;
+  --tv-space-3: 12px;
+  --tv-space-4: 16px;
+  --tv-space-6: 24px;
+  --tv-space-8: 32px;
+  --tv-space-12: 48px;
+  --tv-space-16: 64px;
+
+  /* radius */
+  --tv-radius-control: 8px;
+  --tv-radius-card: 16px;
+  --tv-radius-glass: 20px;
+}
+
+body {
+  background: var(--tv-surface-base);
+  color: var(--tv-text-primary);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-body);
+}
+
+:focus-visible {
+  outline: 2px solid var(--tv-focus-ring);
+  outline-offset: 2px;
+}
