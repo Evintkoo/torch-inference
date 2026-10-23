@@ -1,7 +1,7 @@
 # Designer interface states and flows
 
 **Role:** designer  
-**Document:** 02 of 03
+**Document:** 02 of 04
 
 ## Enumerate the states first
 
@@ -62,6 +62,10 @@ uv run --directory torviello-roles python -m torviello_roles log <id> \
 ```
 
 ## Verify against the build
+
+Screen composition follows the UI principles and atomic inventory in
+document 04; a state built from a forked component instead of the inventory is
+a finding.
 
 Walk the implemented interface state by state against the spec; each mismatch
 is a finding with the state, the expected, and the observed. Force the error

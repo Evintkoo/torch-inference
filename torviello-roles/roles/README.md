@@ -9,7 +9,7 @@ rules.
 |---|---|---|
 | [`product-manager`](product-manager/) | ticket craft, prioritization, dependency graph, evidence audit, report building, session memory | 5 |
 | [`engineer`](engineer/) | design before code, implementation craftsmanship, reliability and security, verification, handoff | 5 |
-| [`designer`](designer/) | interface states and flows, acceptance copy, WCAG 2.2 AA and usability evidence | 3 |
+| [`designer`](designer/) | interface states and flows, UI principles and atomic composition, WCAG 2.2 AA and usability evidence | 4 |
 | [`quality-assurance`](quality-assurance/) | test strategy and execution, ISO 25010 mapping, defect reproduction and reporting | 4 |
 | [`reviewer`](reviewer/) | independent diff review, reproduced checks, verdict | 3 |
 
