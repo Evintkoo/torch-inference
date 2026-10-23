@@ -1324,6 +1324,22 @@ agents = read("AGENTS.md")
 require("torviello_roles" in agents, "repository agent instructions do not require the ticket workflow")
 '''
 
+BUNDLES["unit_packaging"] = r'''
+units = sorted(path for path in SOURCE.iterdir() if path.is_dir() and path.name.startswith("torviello-"))
+require(units, "no torviello-* product units found")
+require(len(units) >= 9, "expected at least nine torviello-* product units")
+for unit in units:
+    readme = unit / "README.md"
+    require(readme.exists(), f"{unit.name}: unit is missing a README.md")
+    require(re.search(r"packag", readme.read_text(encoding="utf-8"), re.I), f"{unit.name}: README declares no packaging status")
+agents = read("AGENTS.md")
+require("Never create new loose files" in agents, "agent policy does not fix the root file set")
+require("torviello-media" in agents and "torviello-design" in agents, "agent policy does not route artifacts to units")
+root_readme = read("README.md")
+require(re.search(r"packageable|packaged as", root_readme, re.I), "root README does not state the unit packaging requirement")
+require("torviello-media" in root_readme and "torviello-serve" in root_readme, "root README does not document the unit routing")
+'''
+
 
 
 BUNDLES["ddd_artifacts"] = r"""
@@ -1510,6 +1526,7 @@ OVERRIDES: dict[tuple[str, int], list[str]] = {
     ("governance", 9): ["tdd_artifacts", "traceability"],
     ("governance", 10): ["edd_artifacts", "traceability"],
     ("governance", 11): ["ticket_workflow"],
+    ("governance", 12): ["unit_packaging"],
     ("licensing", 1): ["license"],
     ("licensing", 2): ["third_party_notices"],
     ("licensing", 3): ["copyright_headers"],

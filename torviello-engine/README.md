@@ -25,6 +25,10 @@ The engine serves local inference across speech synthesis, speech transcription,
 - Evaluation plan: [`evaluations/engine-capability-evaluation.md`](evaluations/engine-capability-evaluation.md) (gates E1–E8).
 - Assurance standard: [`../requirements/assurance-standard.md`](../requirements/assurance-standard.md) (HPA-4).
 
+## Packaging
+
+Per [GOV-12](../torviello-enforcer/governance/rules/12-independent-unit-packaging.md), this unit is packageable as an independent, versioned artifact (engine library and CLI distributions); its packaging manifest, version, and build command live inside this unit, never at the repository root. Status: shape only — no packaging manifest or package evidence exists yet.
+
 ## Validation
 
 Run the repository checks from the root:

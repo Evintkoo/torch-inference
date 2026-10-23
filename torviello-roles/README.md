@@ -61,6 +61,10 @@ A ticket may move to `blocked` from `ready`, `in_progress`, or `review`, and
 back when the blocker clears. `cancelled` records abandoned work; it is never
 deleted. `done` requires an evidence entry.
 
+## Packaging
+
+Per [GOV-12](../torviello-enforcer/governance/rules/12-independent-unit-packaging.md), this unit is packageable as an independent, versioned artifact: the standard-library CLI in `torviello_roles/` runs in place via `uv run --directory torviello-roles`. Status: no package manifest or published artifact exists yet.
+
 ## Validation
 
 ```sh

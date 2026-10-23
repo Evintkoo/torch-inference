@@ -49,6 +49,7 @@ The control structure uses outcome-focused requirements and assessment methods i
 | [09-test-driven-development.md](../rules/09-test-driven-development.md) | CSC-009, ED-010, ED-011, ED-053, ED-055 | R2,R6 |
 | [10-evaluation-driven-development.md](../rules/10-evaluation-driven-development.md) | ED-014, ED-042, ED-054, ED-055 | R1,R2 |
 | [11-work-item-tracking-and-role-memory.md](../rules/11-work-item-tracking-and-role-memory.md) | CSC-005, ED-011, ED-042, ORG-001, ORG-002, PDL-010, PDL-011, PDL-013, PDL-014 | R2,R3 |
+| [12-independent-unit-packaging.md](../rules/12-independent-unit-packaging.md) | CSC-005, ED-011, ED-042, ENG-026, PDL-013 | R1,R2 |
 
 ## Coverage review
 

@@ -25,6 +25,7 @@ This directory contains 11 normative control document(s) and the generated enfor
 | GOV-09 | [09-test-driven-development.md](rules/09-test-driven-development.md) | CSC-009, ED-010, ED-011, ED-053, ED-055 | [tests/test_09_test_driven_development.py](tests/test_09_test_driven_development.py) | Test-Driven Development (TDD) |
 | GOV-10 | [10-evaluation-driven-development.md](rules/10-evaluation-driven-development.md) | ED-014, ED-042, ED-054, ED-055 | [tests/test_10_evaluation_driven_development.py](tests/test_10_evaluation_driven_development.py) | Evaluation-Driven Development (EDD) |
 | GOV-11 | [11-work-item-tracking-and-role-memory.md](rules/11-work-item-tracking-and-role-memory.md) | CSC-005, ED-011, ED-042, ORG-001, ORG-002, PDL-010, PDL-011, PDL-013, PDL-014 | [tests/test_11_work_item_tracking_and_role_memory.py](tests/test_11_work_item_tracking_and_role_memory.py) | Work item tracking and role memory |
+| GOV-12 | [12-independent-unit-packaging.md](rules/12-independent-unit-packaging.md) | CSC-005, ED-011, ED-042, ENG-026, PDL-013 | [tests/test_12_independent_unit_packaging.py](tests/test_12_independent_unit_packaging.py) | Independent unit packaging and root hygiene |
 
 ## Detailed controls
 

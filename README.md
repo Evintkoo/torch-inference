@@ -20,7 +20,7 @@ Torviello aims to be the fastest and lightest inference engine in a declared, re
 - `torviello-media/` — product demo and marketing video production.
 - `torviello-roles/` — hands-on role execution contracts and the agentic ticket store; tracked work starts here.
 
-Each unit carries the same lifecycle shape: `domain/`, `specifications/`, `contracts/`, `src/`, `tests/`, and `evaluations/`, with `README.md` and `AGENTS.md` in every directory.
+Each unit carries the same lifecycle shape: `domain/`, `specifications/`, `contracts/`, `src/`, `tests/`, and `evaluations/`, with `README.md` and `AGENTS.md` in every directory. Every unit is packageable as an independent, versioned artifact under [GOV-12](torviello-enforcer/governance/rules/12-independent-unit-packaging.md): packaging manifests, versions, and build commands live inside the unit — never at the root — and each unit README declares its packaging status.
 
 ### Root hygiene
 
@@ -92,4 +92,4 @@ uv run --locked pytest
 
 The rule corpus has a recorded structural consistency audit in [the governance assurance register](torviello-enforcer/governance/assurance-register.md). That audit covers document structure, stable IDs, requirement/source mappings, and local links. It does not claim product implementation, legal, operational, or human procedure-dry-run conformance. Unresolved lifecycle coverage and open product decisions remain explicitly recorded; resolve applicable items before relying on the affected controls for a release decision.
 
-A buildable scaffold exists, but no model backend, evaluation result, SBOM, provenance attestation, or release decision is recorded. `220` structural/enforcer tests and the scaffold tests passing is not product conformance.
+A buildable scaffold exists, but no model backend, evaluation result, SBOM, provenance attestation, or release decision is recorded. `240` structural/enforcer tests and the scaffold tests passing is not product conformance.
