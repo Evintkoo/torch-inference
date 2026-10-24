@@ -31,6 +31,18 @@ test("page renders the full board composition in order", () => {
   expect(html).toContain("The execution layer for AI.");
 });
 
+test("page keeps one h1 and navigable h2 section headings", () => {
+  expect(html.match(/<h1/g)).toHaveLength(1);
+  expect(html).toContain(">High Performance</h2>");
+  expect(html).toContain(">From idea to impact.</h2>");
+  expect(html).not.toContain("</h3>");
+});
+
+test("page offers a skip link to the main landmark", () => {
+  expect(html).toContain('class="tv-skip-link" href="#main"');
+  expect(html).toContain('<main class="tv-template__main" id="main">');
+});
+
 test("page primary actions navigate to the docs install page", () => {
   expect(html.match(/tv-button--primary"/g)?.length).toBe(2);
   expect(html.match(/tv-button--primary" href="https:\/\/docs\.torviello\.dev\/install"/g)?.length).toBe(2);
@@ -52,9 +64,9 @@ test("every rendered action pairs an icon with its label per house rule 10", () 
 test("page keeps the board composition order", () => {
   const order =
     html.indexOf(">Torviello</span>") <
-      html.indexOf(">High Performance</h3>") &&
-    html.indexOf(">High Performance</h3>") < html.indexOf(">From idea to impact.</h3>") &&
-    html.indexOf(">From idea to impact.</h3>") < html.indexOf(">torviello-engine --help</span>") &&
+      html.indexOf(">High Performance</h2>") &&
+    html.indexOf(">High Performance</h2>") < html.indexOf(">From idea to impact.</h2>") &&
+    html.indexOf(">From idea to impact.</h2>") < html.indexOf(">torviello-engine --help</span>") &&
     html.indexOf(">torviello-engine --help</span>") < html.indexOf("The execution layer for AI.");
   expect(order).toBe(true);
 });

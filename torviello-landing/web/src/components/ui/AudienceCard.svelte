@@ -38,7 +38,7 @@
     <div class="tv-audience-card__eyebrow">
       <SectionLabel label={eyebrow} accent />
     </div>
-    <h3 class="tv-audience-card__heading">{heading}</h3>
+    <h2 class="tv-audience-card__heading">{heading}</h2>
     <p class="tv-audience-card__body">{body}</p>
     {#if action}
       <a

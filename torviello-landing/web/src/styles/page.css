@@ -83,8 +83,17 @@
 }
 
 .tv-terminal__body {
+  margin: 0;
   padding: var(--tv-space-6);
   overflow-x: auto;
+  color: var(--tv-text-primary);
+  font-family: var(--tv-font-mono);
+  font-size: var(--tv-size-body);
+  white-space: pre;
+}
+
+.tv-terminal-line {
+  display: block;
 }
 
 /* Status lines fade in only where motion is welcome; the text itself is
@@ -117,6 +126,27 @@
     opacity: 0;
     transform: translateY(4px);
   }
+}
+
+/* Skip link: hidden until keyboard focus brings it on screen (rule 11) */
+.tv-skip-link {
+  position: absolute;
+  top: var(--tv-space-2);
+  left: var(--tv-space-2);
+  z-index: 10;
+  padding: var(--tv-space-2) var(--tv-space-4);
+  background: var(--tv-surface-raised);
+  color: var(--tv-text-primary);
+  border: 1px solid var(--tv-border-glass);
+  border-radius: var(--tv-radius-control);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-label);
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.tv-skip-link:focus-visible {
+  transform: translateY(0);
 }
 
 /* Footer */

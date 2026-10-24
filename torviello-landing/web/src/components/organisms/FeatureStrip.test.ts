@@ -15,7 +15,7 @@ const items = [
 test("feature strip renders the four board items in order", () => {
   const html = render(FeatureStrip, { props: { items } }).html;
   expect(html.match(/tv-feature-item"/g)).toHaveLength(4);
-  const at = (title: string) => html.indexOf(`>${title}</h3>`);
+  const at = (title: string) => html.indexOf(`>${title}</h2>`);
   expect(at("High Performance")).toBeGreaterThan(-1);
   expect(at("Flexible Deployment")).toBeGreaterThan(at("High Performance"));
   expect(at("Developer &amp; AI Native Friendly")).toBeGreaterThan(at("Flexible Deployment"));

@@ -37,3 +37,10 @@ test("terminal window chrome is decorative", () => {
   const html = render(TerminalDemo, { props: { lines: [...lines] } }).html;
   expect(html).toContain('tv-terminal__chrome" aria-hidden="true"');
 });
+
+test("terminal body is a preformatted block per sheet A6", () => {
+  const html = render(TerminalDemo, { props: { lines: [...lines] } }).html;
+  const body = html.slice(html.indexOf('<pre class="tv-terminal__body"'));
+  expect(body).toContain('class="tv-terminal-line');
+  expect(body).not.toContain("<div");
+});

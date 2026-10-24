@@ -11,7 +11,7 @@
   } = $props();
 </script>
 
-<div class="tv-terminal-line tv-terminal-line--{kind}">
+<span class="tv-terminal-line tv-terminal-line--{kind}">
   <span class="tv-terminal-line__marker" aria-hidden="true">{kind === "prompt" ? "$" : "•"}</span>
   <span class="tv-terminal-line__text">{text}</span>
-</div>
+</span>

@@ -43,7 +43,7 @@ test("audience row passes each slice-two action through to its card", () => {
 test("audience row renders the three board cards in order", () => {
   const html = render(AudienceRow, { props: { cards } }).html;
   expect(html.match(/tv-audience-card"/g)).toHaveLength(3);
-  const at = (heading: string) => html.indexOf(`>${heading}</h3>`);
+  const at = (heading: string) => html.indexOf(`>${heading}</h2>`);
   expect(at("From idea to impact.")).toBeGreaterThan(-1);
   expect(at("Build, deploy, scale together.")).toBeGreaterThan(at("From idea to impact."));
   expect(at("Models in motion.")).toBeGreaterThan(at("Build, deploy, scale together."));

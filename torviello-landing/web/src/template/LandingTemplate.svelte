@@ -16,10 +16,11 @@
 </script>
 
 <div class="tv-template" id="top">
+  <a class="tv-skip-link" href="#main">Skip to content</a>
   <header class="tv-template__nav">
     {@render nav()}
   </header>
-  <main class="tv-template__main">
+  <main class="tv-template__main" id="main">
     {@render children()}
   </main>
   <div class="tv-template__footer">
