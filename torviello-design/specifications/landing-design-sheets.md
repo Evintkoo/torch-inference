@@ -77,6 +77,11 @@ blocks and cite the ticket that designed them (0024).
   `accent-secondary`; command text `text-primary`; status text `text-muted`
 - states: static (complete) and animated (typing/fade-in per line, skipped
   under reduced motion)
+- content (slice 2 correction, ticket 0026): the transcript shows the
+  documented engine session only — `$ torviello-engine --help`,
+  `$ TORCH_PORT=8000 torviello-engine`, and the real JSON startup event
+  (`{"event":"startup","version":"1.0.0","correlation_id":"…","message":"engine
+  started"}`); no invented commands, status prose, or decorative emoji
 - accessibility: the block is a `<pre>`-based transcript selectable as text;
   animation is decorative and suppressed by `prefers-reduced-motion`
 

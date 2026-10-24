@@ -78,13 +78,18 @@ track 0024)
 ### F-07 — Read the terminal demo
 
 - trigger: scroll to the terminal block
-- response: the block renders a JetBrains Mono transcript: `$ pip install
-  torviello`, `$ torviello serve --model my-model`, then status lines (Loading
-  model… / Optimizing graph… / Starting inference server… / Ready 🚀) with teal
-  bullet markers
-- outcome: the transcript is copyable text (real text nodes, not images)
-- invariants: status lines animate only if `prefers-reduced-motion` is not set;
-  with reduced motion they render static and complete
+- response: the block renders a JetBrains Mono transcript of the real engine
+  session (owner direction 2026-10-24, track 0026, superseding the board's
+  fictional pip/serve copy): `$ torviello-engine --help` (the documented
+  verify step), then `$ TORCH_PORT=8000 torviello-engine`, then the JSON
+  startup event the engine actually emits —
+  `{"event":"startup","version":"1.0.0","correlation_id":"…","message":"engine
+  started"}` — with teal bullet markers on the output line
+- outcome: the transcript is copyable text (real text nodes, not images) and
+  every command and log field in it is documented engine behavior
+- invariants: status lines animate only if `prefers-reduced-motion` is not
+  set; with reduced motion they render static and complete; the transcript
+  names no packaging path, CLI subcommand, or log line that does not exist
 
 ### F-08 — Use the page at any size
 
@@ -96,7 +101,9 @@ track 0024)
 ## Data needs
 
 Static content only — no API calls in slice 1. Copy is embedded verbatim from
-the board. The terminal transcript is content, not a live backend session.
+the board except the terminal transcript, which the owner replaced with the
+documented engine session (track 0026). The terminal transcript is content,
+not a live backend session.
 
 ## Exceptions
 
@@ -114,7 +121,7 @@ the board. The terminal transcript is content, not a live backend session.
 | F-04 | heading contains "Torviello" and "Built to infer."; eyebrow verbatim |
 | F-05 | 4 feature items with title and subcopy nodes |
 | F-06 | 3 audience cards with eyebrow, heading, body; one action per card with the specified href, external attributes, and A2 styling |
-| F-07 | terminal lines are text nodes; static rendering under reduced motion |
+| F-07 | transcript lines match the documented engine session; static rendering under reduced motion |
 | F-08 | no horizontal overflow at 320px; menu toggles open/closed |
 
 ## Ordering
