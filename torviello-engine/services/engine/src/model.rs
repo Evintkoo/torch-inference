@@ -485,7 +485,7 @@ source_url = "https://models.example/model.pt"
         ));
         assert!(activation_requires_checksum(&record("demo")));
         let mut unsigned = record("demo");
-        unsigned.content_hash = "md5:abc".to_owned();
+        unsigned.content_hash = "sumhash:abc".to_owned();
         assert!(!activation_requires_checksum(&unsigned));
     }
 }

@@ -18,8 +18,10 @@ TORCH_HOST=127.0.0.1
 ```
 
 Secrets are never committed. Inject them from the environment or an approved
-secret manager. `.env.example` documents optional local variables and contains
-no real credentials. Configuration is validated against
+secret manager. Each unit owns its env example at the unit root — the engine's
+is [`torviello-engine/.env.example`](../../torviello-engine/.env.example); the
+repository root carries no env files. It documents optional local variables and
+contains no real credentials. Configuration is validated against
 [services/engine/api/contracts/schema.json](../services/engine/api/contracts/schema.json)
 before activation. `model_registry` selects the model catalog file.
 
