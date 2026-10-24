@@ -29,6 +29,28 @@
   transform: scale(0.98);
 }
 
+/* House rule 8: the paired icon nudges toward the label's direction on hover
+   and keyboard focus — visible feedback on every activation path */
+.tv-button .tv-icon {
+  transition: transform 120ms ease;
+}
+
+.tv-button:hover .tv-icon,
+.tv-button:focus-visible .tv-icon {
+  transform: translateX(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-button .tv-icon {
+    transition: none;
+  }
+
+  .tv-button:hover .tv-icon,
+  .tv-button:focus-visible .tv-icon {
+    transform: none;
+  }
+}
+
 .tv-button[aria-disabled="true"] {
   cursor: default;
 }

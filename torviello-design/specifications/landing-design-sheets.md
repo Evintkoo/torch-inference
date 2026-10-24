@@ -20,7 +20,9 @@ blocks and cite the ticket that designed them (0024).
   `space-2`/`space-4` padding, `font-family-sans` at `size-body`,
   `weight-semibold`
 - icon (house rule 10, ticket 0029): pairs one A7 icon left of the label,
-  aria-hidden, inheriting the label color
+  aria-hidden, inheriting the label color; the icon nudges 2px toward its
+  direction on hover and focus-visible, suppressed under reduced motion
+  (house rule 8, ticket 0032)
 - states: default; hover `action-primary-hover`; focus-visible 2px
   `focus-ring` outline offset 2px; active pressed (scale 0.98, no color change);
   disabled `surface-raised` fill with `text-muted` label

@@ -18,10 +18,19 @@
   border-top: 1px solid var(--tv-border-glass);
 }
 
-/* Shared section rhythm: stacked slots with space-16 vertical beats */
+/* Shared section rhythm: stacked slots with space-16 vertical beats.
+   Anchored sections stop below the sticky bar (house rule 9, F-01) */
 .tv-section {
   padding-top: var(--tv-space-16);
   padding-bottom: var(--tv-space-16);
+  scroll-margin-top: calc(var(--tv-space-16) + var(--tv-space-4));
+}
+
+/* Smooth anchor travel only where motion is welcome (F-01, house rule 8) */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 .tv-section--hero {
@@ -79,10 +88,27 @@
 }
 
 /* Status lines fade in only where motion is welcome; the text itself is
-   always present, selectable, and complete (F-07 invariant) */
+   always present, selectable, and complete (F-07 invariant). The cascade
+   staggers per line so the transcript reads top to bottom (house rule 8) */
 @media (prefers-reduced-motion: no-preference) {
   .tv-terminal .tv-terminal-line--status {
     animation: tv-status-in 400ms ease both;
+  }
+
+  .tv-terminal__body > :nth-child(3) {
+    animation-delay: 150ms;
+  }
+
+  .tv-terminal__body > :nth-child(4) {
+    animation-delay: 300ms;
+  }
+
+  .tv-terminal__body > :nth-child(5) {
+    animation-delay: 450ms;
+  }
+
+  .tv-terminal__body > :nth-child(6) {
+    animation-delay: 600ms;
   }
 }
 
