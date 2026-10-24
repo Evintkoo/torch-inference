@@ -37,6 +37,32 @@ make common tasks effortless (visible feedback on every interaction); provide
 shortcuts for repeated expert actions; and test with users — no screen ships
 on the designer's confidence alone.
 
+## House principles (owner direction 2026-10-24, track 0028)
+
+Binding on every spec this role produces, with the same checkable force as
+the seven above:
+
+8. **Delight (dopamine hit)** — every element earns its place by giving the
+   visitor a small reward. Interactive elements answer activation with
+   immediate visible feedback (hover, focus, press, state change, purposeful
+   motion); every section carries at least one moment of visual energy (an
+   accent, artwork, motion, or a distinctive composition). A page that only
+   informs is a finding. Constraint: delight never degrades readability,
+   focus visibility, or `prefers-reduced-motion`; document 03 wins conflicts.
+9. **Clean templates and positioning** — every template is visually clean:
+   one named grid, deliberate whitespace, nothing overlapping, crowding, or
+   floating by accident. Every element's position is a decision (aligned,
+   grouped, breathing); if the spec cannot say why an element sits where it
+   sits, the spec is wrong.
+10. **Icon-bearing actions** — every button and action link pairs an icon
+    with its label. Icons come from the sliced brand asset set
+    (`torviello-design/brand/icons/`), never improvised inline in page code;
+    the icon is decorative (`aria-hidden`) and the label carries the name.
+11. **Universal accessibility** — every element in a spec ships its
+    accessibility criteria: an accessible name and role, or a recorded
+    justification for being decorative. "It is just an icon/detail" is not a
+    justification; it is the justification text.
+
 ## Component taxonomy
 
 Specify every element as one of the four classes, and name the class in the
