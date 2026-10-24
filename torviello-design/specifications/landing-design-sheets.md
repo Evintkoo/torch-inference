@@ -19,6 +19,8 @@ blocks and cite the ticket that designed them (0024).
 - tokens: `action-primary` fill, `action-label` text, `radius-control`,
   `space-2`/`space-4` padding, `font-family-sans` at `size-body`,
   `weight-semibold`
+- icon (house rule 10, ticket 0029): pairs one A7 icon left of the label,
+  aria-hidden, inheriting the label color
 - states: default; hover `action-primary-hover`; focus-visible 2px
   `focus-ring` outline offset 2px; active pressed (scale 0.98, no color change);
   disabled `surface-raised` fill with `text-muted` label
@@ -34,6 +36,7 @@ blocks and cite the ticket that designed them (0024).
   per-card audience action (keeps the primary A1 unique to the hero)
 - tokens: transparent fill, 1px `border-glass` border, `text-primary` label,
   same geometry as A1
+- icon: same A7 pairing rule as A1 (house rule 10, ticket 0029)
 - states: hover `surface-glass` fill; focus/disabled as A1
 - contract: may render an external link with `target="_blank"`
   `rel="noopener noreferrer"`
@@ -85,6 +88,25 @@ blocks and cite the ticket that designed them (0024).
 - accessibility: the block is a `<pre>`-based transcript selectable as text;
   animation is decorative and suppressed by `prefers-reduced-motion`
 
+### A7 Icon (ticket 0029)
+
+- purpose: one glyph from the sliced brand asset set
+  (`torviello-design/brand/icons/*.svg`) rendered inline
+- source of truth: the asset file; the component embeds the same vector with
+  a provenance comment naming the asset (the Logo.svelte pattern). A path
+  written directly in page code with no asset counterpart is a finding
+- tokens: inherits `currentColor` so the consuming element's `color` token
+  drives the glyph (for example `action-primary` in M3, `text-primary` in
+  A1/A2); sizing is the consuming atom's job, default 20px in actions
+- contract: `name` prop resolving to an asset in the set; renders 24×24
+  viewBox svg, `aria-hidden="true"`, `focusable="false"`; decorative by
+  definition — the labeled element carries the accessible name (house rule
+  11)
+- states: none of its own; color and size come from the consumer's state
+- accessibility: always `aria-hidden`; never the only carrier of meaning
+- do: consume from the set. don't: recolor per instance outside tokens,
+  improvise a new path, or use an icon without a label on the action
+
 ## Molecules
 
 ### M1 NavBar
@@ -100,7 +122,8 @@ blocks and cite the ticket that designed them (0024).
 
 - purpose: the hero's DEVELOP / DEPLOY / INFER cards
 - tokens: `surface-glass` fill, `border-glass` 1px border, `radius-glass`,
-  inner icon in `action-primary`, title `text-primary`, caption `text-muted`
+  inner icon in `action-primary` from the A7 asset set (box, package, zap),
+  title `text-primary`, caption `text-muted`
 - states: hover lifts fill to `surface-raised` with a 1px `action-primary`
   border and a soft orange glow (decorative, suppressed under reduced motion);
   the cards are **not** interactive — no pointer cursor, no tab stop
@@ -110,8 +133,9 @@ blocks and cite the ticket that designed them (0024).
 ### M3 FeatureItem
 
 - purpose: one value-strip entry (icon + title + subcopy)
-- tokens: icon `action-primary`, title `text-primary` semibold, subcopy
-  `text-muted`; `space-3` gap; 4-up grid ≥ 1024px, 2×2 below, stacked < 560px
+- tokens: icon `action-primary` from the A7 asset set (zap, layers, sliders,
+  users), title `text-primary` semibold, subcopy `text-muted`; `space-3` gap;
+  4-up grid ≥ 1024px, 2×2 below, stacked < 560px
 - accessibility: icon `aria-hidden`; the pair reads title then subcopy
 
 ### M4 AudienceCard
@@ -120,10 +144,12 @@ blocks and cite the ticket that designed them (0024).
 - tokens: `surface-glass` over the photo, gradient scrim to `surface-base` at
   the bottom, A4 eyebrow in `action-primary`, heading `text-primary` at
   `size-heading`, body `text-muted`
-- action (slice 2, ticket 0024): one A2-styled link below the body —
-  "Start building →" → `https://docs.torviello.dev/install` (builders),
-  "Read the docs →" → `https://docs.torviello.dev` (AI teams),
-  "See it on GitHub →" → `https://github.com/torviello` (real-world AI);
+- action (slice 2, tickets 0024 and 0029): one A2-styled link below the body
+  with an A7 icon —
+  "Start building →" with arrow-right → `https://docs.torviello.dev/install`
+  (builders), "Read the docs →" with book-open → `https://docs.torviello.dev`
+  (AI teams), "See it on GitHub →" with the GitHub mark →
+  `https://github.com/torviello` (real-world AI);
   external destinations carry `target="_blank" rel="noopener noreferrer"`
 - states: card hover raises scrim opacity slightly (decorative); action hover
   `surface-glass` fill per A2, focus-visible 2px `focus-ring` outline offset
