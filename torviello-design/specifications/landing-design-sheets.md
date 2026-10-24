@@ -1,13 +1,15 @@
-# Landing design sheets — slice 1
+# Landing design sheets — slices 1–2
 
 **Role:** designer  
 **Unit:** torviello-design  
 **Tokens:** [`torviello-design/contracts/design-tokens.json`](../contracts/design-tokens.json)  
 **Functions:** [`landing-functional-design.md`](landing-functional-design.md)
 
-Every atom, molecule, organism, template, and page that slice 1 introduces is
-designed here as a required sheet. Components consume **semantic tokens only**;
-a raw value where a token exists is a review finding.
+Every atom, molecule, organism, template, and page that slices 1 and 2
+introduce is designed here as a required sheet. Components consume **semantic
+tokens only**; a raw value where a token exists is a review finding. Slice-2
+additions (the M4 per-card action) carry their own state and accessibility
+blocks and cite the ticket that designed them (0024).
 
 ## Atoms
 
@@ -28,7 +30,8 @@ a raw value where a token exists is a review finding.
 
 ### A2 Button — ghost
 
-- purpose: secondary actions ("View on GitHub")
+- purpose: secondary actions ("View on GitHub") and, from slice 2, the
+  per-card audience action (keeps the primary A1 unique to the hero)
 - tokens: transparent fill, 1px `border-glass` border, `text-primary` label,
   same geometry as A1
 - states: hover `surface-glass` fill; focus/disabled as A1
@@ -112,9 +115,18 @@ a raw value where a token exists is a review finding.
 - tokens: `surface-glass` over the photo, gradient scrim to `surface-base` at
   the bottom, A4 eyebrow in `action-primary`, heading `text-primary` at
   `size-heading`, body `text-muted`
-- states: hover raises scrim opacity slightly (decorative)
+- action (slice 2, ticket 0024): one A2-styled link below the body —
+  "Start building →" → `https://docs.torviello.dev/install` (builders),
+  "Read the docs →" → `https://docs.torviello.dev` (AI teams),
+  "See it on GitHub →" → `https://github.com/torviello` (real-world AI);
+  external destinations carry `target="_blank" rel="noopener noreferrer"`
+- states: card hover raises scrim opacity slightly (decorative); action hover
+  `surface-glass` fill per A2, focus-visible 2px `focus-ring` outline offset
+  2px; no card-level pointer cursor — only the action is interactive
 - accessibility: the photo is `aria-hidden` background; text contrast holds on
-  the scrim (measured against `surface-base` values)
+  the scrim (measured against `surface-base` values, 0019 evidence); the
+  action is a real link with a visible label (no icon-only target), target
+  height ≥ 44px; DOM order reads eyebrow → heading → body → action
 
 ## Organisms
 
@@ -137,8 +149,9 @@ a raw value where a token exists is a review finding.
 ### O3 AudienceRow
 
 - composed: 3×M4 cards
-- contract: cards are non-interactive in slice 1; a future CTA per card is
-  slice 2 scope and must not be improvised
+- contract: cards are non-interactive in slice 1; from slice 2 (ticket 0024)
+  each card renders exactly one M4 action link with the destinations fixed in
+  the M4 sheet — no other interactive surface on the card
 
 ## Template and page
 

@@ -3,7 +3,9 @@
 **Role:** designer  
 **Unit:** torviello-design  
 **Reference:** the approved brand board (`torviello-design/brand/reference-board.png`)  
-**Status:** slice 1 — design prep, ready for implementation in `torviello-landing/web`
+**Status:** slices 1–2 — design prep, ready for implementation in `torviello-landing/web`
+(slice 2 adds the per-card audience actions deferred by sheet O3; designed on
+track 0024)
 
 ## Capability statement
 
@@ -60,8 +62,18 @@
 - trigger: scroll to the audience row
 - response: three cards render (FOR BUILDERS / "From idea to impact.", FOR AI
   TEAMS / "Build, deploy, scale together.", FOR REAL-WORLD AI / "Models in
-  motion.") with eyebrow, heading, and body copy
-- outcome: each card presents its audience label, promise, and description
+  motion.") with eyebrow, heading, body copy, and one ghost action per card
+  (slice 2)
+- outcome: each card presents its audience label, promise, description, and a
+  reachable next step
+- action: activating a card action navigates to that audience's destination —
+  builders and AI teams to the docs (`docs.torviello.dev/install` and
+  `docs.torviello.dev`), real-world AI to the GitHub repository
+  (`github.com/torviello`); external destinations open in a new tab with
+  `rel="noopener noreferrer"`
+- invariants: exactly one action per card; the action is a real link styled as
+  A2 (the primary A1 stays unique to the hero); DOM order reads eyebrow →
+  heading → body → action
 
 ### F-07 — Read the terminal demo
 
@@ -101,7 +113,7 @@ the board. The terminal transcript is content, not a live backend session.
 | F-03 | GitHub links carry target=_blank and rel=noopener noreferrer |
 | F-04 | heading contains "Torviello" and "Built to infer."; eyebrow verbatim |
 | F-05 | 4 feature items with title and subcopy nodes |
-| F-06 | 3 audience cards with eyebrow, heading, body |
+| F-06 | 3 audience cards with eyebrow, heading, body; one action per card with the specified href, external attributes, and A2 styling |
 | F-07 | terminal lines are text nodes; static rendering under reduced motion |
 | F-08 | no horizontal overflow at 320px; menu toggles open/closed |
 
