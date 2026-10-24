@@ -3,6 +3,7 @@
      toggles the link list below 768px with aria-expanded. The A5 logo lockup is
      deferred pending the brand SVG asset, so the wordmark carries the name. -->
 <script lang="ts">
+  import Icon from "./Icon.svelte";
   import Logo from "./Logo.svelte";
   import NavLink from "./NavLink.svelte";
 
@@ -73,9 +74,11 @@
           class="tv-button tv-button--ghost"
           href={githubHref}
           target="_blank"
-          rel="noopener noreferrer">GitHub</a
+          rel="noopener noreferrer"><Icon name="github" />GitHub</a
         >
-        <a class="tv-button tv-button--primary" href={getStartedHref}>Get Started</a>
+        <a class="tv-button tv-button--primary" href={getStartedHref}>
+          <Icon name="arrow-right" />Get Started</a
+        >
       </div>
     </nav>
   </div>

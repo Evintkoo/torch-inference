@@ -3,13 +3,14 @@
      renders exactly one M4 action link; no other interactive surface. -->
 <script lang="ts">
   import AudienceCard from "../ui/AudienceCard.svelte";
+  import type { IconName } from "../../lib/icons";
 
   interface RowCard {
     eyebrow: string;
     heading: string;
     body: string;
     image?: string;
-    action?: { label: string; href: string; external?: boolean };
+    action?: { label: string; href: string; external?: boolean; icon?: IconName };
   }
 
   let { cards }: { cards: RowCard[] } = $props();

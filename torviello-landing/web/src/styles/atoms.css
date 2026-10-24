@@ -60,6 +60,20 @@
   color: var(--tv-text-muted);
 }
 
+/* A7 Icon — decorative glyph from the sliced brand assets; color and size
+   come from the consuming element's tokens and geometry */
+.tv-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.tv-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
 /* A3 NavLink */
 .tv-navlink {
   color: var(--tv-text-primary);

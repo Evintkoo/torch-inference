@@ -59,6 +59,16 @@ test("navbar pairs the GitHub ghost action with the Get Started primary action",
   expect(html.match(/tv-button--primary/g)).toHaveLength(1);
 });
 
+test("navbar actions pair icons with their labels per house rule 10", () => {
+  const html = render(NavBar, { props: base }).html;
+  const github = html.slice(html.indexOf("tv-button--ghost"), html.indexOf("GitHub</a>"));
+  expect(github).toContain('class="tv-icon"');
+  expect(github).toContain('aria-hidden="true"');
+  const started = html.slice(html.indexOf("tv-button--primary"), html.indexOf(">Get Started</a>"));
+  expect(started).toContain('class="tv-icon"');
+  expect(started).toContain('aria-hidden="true"');
+});
+
 test("navbar renders the menu button closed by default with aria-expanded", () => {
   const html = render(NavBar, { props: base }).html;
   expect(html).toContain('aria-expanded="false"');

@@ -4,6 +4,7 @@
      over decorative ribbon artwork. One h1 per view. -->
 <script lang="ts">
   import GlassCard from "../ui/GlassCard.svelte";
+  import Icon from "../ui/Icon.svelte";
   import SectionLabel from "../ui/SectionLabel.svelte";
 
   interface HeroCard {
@@ -72,12 +73,14 @@
       </h1>
       <p class="tv-hero__body">{body}</p>
       <div class="tv-hero__actions">
-        <a class="tv-button tv-button--primary" href={primaryHref}>{primaryLabel}</a>
+        <a class="tv-button tv-button--primary" href={primaryHref}>
+          <Icon name="arrow-right" />{primaryLabel}</a
+        >
         <a
           class="tv-button tv-button--ghost"
           href={githubHref}
           target="_blank"
-          rel="noopener noreferrer">{ghostLabel}</a
+          rel="noopener noreferrer"><Icon name="github" />{ghostLabel}</a
         >
       </div>
     </div>

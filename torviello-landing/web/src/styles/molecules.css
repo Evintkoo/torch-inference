@@ -88,6 +88,15 @@
   gap: var(--tv-space-3);
 }
 
+/* Tablet rail (T1 1024 step): the full bar with paired icon actions needs a
+   narrower horizontal padding than the 1200px desktop rail */
+@media (max-width: 1023px) {
+  .tv-navbar__inner {
+    padding-left: var(--tv-space-8);
+    padding-right: var(--tv-space-8);
+  }
+}
+
 /* F-08: below 768px the nav collapses; the menu button drives visibility */
 @media (max-width: 767px) {
   .tv-navbar__menu {

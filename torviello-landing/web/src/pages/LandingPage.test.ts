@@ -45,6 +45,10 @@ test("page wires the slice-two audience actions to the M4 destinations", () => {
   expect(html).toContain(">See it on GitHub →</a>");
 });
 
+test("every rendered action pairs an icon with its label per house rule 10", () => {
+  expect(html.match(/class="tv-icon"/g)).toHaveLength(7);
+});
+
 test("page keeps the board composition order", () => {
   const order =
     html.indexOf(">Torviello</span>") <

@@ -46,6 +46,16 @@ test("hero actions navigate to install and repository", () => {
   expect(ghost).toContain('rel="noopener noreferrer"');
 });
 
+test("hero actions pair icons with their labels per house rule 10", () => {
+  const html = render(HeroSection, { props: base }).html;
+  const primary = html.slice(html.indexOf("tv-button--primary"), html.indexOf(">Get Started →</a>"));
+  expect(primary).toContain('class="tv-icon"');
+  expect(primary).toContain('aria-hidden="true"');
+  const ghost = html.slice(html.indexOf("tv-button--ghost"), html.indexOf("View on GitHub</a>"));
+  expect(ghost).toContain('class="tv-icon"');
+  expect(ghost).toContain('aria-hidden="true"');
+});
+
 test("hero composes the three glass cards in board order over hidden artwork", () => {
   const html = render(HeroSection, { props: base }).html;
   const develop = html.indexOf(">DEVELOP</p>");

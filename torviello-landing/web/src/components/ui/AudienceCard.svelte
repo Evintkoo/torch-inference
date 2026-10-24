@@ -3,7 +3,9 @@
      photo with a gradient scrim to the surface base. Slice 2 (ticket 0024):
      exactly one A2-styled action link below the body, never more. -->
 <script lang="ts">
+  import Icon from "./Icon.svelte";
   import SectionLabel from "./SectionLabel.svelte";
+  import type { IconName } from "../../lib/icons";
 
   let {
     eyebrow,
@@ -17,8 +19,8 @@
     body: string;
     /** Decorative photo; rendered as an aria-hidden background when set. */
     image?: string;
-    /** Sheet M4 slice-2 action: one ghost link with a visible label. */
-    action?: { label: string; href: string; external?: boolean };
+    /** Sheet M4 slice-2 action: one ghost link, icon paired with the label. */
+    action?: { label: string; href: string; external?: boolean; icon?: IconName };
   } = $props();
 </script>
 
@@ -45,7 +47,7 @@
         target={action.external ? "_blank" : undefined}
         rel={action.external ? "noopener noreferrer" : undefined}
       >
-        {action.label}
+        {#if action.icon}<Icon name={action.icon} />{/if}{action.label}
       </a>
     {/if}
   </div>

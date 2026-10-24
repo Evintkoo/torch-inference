@@ -114,6 +114,28 @@ test("external audience action opens a new tab safely and internal does not", ()
   expect(internal).not.toContain("noopener");
 });
 
+test("audience action pairs an icon with its label per house rule 10", () => {
+  const html = render(AudienceCard, {
+    props: {
+      eyebrow: "For real-world AI",
+      heading: "Models in motion.",
+      body: "Deployed at the edge.",
+      action: {
+        label: "See it on GitHub →",
+        href: "https://github.com/torviello",
+        external: true,
+        icon: "github",
+      },
+    },
+  }).html;
+  const action = html.slice(
+    html.indexOf("tv-audience-card__action"),
+    html.indexOf("See it on GitHub →</a>")
+  );
+  expect(action).toContain('class="tv-icon"');
+  expect(action).toContain('aria-hidden="true"');
+});
+
 test("audience card without an action renders no link", () => {
   const html = render(AudienceCard, {
     props: { eyebrow: "For builders", heading: "From idea to impact.", body: "Ship in days." },
