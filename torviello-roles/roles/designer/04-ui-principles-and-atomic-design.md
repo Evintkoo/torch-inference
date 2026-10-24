@@ -62,6 +62,17 @@ the seven above:
     accessibility criteria: an accessible name and role, or a recorded
     justification for being decorative. "It is just an icon/detail" is not a
     justification; it is the justification text.
+12. **Truthful product surface** (owner direction 2026-10-24, track 0031) —
+    every demo, transcript, and example on a screen shows only documented,
+    runnable product behavior: real binary and command names, real
+    configuration, real output format. A transcript that names a packaging
+    path, subcommand, or log line the product does not have is a finding,
+    even when the reference board shows it.
+13. **No slop copy** (owner direction 2026-10-24, track 0031) — copy carries
+    no machine-generated filler: no invented status prose, no decorative
+    emojis, no generic hype lines that could describe any product. Every
+    sentence states something specific about this product or it does not
+    ship.
 
 ## Component taxonomy
 

@@ -46,6 +46,11 @@ that tests can assert.
 - Do not approve the implementation; verification findings go to the ticket and
   the reviewer decides.
 - Do not ship copy that promises behavior the contract does not deliver.
+- Owner feedback received in a session MUST land in a governing artifact (a
+  rule, specification, contract, or design sheet) in the same work period, or
+  on a ticket with the reason it cannot. A ticket log entry alone does not
+  change a rule; feedback that survives only in chat or a log is lost at the
+  next session (owner direction 2026-10-24, track 0031).
 
 ## Tooling
 
