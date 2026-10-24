@@ -90,13 +90,14 @@ blocks and cite the ticket that designed them (0024).
 - accessibility: the block is a `<pre>`-based transcript selectable as text;
   animation is decorative and suppressed by `prefers-reduced-motion`
 
-### A7 Icon (ticket 0029)
+### A7 Icon (tickets 0029 and 0036)
 
 - purpose: one glyph from the sliced brand asset set
   (`torviello-design/brand/icons/*.svg`) rendered inline
-- source of truth: the asset file; the component embeds the same vector with
-  a provenance comment naming the asset (the Logo.svelte pattern). A path
-  written directly in page code with no asset counterpart is a finding
+- source of truth: the asset file plus its published code twin
+  (`torviello-design/brand/icons.ts`), proven equal by the design unit's sync
+  contract test; consumers import the twin (GOV-12.07) and never embed vector
+  data. A path written directly in consuming-unit code is a finding
 - tokens: inherits `currentColor` so the consuming element's `color` token
   drives the glyph (for example `action-primary` in M3, `text-primary` in
   A1/A2); sizing is the consuming atom's job, default 20px in actions

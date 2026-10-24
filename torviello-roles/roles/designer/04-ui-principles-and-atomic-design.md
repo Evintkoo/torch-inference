@@ -105,6 +105,11 @@ Rules:
 - Before specifying a new component, check the inventory: an existing atom or
   molecule that can be extended wins over a new component. A new component
   requires a one-line justification on the ticket.
+- Brand assets are imported, never re-declared (GOV-12.07, owner direction
+  2026-10-24, track 0036): a component consumes the owning unit's asset
+  through its declared entry point; an embedded copy of a brand vector in a
+  consuming unit is a finding unless the owning unit publishes that form with
+  a sync test proving it equals the canonical asset.
 - A component's spec is a contract: its states, props, and events — the same
   contract-first discipline the engineer role applies to APIs.
 - The atomic breakdown appears in the design note so the implementation can be

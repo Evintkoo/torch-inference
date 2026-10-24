@@ -17,7 +17,9 @@ Public landing page and marketing site. Brand message: The execution layer for A
 - Stack: Svelte 5 (runes), Bun 1.3 (test and scripts), Vite 8 (build),
   TypeScript 7 for typechecking, happy-dom for future interaction tests.
 - Design source of truth: `torviello-design/contracts/design-tokens.json` and the
-  slice-one design sheets in `torviello-design/specifications/`. Stylesheets in
+  slice-one design sheets in `torviello-design/specifications/`. Brand assets
+  (icons, mark, favicon) are imported from `torviello-design` via the
+  `@torviello/design/*` alias (GOV-12.07) — never copied into this unit. Stylesheets in
   `web/src/styles/` consume semantic `--tv-*` tokens only; a raw value where a
   token exists is a review finding.
 - Components: `web/src/components/ui/` — slice-one atoms (Button, NavLink,

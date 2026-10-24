@@ -35,8 +35,14 @@
 }
 
 .tv-logo__mark {
+  display: inline-flex;
   width: 32px;
   height: 32px;
+}
+
+.tv-logo__mark svg {
+  width: 100%;
+  height: 100%;
 }
 
 .tv-logo__wordmark {

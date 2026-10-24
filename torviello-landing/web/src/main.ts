@@ -11,7 +11,15 @@ import "./styles/atoms.css";
 import "./styles/molecules.css";
 import "./styles/organisms.css";
 import "./styles/page.css";
+import faviconUrl from "@torviello/design/brand/favicon.svg?url";
 import App from "./App.svelte";
+
+// GOV-12.07: the favicon is owned by torviello-design and imported here.
+const favicon = document.createElement("link");
+favicon.rel = "icon";
+favicon.type = "image/svg+xml";
+favicon.href = faviconUrl;
+document.head.appendChild(favicon);
 
 const app = mount(App, {
   target: document.getElementById("app") as HTMLElement,

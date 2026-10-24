@@ -41,6 +41,10 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 **Requirement:** An artifact MAY remain at the repository root only if this rule or a recorded owner decision names it and bounds its scope. The named exception is the `canvas/` system blueprint. The normative corpus — rules and requirements — lives in `torviello-enforcer/`; operational documentation lives in `torviello-docs/docs/`; organizational policies and evidence records live in `torviello-enforcer/governance/`. Named exceptions retain their root location until an owner decision moves them; they MUST NOT absorb content that belongs to a unit.
 
+### GOV-12.07 — Shared unit artifacts are consumed by import, never by copy
+
+**Requirement:** When one unit consumes an artifact owned by another unit — design assets, tokens, schemas, or other reusable content — it MUST import the artifact from the owning unit through the owning unit's declared entry point, and the import path MUST be declared in the consuming unit's build or module configuration. Re-declaring, embedding, or forking a copy of another unit's artifact in the consuming unit MUST be treated as a finding. Where a build or runtime form requires a transformation of the artifact, the owning unit MUST publish that form alongside the original, and a normative sync test in the owning unit MUST prove the forms stay equal; a stale transformed copy is a finding. Owner direction 2026-10-24: units in this modular monolith import from each other so shared assets stay synchronized at the source.
+
 ## Prohibited conditions
 
 - Creating a new committed file or directory at the repository root outside the fixed file set.
@@ -50,6 +54,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 - Letting a legacy root deployment location absorb new deployment content.
 - Moving or deleting a legacy root directory without a recorded owner decision on a ticket.
 - Using an unnamed "temporary" root location for an artifact that a unit could own.
+- Re-declaring, embedding, or forking another unit's artifact without an owning-unit sync contract.
 
 ## Decision procedure
 

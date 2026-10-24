@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 
 // The Svelte plugin is imported lazily: some config bundlers drop the named
@@ -6,5 +7,13 @@ export default defineConfig(async () => {
   const { svelte } = await import("@sveltejs/vite-plugin-svelte");
   return {
     plugins: [svelte()],
+    resolve: {
+      alias: {
+        // GOV-12.07: design assets are imported from the owning unit.
+        "@torviello/design": fileURLToPath(
+          new URL("../../torviello-design", import.meta.url),
+        ),
+      },
+    },
   };
 });
