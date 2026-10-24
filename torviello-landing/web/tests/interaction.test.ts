@@ -30,6 +30,30 @@ test("the composed app mounts with landmarks and anchors in place", () => {
   target.remove();
 });
 
+test("the slice-two audience actions are reachable interactive links", () => {
+  const target = document.createElement("div");
+  document.body.appendChild(target);
+  const app = mount(App, { target });
+
+  const actions = [
+    ...document.querySelectorAll<HTMLAnchorElement>(".tv-audience-card .tv-button--ghost"),
+  ];
+  expect(actions.map((a) => a.textContent?.trim())).toEqual([
+    "Start building →",
+    "Read the docs →",
+    "See it on GitHub →",
+  ]);
+  expect(actions.every((a) => a.getAttribute("href"))).toBe(true);
+  const [, docs, github] = actions;
+  expect(docs?.target).toBe("_blank");
+  expect(docs?.rel).toContain("noopener");
+  expect(github?.target).toBe("_blank");
+  expect(github?.rel).toContain("noopener");
+
+  unmount(app);
+  target.remove();
+});
+
 test("the mobile menu button toggles aria-expanded and the list state", () => {
   const target = document.createElement("div");
   document.body.appendChild(target);

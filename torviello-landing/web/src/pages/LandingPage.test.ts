@@ -32,8 +32,17 @@ test("page renders the full board composition in order", () => {
 });
 
 test("page primary actions navigate to the docs install page", () => {
-  expect(html.match(/tv-button--primary/g)?.length).toBe(2);
-  expect(html.match(/href="https:\/\/docs\.torviello\.dev\/install"/g)?.length).toBe(2);
+  expect(html.match(/tv-button--primary"/g)?.length).toBe(2);
+  expect(html.match(/tv-button--primary" href="https:\/\/docs\.torviello\.dev\/install"/g)?.length).toBe(2);
+});
+
+test("page wires the slice-two audience actions to the M4 destinations", () => {
+  expect(html.match(/href="https:\/\/docs\.torviello\.dev\/install"/g)?.length).toBe(3);
+  expect(html.match(/href="https:\/\/docs\.torviello\.dev"/g)?.length).toBe(3);
+  expect(html.match(/href="https:\/\/github\.com\/torviello"/g)?.length).toBe(4);
+  expect(html).toContain(">Start building →</a>");
+  expect(html).toContain(">Read the docs →</a>");
+  expect(html).toContain(">See it on GitHub →</a>");
 });
 
 test("page keeps the board composition order", () => {

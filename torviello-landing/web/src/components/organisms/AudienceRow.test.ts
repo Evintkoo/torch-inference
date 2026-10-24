@@ -23,6 +23,23 @@ const cards = [
   },
 ];
 
+test("audience row passes each slice-two action through to its card", () => {
+  const cardsWithActions = cards.map((card, index) => ({
+    ...card,
+    action: [
+      { label: "Start building →", href: "https://docs.torviello.dev/install" },
+      { label: "Read the docs →", href: "https://docs.torviello.dev", external: true },
+      { label: "See it on GitHub →", href: "https://github.com/torviello", external: true },
+    ][index],
+  }));
+  const html = render(AudienceRow, { props: { cards: cardsWithActions } }).html;
+  expect(html.match(/tv-button--ghost/g)).toHaveLength(3);
+  expect(html).toContain(">Start building →</a>");
+  expect(html).toContain(">Read the docs →</a>");
+  expect(html).toContain(">See it on GitHub →</a>");
+  expect(html.match(/rel="noopener noreferrer"/g)).toHaveLength(2);
+});
+
 test("audience row renders the three board cards in order", () => {
   const html = render(AudienceRow, { props: { cards } }).html;
   expect(html.match(/tv-audience-card"/g)).toHaveLength(3);

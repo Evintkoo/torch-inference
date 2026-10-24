@@ -1,6 +1,6 @@
 <!-- Copyright (c) 2026 Torviello. -->
-<!-- Sheet O3: three audience cards. Non-interactive in slice 1 — a per-card
-     CTA is slice 2 scope and must not be improvised. -->
+<!-- Sheet O3: three audience cards. From slice 2 (ticket 0024) each card
+     renders exactly one M4 action link; no other interactive surface. -->
 <script lang="ts">
   import AudienceCard from "../ui/AudienceCard.svelte";
 
@@ -9,6 +9,7 @@
     heading: string;
     body: string;
     image?: string;
+    action?: { label: string; href: string; external?: boolean };
   }
 
   let { cards }: { cards: RowCard[] } = $props();
@@ -16,6 +17,12 @@
 
 <div class="tv-audience-grid">
   {#each cards as card (card.heading)}
-    <AudienceCard eyebrow={card.eyebrow} heading={card.heading} body={card.body} image={card.image} />
+    <AudienceCard
+      eyebrow={card.eyebrow}
+      heading={card.heading}
+      body={card.body}
+      image={card.image}
+      action={card.action}
+    />
   {/each}
 </div>

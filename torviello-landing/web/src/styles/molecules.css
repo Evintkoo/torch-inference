@@ -302,3 +302,9 @@
   font-family: var(--tv-font-sans);
   font-size: var(--tv-size-body);
 }
+
+/* M4 slice-2 action: one A2 ghost link per card, left-aligned under the body */
+.tv-audience-card__action {
+  align-self: flex-start;
+  margin-top: var(--tv-space-4);
+}
