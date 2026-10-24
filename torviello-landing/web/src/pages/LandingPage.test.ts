@@ -26,8 +26,8 @@ test("page renders the hero promise exactly once", () => {
 test("page renders the full board composition in order", () => {
   expect(html.match(/tv-feature-item"/g)).toHaveLength(4);
   expect(html.match(/tv-audience-card"/g)).toHaveLength(3);
-  expect(html).toContain(">pip install torviello</span>");
-  expect(html).toContain(">Ready 🚀</span>");
+  expect(html).toContain(">torviello-engine --help</span>");
+  expect(html).toContain('message":"engine started"}</span>');
   expect(html).toContain("The execution layer for AI.");
 });
 
@@ -50,7 +50,7 @@ test("page keeps the board composition order", () => {
     html.indexOf(">Torviello</span>") <
       html.indexOf(">High Performance</h3>") &&
     html.indexOf(">High Performance</h3>") < html.indexOf(">From idea to impact.</h3>") &&
-    html.indexOf(">From idea to impact.</h3>") < html.indexOf(">pip install torviello</span>") &&
-    html.indexOf(">pip install torviello</span>") < html.indexOf("The execution layer for AI.");
+    html.indexOf(">From idea to impact.</h3>") < html.indexOf(">torviello-engine --help</span>") &&
+    html.indexOf(">torviello-engine --help</span>") < html.indexOf("The execution layer for AI.");
   expect(order).toBe(true);
 });

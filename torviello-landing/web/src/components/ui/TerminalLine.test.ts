@@ -6,25 +6,30 @@ import { render } from "svelte/server";
 import TerminalLine from "./TerminalLine.svelte";
 
 test("terminal line renders a prompt line with a hidden marker", () => {
-  const html = render(TerminalLine, { props: { text: "pip install torviello" } }).html;
+  const html = render(TerminalLine, {
+    props: { text: "TORCH_PORT=8000 torviello-engine" },
+  }).html;
   expect(html).toContain("tv-terminal-line--prompt");
   expect(html).toContain('aria-hidden="true">$</span>');
-  expect(html).toContain(">pip install torviello<");
+  expect(html).toContain(">TORCH_PORT=8000 torviello-engine<");
 });
 
 test("terminal line renders status lines with the teal bullet", () => {
   const html = render(TerminalLine, {
-    props: { text: "Loading model…", kind: "status" },
+    props: {
+      text: '{"event":"startup","message":"engine started"}',
+      kind: "status",
+    },
   }).html;
   expect(html).toContain("tv-terminal-line--status");
   expect(html).toContain('aria-hidden="true">•</span>');
-  expect(html).toContain(">Loading model…<");
+  expect(html).toContain(">{\"event\":\"startup\",\"message\":\"engine started\"}<");
 });
 
 test("terminal lines are real text nodes, selectable and searchable", () => {
   const html = render(TerminalLine, {
-    props: { text: "torviello serve --model my-model" },
+    props: { text: "torviello-engine --help" },
   }).html;
-  expect(html).toContain(">torviello serve --model my-model</span>");
+  expect(html).toContain(">torviello-engine --help</span>");
   expect(html).not.toMatch(/<img|<canvas|background-image/);
 });

@@ -78,12 +78,13 @@
   ];
 
   const terminalLines = [
-    { kind: "prompt", text: "pip install torviello" },
-    { kind: "prompt", text: "torviello serve --model my-model" },
-    { kind: "status", text: "Loading model…" },
-    { kind: "status", text: "Optimizing graph…" },
-    { kind: "status", text: "Starting inference server…" },
-    { kind: "status", text: "Ready 🚀" },
+    { kind: "prompt", text: "torviello-engine --help" },
+    { kind: "prompt", text: "TORCH_PORT=8000 torviello-engine" },
+    {
+      kind: "status",
+      text:
+        '{"event":"startup","version":"1.0.0","correlation_id":"…","message":"engine started"}',
+    },
   ] as const;
 
   const navLinks = [
