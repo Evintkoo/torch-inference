@@ -1,5 +1,5 @@
 <!-- Copyright (c) 2026 Torviello. -->
-<!-- Sheet P1: template T1 populated with O1 → O2 → O3 → terminal → footer.
+<!-- Sheet P1: template T1 populated with O1 -> O2 -> O3 -> terminal -> footer.
      Copy is embedded verbatim from the approved brand board (functional
      design: static content, no API calls in slice 1). Anchors: #product on
      the hero, #use-cases on the audience row, #community on the footer.
@@ -37,7 +37,7 @@
       heading: "From idea to impact.",
       body: "The inference engine that moves with you — from notebooks to production.",
       action: {
-        label: "Start building →",
+        label: "Start building",
         href: "https://docs.torviello.dev/install",
         icon: "arrow-right",
       },
@@ -47,7 +47,7 @@
       heading: "Build, deploy, scale together.",
       body: "A unified inference engine for researchers, engineers, and product teams.",
       action: {
-        label: "Read the docs →",
+        label: "Read the docs",
         href: "https://docs.torviello.dev",
         external: true,
         icon: "book-open",
@@ -58,7 +58,7 @@
       heading: "Models in motion.",
       body: "Efficient, adaptable, and ready for production use cases.",
       action: {
-        label: "See it on GitHub →",
+        label: "See it on GitHub",
         href: "https://github.com/torviello",
         external: true,
         icon: "github",
@@ -101,7 +101,7 @@
         line2="Built to"
         accent="infer."
         body="An AI-native inference engine for the next generation of builders. From experimentation to production, Torviello gives you the speed, control, and flexibility to run AI your way."
-        primaryLabel="Get Started →"
+        primaryLabel="Get Started"
         primaryHref="https://docs.torviello.dev/install"
         ghostLabel="View on GitHub"
         githubHref="https://github.com/torviello"

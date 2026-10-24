@@ -52,9 +52,9 @@ test("page wires the slice-two audience actions to the M4 destinations", () => {
   expect(html.match(/href="https:\/\/docs\.torviello\.dev\/install"/g)?.length).toBe(3);
   expect(html.match(/href="https:\/\/docs\.torviello\.dev"/g)?.length).toBe(3);
   expect(html.match(/href="https:\/\/github\.com\/torviello"/g)?.length).toBe(4);
-  expect(html).toContain(">Start building →</a>");
-  expect(html).toContain(">Read the docs →</a>");
-  expect(html).toContain(">See it on GitHub →</a>");
+  expect(html).toContain(">Start building</a>");
+  expect(html).toContain(">Read the docs</a>");
+  expect(html).toContain(">See it on GitHub</a>");
 });
 
 test("every rendered action pairs an icon with its label per house rule 10", () => {

@@ -39,9 +39,9 @@ test("the slice-two audience actions are reachable interactive links", () => {
     ...document.querySelectorAll<HTMLAnchorElement>(".tv-audience-card .tv-button--ghost"),
   ];
   expect(actions.map((a) => a.textContent?.trim())).toEqual([
-    "Start building →",
-    "Read the docs →",
-    "See it on GitHub →",
+    "Start building",
+    "Read the docs",
+    "See it on GitHub",
   ]);
   expect(actions.every((a) => a.getAttribute("href"))).toBe(true);
   const [, docs, github] = actions;

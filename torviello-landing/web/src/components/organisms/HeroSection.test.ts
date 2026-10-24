@@ -18,7 +18,7 @@ const base = {
   line2: "Built to",
   accent: "infer.",
   body: "An AI-native inference engine for the next generation of builders.",
-  primaryLabel: "Get Started →",
+  primaryLabel: "Get Started",
   primaryHref: "#install",
   ghostLabel: "View on GitHub",
   githubHref: "https://github.com/torviello",
@@ -39,7 +39,7 @@ test("hero actions navigate to install and repository", () => {
   const html = render(HeroSection, { props: base }).html;
   expect(html).toContain('class="tv-button tv-button--primary"');
   expect(html).toContain('href="#install"');
-  expect(html).toContain(">Get Started →</a>");
+  expect(html).toContain(">Get Started</a>");
   const ghost = html.slice(html.indexOf("tv-button--ghost") - 200, html.indexOf("View on GitHub</a>") + 18);
   expect(ghost).toContain('href="https://github.com/torviello"');
   expect(ghost).toContain('target="_blank"');
@@ -48,7 +48,7 @@ test("hero actions navigate to install and repository", () => {
 
 test("hero actions pair icons with their labels per house rule 10", () => {
   const html = render(HeroSection, { props: base }).html;
-  const primary = html.slice(html.indexOf("tv-button--primary"), html.indexOf(">Get Started →</a>"));
+  const primary = html.slice(html.indexOf("tv-button--primary"), html.indexOf(">Get Started</a>"));
   expect(primary).toContain('class="tv-icon"');
   expect(primary).toContain('aria-hidden="true"');
   const ghost = html.slice(html.indexOf("tv-button--ghost"), html.indexOf("View on GitHub</a>"));

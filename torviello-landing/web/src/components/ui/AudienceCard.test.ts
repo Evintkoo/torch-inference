@@ -52,34 +52,34 @@ test("audience card renders exactly one ghost action below the body", () => {
       heading: "From idea to impact.",
       body: "Ship in days.",
       action: {
-        label: "Start building →",
+        label: "Start building",
         href: "https://docs.torviello.dev/install",
       },
     },
   }).html;
   expect(html.match(/<a /g)).toHaveLength(1);
   expect(html).toContain("tv-button--ghost");
-  expect(html).toContain(">Start building →</a>");
+  expect(html).toContain(">Start building</a>");
   expect(html).toContain('href="https://docs.torviello.dev/install"');
 
   const bodyAt = html.indexOf(">Ship in days.</p>");
-  const actionAt = html.indexOf(">Start building →</a>");
+  const actionAt = html.indexOf(">Start building</a>");
   expect(actionAt).toBeGreaterThan(bodyAt);
 });
 
-test("audience card DOM order reads eyebrow heading body action", () => {
+test("audience card DOM order reads eyebrow -> heading -> body -> action", () => {
   const html = render(AudienceCard, {
     props: {
       eyebrow: "For AI teams",
       heading: "Build, deploy, scale together.",
       body: "One workflow.",
-      action: { label: "Read the docs →", href: "https://docs.torviello.dev" },
+      action: { label: "Read the docs", href: "https://docs.torviello.dev" },
     },
   }).html;
   const eyebrowAt = html.indexOf("tv-audience-card__eyebrow");
   const headingAt = html.indexOf(">Build, deploy, scale together.</");
   const bodyAt = html.indexOf(">One workflow.</p>");
-  const actionAt = html.indexOf(">Read the docs →</a>");
+  const actionAt = html.indexOf(">Read the docs</a>");
   expect(eyebrowAt).toBeGreaterThan(-1);
   expect(headingAt).toBeGreaterThan(eyebrowAt);
   expect(bodyAt).toBeGreaterThan(headingAt);
@@ -93,7 +93,7 @@ test("external audience action opens a new tab safely and internal does not", ()
       heading: "Models in motion.",
       body: "Deployed at the edge.",
       action: {
-        label: "See it on GitHub →",
+        label: "See it on GitHub",
         href: "https://github.com/torviello",
         external: true,
       },
@@ -107,7 +107,7 @@ test("external audience action opens a new tab safely and internal does not", ()
       eyebrow: "For builders",
       heading: "From idea to impact.",
       body: "Ship in days.",
-      action: { label: "Start building →", href: "/install" },
+      action: { label: "Start building", href: "/install" },
     },
   }).html;
   expect(internal).not.toContain('target="_blank"');
@@ -121,7 +121,7 @@ test("audience action pairs an icon with its label per house rule 10", () => {
       heading: "Models in motion.",
       body: "Deployed at the edge.",
       action: {
-        label: "See it on GitHub →",
+        label: "See it on GitHub",
         href: "https://github.com/torviello",
         external: true,
         icon: "github",
@@ -130,7 +130,7 @@ test("audience action pairs an icon with its label per house rule 10", () => {
   }).html;
   const action = html.slice(
     html.indexOf("tv-audience-card__action"),
-    html.indexOf("See it on GitHub →</a>")
+    html.indexOf("See it on GitHub</a>")
   );
   expect(action).toContain('class="tv-icon"');
   expect(action).toContain('aria-hidden="true"');
