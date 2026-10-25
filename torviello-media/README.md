@@ -29,7 +29,9 @@ Run this unit's test categories from `tests/`, then record evaluation evidence i
 
 ## Status
 
-Partial. The unit owns its first artifacts: the generated landing showcase
-photography under `assets/landing/` (ticket 0038, AI-generated for this
-project — no stock licensing constraints). No implementation, contract, test,
-or evaluation evidence exists yet beyond the asset provenance record.
+Partial. The unit owns its first asset slots: the landing showcase
+photography under `assets/landing/` (ticket 0038) is specified and provenance-
+documented but not yet generated — the image-generation quota was exhausted on
+2026-10-25 and generation is pending; the landing cards ship with token-pure
+art until the assets land. No implementation, contract, test, or evaluation
+evidence exists yet beyond the asset provenance record.
