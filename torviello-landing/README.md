@@ -30,11 +30,14 @@ Public landing page and marketing site. Brand message: The execution layer for A
   ShowcaseGrid, FeatureStrip), `web/src/components/sections/` (TerminalCard,
   SiteFooter), `web/src/template/LandingTemplate.svelte`, and
   `web/src/pages/LandingPage.svelte` assemble the full board composition
-  (ticket 0038): the upper hero + brand panel grid and the four-card showcase
-  with product / use-cases / community anchors. The terminal showcase card
-  presents the board's pip/serve example under a visible ILLUSTRATIVE label;
-  every transcript presented as real behavior stays the documented engine
-  session. Webfonts (Inter, JetBrains Mono) load locally via fontsource.
+  (tickets 0038/0039): the upper hero + brand panel grid and the four-card
+  showcase with product / use-cases / community anchors. The three audience
+  cards carry the showcase photography imported from
+  `torviello-media/assets/landing` (sliced from the approved reference board);
+  the terminal showcase card presents the board's pip/serve example under a
+  visible ILLUSTRATIVE label; every transcript presented as real behavior stays
+  the documented engine session. Webfonts (Inter, JetBrains Mono) load locally
+  via fontsource.
 - `web/src/console/` — React inference-demo scaffold inherited from the engine
   scaffold. It is not landing scope; relocation to a console unit awaits an
   owner decision.
@@ -60,13 +63,16 @@ Repository-wide: `uv run --locked pytest torviello-design/tests torviello-engine
 
 ## Status
 
-Slice three implemented on ticket 0038: the full board composition — hero
-panel (in-panel nav, promise, inference-flow artwork, feature strip), brand
+Slice three implemented on tickets 0038 and 0039: the full board composition —
+hero panel (in-panel nav, promise, inference-flow artwork, feature strip), brand
 identity panel, and the four-card showcase (three audience cards with
-generated photography plus the illustrative terminal card) — with desktop,
-tablet, and mobile behavior. Slice one and slice two history:
+torviello-media photography sliced from the approved board plus the illustrative
+terminal card) — with desktop, tablet, and mobile behavior. Slice one and slice
+two history:
 [2026-10-24-landing-slice-one-qa.md](evaluations/reports/2026-10-24-landing-slice-one-qa.md),
-[2026-10-24-landing-slice-two-actions.md](evaluations/reports/2026-10-24-landing-slice-two-actions.md).
+[2026-10-24-landing-slice-two-actions.md](evaluations/reports/2026-10-24-landing-slice-two-actions.md);
+showcase-photography evaluation:
+[2026-10-25-landing-showcase-photos.md](evaluations/reports/2026-10-25-landing-showcase-photos.md).
 Follow-ups: confirm the placeholder domains (docs.torviello.dev,
 github.com/torviello), replace the vector-interpreted logo mark when official
 brand files exist, and run the screen-reader pass (designer role evidence).

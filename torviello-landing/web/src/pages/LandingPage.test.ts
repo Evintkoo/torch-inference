@@ -108,3 +108,27 @@ test("page keeps one h1 and navigable h2 section headings", () => {
 test("page renders the footer with the community anchor", () => {
   expect(html).toContain("The execution layer for AI.");
 });
+
+test("page wires the three media-unit photos to the showcase cards", () => {
+  // Ticket 0039: the photography imports resolve through the @torviello/media
+  // alias and render as the decorative card backgrounds in board order.
+  const photos = html.match(/<img class="tv-audience-card__photo"[^>]*>/g) ?? [];
+  expect(photos).toHaveLength(3);
+  expect(photos[0]).toMatch(/builders\.jpg/);
+  expect(photos[1]).toMatch(/teams\.jpg/);
+  expect(photos[2]).toMatch(/city\.jpg/);
+});
+
+test("every showcase photo is a decorative aria-hidden background", () => {
+  const photos = html.match(/<img class="tv-audience-card__photo"[^>]*>/g) ?? [];
+  expect(photos).toHaveLength(3);
+  for (const photo of photos) {
+    expect(photo).toContain('alt=""');
+    expect(photo).toContain('aria-hidden="true"');
+    expect(photo).toContain('loading="lazy"');
+  }
+});
+
+test("photos replace the built-in city illustration on the page", () => {
+  expect(html).not.toContain("tv-audience-card__city");
+});

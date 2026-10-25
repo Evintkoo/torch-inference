@@ -1,22 +1,40 @@
 # torviello-media/assets/landing
 
-Intended photographic assets for the landing showcase cards (ticket 0038).
-Owned by this unit; `torviello-landing/web` will import them through the
+Photographic assets for the landing showcase cards (tickets 0038/0039).
+Owned by this unit; `torviello-landing/web` imports them through the
 `@torviello/media` alias (GOV-12.07 pattern: import from the owning unit,
 never copy).
 
-Planned files (pending generation — the image-generation daily quota was
-exhausted on 2026-10-25; generation is scheduled and these slots are reserved):
+Delivered files (2026-10-25):
 
 - `builders.jpg` — for-builders card: person coding at a laptop at night under
-  warm orange ambient light, dark dashboard on screen.
+  warm orange ambient light, dark dashboard on screen. 338×746.
 - `teams.jpg` — for-AI-teams card: small team collaborating around a laptop in
-  warm indoor light.
-- `city.jpg` — for-real-world-AI card: dark blue dusk cityscape; the landing
-  card currently ships with the built-in SVG dusk-city illustration and can
-  switch to this photo once it exists.
+  warm indoor light. 412×746.
+- `city.jpg` — for-real-world-AI card: dark blue dusk cityscape with the
+  orange inference line. 676×356.
 
-Provenance rule: AI-generated for this project (Gemini image model) — not
-stock photography; no third-party license constraints. Decorative on the page
-(rendered `aria-hidden` behind a text scrim). This record is a plan, not
-evidence of delivered assets.
+## Provenance
+
+Sliced from the project's approved brand board,
+`torviello-design/brand/reference-board.png` (the showcase row), with
+ImageMagick: cropped to text-free photo regions, Lanczos-upscaled 2×, stripped
+of metadata, progressive JPEG quality 88. Not stock photography and not
+generated media — the assets are derived from the project's own approved
+design board, so there are no third-party license constraints.
+
+Reproduction (from the repository root):
+
+```sh
+B=torviello-design/brand/reference-board.png
+magick "$B" -crop 169x373+235+639 +repage -filter Lanczos -resize 338x746 \
+  -strip -interlace Plane -quality 88 torviello-media/assets/landing/builders.jpg
+magick "$B" -crop 206x373+660+639 +repage -filter Lanczos -resize 412x746 \
+  -strip -interlace Plane -quality 88 torviello-media/assets/landing/teams.jpg
+magick "$B" -crop 338x178+880+834 +repage -filter Lanczos -resize 676x356 \
+  -strip -interlace Plane -quality 88 torviello-media/assets/landing/city.jpg
+```
+
+Decorative on the page (rendered `aria-hidden` behind a text scrim). Delivered
+assets are evidence in the showcase-photography evaluation report at
+`torviello-landing/evaluations/reports/2026-10-25-landing-showcase-photos.md`.

@@ -29,9 +29,10 @@ Run this unit's test categories from `tests/`, then record evaluation evidence i
 
 ## Status
 
-Partial. The unit owns its first asset slots: the landing showcase
-photography under `assets/landing/` (ticket 0038) is specified and provenance-
-documented but not yet generated — the image-generation quota was exhausted on
-2026-10-25 and generation is pending; the landing cards ship with token-pure
-art until the assets land. No implementation, contract, test, or evaluation
-evidence exists yet beyond the asset provenance record.
+Partial. The unit owns its first delivered assets: the landing showcase
+photography under `assets/landing/` (tickets 0038/0039) — sliced from the
+approved brand board with provenance recorded in
+[assets/landing/README.md](assets/landing/README.md) and consumed by
+`torviello-landing/web` through the `@torviello/media` alias. No implementation,
+contract, test, or evaluation evidence exists yet beyond the asset provenance
+record and the landing evaluation report.

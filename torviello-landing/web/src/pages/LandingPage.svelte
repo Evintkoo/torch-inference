@@ -1,11 +1,12 @@
 <!-- Copyright (c) 2026 Torviello. -->
-<!-- Sheet P1 (slice-3 amendment, ticket 0038): the full board composition —
-     the upper main grid (O4 hero panel + O6 brand panel) and the lower O7
-     showcase grid (three M4 audience cards + the M8 terminal card), then the
-     footer. Copy is embedded verbatim from the approved brand board; the
-     terminal card carries the board's pip/serve example under the M8
-     illustrative label. Anchors: #product on the hero panel, #use-cases on
-     the showcase, #community on the footer. -->
+<!-- Sheet P1 (slice-3 amendment, ticket 0038/ticket 0039): the full board
+     composition — the upper main grid (O4 hero panel + O6 brand panel) and the
+     lower O7 showcase grid (three M4 audience cards with torviello-media
+     photography + the M8 terminal card), then the footer. Copy is embedded
+     verbatim from the approved brand board; the terminal card carries the
+     board's pip/serve example under the M8 illustrative label. Anchors:
+     #product on the hero panel, #use-cases on the showcase, #community on the
+     footer. -->
 <script lang="ts">
   import BrandPanel from "../components/organisms/BrandPanel.svelte";
   import HeroPanel from "../components/organisms/HeroPanel.svelte";
@@ -13,6 +14,12 @@
   import SiteFooter from "../components/sections/SiteFooter.svelte";
   import LandingTemplate from "../template/LandingTemplate.svelte";
   import { icons } from "../lib/icons";
+  // Ticket 0039: the showcase photography is owned by torviello-media and
+  // imported through the alias (GOV-12.07), sliced from the approved reference
+  // board — never generated copies inside this unit.
+  import buildersPhoto from "@torviello/media/assets/landing/builders.jpg";
+  import teamsPhoto from "@torviello/media/assets/landing/teams.jpg";
+  import cityPhoto from "@torviello/media/assets/landing/city.jpg";
 
   const flowStages = [
     { icon: icons.box, title: "DEVELOP", caption: "Experiment, iterate, and optimize." },
@@ -36,6 +43,7 @@
       eyebrow: "For builders",
       heading: "From idea to impact.",
       body: "The inference engine that moves with you — from notebooks to production.",
+      image: buildersPhoto,
       action: {
         label: "Start building",
         href: "https://docs.torviello.dev/install",
@@ -46,6 +54,7 @@
       eyebrow: "For AI teams",
       heading: "Build, deploy, scale together.",
       body: "A unified inference engine for researchers, engineers, and product teams.",
+      image: teamsPhoto,
       action: {
         label: "Read the docs",
         href: "https://docs.torviello.dev",
@@ -57,7 +66,7 @@
       eyebrow: "For real-world AI",
       heading: "Models in motion.",
       body: "Efficient, adaptable, and ready for production use cases.",
-      art: "city",
+      image: cityPhoto,
       action: {
         label: "See it on GitHub",
         href: "https://github.com/torviello",
