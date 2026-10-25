@@ -84,9 +84,11 @@ def test_consuming_units_do_not_fork_canonical_vector_data() -> None:
 # Measured brand palette: the gradient ramp sampled from the board pixels
 # plus the board label palette and the midnight favicon ground.
 ALLOWED_FILLS = {
-    "#FA8E5B",
-    "#F7734A",
-    "#FC6E41",
+    "#FE8C56",
+    "#F9713F",
+    "#F96D41",
+    "#FA7244",
+    "#F8663B",
     "#F5F4F4",
     "#FF855F",
     "#FF683B",

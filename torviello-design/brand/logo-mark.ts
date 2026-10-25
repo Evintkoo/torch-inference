@@ -1,23 +1,22 @@
 // Copyright (c) 2026 Torviello.
 // Code twin of brand/logo-mark.svg (GOV-12.07, ticket 0037): the folded
 // ribbon T as published for unit consumers, vectorized at eight-times board
-// resolution with potrace hundredth-unit fitting; the sync contract test
-// proves it equals the canonical asset. Consumers import, never fork.
+// resolution with potrace hundredth-unit fitting and measured per-region
+// gradients; the sync contract test proves it equals the canonical asset.
+// Consumers import, never fork.
 export const logoMark = `<!-- Canonical brand mark: vectorized from the approved board lockup at
      eight-times resolution with potrace hundredth-unit curve fitting
-     (ticket 0037, superseding the 0036 four-times trace). Gradient stops
-     measured from the board pixels; official brand files remain pending. -->
+     (ticket 0037 revision 2: measured per-region gradients - the bar
+     ramps light to deep left to right, the leg holds the deep tone).
+     Official brand files remain pending. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
   <defs>
-    <linearGradient id="tv-mark-orange" x1="0.12" y1="0.1" x2="0.5" y2="0.95">
-      <stop offset="0" stop-color="#FA8E5B"/>
-      <stop offset="0.5" stop-color="#F7734A"/>
-      <stop offset="1" stop-color="#FC6E41"/>
-    </linearGradient>
+<linearGradient id="tv-mark-bar" gradientUnits="userSpaceOnUse" x1="8400" y1="18000" x2="69100" y2="14000"><stop offset="0" stop-color="#FE8C56"/><stop offset="0.55" stop-color="#F9713F"/><stop offset="1" stop-color="#F96D41"/></linearGradient>
+<linearGradient id="tv-mark-leg" gradientUnits="userSpaceOnUse" x1="40000" y1="30100" x2="44000" y2="60000"><stop offset="0" stop-color="#FA7244"/><stop offset="1" stop-color="#F8663B"/></linearGradient>
   </defs>
   <g transform="translate(5.6 -1.22) scale(0.060627)">
     <g transform="translate(0.000000,800.000000) scale(0.010000,-0.010000)">
-      <path fill="url(#tv-mark-orange)" d="M66775 66995 c-371 -43 -956 -172 -1300 -286 -344 -114 -850 -260
+      <path fill="url(#tv-mark-bar)" d="M66775 66995 c-371 -43 -956 -172 -1300 -286 -344 -114 -850 -260
 -1125 -325 -372 -89 -5659 -134 -20650 -177 l-20150 -57 -650 -225 c-357 -124
 -1160 -317 -1784 -428 -726 -130 -1339 -307 -1706 -492 -315 -159 -740 -320
 -945 -359 -204 -38 -530 -177 -724 -309 -194 -131 -531 -330 -749 -441 -1255
@@ -35,7 +34,8 @@ export const logoMark = `<!-- Canonical brand mark: vectorized from the approved
 550 80 194 279 518 442 721 162 203 295 413 295 467 0 54 162 310 359 569 197
 259 439 656 536 884 98 228 259 481 358 562 98 82 288 397 422 699 133 303
 321 640 417 750 244 278 808 1317 808 1488 0 77 -71 168 -158 201 -205 79
--1306 56 -2167 -44z"/> <path fill="url(#tv-mark-orange)" d="M40050 49295 c-851 -45 -1714 -154 -2200 -279 -440 -112 -1115 -257
+-1306 56 -2167 -44z"/>
+      <path fill="url(#tv-mark-leg)" d="M40050 49295 c-851 -45 -1714 -154 -2200 -279 -440 -112 -1115 -257
 -1500 -320 -385 -64 -925 -241 -1200 -392 -275 -152 -756 -351 -1070 -441
 -313 -91 -601 -215 -638 -276 -38 -61 -389 -264 -780 -453 -1654 -795 -2935
 -1748 -4393 -3269 -429 -448 -850 -950 -936 -1115 -86 -165 -260 -412 -387
