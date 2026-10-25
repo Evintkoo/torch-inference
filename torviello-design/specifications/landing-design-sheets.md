@@ -216,3 +216,111 @@ blocks and cite the ticket that designed them (0024).
 - Accessibility evidence (keyboard walkthrough, contrast measurements in
   `test_design_tokens.py`, screen-reader pass) lands in the designer role's
   evidence table once the slice is implemented.
+
+---
+
+## Slice 3 — board composition (ticket 0038)
+
+Slice 3 assembles the full board: the upper region becomes a two-column grid
+(hero panel + brand identity panel) and the lower region a four-card showcase.
+Sheets A1–A7, M1–M4, O2 remain in force; the amendments below log every change
+on ticket 0038.
+
+### O4 HeroPanel (amends O1)
+
+- composed: M1 NavBar (in-panel, static — the sticky template bar is retired)
+  + hero copy (A4 eyebrow, one h1 with the orange emphasis, body, A1 + A2) +
+  O5 InferenceFlow on the right half + O2 FeatureStrip along the bottom edge
+- tokens: panel fill `surface-canvas`, 1px `border-panel`, `radius-panel`;
+  heading `size-display` (clamped 40–64px by breakpoint); strip is an elevated
+  band (`surface-elevated`) with `border-panel` top hairline
+- states: no panel-level hover; all interactivity belongs to M1 and the actions
+- accessibility: the panel is a `<section>` labelled by the h1; DOM order reads
+  nav → copy → flow → strip; the flow and strip icons are aria-hidden
+- breakpoints: ≥1280 two-column canvas; 768–1279 hero panel full-width with the
+  flow artwork below the copy; <768 single column, heading 40–46px, strip 2×2
+
+### O5 InferenceFlow
+
+- composed: one decorative SVG stream (multi-stroke orange gradient paths with
+  blurred depth duplicates and edge masks) behind three M2 GlassCard stages —
+  DEVELOP (smallest, near-flat tilt), DEPLOY (larger, stronger tilt), INFER
+  (largest, brightest border and edge glow)
+- stage data: box → "Experiment, iterate, and optimize."; package → "Scale
+  with confidence."; zap → "Real-world impact." (icon set from A7, ticket 0029)
+- tokens: stream strokes derive from `action-primary` / `accent-orange-light`
+  gradients; stage borders `border-panel-strong`, INFER border
+  `action-primary`; glow `glow-orange`; stage surfaces `surface-glass`
+- states: stream drifts and the glow breathes on a 7–12s loop only under
+  `prefers-reduced-motion: no-preference`; static otherwise
+- accessibility: the whole region is one `aria-hidden` figure; the stage text
+  is decorative duplication of the hero promise, not content
+- contract: pure decoration — no interactive surface, no pointer cursor
+
+### O6 BrandPanel
+
+- composed: primary lockup (canonical A5 mark + lowercase wordmark, display
+  size, non-interactive), three variation previews in one row, palette section,
+  typography section
+- variations: dark preview (orange + warm-white mark), light preview (orange
+  mark on `warm-white`), app icon (rounded-square dark tile, mark only);
+  captions `LOGO VARIATIONS` and `APP ICON` as A4 labels
+- palette: four swatches — Midnight `#0b1020`, Torviello Orange `#ff683b`,
+  Warm White `#f7f8fa`, Signal Teal `#22d3c5` — each with name and exact hex
+  beneath, caption `COLOR PALETTE`; swatches wrap 2×2 when the panel drops
+  below 400px
+- typography: two samples — large `Aa` in `font-family-sans` labelled
+  Inter / Headings & UI, large `Aa` in `font-family-mono` labelled
+  JetBrains Mono / Code & Technical
+- tokens: panel fill `surface-canvas`, `border-panel`, `radius-panel`; preview
+  tiles `radius-control`-sized borders per the board (fine hairlines)
+- accessibility: the panel is a complementary `<aside aria-label="Brand
+  identity">`; swatch hex values are real text; the mark is aria-hidden
+- don't: recolor the mark, fork the asset, or add palette entries outside the
+  token contract
+
+### O7 ShowcaseGrid (amends O3)
+
+- composed: 3×M4 audience cards + M8 TerminalCard in one equal-height row
+- columns (desktop): `1.26fr 1.45fr 1.06fr 1fr` with `space-3` gaps (board
+  ratio 390/449/327/310 at 1512px content width); 2×2 at 768–1279px; one
+  column below 768px
+- states: card hover scrim lift per M4; the terminal card has no hover state
+- accessibility: equal heights via grid stretch, not fixed pixel heights; DOM
+  order matches visual order left to right
+
+### M8 TerminalCard
+
+- composed: the showcase terminal — dark card fill `surface-card`, an inset
+  terminal window (`surface-terminal` fill, `radius-control` corners, window
+  chrome of three dots), two A6 prompt lines, and a four-step status rail
+- status rail: orange (`action-primary`) circular markers joined by a 1px
+  connector line, labels "Loading model…", "Optimizing graph…",
+  "Starting inference server…", "Ready." in `font-family-mono`
+- illustrative label (BC-06): a mono caption `ILLUSTRATIVE EXAMPLE` sits in the
+  window header area, so the pip/serve commands are never presented as verified
+  engine behavior (task direction 2026-10-25 on ticket 0038, refining the 0026
+  owner direction for this card; the documented engine session remains the
+  verified transcript if a live demo section returns)
+- states: none interactive; the rail cascade animates per line only under
+  `no-preference` motion and renders static and complete otherwise (A6 rule)
+- accessibility: the transcript is real selectable text; dots and rail are
+  aria-hidden decoration
+
+### T1/P1 amendment (ticket 0038)
+
+- the template canvas is a 12px-gutter panel grid (`space-3` gaps, max-width
+  1600px centered) instead of the 1200px section rhythm; slots: main grid
+  (O4 + O6), showcase grid (O7), footer (unchanged, below the canvas)
+- the sticky template nav is retired; M1 renders inside O4 (static)
+- breakpoints: 1280 / 1024 / 768 / 560 / 320; anchor scroll margins keep
+  clearing the in-panel nav
+- P1 order: O4 → O6 (upper grid), O7 (showcase), footer — one h1 total, in O4
+
+### Media (ticket 0038)
+
+- the builders, AI-teams, and real-world-AI card visuals are generated
+  photographic assets owned by `torviello-media` and imported by the landing
+  via the unit alias (GOV-12.07 pattern); no stock photography, no local forks
+- the real-world-AI card overlays decorative SVG inference lines on the dusk
+  cityscape so the artwork visually relates to O5

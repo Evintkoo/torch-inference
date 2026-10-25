@@ -1,71 +1,59 @@
 /*
  * Copyright (c) 2026 Torviello.
- * Slice-one organisms (design sheets O1–O3). Consumes ONLY the semantic
- * tokens from tokens.css; a raw value here is a review finding. Layout math
- * (percent viewport clamps, breakpoints) is not token territory.
+ * Slice-three organisms (design sheets O4–O7, ticket 0038) on top of the
+ * slice-one O2 strip. Consumes ONLY the semantic tokens from tokens.css; a
+ * raw value here is a review finding. Layout math (perspective transforms,
+ * percentage offsets, breakpoints, clamps) is not token territory.
  */
 
-/* O1 HeroSection */
-.tv-hero {
+/* O4 HeroPanel — the board hero: nav, copy, flow artwork, feature strip */
+.tv-hero-panel {
   position: relative;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
+  min-height: 603px;
+  background: var(--tv-surface-canvas);
+  border: 1px solid var(--tv-border-panel);
+  border-radius: var(--tv-radius-panel);
 }
 
-.tv-hero__ribbon {
-  position: absolute;
-  inset: 0 0 0 12%;
-  width: 88%;
-  height: 100%;
-  pointer-events: none;
-  /* Alpha mask fades every edge so the artwork never hard-clips; the mask
-     color is irrelevant (alpha-only), so it borrows an opaque token. */
-  -webkit-mask-image: radial-gradient(120% 90% at 65% 45%, var(--tv-surface-base) 55%, transparent 88%);
-  mask-image: radial-gradient(120% 90% at 65% 45%, var(--tv-surface-base) 55%, transparent 88%);
+.tv-hero-panel__nav {
+  padding: var(--tv-space-4) var(--tv-space-8) 0;
 }
 
-/* The ribbon drifts subtly on load; static under reduced motion */
-@media (prefers-reduced-motion: no-preference) {
-  .tv-hero__ribbon {
-    animation: tv-ribbon-drift 12s ease-in-out infinite alternate;
-  }
-}
-
-@keyframes tv-ribbon-drift {
-  from {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  to {
-    transform: translate3d(-2%, 2%, 0) scale(1.04);
-  }
-}
-
-.tv-hero__layout {
+.tv-hero-panel__body {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--tv-space-12);
-  padding-top: var(--tv-space-16);
-  padding-bottom: var(--tv-space-16);
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  align-items: center;
+  flex: 1;
+  gap: var(--tv-space-4);
+  padding-top: var(--tv-space-6);
+  padding-bottom: var(--tv-space-6);
 }
 
-@media (min-width: 1024px) {
-  .tv-hero__layout {
-    grid-template-columns: 1.1fr 1fr;
-    align-items: center;
-  }
+.tv-hero-panel__copy {
+  position: relative;
+  z-index: 1;
+  padding-left: clamp(var(--tv-space-6), 4.9vw, 75px);
+  padding-right: var(--tv-space-6);
+  min-width: 0;
 }
 
-.tv-hero__heading {
-  margin: 0 0 var(--tv-space-6);
+.tv-hero-panel__heading {
+  margin: 0;
   color: var(--tv-text-primary);
   font-family: var(--tv-font-sans);
-  /* Never below the heading size, never above the display size */
-  font-size: clamp(var(--tv-size-heading), 9vw, var(--tv-size-display));
+  /* 40px at the 768px step (spec F-08/BC-07), 64px at the 1536px reference */
+  font-size: clamp(40px, 5.2vw, var(--tv-size-display));
   font-weight: var(--tv-weight-semibold);
-  line-height: 1.05;
+  line-height: 1.04;
+  letter-spacing: -0.04em;
+  max-width: 9.5em;
 }
 
-.tv-hero__line {
+.tv-hero-panel__line {
   display: block;
 }
 
@@ -74,43 +62,455 @@
   font-style: normal;
 }
 
-.tv-hero__body {
-  margin: 0 0 var(--tv-space-8);
-  max-width: 46ch;
+.tv-hero-panel__body-copy {
+  margin: var(--tv-space-4) 0 0;
+  max-width: 390px;
   color: var(--tv-text-muted);
   font-family: var(--tv-font-sans);
   font-size: var(--tv-size-body);
-  line-height: 1.6;
+  line-height: 1.375;
 }
 
-.tv-hero__actions {
+.tv-hero-panel__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--tv-space-3);
-  margin-bottom: var(--tv-space-12);
-}
-
-.tv-hero__cards {
-  display: grid;
-  grid-template-columns: 1fr;
   gap: var(--tv-space-4);
+  margin-top: var(--tv-space-6);
 }
 
-@media (min-width: 560px) {
-  .tv-hero__cards {
-    grid-template-columns: repeat(3, 1fr);
+.tv-hero-panel__flow {
+  position: relative;
+  min-width: 0;
+  min-height: 100%;
+}
+
+/* O5 InferenceFlow — luminous stream through three tilted glass stages */
+.tv-flow {
+  position: absolute;
+  inset: calc(-1 * var(--tv-space-6)) 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.tv-flow__stream {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* The stream drifts on a long loop; fully static under reduced motion */
+@media (prefers-reduced-motion: no-preference) {
+  .tv-flow__drift {
+    animation: tv-flow-drift 10s ease-in-out infinite alternate;
+    transform-origin: 55% 55%;
   }
 }
 
-/* O3 AudienceRow — three cards; three-up from 900px, stacked below */
-.tv-audience-grid {
+@keyframes tv-flow-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-2.5%, 2%, 0) scale(1.05);
+  }
+}
+
+.tv-flow__stages {
+  position: absolute;
+  inset: 0;
+  perspective: 900px;
+}
+
+.tv-flow__stages .tv-glass-card {
+  position: absolute;
+  width: 27%;
+  padding: var(--tv-space-4);
+}
+
+.tv-flow__stages .tv-glass-card__icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.tv-flow__stages .tv-glass-card__title {
+  margin: var(--tv-space-2) 0 var(--tv-space-1);
+  font-size: var(--tv-size-label);
+  letter-spacing: 0.08em;
+}
+
+.tv-flow__stages .tv-glass-card__caption {
+  font-size: var(--tv-size-small);
+}
+
+.tv-flow__stages .tv-glass-card[data-stage="develop"] {
+  left: 2%;
+  top: 38%;
+  transform: rotateY(-16deg) rotateZ(-1.5deg);
+}
+
+.tv-flow__stages .tv-glass-card[data-stage="deploy"] {
+  left: 31%;
+  top: 22%;
+  width: 30%;
+  transform: rotateY(-14deg);
+}
+
+.tv-flow__stages .tv-glass-card[data-stage="infer"] {
+  left: 64%;
+  top: 8%;
+  width: 33%;
+  border-color: var(--tv-action-primary);
+  box-shadow:
+    0 0 24px var(--tv-glow-orange),
+    inset 0 0 18px color-mix(in srgb, var(--tv-action-primary) 18%, transparent);
+  transform: rotateY(-12deg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tv-flow__stages .tv-glass-card[data-stage="infer"] {
+    animation: tv-flow-breathe 8s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes tv-flow-breathe {
+  from {
+    box-shadow:
+      0 0 18px var(--tv-glow-orange),
+      inset 0 0 14px color-mix(in srgb, var(--tv-action-primary) 14%, transparent);
+  }
+  to {
+    box-shadow:
+      0 0 34px var(--tv-glow-orange),
+      inset 0 0 24px color-mix(in srgb, var(--tv-action-primary) 24%, transparent);
+  }
+}
+
+/* A5 strip — the elevated feature band along the hero's bottom edge */
+.tv-hero-panel__strip {
+  position: relative;
+  z-index: 1;
+  background: var(--tv-surface-elevated);
+  border-top: 1px solid var(--tv-border-panel);
+  padding: var(--tv-space-4) clamp(var(--tv-space-4), 3vw, var(--tv-space-8));
+}
+
+.tv-hero-panel__strip .tv-feature-item {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--tv-space-6);
+  grid-template-columns: auto 1fr;
+  column-gap: var(--tv-space-2);
+  align-items: center;
 }
 
-@media (min-width: 900px) {
-  .tv-audience-grid {
-    grid-template-columns: repeat(3, 1fr);
+.tv-hero-panel__strip .tv-feature-item__icon {
+  grid-row: span 2;
+}
+
+.tv-hero-panel__strip .tv-feature-item__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.tv-hero-panel__strip .tv-feature-item__title {
+  margin: 0;
+  font-size: var(--tv-size-label);
+  font-weight: var(--tv-weight-semibold);
+}
+
+.tv-hero-panel__strip .tv-feature-item__subcopy {
+  grid-column: 2;
+  font-size: var(--tv-size-small);
+}
+
+/* O7 ShowcaseGrid — the board's four-card row */
+.tv-showcase-grid {
+  display: grid;
+  grid-template-columns: 1.26fr 1.45fr 1.06fr 1fr;
+  gap: var(--tv-space-3);
+  align-items: stretch;
+}
+
+.tv-showcase-grid > * {
+  min-height: 384px;
+}
+
+/* Decorative inference lines on the real-world-AI card (O7) */
+.tv-audience-card__lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tv-audience-card__lines-drift {
+    animation: tv-flow-drift 11s ease-in-out infinite alternate;
+    transform-origin: 60% 60%;
   }
+}
+
+/* O4/O7 breakpoints: canvas proportions from the board, scaled by step */
+@media (max-width: 1279px) {
+  .tv-showcase-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tv-showcase-grid > * {
+    min-height: 320px;
+  }
+
+  .tv-hero-panel__body {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .tv-hero-panel__flow {
+    min-height: 340px;
+  }
+
+  .tv-hero-panel__copy {
+    padding-left: var(--tv-space-6);
+  }
+}
+
+@media (max-width: 767px) {
+  .tv-hero-panel {
+    min-height: 0;
+  }
+
+  .tv-hero-panel__heading {
+    font-size: clamp(40px, 11vw, 46px);
+  }
+
+  .tv-showcase-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tv-showcase-grid > * {
+    min-height: 300px;
+  }
+}
+
+/* O6 BrandPanel — the board's brand identity panel */
+/* The aside itself is the flex column so the typography block pins to the
+   bottom edge via margin-top auto at any stretched row height */
+.tv-brand-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--tv-surface-canvas);
+  border: 1px solid var(--tv-border-panel);
+  border-radius: var(--tv-radius-panel);
+  min-height: 603px;
+  overflow: hidden;
+}
+
+.tv-brand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tv-space-6);
+  flex: 1;
+  min-height: 0;
+  padding: var(--tv-space-8) var(--tv-space-6);
+}
+
+.tv-brand__lockup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tv-space-3);
+  padding-top: var(--tv-space-2);
+}
+
+.tv-brand__mark {
+  display: inline-flex;
+  width: 46px;
+  height: 46px;
+}
+
+.tv-brand__mark svg {
+  width: 100%;
+  height: 100%;
+}
+
+.tv-brand__wordmark {
+  color: var(--tv-text-primary);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-heading);
+  font-weight: var(--tv-weight-semibold);
+  letter-spacing: -0.01em;
+}
+
+.tv-brand__row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--tv-space-3);
+}
+
+.tv-brand__variation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+  border: 1px solid var(--tv-border-panel);
+  border-radius: var(--tv-radius-panel);
+  overflow: hidden;
+}
+
+.tv-brand__variation--dark {
+  background: var(--tv-color-deep);
+}
+
+.tv-brand__variation--light {
+  background: var(--tv-color-warm-white);
+}
+
+.tv-brand__variation--icon .tv-brand__variation-mark {
+  width: 44px;
+  height: 44px;
+  padding: var(--tv-space-2);
+  background: var(--tv-color-deep);
+  border-radius: var(--tv-radius-control);
+}
+
+.tv-brand__variation-mark {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  color: var(--tv-action-primary);
+}
+
+.tv-brand__variation-mark svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* The light preview recolors only the wordmark inside the lockup context;
+   the mark stays orange per the board (no per-section recoloring) */
+.tv-brand__row-labels {
+  display: flex;
+}
+
+.tv-brand__row-labels .tv-brand__caption {
+  flex: 1;
+}
+
+.tv-brand__row-labels .tv-brand__caption--group {
+  flex: 2;
+}
+
+.tv-brand__caption {
+  margin: calc(-1 * var(--tv-space-4)) 0 0;
+  color: var(--tv-text-muted);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-micro);
+  font-weight: var(--tv-weight-semibold);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.tv-brand .tv-section-label {
+  margin-bottom: var(--tv-space-3);
+}
+
+.tv-brand__palette {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--tv-space-3);
+}
+
+.tv-brand__swatch-chip {
+  display: block;
+  aspect-ratio: 88 / 72;
+  border: 1px solid var(--tv-border-panel);
+  border-radius: var(--tv-radius-panel);
+}
+
+.tv-brand__swatch-name {
+  margin: var(--tv-space-2) 0 0;
+  color: var(--tv-text-primary);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-small);
+  font-weight: var(--tv-weight-semibold);
+}
+
+.tv-brand__swatch-hex {
+  margin: 0;
+  color: var(--tv-text-muted);
+  font-family: var(--tv-font-mono);
+  font-size: var(--tv-size-micro);
+  letter-spacing: 0.04em;
+}
+
+.tv-brand__typography {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--tv-space-6);
+  margin-top: auto;
+  padding-top: var(--tv-space-4);
+  border-top: 1px solid var(--tv-border-panel);
+}
+
+.tv-brand__type-sample {
+  display: flex;
+  align-items: center;
+  gap: var(--tv-space-3);
+}
+
+.tv-brand__type-glyph {
+  font-size: var(--tv-size-heading);
+  font-weight: var(--tv-weight-semibold);
+  color: var(--tv-text-primary);
+  line-height: 1;
+}
+
+.tv-brand__type-name {
+  margin: 0;
+  color: var(--tv-text-primary);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-small);
+  font-weight: var(--tv-weight-semibold);
+}
+
+.tv-brand__type-usage {
+  margin: 0;
+  color: var(--tv-text-muted);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-micro);
+}
+
+/* BC-07: the brand panel wraps below the hero on tablet and tightens */
+@media (max-width: 1279px) {
+  .tv-brand-panel {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 559px) {
+  .tv-brand {
+    padding: var(--tv-space-6) var(--tv-space-4);
+  }
+
+  .tv-brand__palette {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tv-brand__typography {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* O4 scope: board typography steps for the in-panel nav and eyebrow
+   (spec A1/A2: 24px wordmark, 10px eyebrow with 3.2px tracking, 32px nav gap) */
+.tv-hero-panel .tv-logo__wordmark {
+  font-size: 24px;
+}
+
+.tv-hero-panel .tv-section-label {
+  font-size: var(--tv-size-micro);
+  letter-spacing: 0.32em;
+}
+
+.tv-hero-panel__nav .tv-navbar__list {
+  gap: var(--tv-space-8);
 }

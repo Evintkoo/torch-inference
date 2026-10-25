@@ -29,5 +29,6 @@ Run this unit's test categories from `tests/`, then record evaluation evidence i
 ## Status
 
 Active: the brand board, the design-token contract with parity and contrast
-tests, the landing functional design, and the slice-one design sheets exist.
-The landing implementation lives in torviello-landing.
+tests (extended with the board panel tokens on ticket 0038), the landing
+functional design, and the design sheets (slices 1–3) exist. The landing
+implementation lives in torviello-landing.

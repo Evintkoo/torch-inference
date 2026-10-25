@@ -142,3 +142,25 @@ test("audience card without an action renders no link", () => {
   }).html;
   expect(html).not.toMatch(/<a /);
 });
+
+test("the real-world card renders the city silhouette art instead of a photo", () => {
+  const withArt = render(AudienceCard, {
+    props: {
+      eyebrow: "For real-world AI",
+      heading: "Models in motion.",
+      body: "Efficient, adaptable, and ready for production use cases.",
+      art: "city",
+    },
+  }).html;
+  expect(withArt).toContain("tv-audience-card__city");
+  expect(withArt).toContain("tv-audience-card__lines");
+
+  const withoutArt = render(AudienceCard, {
+    props: {
+      eyebrow: "For builders",
+      heading: "From idea to impact.",
+      body: "The inference engine that moves with you — from notebooks to production.",
+    },
+  }).html;
+  expect(withoutArt).not.toContain("tv-audience-card__city");
+});

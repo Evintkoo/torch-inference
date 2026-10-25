@@ -129,3 +129,64 @@ not a live backend session.
 Functional design (this document) → design sheets (`landing-design-sheets.md`)
 → implementation in `torviello-landing/web` → accessibility and usability
 evidence per the designer role.
+
+---
+
+## Amendment — board composition (ticket 0038, 2026-10-25)
+
+The board-composition task direction completes the approved board on the
+landing page. F-01…F-03 and F-08 remain in force. Amendments, all traceable to
+[`torviello-landing/specifications/landing-board-composition.md`](../../../torviello-landing/specifications/landing-board-composition.md):
+
+### F-04 (amended) — Read the hero promise
+
+- the promise renders inside the hero panel (O4) with the navigation above and
+  the inference-flow artwork (O5) on the right half; the strip of F-05 moves to
+  the hero panel's bottom edge
+- invariants unchanged: verbatim copy, one h1, decorative flow
+
+### F-05 (amended) — Scan the value strip
+
+- trigger: page load (the strip lives on the hero panel's bottom edge)
+- invariants unchanged: four items, title + subcopy, no truncation at 320px
+
+### F-06 (amended) — Self-identify as an audience
+
+- the three audience cards render as showcase cards 1–3 (O7) in the four-card
+  row, with the same eyebrows, headings, bodies, and M4 actions and
+  destinations as slice 2
+- invariant: exactly one action per audience card; DOM order eyebrow → heading
+  → body → action
+
+### F-07 (superseded on this card) — Terminal execution showcase
+
+- trigger: the visitor reads showcase card 4 (M8)
+- response: the card renders the window chrome, the pip/serve prompt lines, and
+  the four-step status rail from the board
+- outcome: the example reads as a design showcase, explicitly labeled
+  `ILLUSTRATIVE EXAMPLE` in mono in the window header, so no command or status
+  line is presented as verified engine behavior
+- invariants: the label renders before any visitor relies on the commands;
+  static and complete under reduced motion; the A6 truthfulness rule continues
+  to govern any transcript presented as real behavior
+- provenance: the board's terminal copy returns as an illustrative example per
+  the task direction (2026-10-25) recorded on ticket 0038, refining the 0026
+  owner direction, which remains binding for any non-labeled transcript
+
+### F-09 — Read the brand identity panel
+
+- trigger: the visitor views the upper-right panel (O6)
+- response: the primary lockup, three logo-variation previews with captions,
+  the four hex-labeled palette swatches, and the two typography samples render
+- outcome: the brand panel matches the board; swatch hex values are exact text
+- invariants: the mark is the canonical imported asset; no palette entry
+  outside the token contract; the panel is non-interactive
+
+### F-10 — Use the board at the reference size
+
+- trigger: viewport 1536×1012 (the board reference)
+- response: the upper grid splits ≈2.26 : 1 (hero ≈69% / brand ≈31%) and the
+  showcase renders four equal-height cards in the board's 1.26 / 1.45 / 1.06 /
+  1 ratio
+- outcome: the composition mirrors the board geometry at the reference
+  viewport and scales proportionally at other desktop widths

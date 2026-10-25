@@ -16,4 +16,7 @@ Every critical requirement resolves to recorded evaluation evidence.
 
 ## Status
 
-Repository shape only. No artifact, implementation, or evaluation evidence is recorded here yet.
+Active. Dated reports with screenshot evidence:
+[2026-10-24-landing-slice-one-qa.md](reports/2026-10-24-landing-slice-one-qa.md),
+[2026-10-24-landing-slice-two-actions.md](reports/2026-10-24-landing-slice-two-actions.md),
+[2026-10-25-landing-slice-three-board.md](reports/2026-10-25-landing-slice-three-board.md).

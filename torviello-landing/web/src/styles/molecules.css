@@ -6,13 +6,9 @@
  * contract in torviello-design/contracts/design-tokens.json.
  */
 
-/* M1 NavBar — sticky glass bar over the surface base */
+/* M1 NavBar — in-panel bar over the hero canvas (T1 slice-3 amendment) */
 .tv-navbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: color-mix(in srgb, var(--tv-surface-base) 90%, transparent);
-  border-bottom: 1px solid var(--tv-border-glass);
+  background: transparent;
 }
 
 .tv-navbar__inner {
@@ -20,9 +16,9 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--tv-space-4);
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: var(--tv-space-4) var(--tv-space-16);
+  max-width: none;
+  margin: 0;
+  padding: 0;
 }
 
 /* A5 Logo lockup — mark + wordmark as the single home link */
@@ -257,8 +253,8 @@
   position: relative;
   overflow: hidden;
   background: var(--tv-surface-glass);
-  border: 1px solid var(--tv-border-glass);
-  border-radius: var(--tv-radius-glass);
+  border: 1px solid var(--tv-border-panel);
+  border-radius: var(--tv-radius-panel);
 }
 
 .tv-audience-card__photo {
@@ -274,12 +270,14 @@
   display: flex;
   flex-direction: column;
   min-height: 280px;
-  justify-content: flex-end;
+  height: 100%;
+  justify-content: flex-start;
   padding: var(--tv-space-6);
   background: linear-gradient(
     to bottom,
-    color-mix(in srgb, var(--tv-surface-base) 0%, transparent),
-    color-mix(in srgb, var(--tv-surface-base) 85%, transparent)
+    color-mix(in srgb, var(--tv-surface-canvas) 82%, transparent),
+    color-mix(in srgb, var(--tv-surface-canvas) 12%, transparent) 55%,
+    color-mix(in srgb, var(--tv-surface-canvas) 0%, transparent)
   );
   transition: opacity 120ms ease;
 }
@@ -313,6 +311,7 @@
 
 .tv-audience-card__body {
   margin: 0;
+  max-width: 34ch;
   color: var(--tv-text-muted);
   font-family: var(--tv-font-sans);
   font-size: var(--tv-size-body);
@@ -322,4 +321,169 @@
 .tv-audience-card__action {
   align-self: flex-start;
   margin-top: var(--tv-space-4);
+}
+
+/* BC-07 (ticket 0038): the strip keeps two columns down to the smallest step */
+@media (max-width: 559px) {
+  .tv-feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--tv-space-4);
+  }
+}
+
+/* M8 TerminalCard — the illustrative terminal execution showcase */
+.tv-showcase-card--terminal {
+  background: var(--tv-surface-card);
+  border: 1px solid var(--tv-border-panel);
+  border-radius: var(--tv-radius-panel);
+}
+
+.tv-terminal-card {
+  height: 100%;
+  padding: var(--tv-space-6);
+}
+
+.tv-terminal-card__window {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--tv-surface-canvas);
+  border: 1px solid var(--tv-border-panel-strong);
+  border-radius: var(--tv-radius-control);
+  overflow: hidden;
+}
+
+.tv-terminal-card__chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tv-space-2);
+  padding: var(--tv-space-2) var(--tv-space-3);
+  border-bottom: 1px solid var(--tv-border-panel);
+}
+
+.tv-terminal-card__dots {
+  display: inline-flex;
+  gap: var(--tv-space-1);
+}
+
+/* Window dots in brand hues: primary, light, teal (board traffic lights,
+   rendered token-pure per the sheet M8 note) */
+.tv-terminal-card__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--tv-action-primary);
+}
+
+.tv-terminal-card__dot:nth-child(2) {
+  background: var(--tv-accent-orange-light);
+}
+
+.tv-terminal-card__dot:nth-child(3) {
+  background: var(--tv-accent-secondary);
+}
+
+.tv-terminal-card__note {
+  margin: 0;
+  color: var(--tv-text-muted);
+  font-family: var(--tv-font-mono);
+  font-size: var(--tv-size-small);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tv-terminal-card__transcript {
+  margin: 0;
+  padding: var(--tv-space-4);
+  overflow-x: auto;
+  font-family: var(--tv-font-mono);
+  font-size: var(--tv-size-small);
+  white-space: pre;
+}
+
+.tv-terminal-card__transcript .tv-terminal-line {
+  font-size: var(--tv-size-small);
+}
+
+.tv-terminal-card__rail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tv-space-4);
+  margin: 0;
+  padding: var(--tv-space-2) var(--tv-space-4) var(--tv-space-6) var(--tv-space-4);
+  list-style: none;
+}
+
+/* The connector line joins the markers; markers stay pure orange */
+.tv-terminal-card__rail::before {
+  content: "";
+  position: absolute;
+  top: var(--tv-space-3);
+  bottom: var(--tv-space-4);
+  left: calc(var(--tv-space-4) + 5px);
+  width: 1px;
+  background: color-mix(in srgb, var(--tv-action-primary) 55%, transparent);
+}
+
+.tv-terminal-card__step {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--tv-space-3);
+}
+
+.tv-terminal-card__marker {
+  flex-shrink: 0;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--tv-action-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tv-action-primary) 18%, transparent);
+}
+
+.tv-terminal-card__step-text {
+  color: var(--tv-text-muted);
+  font-family: var(--tv-font-mono);
+  font-size: var(--tv-size-small);
+}
+
+.tv-terminal-card__step:last-child .tv-terminal-card__step-text {
+  color: var(--tv-accent-secondary);
+}
+
+/* The rail cascades in only where motion is welcome; static and complete
+   otherwise (A6 invariant) */
+@media (prefers-reduced-motion: no-preference) {
+  .tv-terminal-card__step {
+    animation: tv-rail-in 400ms ease both;
+  }
+
+  .tv-terminal-card__step:nth-child(2) {
+    animation-delay: 120ms;
+  }
+
+  .tv-terminal-card__step:nth-child(3) {
+    animation-delay: 240ms;
+  }
+
+  .tv-terminal-card__step:nth-child(4) {
+    animation-delay: 360ms;
+  }
+}
+
+@keyframes tv-rail-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* O7 dusk-city illustration (real-world-AI card, ticket 0038) */
+.tv-audience-card__city {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }

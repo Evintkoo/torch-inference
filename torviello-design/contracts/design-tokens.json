@@ -26,6 +26,31 @@
       "$type": "color",
       "$value": "#ff855f",
       "$description": "Derived: orange lightened for hover states. 7.91:1 on midnight (AAA)."
+    },
+    "orange-light": {
+      "$type": "color",
+      "$value": "#ff8a5b",
+      "$description": "Board: light orange stop of the inference-flow stream gradient."
+    },
+    "orange-dark": {
+      "$type": "color",
+      "$value": "#d94824",
+      "$description": "Board: deep orange stop of the inference-flow stream gradient."
+    },
+    "canvas": {
+      "$type": "color",
+      "$value": "#080d14",
+      "$description": "Board: panel canvas near-black. Hero and brand panel fill."
+    },
+    "deep": {
+      "$type": "color",
+      "$value": "#09111b",
+      "$description": "Board: deep blue-black of the terminal showcase card."
+    },
+    "elevated": {
+      "$type": "color",
+      "$value": "#101827",
+      "$description": "Board: elevated band behind the hero feature strip."
     }
   },
   "semantic": {
@@ -79,6 +104,46 @@
       "$value": "#22d3c5",
       "$description": "Status-ready accent, data highlights, terminal prompt bullets."
     },
+    "surface-canvas": {
+      "$type": "color",
+      "$value": "#080d14",
+      "$description": "Board panel canvas: hero and brand panel fill (slice 3, ticket 0038)."
+    },
+    "surface-elevated": {
+      "$type": "color",
+      "$value": "#101827",
+      "$description": "Elevated band: the hero feature strip (slice 3, ticket 0038)."
+    },
+    "surface-card": {
+      "$type": "color",
+      "$value": "#09111b",
+      "$description": "Terminal showcase card fill (slice 3, ticket 0038)."
+    },
+    "accent-orange-light": {
+      "$type": "color",
+      "$value": "#ff8a5b",
+      "$description": "Flow stream light stop and INFER highlight (slice 3, ticket 0038)."
+    },
+    "accent-orange-dark": {
+      "$type": "color",
+      "$value": "#d94824",
+      "$description": "Flow stream depth stop (slice 3, ticket 0038)."
+    },
+    "border-panel": {
+      "$type": "color",
+      "$value": "rgba(169, 185, 209, 0.12)",
+      "$description": "Panel hairline on the board canvas (slice 3, ticket 0038)."
+    },
+    "border-panel-strong": {
+      "$type": "color",
+      "$value": "rgba(169, 185, 209, 0.23)",
+      "$description": "Stage and window hairline, stronger step (slice 3, ticket 0038)."
+    },
+    "glow-orange": {
+      "$type": "color",
+      "$value": "rgba(255, 104, 59, 0.32)",
+      "$description": "INFER edge glow and stream bloom (slice 3, ticket 0038)."
+    },
     "focus-ring": {
       "$type": "color",
       "$value": "#22d3c5",
@@ -121,6 +186,16 @@
     "size-label": {
       "$type": "dimension",
       "$value": "13px"
+    },
+    "size-small": {
+      "$type": "dimension",
+      "$value": "11px",
+      "$description": "Board: strip subcopy and terminal transcript text (ticket 0038)."
+    },
+    "size-micro": {
+      "$type": "dimension",
+      "$value": "10px",
+      "$description": "Board: hero eyebrow with 3.2px tracking (ticket 0038)."
     },
     "weight-semibold": {
       "$type": "fontWeight",
@@ -169,6 +244,11 @@
     "control": {
       "$type": "dimension",
       "$value": "8px"
+    },
+    "panel": {
+      "$type": "dimension",
+      "$value": "12px",
+      "$description": "Board: principal panel corners measured 11-14px (ticket 0038)."
     },
     "card": {
       "$type": "dimension",

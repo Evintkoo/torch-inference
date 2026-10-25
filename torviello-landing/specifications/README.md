@@ -16,4 +16,6 @@ Every requirement ID resolves and is referenced by a contract, test, or evaluati
 
 ## Status
 
-Repository shape only. No artifact, implementation, or evaluation evidence is recorded here yet.
+Active. [landing-board-composition.md](landing-board-composition.md) specifies
+the full board composition implemented on ticket 0038 (BC-01…BC-07,
+AC-BC-1…7).

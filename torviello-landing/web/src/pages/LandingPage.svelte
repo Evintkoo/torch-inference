@@ -1,20 +1,20 @@
 <!-- Copyright (c) 2026 Torviello. -->
-<!-- Sheet P1: template T1 populated with O1 -> O2 -> O3 -> terminal -> footer.
-     Copy is embedded verbatim from the approved brand board (functional
-     design: static content, no API calls in slice 1). Anchors: #product on
-     the hero, #use-cases on the audience row, #community on the footer.
-     Slice 2: the audience cards carry the M4 actions from ticket 0024. -->
+<!-- Sheet P1 (slice-3 amendment, ticket 0038): the full board composition —
+     the upper main grid (O4 hero panel + O6 brand panel) and the lower O7
+     showcase grid (three M4 audience cards + the M8 terminal card), then the
+     footer. Copy is embedded verbatim from the approved brand board; the
+     terminal card carries the board's pip/serve example under the M8
+     illustrative label. Anchors: #product on the hero panel, #use-cases on
+     the showcase, #community on the footer. -->
 <script lang="ts">
-  import AudienceRow from "../components/organisms/AudienceRow.svelte";
-  import FeatureStrip from "../components/organisms/FeatureStrip.svelte";
-  import HeroSection from "../components/organisms/HeroSection.svelte";
+  import BrandPanel from "../components/organisms/BrandPanel.svelte";
+  import HeroPanel from "../components/organisms/HeroPanel.svelte";
+  import ShowcaseGrid from "../components/organisms/ShowcaseGrid.svelte";
   import SiteFooter from "../components/sections/SiteFooter.svelte";
-  import TerminalDemo from "../components/sections/TerminalDemo.svelte";
-  import NavBar from "../components/ui/NavBar.svelte";
   import LandingTemplate from "../template/LandingTemplate.svelte";
   import { icons } from "../lib/icons";
 
-  const heroCards = [
+  const flowStages = [
     { icon: icons.box, title: "DEVELOP", caption: "Experiment, iterate, and optimize." },
     { icon: icons.package, title: "DEPLOY", caption: "Scale with confidence." },
     { icon: icons.zap, title: "INFER", caption: "Real-world impact." },
@@ -31,7 +31,7 @@
     { icon: icons.users, title: "Built for Real Teams", subcopy: "From research to production" },
   ];
 
-  const audienceCards = [
+  const showcaseCards = [
     {
       eyebrow: "For builders",
       heading: "From idea to impact.",
@@ -57,6 +57,7 @@
       eyebrow: "For real-world AI",
       heading: "Models in motion.",
       body: "Efficient, adaptable, and ready for production use cases.",
+      art: "city",
       action: {
         label: "See it on GitHub",
         href: "https://github.com/torviello",
@@ -66,15 +67,15 @@
     },
   ];
 
-  const terminalLines = [
-    { kind: "prompt", text: "torviello-engine --help" },
-    { kind: "prompt", text: "TORCH_PORT=8000 torviello-engine" },
-    {
-      kind: "status",
-      text:
-        '{"event":"startup","version":"1.0.0","correlation_id":"…","message":"engine started"}',
-    },
-  ] as const;
+  const terminalExample = {
+    commands: ["pip install torviello", "torviello serve --model my-model"],
+    steps: [
+      "Loading model...",
+      "Optimizing graph...",
+      "Starting inference server...",
+      "Ready.",
+    ],
+  };
 
   const navLinks = [
     { label: "Product", href: "#product" },
@@ -85,17 +86,12 @@
 </script>
 
 <LandingTemplate>
-  {#snippet nav()}
-    <NavBar
-      links={navLinks}
-      getStartedHref="https://docs.torviello.dev/install"
-      githubHref="https://github.com/torviello"
-    />
-  {/snippet}
-
   {#snippet children()}
-    <section id="product" class="tv-section tv-section--hero">
-      <HeroSection
+    <div class="tv-main-grid">
+      <HeroPanel
+        links={navLinks}
+        getStartedHref="https://docs.torviello.dev/install"
+        githubHref="https://github.com/torviello"
         eyebrow="AI-native inference engine"
         line1="Torviello"
         line2="Built to"
@@ -104,21 +100,14 @@
         primaryLabel="Get Started"
         primaryHref="https://docs.torviello.dev/install"
         ghostLabel="View on GitHub"
-        githubHref="https://github.com/torviello"
-        cards={heroCards}
+        stages={flowStages}
+        strip={stripItems}
       />
-    </section>
+      <BrandPanel />
+    </div>
 
-    <section class="tv-section tv-container" aria-label="Why Torviello">
-      <FeatureStrip items={stripItems} />
-    </section>
-
-    <section id="use-cases" class="tv-section tv-container">
-      <AudienceRow cards={audienceCards} />
-    </section>
-
-    <section class="tv-section tv-container tv-section--terminal" aria-label="Terminal demo">
-      <TerminalDemo lines={[...terminalLines]} />
+    <section id="use-cases" class="tv-showcase" aria-label="Torviello for every stage">
+      <ShowcaseGrid cards={showcaseCards} terminal={terminalExample} />
     </section>
   {/snippet}
 

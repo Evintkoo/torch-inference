@@ -17,20 +17,24 @@ Public landing page and marketing site. Brand message: The execution layer for A
 - Stack: Svelte 5 (runes), Bun 1.3 (test and scripts), Vite 8 (build),
   TypeScript 7 for typechecking, happy-dom for future interaction tests.
 - Design source of truth: `torviello-design/contracts/design-tokens.json` and the
-  slice-one design sheets in `torviello-design/specifications/`. Brand assets
+  design sheets in `torviello-design/specifications/` (slices 1–3). Brand assets
   (icons, mark, favicon) are imported from `torviello-design` via the
-  `@torviello/design/*` alias (GOV-12.07) — never copied into this unit. Stylesheets in
-  `web/src/styles/` consume semantic `--tv-*` tokens only; a raw value where a
-  token exists is a review finding.
+  `@torviello/design/*` alias and showcase photography from `torviello-media`
+  via `@torviello/media/*` (GOV-12.07) — never copied into this unit.
+  Stylesheets in `web/src/styles/` consume semantic `--tv-*` tokens only; a raw
+  value where a token exists is a review finding.
 - Components: `web/src/components/ui/` — slice-one atoms (Button, NavLink,
   SectionLabel, TerminalLine, Logo) and molecules (NavBar, GlassCard,
   FeatureItem, AudienceCard), each with Bun server-render tests.
-- Page: `web/src/components/organisms/` (HeroSection, FeatureStrip,
-  AudienceRow), `web/src/components/sections/` (TerminalDemo, SiteFooter),
-  `web/src/template/LandingTemplate.svelte`, and `web/src/pages/LandingPage.svelte`
-  assemble the full board composition with verbatim copy and product /
-  use-cases / community anchors. Webfonts (Inter, JetBrains Mono) load locally
-  via fontsource.
+- Page: `web/src/components/organisms/` (HeroPanel, InferenceFlow, BrandPanel,
+  ShowcaseGrid, FeatureStrip), `web/src/components/sections/` (TerminalCard,
+  SiteFooter), `web/src/template/LandingTemplate.svelte`, and
+  `web/src/pages/LandingPage.svelte` assemble the full board composition
+  (ticket 0038): the upper hero + brand panel grid and the four-card showcase
+  with product / use-cases / community anchors. The terminal showcase card
+  presents the board's pip/serve example under a visible ILLUSTRATIVE label;
+  every transcript presented as real behavior stays the documented engine
+  session. Webfonts (Inter, JetBrains Mono) load locally via fontsource.
 - `web/src/console/` — React inference-demo scaffold inherited from the engine
   scaffold. It is not landing scope; relocation to a console unit awaits an
   owner decision.
@@ -56,10 +60,13 @@ Repository-wide: `uv run --locked pytest torviello-design/tests torviello-engine
 
 ## Status
 
-Slice one implemented end to end and QA-passed: design tokens, atoms (including
-the A5 logo lockup), molecules, organisms, template, and the assembled page —
-see [evaluations/reports/2026-10-24-landing-slice-one-qa.md](evaluations/reports/2026-10-24-landing-slice-one-qa.md).
+Slice three implemented on ticket 0038: the full board composition — hero
+panel (in-panel nav, promise, inference-flow artwork, feature strip), brand
+identity panel, and the four-card showcase (three audience cards with
+generated photography plus the illustrative terminal card) — with desktop,
+tablet, and mobile behavior. Slice one and slice two history:
+[2026-10-24-landing-slice-one-qa.md](evaluations/reports/2026-10-24-landing-slice-one-qa.md),
+[2026-10-24-landing-slice-two-actions.md](evaluations/reports/2026-10-24-landing-slice-two-actions.md).
 Follow-ups: confirm the placeholder domains (docs.torviello.dev,
 github.com/torviello), replace the vector-interpreted logo mark when official
-brand files exist, add audience-card photography, and run the screen-reader
-pass (designer role evidence).
+brand files exist, and run the screen-reader pass (designer role evidence).

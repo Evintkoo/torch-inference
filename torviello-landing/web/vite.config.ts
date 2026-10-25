@@ -9,9 +9,12 @@ export default defineConfig(async () => {
     plugins: [svelte()],
     resolve: {
       alias: {
-        // GOV-12.07: design assets are imported from the owning unit.
+        // GOV-12.07: design and media assets are imported from the owning unit.
         "@torviello/design": fileURLToPath(
           new URL("../../torviello-design", import.meta.url),
+        ),
+        "@torviello/media": fileURLToPath(
+          new URL("../../torviello-media", import.meta.url),
         ),
       },
     },
