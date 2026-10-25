@@ -209,6 +209,10 @@ blocks and cite the ticket that designed them (0024).
   a logged change on the owning ticket with the affected acceptance checks.
 - Implementation is verified against these sheets cell by cell; a component
   built from a fork instead of this inventory is a finding.
+- Brand svg assets carry the quality bar of designer document 04 (viewBox,
+  no rasters, size budgets, measured palette, board render parity IoU ≥ 0.80
+  rasterized by Chrome) — enforced by the design unit's sync contract test
+  (ticket 0037).
 - Accessibility evidence (keyboard walkthrough, contrast measurements in
   `test_design_tokens.py`, screen-reader pass) lands in the designer role's
   evidence table once the slice is implemented.

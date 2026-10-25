@@ -110,6 +110,11 @@ Rules:
   through its declared entry point; an embedded copy of a brand vector in a
   consuming unit is a finding unless the owning unit publishes that form with
   a sync test proving it equals the canonical asset.
+- Svg asset quality bar (owner direction 2026-10-24, track 0037): brand svgs
+  declare a viewBox, embed no rasters, stay within their size budgets, use
+  only the measured brand palette, and the mark must pass a render-parity
+  gate (shape IoU against the committed board crop, bar 0.80) rasterized by
+  a real browser engine; hand-drawn interpretations do not meet the bar.
 - A component's spec is a contract: its states, props, and events — the same
   contract-first discipline the engineer role applies to APIs.
 - The atomic breakdown appears in the design note so the implementation can be

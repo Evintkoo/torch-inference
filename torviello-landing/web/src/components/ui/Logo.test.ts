@@ -18,7 +18,8 @@ test("logo renders the canonical traced mark from the design unit", () => {
 
 test("the published mark is the board trace, not an off-brand fork", () => {
   expect(logoMark).toContain("<svg");
-  expect(logoMark).toContain("M3155 3183");
+  expect(logoMark).toContain("M66775 66995");
   expect(logoMark).not.toContain("M6 12.5");
   expect(logoMark).not.toContain("M42 6.8");
+  expect(logoMark).not.toContain("M3155 3183");
 });
