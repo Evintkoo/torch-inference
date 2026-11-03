@@ -14,26 +14,26 @@
   grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
   align-items: center;
   gap: var(--tv-space-12);
-  padding: var(--tv-space-16) clamp(var(--tv-space-4), 3vw, var(--tv-space-8)) var(--tv-space-16);
+  padding: clamp(64px, 7vw, 112px) clamp(var(--tv-space-4), 3vw, var(--tv-space-8));
   overflow: hidden;
   border-radius: var(--tv-radius-panel);
 }
 
-/* A soft brand glow behind the copy — decorative, token-derived */
+/* Ambient aurora: two token-derived lights giving the canvas depth */
 .tv-hero::before {
   content: "";
   position: absolute;
   inset: 0;
   background:
     radial-gradient(
-      46rem 30rem at 12% 18%,
-      color-mix(in srgb, var(--tv-action-primary) 9%, transparent),
-      transparent 65%
+      50rem 34rem at 10% 8%,
+      color-mix(in srgb, var(--tv-action-primary) 11%, transparent),
+      transparent 62%
     ),
     radial-gradient(
-      40rem 28rem at 92% 90%,
-      color-mix(in srgb, var(--tv-accent-secondary) 5%, transparent),
-      transparent 70%
+      44rem 30rem at 96% 96%,
+      color-mix(in srgb, var(--tv-accent-secondary) 6%, transparent),
+      transparent 68%
     );
   pointer-events: none;
 }
@@ -48,12 +48,12 @@
   margin: 0;
   color: var(--tv-text-primary);
   font-family: var(--tv-font-sans);
-  /* 40px at the 768px step (spec LP-02/BC-07 carry), 72px at the 1536px
-     reference — the promise is the page's largest type */
-  font-size: clamp(40px, 5.6vw, 72px);
+  /* 44px at the 768px step, 84px at the 1536px reference — the promise is
+     the page's largest type and reads as display, not body-plus */
+  font-size: clamp(44px, 6vw, 84px);
   font-weight: var(--tv-weight-semibold);
-  line-height: 1.02;
-  letter-spacing: -0.04em;
+  line-height: 1;
+  letter-spacing: -0.045em;
   max-width: 9.5em;
 }
 
@@ -61,18 +61,27 @@
   display: block;
 }
 
+/* The accent word is a light-to-brand gradient, the page's one luxury cue */
 .tv-hero__accent {
-  color: var(--tv-action-primary);
   font-style: normal;
+  background: linear-gradient(
+    115deg,
+    var(--tv-action-primary) 15%,
+    var(--tv-accent-orange-light) 80%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--tv-action-primary);
 }
 
 .tv-hero__body-copy {
-  margin: var(--tv-space-4) 0 0;
-  max-width: 430px;
+  margin: var(--tv-space-6) 0 0;
+  max-width: 440px;
   color: var(--tv-text-muted);
   font-family: var(--tv-font-sans);
   font-size: var(--tv-size-body);
-  line-height: 1.5;
+  line-height: 1.65;
 }
 
 /* LP-02 rail — the three stages in normal flow; nothing can clip */
@@ -89,12 +98,21 @@
 .tv-hero__stage {
   display: flex;
   flex-direction: column;
-  gap: var(--tv-space-1);
+  gap: var(--tv-space-2);
   min-width: 0;
 }
 
+/* The stage icon sits in a small glass tile — chips read as system, not
+   stray glyphs */
 .tv-hero__stage-icon {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--tv-radius-control);
+  background: var(--tv-surface-glass);
+  border: 1px solid var(--tv-border-glass);
   color: var(--tv-action-primary);
 }
 
@@ -131,15 +149,15 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--tv-space-4);
-  margin-top: var(--tv-space-6);
+  margin-top: var(--tv-space-8);
 }
 
 .tv-hero__trust {
   margin: var(--tv-space-4) 0 0;
-  color: var(--tv-text-muted);
+  color: color-mix(in srgb, var(--tv-text-muted) 78%, transparent);
   font-family: var(--tv-font-mono);
   font-size: var(--tv-size-small);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 
 .tv-hero__terminal {
@@ -148,12 +166,28 @@
   min-width: 0;
 }
 
+/* A brand halo behind the window lifts it off the canvas */
+.tv-hero__terminal::before {
+  content: "";
+  position: absolute;
+  inset: -12% -8%;
+  background: radial-gradient(
+    60% 60% at 50% 45%,
+    color-mix(in srgb, var(--tv-action-primary) 13%, transparent),
+    transparent 72%
+  );
+  pointer-events: none;
+}
+
 /* The hero terminal reuses the M8 window chrome; its note reads "Documented
    engine session" — the verified transcript, never the illustrative label */
 .tv-hero__terminal .tv-terminal-card__window {
+  background: color-mix(in srgb, var(--tv-surface-canvas) 92%, transparent);
   box-shadow:
-    0 24px 64px color-mix(in srgb, var(--tv-color-canvas) 70%, transparent),
-    0 0 0 1px color-mix(in srgb, var(--tv-action-primary) 12%, transparent);
+    0 1px 0 color-mix(in srgb, var(--tv-color-warm-white) 10%, transparent) inset,
+    0 0 0 1px color-mix(in srgb, var(--tv-action-primary) 16%, transparent),
+    0 32px 80px color-mix(in srgb, var(--tv-color-canvas) 78%, transparent),
+    0 0 80px color-mix(in srgb, var(--tv-action-primary) 10%, transparent);
 }
 
 .tv-hero__session {
@@ -187,18 +221,19 @@
   margin: 0;
   color: var(--tv-text-primary);
   font-family: var(--tv-font-sans);
-  font-size: clamp(28px, 3vw, var(--tv-size-heading));
+  font-size: clamp(30px, 3.2vw, 42px);
   font-weight: var(--tv-weight-semibold);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
 }
 
 .tv-section__sub {
-  margin: var(--tv-space-2) 0 var(--tv-space-8);
+  margin: var(--tv-space-3) 0 var(--tv-space-8);
   max-width: 560px;
   color: var(--tv-text-muted);
   font-family: var(--tv-font-sans);
   font-size: var(--tv-size-body);
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 /* LP-03 values — the approved strip items as glass cards in a real section */
@@ -211,20 +246,50 @@
   border: 1px solid var(--tv-border-glass);
   border-radius: var(--tv-radius-card);
   padding: var(--tv-space-6);
+  /* A hairline of light along the top edge is what separates "glass" from
+     "grey box" */
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--tv-color-warm-white) 8%, transparent);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.tv-values .tv-feature-item:hover {
+  transform: translateY(-2px);
+  background: var(--tv-surface-raised);
+  border-color: color-mix(in srgb, var(--tv-action-primary) 40%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-values .tv-feature-item {
+    transition: none;
+  }
+
+  .tv-values .tv-feature-item:hover {
+    transform: none;
+  }
 }
 
 /* LP-04 proof band — pending slots, no claimed numbers */
 .tv-proof {
-  padding: var(--tv-space-12) clamp(var(--tv-space-4), 3vw, var(--tv-space-8));
-  background: var(--tv-surface-card);
+  padding: clamp(48px, 6vw, 80px) clamp(var(--tv-space-4), 3vw, var(--tv-space-8));
+  background:
+    radial-gradient(
+      60rem 24rem at 50% 0%,
+      color-mix(in srgb, var(--tv-action-primary) 5%, transparent),
+      transparent 70%
+    ),
+    var(--tv-surface-card);
   border: 1px solid var(--tv-border-panel);
   border-radius: var(--tv-radius-panel);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--tv-color-warm-white) 7%, transparent);
 }
 
 .tv-proof__grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--tv-space-6);
+  gap: var(--tv-space-4);
   margin: var(--tv-space-8) 0 0;
 }
 
@@ -237,6 +302,7 @@
   background: var(--tv-surface-glass);
   border: 1px solid var(--tv-border-glass);
   border-radius: var(--tv-radius-card);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--tv-color-warm-white) 6%, transparent);
 }
 
 .tv-proof__label {
@@ -244,15 +310,15 @@
   font-family: var(--tv-font-sans);
   font-size: var(--tv-size-label);
   font-weight: var(--tv-weight-semibold);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .tv-proof__value {
-  margin: 0;
+  margin: var(--tv-space-2) 0 0;
   color: var(--tv-text-primary);
   font-family: var(--tv-font-mono);
-  font-size: clamp(32px, 3.4vw, 44px);
+  font-size: clamp(36px, 3.8vw, 52px);
   font-weight: var(--tv-weight-semibold);
 }
 
@@ -260,7 +326,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--tv-space-2);
-  margin: var(--tv-space-2) 0 0;
+  margin: var(--tv-space-3) 0 0;
   color: var(--tv-accent-secondary);
   font-family: var(--tv-font-mono);
   font-size: var(--tv-size-small);
@@ -276,44 +342,54 @@
 
 .tv-proof__footnote {
   margin: var(--tv-space-6) 0 0;
-  color: var(--tv-text-muted);
+  color: color-mix(in srgb, var(--tv-text-muted) 80%, transparent);
   font-family: var(--tv-font-sans);
   font-size: var(--tv-size-small);
 }
 
-/* LP-07 CTA band — the closing brand gradient */
+/* LP-07 CTA band — the closing brand gradient with ambient depth */
 .tv-cta {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--tv-space-6);
-  padding: var(--tv-space-12) clamp(var(--tv-space-4), 3vw, var(--tv-space-8));
-  background: linear-gradient(
-    120deg,
-    var(--tv-accent-orange-dark),
-    var(--tv-action-primary) 55%,
-    var(--tv-accent-orange-light)
-  );
+  padding: clamp(56px, 7vw, 88px) clamp(var(--tv-space-4), 3vw, var(--tv-space-8));
+  background:
+    radial-gradient(
+      90rem 40rem at 12% -10%,
+      color-mix(in srgb, var(--tv-color-warm-white) 16%, transparent),
+      transparent 55%
+    ),
+    linear-gradient(
+      120deg,
+      var(--tv-accent-orange-dark),
+      var(--tv-action-primary) 55%,
+      var(--tv-accent-orange-light)
+    );
   border-radius: var(--tv-radius-panel);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--tv-color-warm-white) 30%, transparent),
+    0 24px 80px color-mix(in srgb, var(--tv-action-primary) 16%, transparent);
 }
 
 .tv-cta__heading {
   margin: 0;
   color: var(--tv-color-midnight);
   font-family: var(--tv-font-sans);
-  font-size: clamp(28px, 3vw, var(--tv-size-heading));
+  font-size: clamp(30px, 3.6vw, 46px);
   font-weight: var(--tv-weight-semibold);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 .tv-cta__body {
-  margin: var(--tv-space-2) 0 0;
+  margin: var(--tv-space-3) 0 0;
   max-width: 480px;
   color: color-mix(in srgb, var(--tv-color-midnight) 82%, transparent);
   font-family: var(--tv-font-sans);
   font-size: var(--tv-size-body);
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .tv-cta__actions {
@@ -376,20 +452,39 @@
   }
 
   .tv-showcase-grid > * {
-    min-height: 320px;
+    /* Full-width cards need height for the photography to read (LP-05) */
+    min-height: 400px;
+  }
+
+  /* The shared scrim is tuned for the narrow three-across card; on a
+     full-width card it blacked the photo out (LP-05 defect, 2026-11-03) */
+  .tv-audience-card__content {
+    background:
+      linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--tv-surface-canvas) 82%, transparent) 0%,
+        color-mix(in srgb, var(--tv-surface-canvas) 42%, transparent) 42%,
+        color-mix(in srgb, var(--tv-surface-canvas) 0%, transparent) 62%
+      ),
+      linear-gradient(
+        to top,
+        color-mix(in srgb, var(--tv-surface-canvas) 50%, transparent) 0%,
+        transparent 42%
+      );
   }
 
   .tv-hero {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--tv-space-8);
   }
-
-  .tv-proof__grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 @media (max-width: 767px) {
+  /* LP-04: the proof slots keep three across until the phone step */
+  .tv-proof__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .tv-hero {
     padding-top: var(--tv-space-8);
     padding-bottom: var(--tv-space-8);

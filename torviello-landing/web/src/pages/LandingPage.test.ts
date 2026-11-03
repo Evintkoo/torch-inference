@@ -38,6 +38,14 @@ test("the hero rail orders develop, deploy, infer in normal flow (LP-02)", () =>
   expect(html).not.toContain('class="tv-flow"');
 });
 
+test("the hero rail stage chips render real glyph data, not empty icons", () => {
+  const chips = html.match(/<span class="tv-hero__stage-icon"[^>]*>[\s\S]*?<\/span>/g) ?? [];
+  expect(chips).toHaveLength(3);
+  for (const chip of chips) {
+    expect(chip).toContain("<svg");
+  }
+});
+
 test("the hero shows the documented engine session as the only verified transcript (LP-02)", () => {
   const hero = html.slice(html.indexOf('class="tv-hero"'), html.indexOf('id="product"'));
   expect(hero).toContain("Documented engine session");

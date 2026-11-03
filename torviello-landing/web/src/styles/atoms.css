@@ -19,6 +19,9 @@
   font-weight: var(--tv-weight-semibold);
   text-decoration: none;
   cursor: pointer;
+  /* Button labels never wrap; the tablet rail drops a redundant action
+     instead (LP-01, 2026-11-03) */
+  white-space: nowrap;
   transition:
     background-color 120ms ease,
     border-color 120ms ease,
@@ -56,12 +59,26 @@
 }
 
 .tv-button--primary {
-  background: var(--tv-action-primary);
+  background: linear-gradient(
+    135deg,
+    var(--tv-accent-orange-light),
+    var(--tv-action-primary) 55%
+  );
   color: var(--tv-action-label);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--tv-color-warm-white) 28%, transparent) inset,
+    0 10px 30px color-mix(in srgb, var(--tv-action-primary) 22%, transparent);
 }
 
 .tv-button--primary:hover:not([aria-disabled="true"]) {
-  background: var(--tv-action-primary-hover);
+  background: linear-gradient(
+    135deg,
+    var(--tv-accent-orange-light),
+    var(--tv-action-primary-hover) 55%
+  );
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--tv-color-warm-white) 28%, transparent) inset,
+    0 14px 40px color-mix(in srgb, var(--tv-action-primary) 32%, transparent);
 }
 
 /* A2 Button — ghost: secondary pairing with a glass hairline */
@@ -73,6 +90,7 @@
 
 .tv-button--ghost:hover:not([aria-disabled="true"]) {
   background: var(--tv-surface-glass);
+  border-color: color-mix(in srgb, var(--tv-action-primary) 45%, transparent);
 }
 
 /* LP-07 inverse: the CTA band's primary on the brand gradient — midnight
@@ -80,10 +98,18 @@
 .tv-button--inverse {
   background: var(--tv-surface-base);
   color: var(--tv-text-primary);
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--tv-color-canvas) 45%, transparent);
 }
 
 .tv-button--inverse:hover:not([aria-disabled="true"]) {
   background: var(--tv-surface-elevated);
+  box-shadow: 0 16px 44px color-mix(in srgb, var(--tv-color-canvas) 55%, transparent);
+}
+
+/* Brand-tinted text selection — small, but it reads as craft */
+::selection {
+  background: color-mix(in srgb, var(--tv-action-primary) 32%, transparent);
+  color: var(--tv-text-primary);
 }
 
 .tv-button[aria-disabled="true"],

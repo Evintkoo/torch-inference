@@ -111,6 +111,54 @@ Screenshots: [1536](2026-11-03-landing-redesign/1536.png) ·
    `.tv-hero-panel` to `.tv-hero` and gained sticky-nav, proof, and CTA
    probes; thresholds (0px overflow, equal card heights, one h1) unchanged.
 
+## QA defect round and polish pass — 2026-11-03 (same ticket, uncommitted at review)
+
+A post-implementation sweep at the intermediate widths the reference
+screenshots do not show surfaced four defects, fixed and re-verified:
+
+1. **Audience cards went black below 1280px** — the shared scrim is tuned for
+   the narrow three-across card; applied to a full-width card it swallowed the
+   photography. Fixed with a ≤1279px scrim step (82% → 42% → 0% at 62%) and a
+   400px card min-height.
+2. **Proof band slots stacked into one empty column at 768–1279px** — the
+   single-column breakpoint moved from 1279px to the 767px phone step, so the
+   band keeps three slots through the tablet range.
+3. **The nav's Get Started label wrapped to two lines at 768px** — button
+   labels are now `white-space: nowrap`, and the tablet rail (768–1023px)
+   drops the nav's GitHub ghost (the hero repeats it immediately below).
+4. **No nav blur in Safari** — `-webkit-backdrop-filter` added alongside the
+   standard property.
+
+A fifth defect came from the redesign itself: the hero rail stage chips
+rendered **empty** — the page passed raw SVG strings (`icons.box`) into the
+`Icon` name contract (which expects keys; `FeatureItem` is the `{@html}`
+consumer, not `Icon`). Caught by a new page-level regression test written RED
+(1 fail before the fix), fixed by passing `IconName` keys typed against the
+published twin.
+
+On top of the fixes, the visual pass moved toward the owner's
+"expensive and elegant" direction: gradient-fill primary buttons with brand
+glow, a gradient-clipped accent word in the hero display, dual ambient
+aurora glows, halo + gradient-ring treatment on both terminal windows, icon
+chips in the hero rail, hover lift on value cards, slow photo zoom on
+audience cards (reduced-motion guarded), top-edge inner highlights on every
+glass surface, deeper CTA gradient with a light bloom, stronger nav blur,
+brand-tinted text selection, and wider section rhythm. All values stay
+token-derived (`color-mix` over semantic tokens; layout math is not token
+territory).
+
+Re-verification after the round:
+
+| Command | Result |
+|---|---|
+| `cd torviello-landing/web && bun test src` | 87 passed, 0 failed (incl. the new rail-glyph regression test) |
+| `bun run test:interaction` | 6 passed, 0 failed |
+| `bun run typecheck` | clean |
+| `bun run build` | green (141ms) |
+| `bun run scripts/visual-qa.ts …` | VISUAL QA PASS, 0px overflow at all 8 widths; screenshots re-archived |
+| `uv run --locked pytest …` | 51 passed |
+| Console sweep (1536/1024/390) | no console errors, no failed requests |
+
 ## Assumptions and limitations
 
 - **Proof band is intentionally empty**: slots fill only when a real

@@ -20,7 +20,7 @@
   import TerminalCard from "../components/sections/TerminalCard.svelte";
   import Icon from "../components/ui/Icon.svelte";
   import LandingTemplate from "../template/LandingTemplate.svelte";
-  import { icons } from "../lib/icons";
+  import { icons, type IconName } from "../lib/icons";
   // The showcase photography is owned by torviello-media and imported through
   // the alias (GOV-12.07), sliced from the approved reference board — never
   // generated copies inside this unit.
@@ -43,10 +43,14 @@
       '{"event":"startup","version":"1.0.0","correlation_id":"…","message":"engine started"}',
   };
 
-  const flowStages = [
-    { icon: icons.box, title: "DEVELOP", caption: "Experiment, iterate, and optimize." },
-    { icon: icons.package, title: "DEPLOY", caption: "Scale with confidence." },
-    { icon: icons.zap, title: "INFER", caption: "Real-world impact." },
+  // LP-02: the rail stages carry IconName keys — Icon resolves them against
+  // the published twin. (2026-11-03 defect: passing the raw svg strings here
+  // rendered empty chips, the FeatureItem {@html} contract vs the Icon
+  // name contract.)
+  const flowStages: { icon: IconName; title: string; caption: string }[] = [
+    { icon: "box", title: "DEVELOP", caption: "Experiment, iterate, and optimize." },
+    { icon: "package", title: "DEPLOY", caption: "Scale with confidence." },
+    { icon: "zap", title: "INFER", caption: "Real-world impact." },
   ];
 
   const valueItems = [

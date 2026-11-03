@@ -91,11 +91,17 @@
 }
 
 /* Tablet rail (T1 1024 step): the full bar with paired icon actions needs a
-   narrower horizontal padding than the 1200px desktop rail */
-@media (max-width: 1023px) {
+   narrower horizontal padding than the 1200px desktop rail. In the same step
+   the nav drops the GitHub ghost — the hero repeats it directly below, and
+   keeping both wrapped the Get Started label (LP-01 defect, 2026-11-03). */
+@media (min-width: 768px) and (max-width: 1023px) {
   .tv-navbar__inner {
-    padding-left: var(--tv-space-8);
-    padding-right: var(--tv-space-8);
+    padding-left: var(--tv-space-4);
+    padding-right: var(--tv-space-4);
+  }
+
+  .tv-navbar__actions .tv-button--ghost {
+    display: none;
   }
 }
 
@@ -254,7 +260,8 @@
   overflow: hidden;
   background: var(--tv-surface-glass);
   border: 1px solid var(--tv-border-panel);
-  border-radius: var(--tv-radius-panel);
+  border-radius: var(--tv-radius-card);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--tv-color-warm-white) 8%, transparent);
 }
 
 .tv-audience-card__photo {
@@ -263,6 +270,20 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 400ms ease;
+}
+
+/* A slow photo zoom on hover — the card feels alive, not printed */
+@media (prefers-reduced-motion: no-preference) {
+  .tv-audience-card:hover .tv-audience-card__photo {
+    transform: scale(1.045);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-audience-card__photo {
+    transition: none;
+  }
 }
 
 .tv-audience-card__content {
