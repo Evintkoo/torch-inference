@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Torviello.
-// Sheet O7 (slice 3, ticket 0038) — the showcase grid: three audience cards
-// plus the terminal execution card in one equal-height row.
+// Sheet O7 (slice 3, ticket 0038; ticket 0040 re-composition) — the showcase
+// grid renders the three audience cards; the terminal example moved to its own
+// band below the row.
 import { expect, test } from "bun:test";
 import { render } from "svelte/server";
 
@@ -27,22 +28,15 @@ const cards = [
   },
 ];
 
-const terminal = {
-  commands: ["pip install torviello", "torviello serve --model my-model"],
-  steps: ["Loading model...", "Optimizing graph...", "Starting inference server...", "Ready."],
-};
-
-test("showcase grid renders four equal cards with the terminal card last", () => {
-  const html = render(ShowcaseGrid, { props: { cards, terminal } }).html;
+test("showcase grid renders exactly the three audience cards", () => {
+  const html = render(ShowcaseGrid, { props: { cards } }).html;
   expect(html.match(/class="tv-audience-card /g)).toHaveLength(3);
-  expect(html).toContain('class="tv-showcase-card tv-showcase-card--terminal"');
-  const github = html.indexOf(">Models in motion.</h2>");
-  const terminalCard = html.indexOf("tv-showcase-card--terminal");
-  expect(terminalCard).toBeGreaterThan(github);
+  expect(html).not.toContain("tv-showcase-card--terminal");
+  expect(html).not.toContain("pip install torviello");
 });
 
 test("showcase grid keeps one action per audience card with safe externals", () => {
-  const html = render(ShowcaseGrid, { props: { cards, terminal } }).html;
+  const html = render(ShowcaseGrid, { props: { cards } }).html;
   expect(html).toContain(">Start building</a>");
   expect(html).toContain(">Read the docs</a>");
   expect(html).toContain(">See it on GitHub</a>");
@@ -50,7 +44,7 @@ test("showcase grid keeps one action per audience card with safe externals", () 
 });
 
 test("showcase grid renders the three board eyebrows in order", () => {
-  const html = render(ShowcaseGrid, { props: { cards, terminal } }).html;
+  const html = render(ShowcaseGrid, { props: { cards } }).html;
   const at = (heading: string) => html.indexOf(`>${heading}</h2>`);
   expect(at("From idea to impact.")).toBeGreaterThan(-1);
   expect(at("Build, deploy, scale together.")).toBeGreaterThan(at("From idea to impact."));

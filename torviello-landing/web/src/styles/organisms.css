@@ -222,10 +222,11 @@
   font-size: var(--tv-size-small);
 }
 
-/* O7 ShowcaseGrid — the board's four-card row */
+/* O7 ShowcaseGrid — the three audience cards in one equal-height row
+   (ticket 0040: the terminal example moved to its own band below) */
 .tv-showcase-grid {
   display: grid;
-  grid-template-columns: 1.26fr 1.45fr 1.06fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--tv-space-3);
   align-items: stretch;
 }
@@ -253,7 +254,7 @@
 /* O4/O7 breakpoints: canvas proportions from the board, scaled by step */
 @media (max-width: 1279px) {
   .tv-showcase-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .tv-showcase-grid > * {
@@ -289,214 +290,6 @@
 
   .tv-showcase-grid > * {
     min-height: 300px;
-  }
-}
-
-/* O6 BrandPanel — the board's brand identity panel */
-/* The aside itself is the flex column so the typography block pins to the
-   bottom edge via margin-top auto at any stretched row height */
-.tv-brand-panel {
-  display: flex;
-  flex-direction: column;
-  background: var(--tv-surface-canvas);
-  border: 1px solid var(--tv-border-panel);
-  border-radius: var(--tv-radius-panel);
-  min-height: 603px;
-  overflow: hidden;
-}
-
-.tv-brand {
-  display: flex;
-  flex-direction: column;
-  gap: var(--tv-space-6);
-  flex: 1;
-  min-height: 0;
-  padding: var(--tv-space-8) var(--tv-space-6);
-}
-
-.tv-brand__lockup {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--tv-space-3);
-  padding-top: var(--tv-space-2);
-}
-
-.tv-brand__mark {
-  display: inline-flex;
-  width: 46px;
-  height: 46px;
-}
-
-.tv-brand__mark svg {
-  width: 100%;
-  height: 100%;
-}
-
-.tv-brand__wordmark {
-  color: var(--tv-text-primary);
-  font-family: var(--tv-font-sans);
-  font-size: var(--tv-size-heading);
-  font-weight: var(--tv-weight-semibold);
-  letter-spacing: -0.01em;
-}
-
-.tv-brand__row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--tv-space-3);
-}
-
-.tv-brand__variation {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 80px;
-  border: 1px solid var(--tv-border-panel);
-  border-radius: var(--tv-radius-panel);
-  overflow: hidden;
-}
-
-.tv-brand__variation--dark {
-  background: var(--tv-color-deep);
-}
-
-.tv-brand__variation--light {
-  background: var(--tv-color-warm-white);
-}
-
-.tv-brand__variation--icon .tv-brand__variation-mark {
-  width: 44px;
-  height: 44px;
-  padding: var(--tv-space-2);
-  background: var(--tv-color-deep);
-  border-radius: var(--tv-radius-control);
-}
-
-.tv-brand__variation-mark {
-  display: inline-flex;
-  width: 34px;
-  height: 34px;
-  color: var(--tv-action-primary);
-}
-
-.tv-brand__variation-mark svg {
-  width: 100%;
-  height: 100%;
-}
-
-/* The light preview recolors only the wordmark inside the lockup context;
-   the mark stays orange per the board (no per-section recoloring) */
-.tv-brand__row-labels {
-  display: flex;
-}
-
-.tv-brand__row-labels .tv-brand__caption {
-  flex: 1;
-}
-
-.tv-brand__row-labels .tv-brand__caption--group {
-  flex: 2;
-}
-
-.tv-brand__caption {
-  margin: calc(-1 * var(--tv-space-4)) 0 0;
-  color: var(--tv-text-muted);
-  font-family: var(--tv-font-sans);
-  font-size: var(--tv-size-micro);
-  font-weight: var(--tv-weight-semibold);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
-.tv-brand .tv-section-label {
-  margin-bottom: var(--tv-space-3);
-}
-
-.tv-brand__palette {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--tv-space-3);
-}
-
-.tv-brand__swatch-chip {
-  display: block;
-  aspect-ratio: 88 / 72;
-  border: 1px solid var(--tv-border-panel);
-  border-radius: var(--tv-radius-panel);
-}
-
-.tv-brand__swatch-name {
-  margin: var(--tv-space-2) 0 0;
-  color: var(--tv-text-primary);
-  font-family: var(--tv-font-sans);
-  font-size: var(--tv-size-small);
-  font-weight: var(--tv-weight-semibold);
-}
-
-.tv-brand__swatch-hex {
-  margin: 0;
-  color: var(--tv-text-muted);
-  font-family: var(--tv-font-mono);
-  font-size: var(--tv-size-micro);
-  letter-spacing: 0.04em;
-}
-
-.tv-brand__typography {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--tv-space-6);
-  margin-top: auto;
-  padding-top: var(--tv-space-4);
-  border-top: 1px solid var(--tv-border-panel);
-}
-
-.tv-brand__type-sample {
-  display: flex;
-  align-items: center;
-  gap: var(--tv-space-3);
-}
-
-.tv-brand__type-glyph {
-  font-size: var(--tv-size-heading);
-  font-weight: var(--tv-weight-semibold);
-  color: var(--tv-text-primary);
-  line-height: 1;
-}
-
-.tv-brand__type-name {
-  margin: 0;
-  color: var(--tv-text-primary);
-  font-family: var(--tv-font-sans);
-  font-size: var(--tv-size-small);
-  font-weight: var(--tv-weight-semibold);
-}
-
-.tv-brand__type-usage {
-  margin: 0;
-  color: var(--tv-text-muted);
-  font-family: var(--tv-font-sans);
-  font-size: var(--tv-size-micro);
-}
-
-/* BC-07: the brand panel wraps below the hero on tablet and tightens */
-@media (max-width: 1279px) {
-  .tv-brand-panel {
-    min-height: 0;
-  }
-}
-
-@media (max-width: 559px) {
-  .tv-brand {
-    padding: var(--tv-space-6) var(--tv-space-4);
-  }
-
-  .tv-brand__palette {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .tv-brand__typography {
-    grid-template-columns: 1fr;
   }
 }
 

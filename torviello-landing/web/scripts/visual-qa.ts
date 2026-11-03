@@ -41,34 +41,43 @@ for (const width of widths) {
     const overflow = document.documentElement.scrollWidth - document.documentElement.clientWidth;
     const h1Count = document.querySelectorAll("h1").length;
     const menuBox = menu ? JSON.parse(JSON.stringify(menu.getBoundingClientRect())) : null;
-    const brand = document.querySelector(".tv-brand-panel");
+    const canvas = document.querySelector(".tv-canvas");
     const hero = document.querySelector(".tv-hero-panel");
     const cards = [...document.querySelectorAll(".tv-showcase-grid > *")];
     const cardHeights = cards.map((card) =>
       Math.round(card.getBoundingClientRect().height),
     );
-    const ratio =
-      hero && brand
-        ? hero.getBoundingClientRect().width / brand.getBoundingClientRect().width
-        : 0;
-    return { menuDisplay, overflow, h1Count, menuBox, ratio, cardCount: cards.length, cardHeights };
+    const terminalBand = document.querySelector(".tv-terminal-band");
+    const canvasWidth = canvas ? canvas.getBoundingClientRect().width : 0;
+    const heroWidth = hero ? hero.getBoundingClientRect().width : 0;
+    return {
+      menuDisplay,
+      overflow,
+      h1Count,
+      menuBox,
+      cardCount: cards.length,
+      cardHeights,
+      terminalBand: Boolean(terminalBand),
+      canvasWidth,
+      heroWidth,
+    };
   });
 
   const menuVisible = width < 768 ? report.menuDisplay !== "none" : report.menuDisplay === "none";
   const overflowOk = report.overflow <= 0;
   if (!menuVisible || !overflowOk || report.h1Count !== 1) failures += 1;
 
-  // BC-01/AC-BC-1: at the 1536px reference the hero is ~2.26x the brand
-  // panel (tolerance 5%) and the showcase renders four equal-height cards.
+  // Ticket 0040: the hero spans the canvas width (no second column), the row
+  // holds exactly three equal-height cards, and the terminal band exists.
   if (width === 1536) {
-    const ratioOk = Math.abs(report.ratio - 2.26) / 2.26 <= 0.05;
+    const heroFullWidth = report.canvasWidth > 0 && report.heroWidth >= report.canvasWidth - 40;
     const cardsOk =
-      report.cardCount === 4 &&
-      report.cardHeights.length === 4 &&
+      report.cardCount === 3 &&
+      report.cardHeights.length === 3 &&
       Math.max(...report.cardHeights) - Math.min(...report.cardHeights) <= 2;
-    if (!ratioOk || !cardsOk) failures += 1;
+    if (!heroFullWidth || !cardsOk || !report.terminalBand) failures += 1;
     console.log(
-      `      hero:brand ${report.ratio.toFixed(2)}:1(${ratioOk ? "ok" : "FAIL"})  cards:${report.cardCount} heights=${report.cardHeights.join("/")}(${cardsOk ? "ok" : "FAIL"})`,
+      `      hero:full-width ${Math.round(report.heroWidth)}/${Math.round(report.canvasWidth)}(${heroFullWidth ? "ok" : "FAIL"})  cards:${report.cardCount} heights=${report.cardHeights.join("/")}(${cardsOk ? "ok" : "FAIL"})  terminal-band:${report.terminalBand ? "ok" : "FAIL"}`,
     );
   }
 

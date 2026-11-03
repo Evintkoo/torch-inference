@@ -26,18 +26,20 @@ Public landing page and marketing site. Brand message: The execution layer for A
 - Components: `web/src/components/ui/` — slice-one atoms (Button, NavLink,
   SectionLabel, TerminalLine, Logo) and molecules (NavBar, GlassCard,
   FeatureItem, AudienceCard), each with Bun server-render tests.
-- Page: `web/src/components/organisms/` (HeroPanel, InferenceFlow, BrandPanel,
-  ShowcaseGrid, FeatureStrip), `web/src/components/sections/` (TerminalCard,
-  SiteFooter), `web/src/template/LandingTemplate.svelte`, and
-  `web/src/pages/LandingPage.svelte` assemble the full board composition
-  (tickets 0038/0039): the upper hero + brand panel grid and the four-card
-  showcase with product / use-cases / community anchors. The three audience
-  cards carry the showcase photography imported from
+- Page: `web/src/components/organisms/` (HeroPanel, InferenceFlow, ShowcaseGrid,
+  FeatureStrip), `web/src/components/sections/` (TerminalCard, SiteFooter),
+  `web/src/template/LandingTemplate.svelte`, and
+  `web/src/pages/LandingPage.svelte` assemble the board composition (tickets
+  0038/0039/0040): a full-width hero panel, the three-card audience row with
+  product / use-cases / community anchors, and the illustrative terminal band
+  below the row. The design-standard brand sheet drawn on the board is internal
+  design documentation and is not rendered on the site (ticket 0040). The three
+  audience cards carry the showcase photography imported from
   `torviello-media/assets/landing` (sliced from the approved reference board);
-  the terminal showcase card presents the board's pip/serve example under a
-  visible ILLUSTRATIVE label; every transcript presented as real behavior stays
-  the documented engine session. Webfonts (Inter, JetBrains Mono) load locally
-  via fontsource.
+  the terminal band presents the board's pip/serve example under a visible
+  ILLUSTRATIVE label; every transcript presented as real behavior stays the
+  documented engine session. Webfonts (Inter, JetBrains Mono) load locally via
+  fontsource.
 - `web/src/console/` — React inference-demo scaffold inherited from the engine
   scaffold. It is not landing scope; relocation to a console unit awaits an
   owner decision.
@@ -63,16 +65,18 @@ Repository-wide: `uv run --locked pytest torviello-design/tests torviello-engine
 
 ## Status
 
-Slice three implemented on tickets 0038 and 0039: the full board composition —
-hero panel (in-panel nav, promise, inference-flow artwork, feature strip), brand
-identity panel, and the four-card showcase (three audience cards with
-torviello-media photography sliced from the approved board plus the illustrative
-terminal card) — with desktop, tablet, and mobile behavior. Slice one and slice
-two history:
+Slice three implemented on tickets 0038, 0039, and 0040: the board composition —
+full-width hero panel (in-panel nav, promise, inference-flow artwork, feature
+strip), the three-card audience row with torviello-media photography sliced from
+the approved board, and the illustrative terminal band beneath the row — with
+desktop, tablet, and mobile behavior. The design-standard brand sheet is not part
+of the site (ticket 0040). Slice one and slice two history:
 [2026-10-24-landing-slice-one-qa.md](evaluations/reports/2026-10-24-landing-slice-one-qa.md),
 [2026-10-24-landing-slice-two-actions.md](evaluations/reports/2026-10-24-landing-slice-two-actions.md);
 showcase-photography evaluation:
-[2026-10-25-landing-showcase-photos.md](evaluations/reports/2026-10-25-landing-showcase-photos.md).
+[2026-10-25-landing-showcase-photos.md](evaluations/reports/2026-10-25-landing-showcase-photos.md);
+re-composition evaluation:
+[2026-10-25-landing-recomposition.md](evaluations/reports/2026-10-25-landing-recomposition.md).
 Follow-ups: confirm the placeholder domains (docs.torviello.dev,
 github.com/torviello), replace the vector-interpreted logo mark when official
 brand files exist, and run the screen-reader pass (designer role evidence).

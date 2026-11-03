@@ -1,10 +1,10 @@
 <!-- Copyright (c) 2026 Torviello. -->
-<!-- Sheet O7 (slice 3, ticket 0038): the showcase grid — three M4 audience
-     cards plus the M8 terminal execution card in one equal-height row. Card
-     order is the board order: builders, AI teams, real-world AI, terminal. -->
+<!-- Sheet O7 (slice 3, ticket 0038; ticket 0040 re-composition): the showcase
+     grid — the three M4 audience cards in one equal-height row. The M8
+     terminal example moved out of this row into its own full-width band on the
+     page. Card order is the board order: builders, AI teams, real-world AI. -->
 <script lang="ts">
   import AudienceCard from "../ui/AudienceCard.svelte";
-  import TerminalCard from "../sections/TerminalCard.svelte";
   import type { IconName } from "../../lib/icons";
 
   interface ShowcaseCard {
@@ -18,10 +18,8 @@
 
   let {
     cards,
-    terminal,
   }: {
     cards: ShowcaseCard[];
-    terminal: { commands: string[]; steps: string[] };
   } = $props();
 </script>
 
@@ -36,5 +34,4 @@
       action={card.action}
     />
   {/each}
-  <TerminalCard commands={terminal.commands} steps={terminal.steps} />
 </div>

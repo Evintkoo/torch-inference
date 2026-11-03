@@ -5,12 +5,12 @@ Owned by this unit; `torviello-landing/web` imports them through the
 `@torviello/media` alias (GOV-12.07 pattern: import from the owning unit,
 never copy).
 
-Delivered files (2026-10-25):
+Delivered files (2026-10-25; re-cropped for the three-card row on ticket 0040):
 
 - `builders.jpg` — for-builders card: person coding at a laptop at night under
-  warm orange ambient light, dark dashboard on screen. 338×746.
+  warm orange ambient light, dark dashboard on screen. 776×346.
 - `teams.jpg` — for-AI-teams card: small team collaborating around a laptop in
-  warm indoor light. 412×746.
+  warm indoor light. 472×484.
 - `city.jpg` — for-real-world-AI card: dark blue dusk cityscape with the
   orange inference line. 676×356.
 
@@ -27,9 +27,9 @@ Reproduction (from the repository root):
 
 ```sh
 B=torviello-design/brand/reference-board.png
-magick "$B" -crop 169x373+235+639 +repage -filter Lanczos -resize 338x746 \
+magick "$B" -crop 388x173+16+839 +repage -filter Lanczos -resize 776x346 \
   -strip -interlace Plane -quality 88 torviello-media/assets/landing/builders.jpg
-magick "$B" -crop 206x373+660+639 +repage -filter Lanczos -resize 412x746 \
+magick "$B" -crop 236x242+630+770 +repage -filter Lanczos -resize 472x484 \
   -strip -interlace Plane -quality 88 torviello-media/assets/landing/teams.jpg
 magick "$B" -crop 338x178+880+834 +repage -filter Lanczos -resize 676x356 \
   -strip -interlace Plane -quality 88 torviello-media/assets/landing/city.jpg
@@ -37,4 +37,6 @@ magick "$B" -crop 338x178+880+834 +repage -filter Lanczos -resize 676x356 \
 
 Decorative on the page (rendered `aria-hidden` behind a text scrim). Delivered
 assets are evidence in the showcase-photography evaluation report at
-`torviello-landing/evaluations/reports/2026-10-25-landing-showcase-photos.md`.
+`torviello-landing/evaluations/reports/2026-10-25-landing-showcase-photos.md`
+and the re-composition report at
+`torviello-landing/evaluations/reports/2026-10-25-landing-recomposition.md`.

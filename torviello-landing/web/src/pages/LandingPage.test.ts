@@ -8,11 +8,21 @@ import LandingPage from "./LandingPage.svelte";
 
 const html = render(LandingPage, { props: {} }).html;
 
-test("page renders the panel canvas with the two-column upper grid", () => {
+test("page renders the canvas with the hero at full width", () => {
   expect(html).toContain('class="tv-canvas"');
-  expect(html).toContain('class="tv-main-grid"');
   expect(html).toContain('class="tv-hero-panel"');
-  expect(html).toContain('aria-label="Brand identity"');
+  // Ticket 0040: the design-standard brand sheet is off the website and the
+  // hero no longer shares the upper grid with a second column.
+  expect(html).not.toContain('aria-label="Brand identity"');
+  expect(html).not.toContain('class="tv-main-grid"');
+});
+
+test("page does not ship the design-standard brand sheet", () => {
+  expect(html).not.toContain(">LOGO VARIATIONS</p>");
+  expect(html).not.toContain(">APP ICON</p>");
+  expect(html).not.toContain(">COLOR PALETTE</p>");
+  expect(html).not.toContain(">JetBrains Mono</p>");
+  expect(html).not.toContain(">#FF683B</p>");
 });
 
 test("page renders the nav with resolvable section anchors", () => {
@@ -32,39 +42,32 @@ test("page renders the hero promise exactly once inside the hero panel", () => {
 });
 
 test("page renders the flow stages and the strip inside the hero panel", () => {
-  const panel = html.slice(html.indexOf("tv-hero-panel"), html.indexOf("tv-brand-panel"));
+  const panel = html.slice(html.indexOf("tv-hero-panel"), html.indexOf("tv-showcase"));
   expect(panel).toContain('class="tv-flow" aria-hidden="true"');
   expect(panel.match(/tv-feature-item"/g)).toHaveLength(4);
   expect(panel.indexOf(">DEVELOP</p>")).toBeLessThan(panel.indexOf(">DEPLOY</p>"));
   expect(panel.indexOf(">DEPLOY</p>")).toBeLessThan(panel.indexOf(">INFER</p>"));
 });
 
-test("page renders the brand panel content", () => {
-  const brand = html.slice(html.indexOf("tv-brand-panel"));
-  expect(brand).toContain(">LOGO VARIATIONS</p>");
-  expect(brand).toContain(">APP ICON</p>");
-  expect(brand).toContain(">#FF683B</p>");
-  expect(brand).toContain(">COLOR PALETTE</p>");
-  expect(brand).toContain(">JetBrains Mono</p>");
-});
-
-test("page renders the four showcase cards in board order", () => {
+test("page renders three audience cards with the terminal band below them", () => {
   expect(html.match(/class="tv-audience-card /g)).toHaveLength(3);
   expect(html.match(/tv-showcase-card--terminal/g)).toHaveLength(1);
   const order = [
     html.indexOf(">From idea to impact.</h2>"),
     html.indexOf(">Build, deploy, scale together.</h2>"),
     html.indexOf(">Models in motion.</h2>"),
-    html.indexOf("tv-showcase-card--terminal"),
+    html.indexOf('class="tv-terminal-band"'),
+    html.indexOf('class="tv-template__footer"'),
   ];
   expect(order.every((position) => position > -1)).toBe(true);
   expect(order[0]).toBeLessThan(order[1]!);
   expect(order[1]).toBeLessThan(order[2]!);
   expect(order[2]).toBeLessThan(order[3]!);
+  expect(order[3]).toBeLessThan(order[4]!);
 });
 
 test("page labels the terminal showcase example as illustrative", () => {
-  const terminal = html.slice(html.indexOf("tv-showcase-card--terminal"));
+  const terminal = html.slice(html.indexOf('class="tv-terminal-band"'));
   expect(terminal).toContain("Illustrative example");
   expect(terminal).toContain(">pip install torviello</span>");
   expect(terminal).toContain(">torviello serve --model my-model</span>");

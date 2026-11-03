@@ -79,14 +79,14 @@ test("the mobile menu button toggles aria-expanded and the list state", () => {
   target.remove();
 });
 
-test("the board composition mounts the brand panel, flow, and terminal card", () => {
+test("the board composition mounts the full-width hero, flow, and terminal band", () => {
   const target = document.createElement("div");
   document.body.appendChild(target);
   const app = mount(App, { target });
 
-  expect(document.querySelector('aside[aria-label="Brand identity"]')).toBeTruthy();
+  expect(document.querySelector('aside[aria-label="Brand identity"]')).toBeNull();
   expect(document.querySelector(".tv-flow")?.getAttribute("aria-hidden")).toBe("true");
-  expect(document.querySelector(".tv-showcase-card--terminal")).toBeTruthy();
+  expect(document.querySelector(".tv-terminal-band")).toBeTruthy();
   expect(document.querySelector(".tv-canvas")).toBeTruthy();
 
   unmount(app);
@@ -100,9 +100,9 @@ test("the terminal showcase example is labeled illustrative in the dom", () => {
 
   const label = document.querySelector(".tv-terminal-card__note");
   expect(label?.textContent).toContain("Illustrative example");
-  const card = document.querySelector(".tv-showcase-card--terminal")!;
-  expect(card.textContent).toContain("pip install torviello");
-  expect(card.textContent).toContain("Ready.");
+  const band = document.querySelector(".tv-terminal-band")!;
+  expect(band.textContent).toContain("pip install torviello");
+  expect(band.textContent).toContain("Ready.");
 
   unmount(app);
   target.remove();

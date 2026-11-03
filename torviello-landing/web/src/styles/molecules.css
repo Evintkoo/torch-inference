@@ -273,12 +273,20 @@
   height: 100%;
   justify-content: flex-start;
   padding: var(--tv-space-6);
-  background: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--tv-surface-canvas) 82%, transparent),
-    color-mix(in srgb, var(--tv-surface-canvas) 12%, transparent) 55%,
-    color-mix(in srgb, var(--tv-surface-canvas) 0%, transparent)
-  );
+  /* Board-faithful scrim (ticket 0040): the photo stays visible on the right
+     and along the bottom; the left region under the copy is darkened. */
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--tv-surface-canvas) 88%, transparent) 0%,
+      color-mix(in srgb, var(--tv-surface-canvas) 70%, transparent) 45%,
+      color-mix(in srgb, var(--tv-surface-canvas) 0%, transparent) 78%
+    ),
+    linear-gradient(
+      to top,
+      color-mix(in srgb, var(--tv-surface-canvas) 28%, transparent) 0%,
+      transparent 45%
+    );
   transition: opacity 120ms ease;
 }
 
@@ -336,6 +344,14 @@
   background: var(--tv-surface-card);
   border: 1px solid var(--tv-border-panel);
   border-radius: var(--tv-radius-panel);
+}
+
+/* Ticket 0040: the terminal lives in its own full-width band, so the card
+   chrome belongs to the band and the window fills it. */
+.tv-terminal-band .tv-showcase-card--terminal {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
 }
 
 .tv-terminal-card {

@@ -7,6 +7,7 @@
 /* T1 LandingTemplate — the 12px-gutter panel canvas from the board */
 .tv-canvas {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--tv-space-3);
   max-width: 1600px;
   margin: 0 auto;
@@ -17,17 +18,27 @@
   display: block;
 }
 
-/* The upper grid: hero panel + brand panel, board ratio 1040:460 */
-.tv-main-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 2.26fr) minmax(360px, 1fr);
-  gap: var(--tv-space-3);
-  align-items: stretch;
-}
+/* The hero panel takes the full canvas width (ticket 0040: the design-standard
+   brand sheet left the website). */
 
 /* Anchored showcase section stops clear of the in-panel nav (F-01, rule 9) */
 .tv-showcase {
   scroll-margin-top: calc(var(--tv-space-16) + var(--tv-space-4));
+}
+
+/* Ticket 0040: the illustrative terminal band below the audience row */
+.tv-terminal-band {
+  margin-top: var(--tv-space-3);
+  padding: var(--tv-space-6);
+  background: var(--tv-surface-card);
+  border: 1px solid var(--tv-border-panel);
+  border-radius: var(--tv-radius-panel);
+}
+
+.tv-terminal-band .tv-terminal-card {
+  max-width: 880px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .tv-template__footer {
@@ -141,16 +152,5 @@
 @media (max-width: 767px) {
   .tv-canvas {
     padding: var(--tv-space-4);
-  }
-
-  .tv-main-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-/* BC-07: 768–1279px stacks the brand panel beneath the hero */
-@media (max-width: 1279px) {
-  .tv-main-grid {
-    grid-template-columns: 1fr;
   }
 }
