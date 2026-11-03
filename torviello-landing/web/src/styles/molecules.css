@@ -273,19 +273,21 @@
   height: 100%;
   justify-content: flex-start;
   padding: var(--tv-space-6);
-  /* Board-faithful scrim (ticket 0040): the photo stays visible on the right
-     and along the bottom; the left region under the copy is darkened. */
+  /* One shared scrim system (LP-05): a left-weighted wash keeps the copy
+     legible while the photography stays visible behind and beside it, with a
+     bottom fade anchoring the action. Every card uses the same mix so the
+     row reads as one system regardless of each photo's brightness. */
   background:
     linear-gradient(
       90deg,
-      color-mix(in srgb, var(--tv-surface-canvas) 88%, transparent) 0%,
-      color-mix(in srgb, var(--tv-surface-canvas) 70%, transparent) 45%,
+      color-mix(in srgb, var(--tv-surface-canvas) 86%, transparent) 0%,
+      color-mix(in srgb, var(--tv-surface-canvas) 62%, transparent) 45%,
       color-mix(in srgb, var(--tv-surface-canvas) 0%, transparent) 78%
     ),
     linear-gradient(
       to top,
-      color-mix(in srgb, var(--tv-surface-canvas) 28%, transparent) 0%,
-      transparent 45%
+      color-mix(in srgb, var(--tv-surface-canvas) 55%, transparent) 0%,
+      transparent 50%
     );
   transition: opacity 120ms ease;
 }
@@ -325,16 +327,18 @@
   font-size: var(--tv-size-body);
 }
 
-/* M4 slice-2 action: one A2 ghost link per card, left-aligned under the body */
+/* M4 slice-2 action: one A2 ghost link per card, pinned to the card bottom
+   (LP-05) so equal-height cards align their actions */
 .tv-audience-card__action {
   align-self: flex-start;
-  margin-top: var(--tv-space-4);
+  margin-top: auto;
+  padding-top: var(--tv-space-4);
 }
 
-/* BC-07 (ticket 0038): the strip keeps two columns down to the smallest step */
+/* LP-03: the values grid stacks to one column on the smallest step */
 @media (max-width: 559px) {
   .tv-feature-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: var(--tv-space-4);
   }
 }

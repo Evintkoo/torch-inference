@@ -1,59 +1,63 @@
 /*
  * Copyright (c) 2026 Torviello.
- * Slice-three organisms (design sheets O4–O7, ticket 0038) on top of the
- * slice-one O2 strip. Consumes ONLY the semantic tokens from tokens.css; a
- * raw value here is a review finding. Layout math (perspective transforms,
- * percentage offsets, breakpoints, clamps) is not token territory.
+ * Landing redesign organisms (ticket 0041, LP-02…LP-07) on top of the slice
+ * components that remain (FeatureStrip, ShowcaseGrid). Consumes ONLY the
+ * semantic tokens from tokens.css; a raw value here is a review finding.
+ * Layout math (gradients via color-mix, percentage offsets, breakpoints,
+ * clamps) is not token territory.
  */
 
-/* O4 HeroPanel — the board hero: nav, copy, flow artwork, feature strip */
-.tv-hero-panel {
+/* LP-02 Hero — unboxed, copy left, documented engine session right */
+.tv-hero {
   position: relative;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+  align-items: center;
+  gap: var(--tv-space-12);
+  padding: var(--tv-space-16) clamp(var(--tv-space-4), 3vw, var(--tv-space-8)) var(--tv-space-16);
   overflow: hidden;
-  min-height: 603px;
-  background: var(--tv-surface-canvas);
-  border: 1px solid var(--tv-border-panel);
   border-radius: var(--tv-radius-panel);
 }
 
-.tv-hero-panel__nav {
-  padding: var(--tv-space-4) var(--tv-space-8) 0;
+/* A soft brand glow behind the copy — decorative, token-derived */
+.tv-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      46rem 30rem at 12% 18%,
+      color-mix(in srgb, var(--tv-action-primary) 9%, transparent),
+      transparent 65%
+    ),
+    radial-gradient(
+      40rem 28rem at 92% 90%,
+      color-mix(in srgb, var(--tv-accent-secondary) 5%, transparent),
+      transparent 70%
+    );
+  pointer-events: none;
 }
 
-.tv-hero-panel__body {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
-  align-items: center;
-  flex: 1;
-  gap: var(--tv-space-4);
-  padding-top: var(--tv-space-6);
-  padding-bottom: var(--tv-space-6);
-}
-
-.tv-hero-panel__copy {
+.tv-hero__copy {
   position: relative;
   z-index: 1;
-  padding-left: clamp(var(--tv-space-6), 4.9vw, 75px);
-  padding-right: var(--tv-space-6);
   min-width: 0;
 }
 
-.tv-hero-panel__heading {
+.tv-hero__heading {
   margin: 0;
   color: var(--tv-text-primary);
   font-family: var(--tv-font-sans);
-  /* 40px at the 768px step (spec F-08/BC-07), 64px at the 1536px reference */
-  font-size: clamp(40px, 5.2vw, var(--tv-size-display));
+  /* 40px at the 768px step (spec LP-02/BC-07 carry), 72px at the 1536px
+     reference — the promise is the page's largest type */
+  font-size: clamp(40px, 5.6vw, 72px);
   font-weight: var(--tv-weight-semibold);
-  line-height: 1.04;
+  line-height: 1.02;
   letter-spacing: -0.04em;
   max-width: 9.5em;
 }
 
-.tv-hero-panel__line {
+.tv-hero__line {
   display: block;
 }
 
@@ -62,168 +66,273 @@
   font-style: normal;
 }
 
-.tv-hero-panel__body-copy {
+.tv-hero__body-copy {
   margin: var(--tv-space-4) 0 0;
-  max-width: 390px;
+  max-width: 430px;
   color: var(--tv-text-muted);
   font-family: var(--tv-font-sans);
   font-size: var(--tv-size-body);
-  line-height: 1.375;
+  line-height: 1.5;
 }
 
-.tv-hero-panel__actions {
+/* LP-02 rail — the three stages in normal flow; nothing can clip */
+.tv-hero__rail {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: var(--tv-space-2);
+  margin: var(--tv-space-6) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tv-hero__stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tv-space-1);
+  min-width: 0;
+}
+
+.tv-hero__stage-icon {
+  display: inline-flex;
+  color: var(--tv-action-primary);
+}
+
+.tv-hero__stage-icon .tv-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.tv-hero__stage-title {
+  margin: 0;
+  color: var(--tv-text-primary);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-label);
+  font-weight: var(--tv-weight-semibold);
+  letter-spacing: 0.08em;
+}
+
+.tv-hero__stage-caption {
+  margin: 0;
+  color: var(--tv-text-muted);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-small);
+}
+
+.tv-hero__rail-connector {
+  flex-shrink: 0;
+  align-self: center;
+  width: clamp(var(--tv-space-4), 3vw, var(--tv-space-8));
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--tv-action-primary), transparent);
+}
+
+.tv-hero__actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--tv-space-4);
   margin-top: var(--tv-space-6);
 }
 
-.tv-hero-panel__flow {
-  position: relative;
-  min-width: 0;
-  min-height: 100%;
-}
-
-/* O5 InferenceFlow — luminous stream through three tilted glass stages */
-.tv-flow {
-  position: absolute;
-  inset: calc(-1 * var(--tv-space-6)) 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.tv-flow__stream {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-/* The stream drifts on a long loop; fully static under reduced motion */
-@media (prefers-reduced-motion: no-preference) {
-  .tv-flow__drift {
-    animation: tv-flow-drift 10s ease-in-out infinite alternate;
-    transform-origin: 55% 55%;
-  }
-}
-
-@keyframes tv-flow-drift {
-  from {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  to {
-    transform: translate3d(-2.5%, 2%, 0) scale(1.05);
-  }
-}
-
-.tv-flow__stages {
-  position: absolute;
-  inset: 0;
-  perspective: 900px;
-}
-
-.tv-flow__stages .tv-glass-card {
-  position: absolute;
-  width: 27%;
-  padding: var(--tv-space-4);
-}
-
-.tv-flow__stages .tv-glass-card__icon svg {
-  width: 22px;
-  height: 22px;
-}
-
-.tv-flow__stages .tv-glass-card__title {
-  margin: var(--tv-space-2) 0 var(--tv-space-1);
-  font-size: var(--tv-size-label);
-  letter-spacing: 0.08em;
-}
-
-.tv-flow__stages .tv-glass-card__caption {
+.tv-hero__trust {
+  margin: var(--tv-space-4) 0 0;
+  color: var(--tv-text-muted);
+  font-family: var(--tv-font-mono);
   font-size: var(--tv-size-small);
+  letter-spacing: 0.04em;
 }
 
-.tv-flow__stages .tv-glass-card[data-stage="develop"] {
-  left: 2%;
-  top: 38%;
-  transform: rotateY(-16deg) rotateZ(-1.5deg);
-}
-
-.tv-flow__stages .tv-glass-card[data-stage="deploy"] {
-  left: 31%;
-  top: 22%;
-  width: 30%;
-  transform: rotateY(-14deg);
-}
-
-.tv-flow__stages .tv-glass-card[data-stage="infer"] {
-  left: 64%;
-  top: 8%;
-  width: 33%;
-  border-color: var(--tv-action-primary);
-  box-shadow:
-    0 0 24px var(--tv-glow-orange),
-    inset 0 0 18px color-mix(in srgb, var(--tv-action-primary) 18%, transparent);
-  transform: rotateY(-12deg);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .tv-flow__stages .tv-glass-card[data-stage="infer"] {
-    animation: tv-flow-breathe 8s ease-in-out infinite alternate;
-  }
-}
-
-@keyframes tv-flow-breathe {
-  from {
-    box-shadow:
-      0 0 18px var(--tv-glow-orange),
-      inset 0 0 14px color-mix(in srgb, var(--tv-action-primary) 14%, transparent);
-  }
-  to {
-    box-shadow:
-      0 0 34px var(--tv-glow-orange),
-      inset 0 0 24px color-mix(in srgb, var(--tv-action-primary) 24%, transparent);
-  }
-}
-
-/* A5 strip — the elevated feature band along the hero's bottom edge */
-.tv-hero-panel__strip {
+.tv-hero__terminal {
   position: relative;
   z-index: 1;
-  background: var(--tv-surface-elevated);
-  border-top: 1px solid var(--tv-border-panel);
-  padding: var(--tv-space-4) clamp(var(--tv-space-4), 3vw, var(--tv-space-8));
+  min-width: 0;
 }
 
-.tv-hero-panel__strip .tv-feature-item {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  column-gap: var(--tv-space-2);
-  align-items: center;
+/* The hero terminal reuses the M8 window chrome; its note reads "Documented
+   engine session" — the verified transcript, never the illustrative label */
+.tv-hero__terminal .tv-terminal-card__window {
+  box-shadow:
+    0 24px 64px color-mix(in srgb, var(--tv-color-canvas) 70%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--tv-action-primary) 12%, transparent);
 }
 
-.tv-hero-panel__strip .tv-feature-item__icon {
-  grid-row: span 2;
-}
-
-.tv-hero-panel__strip .tv-feature-item__icon svg {
-  width: 20px;
-  height: 20px;
-}
-
-.tv-hero-panel__strip .tv-feature-item__title {
+.tv-hero__session {
   margin: 0;
+  padding: var(--tv-space-6) var(--tv-space-6) var(--tv-space-8);
+  overflow-x: auto;
+  font-family: var(--tv-font-mono);
   font-size: var(--tv-size-label);
+  line-height: 1.9;
+  white-space: pre;
+}
+
+.tv-hero__session .tv-terminal-line {
+  font-size: var(--tv-size-label);
+}
+
+.tv-hero__session-output {
+  display: block;
+  margin-top: var(--tv-space-3);
+  color: var(--tv-accent-secondary);
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
+/* LP-03/LP-04/LP-05 shared section rhythm */
+.tv-section {
+  scroll-margin-top: calc(var(--tv-space-16) + var(--tv-space-4));
+}
+
+.tv-section__title {
+  margin: 0;
+  color: var(--tv-text-primary);
+  font-family: var(--tv-font-sans);
+  font-size: clamp(28px, 3vw, var(--tv-size-heading));
+  font-weight: var(--tv-weight-semibold);
+  letter-spacing: -0.02em;
+}
+
+.tv-section__sub {
+  margin: var(--tv-space-2) 0 var(--tv-space-8);
+  max-width: 560px;
+  color: var(--tv-text-muted);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-body);
+  line-height: 1.5;
+}
+
+/* LP-03 values — the approved strip items as glass cards in a real section */
+.tv-values .tv-feature-grid {
+  gap: var(--tv-space-4);
+}
+
+.tv-values .tv-feature-item {
+  background: var(--tv-surface-glass);
+  border: 1px solid var(--tv-border-glass);
+  border-radius: var(--tv-radius-card);
+  padding: var(--tv-space-6);
+}
+
+/* LP-04 proof band — pending slots, no claimed numbers */
+.tv-proof {
+  padding: var(--tv-space-12) clamp(var(--tv-space-4), 3vw, var(--tv-space-8));
+  background: var(--tv-surface-card);
+  border: 1px solid var(--tv-border-panel);
+  border-radius: var(--tv-radius-panel);
+}
+
+.tv-proof__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--tv-space-6);
+  margin: var(--tv-space-8) 0 0;
+}
+
+.tv-proof__slot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tv-space-1);
+  margin: 0;
+  padding: var(--tv-space-6);
+  background: var(--tv-surface-glass);
+  border: 1px solid var(--tv-border-glass);
+  border-radius: var(--tv-radius-card);
+}
+
+.tv-proof__label {
+  color: var(--tv-text-muted);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-label);
+  font-weight: var(--tv-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tv-proof__value {
+  margin: 0;
+  color: var(--tv-text-primary);
+  font-family: var(--tv-font-mono);
+  font-size: clamp(32px, 3.4vw, 44px);
   font-weight: var(--tv-weight-semibold);
 }
 
-.tv-hero-panel__strip .tv-feature-item__subcopy {
-  grid-column: 2;
+.tv-proof__state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tv-space-2);
+  margin: var(--tv-space-2) 0 0;
+  color: var(--tv-accent-secondary);
+  font-family: var(--tv-font-mono);
   font-size: var(--tv-size-small);
 }
 
-/* O7 ShowcaseGrid — the three audience cards in one equal-height row
-   (ticket 0040: the terminal example moved to its own band below) */
+.tv-proof__state::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1.5px solid var(--tv-accent-secondary);
+}
+
+.tv-proof__footnote {
+  margin: var(--tv-space-6) 0 0;
+  color: var(--tv-text-muted);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-small);
+}
+
+/* LP-07 CTA band — the closing brand gradient */
+.tv-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--tv-space-6);
+  padding: var(--tv-space-12) clamp(var(--tv-space-4), 3vw, var(--tv-space-8));
+  background: linear-gradient(
+    120deg,
+    var(--tv-accent-orange-dark),
+    var(--tv-action-primary) 55%,
+    var(--tv-accent-orange-light)
+  );
+  border-radius: var(--tv-radius-panel);
+}
+
+.tv-cta__heading {
+  margin: 0;
+  color: var(--tv-color-midnight);
+  font-family: var(--tv-font-sans);
+  font-size: clamp(28px, 3vw, var(--tv-size-heading));
+  font-weight: var(--tv-weight-semibold);
+  letter-spacing: -0.02em;
+}
+
+.tv-cta__body {
+  margin: var(--tv-space-2) 0 0;
+  max-width: 480px;
+  color: color-mix(in srgb, var(--tv-color-midnight) 82%, transparent);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-body);
+  line-height: 1.5;
+}
+
+.tv-cta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tv-space-4);
+}
+
+/* The glass-hairline ghost reads correctly on the orange gradient */
+.tv-cta .tv-button--ghost {
+  border-color: color-mix(in srgb, var(--tv-color-midnight) 34%, transparent);
+  color: var(--tv-color-midnight);
+}
+
+.tv-cta .tv-button--ghost:hover {
+  background: color-mix(in srgb, var(--tv-color-midnight) 12%, transparent);
+}
+
+/* O7 ShowcaseGrid — the three audience cards in one equal-height row */
 .tv-showcase-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -246,12 +355,21 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .tv-audience-card__lines-drift {
-    animation: tv-flow-drift 11s ease-in-out infinite alternate;
+    animation: tv-hero-drift 11s ease-in-out infinite alternate;
     transform-origin: 60% 60%;
   }
 }
 
-/* O4/O7 breakpoints: canvas proportions from the board, scaled by step */
+@keyframes tv-hero-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-2%, 1.5%, 0) scale(1.04);
+  }
+}
+
+/* LP-02…LP-07 breakpoints */
 @media (max-width: 1279px) {
   .tv-showcase-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -261,27 +379,34 @@
     min-height: 320px;
   }
 
-  .tv-hero-panel__body {
-    grid-template-columns: 1fr;
-    align-items: start;
+  .tv-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--tv-space-8);
   }
 
-  .tv-hero-panel__flow {
-    min-height: 340px;
-  }
-
-  .tv-hero-panel__copy {
-    padding-left: var(--tv-space-6);
+  .tv-proof__grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 @media (max-width: 767px) {
-  .tv-hero-panel {
-    min-height: 0;
+  .tv-hero {
+    padding-top: var(--tv-space-8);
+    padding-bottom: var(--tv-space-8);
   }
 
-  .tv-hero-panel__heading {
+  .tv-hero__heading {
     font-size: clamp(40px, 11vw, 46px);
+  }
+
+  /* The rail stacks and drops its connectors instead of squeezing */
+  .tv-hero__rail {
+    flex-direction: column;
+    gap: var(--tv-space-3);
+  }
+
+  .tv-hero__rail-connector {
+    display: none;
   }
 
   .tv-showcase-grid {
@@ -291,19 +416,9 @@
   .tv-showcase-grid > * {
     min-height: 300px;
   }
-}
 
-/* O4 scope: board typography steps for the in-panel nav and eyebrow
-   (spec A1/A2: 24px wordmark, 10px eyebrow with 3.2px tracking, 32px nav gap) */
-.tv-hero-panel .tv-logo__wordmark {
-  font-size: 24px;
-}
-
-.tv-hero-panel .tv-section-label {
-  font-size: var(--tv-size-micro);
-  letter-spacing: 0.32em;
-}
-
-.tv-hero-panel__nav .tv-navbar__list {
-  gap: var(--tv-space-8);
+  .tv-cta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }

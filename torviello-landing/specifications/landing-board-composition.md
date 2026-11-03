@@ -10,7 +10,14 @@ board-composition task direction (2026-10-25)
 **Status:** approved for implementation on ticket 0038; amended on
 [ticket 0040](../../../torviello-roles/tickets/0040-drop-the-brand-sheet-free-the-hero-and-move-the-terminal-bel.md)
 (owner direction 2026-10-25: the design-standard brand sheet comes off the
-public site and the terminal example leaves the card row)
+public site and the terminal example leaves the card row); **layout
+requirements superseded on ticket
+[0041](../../../torviello-roles/tickets/0041-rebuild-the-landing-page-as-a-conversion-focused-product-pag.md)**
+(owner direction 2026-11-03, GOV-07.05: the board's panel-grid composition is
+retired as page structure by the
+[landing redesign specification](landing-redesign.md) — BC-01, BC-02, BC-05,
+and BC-07 are superseded by LP-01…LP-09; BC-04, BC-06, and AC-BC-7 carry
+forward unchanged)
 
 This specification completes the board composition on top of slices 1–2: the
 page becomes the board canvas — a full-width hero panel, a three-card audience

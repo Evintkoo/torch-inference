@@ -1,44 +1,70 @@
 /*
  * Copyright (c) 2026 Torviello.
- * Slice-three template and page (design sheets T1/P1 amendment, ticket 0038)
- * plus the footer section. Consumes ONLY the semantic tokens from tokens.css.
+ * Landing redesign template and page (ticket 0041) plus the footer section.
+ * Consumes ONLY the semantic tokens from tokens.css.
  */
 
-/* T1 LandingTemplate — the 12px-gutter panel canvas from the board */
+/* LP-01 sticky nav wrapper — glass blur over the scrolling page */
+.tv-topnav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--tv-surface-canvas) 88%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--tv-border-glass);
+}
+
+.tv-topnav .tv-navbar__inner {
+  max-width: 1568px;
+  margin: 0 auto;
+  padding: var(--tv-space-2) var(--tv-space-8);
+}
+
+/* Sections breathe on the unboxed canvas; panels remain for cards and bands */
 .tv-canvas {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--tv-space-3);
+  gap: var(--tv-space-12);
   max-width: 1600px;
   margin: 0 auto;
-  padding: var(--tv-space-3);
+  padding: 0 var(--tv-space-3) var(--tv-space-12);
 }
 
 .tv-template__main {
   display: block;
 }
 
-/* The hero panel takes the full canvas width (ticket 0040: the design-standard
-   brand sheet left the website). */
-
-/* Anchored showcase section stops clear of the in-panel nav (F-01, rule 9) */
-.tv-showcase {
+/* Anchored sections stop clear of the sticky nav (F-01, rule 9) */
+.tv-section,
+.tv-proof,
+.tv-cta,
+.tv-hero {
   scroll-margin-top: calc(var(--tv-space-16) + var(--tv-space-4));
 }
 
-/* Ticket 0040: the illustrative terminal band below the audience row */
+.tv-values {
+  padding-top: var(--tv-space-8);
+}
+
+/* LP-06 terminal band — explanatory copy beside the illustrative example */
 .tv-terminal-band {
-  margin-top: var(--tv-space-3);
-  padding: var(--tv-space-6);
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: center;
+  gap: var(--tv-space-12);
+  margin-top: var(--tv-space-8);
+  padding: var(--tv-space-12) clamp(var(--tv-space-4), 3vw, var(--tv-space-8));
   background: var(--tv-surface-card);
   border: 1px solid var(--tv-border-panel);
   border-radius: var(--tv-radius-panel);
 }
 
-.tv-terminal-band .tv-terminal-card {
-  max-width: 880px;
-  margin-left: auto;
-  margin-right: auto;
+.tv-terminal-band__copy .tv-section__sub {
+  margin-bottom: var(--tv-space-6);
+}
+
+.tv-terminal-band__terminal .tv-terminal-card {
+  padding: 0;
 }
 
 .tv-template__footer {
@@ -54,18 +80,11 @@
 
 /* Footer content rail */
 .tv-container {
-  max-width: 1200px;
+  max-width: 1568px;
   margin-left: auto;
   margin-right: auto;
-  padding-left: var(--tv-space-16);
-  padding-right: var(--tv-space-16);
-}
-
-@media (max-width: 559px) {
-  .tv-container {
-    padding-left: var(--tv-space-4);
-    padding-right: var(--tv-space-4);
-  }
+  padding-left: var(--tv-space-8);
+  padding-right: var(--tv-space-8);
 }
 
 /* Skip link: hidden until keyboard focus brings it on screen (rule 11) */
@@ -73,7 +92,7 @@
   position: absolute;
   top: var(--tv-space-2);
   left: var(--tv-space-2);
-  z-index: 10;
+  z-index: 30;
   padding: var(--tv-space-2) var(--tv-space-4);
   background: var(--tv-surface-raised);
   color: var(--tv-text-primary);
@@ -89,17 +108,17 @@
   transform: translateY(0);
 }
 
-/* Footer */
+/* LP-08 footer — brand column, link columns, copyright bar */
 .tv-footer {
-  padding: var(--tv-space-12) 0;
+  padding: var(--tv-space-12) 0 var(--tv-space-8);
 }
 
 .tv-footer__layout {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: var(--tv-space-6);
+  gap: var(--tv-space-12);
 }
 
 .tv-footer__wordmark {
@@ -120,9 +139,28 @@
   font-size: var(--tv-size-label);
 }
 
-.tv-footer__links {
+.tv-footer__columns {
   display: flex;
-  gap: var(--tv-space-4);
+  flex-wrap: wrap;
+  gap: var(--tv-space-16);
+}
+
+.tv-footer__column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--tv-space-1);
+  min-width: 120px;
+}
+
+.tv-footer__column-title {
+  margin: 0 0 var(--tv-space-2);
+  color: var(--tv-text-muted);
+  font-family: var(--tv-font-sans);
+  font-size: var(--tv-size-small);
+  font-weight: var(--tv-weight-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .tv-footer__link {
@@ -141,6 +179,12 @@
   text-underline-offset: 4px;
 }
 
+.tv-footer__bottom {
+  margin-top: var(--tv-space-8);
+  padding-top: var(--tv-space-6);
+  border-top: 1px solid var(--tv-border-glass);
+}
+
 .tv-footer__copyright {
   margin: 0;
   color: var(--tv-text-muted);
@@ -148,9 +192,40 @@
   font-size: var(--tv-size-label);
 }
 
-/* BC-07: below 768px the canvas relaxes to the mobile content padding */
+/* Narrow steps: relaxed padding, stacked bands */
+@media (max-width: 1023px) {
+  .tv-terminal-band {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--tv-space-8);
+  }
+}
+
 @media (max-width: 767px) {
   .tv-canvas {
-    padding: var(--tv-space-4);
+    padding: 0 var(--tv-space-4) var(--tv-space-8);
+    gap: var(--tv-space-8);
+  }
+
+  .tv-topnav .tv-navbar__inner {
+    padding-left: var(--tv-space-4);
+    padding-right: var(--tv-space-4);
+  }
+
+  .tv-container {
+    padding-left: var(--tv-space-4);
+    padding-right: var(--tv-space-4);
+  }
+
+  .tv-terminal-band {
+    padding: var(--tv-space-6) var(--tv-space-4);
+  }
+
+  .tv-footer__layout {
+    flex-direction: column;
+    gap: var(--tv-space-8);
+  }
+
+  .tv-footer__columns {
+    gap: var(--tv-space-8);
   }
 }

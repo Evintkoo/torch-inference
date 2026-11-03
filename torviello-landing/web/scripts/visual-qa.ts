@@ -42,12 +42,16 @@ for (const width of widths) {
     const h1Count = document.querySelectorAll("h1").length;
     const menuBox = menu ? JSON.parse(JSON.stringify(menu.getBoundingClientRect())) : null;
     const canvas = document.querySelector(".tv-canvas");
-    const hero = document.querySelector(".tv-hero-panel");
+    const hero = document.querySelector(".tv-hero");
+    const topnav = document.querySelector(".tv-topnav");
     const cards = [...document.querySelectorAll(".tv-showcase-grid > *")];
     const cardHeights = cards.map((card) =>
       Math.round(card.getBoundingClientRect().height),
     );
     const terminalBand = document.querySelector(".tv-terminal-band");
+    const proof = document.querySelector(".tv-proof");
+    const proofSlots = document.querySelectorAll(".tv-proof__value[data-pending]").length;
+    const cta = document.querySelector(".tv-cta");
     const canvasWidth = canvas ? canvas.getBoundingClientRect().width : 0;
     const heroWidth = hero ? hero.getBoundingClientRect().width : 0;
     return {
@@ -58,6 +62,11 @@ for (const width of widths) {
       cardCount: cards.length,
       cardHeights,
       terminalBand: Boolean(terminalBand),
+      proof: Boolean(proof),
+      proofSlots,
+      cta: Boolean(cta),
+      // LP-01: the nav wrapper must be position sticky at desktop widths.
+      navSticky: topnav ? getComputedStyle(topnav).position === "sticky" : false,
       canvasWidth,
       heroWidth,
     };
@@ -67,17 +76,18 @@ for (const width of widths) {
   const overflowOk = report.overflow <= 0;
   if (!menuVisible || !overflowOk || report.h1Count !== 1) failures += 1;
 
-  // Ticket 0040: the hero spans the canvas width (no second column), the row
-  // holds exactly three equal-height cards, and the terminal band exists.
+  // Ticket 0041: the sticky nav, unboxed hero, proof band with pending slots,
+  // CTA band, three equal-height cards, and the terminal band must all hold.
   if (width === 1536) {
     const heroFullWidth = report.canvasWidth > 0 && report.heroWidth >= report.canvasWidth - 40;
     const cardsOk =
       report.cardCount === 3 &&
       report.cardHeights.length === 3 &&
       Math.max(...report.cardHeights) - Math.min(...report.cardHeights) <= 2;
-    if (!heroFullWidth || !cardsOk || !report.terminalBand) failures += 1;
+    const bandsOk = report.terminalBand && report.proof && report.cta && report.navSticky;
+    if (!heroFullWidth || !cardsOk || !bandsOk || report.proofSlots !== 3) failures += 1;
     console.log(
-      `      hero:full-width ${Math.round(report.heroWidth)}/${Math.round(report.canvasWidth)}(${heroFullWidth ? "ok" : "FAIL"})  cards:${report.cardCount} heights=${report.cardHeights.join("/")}(${cardsOk ? "ok" : "FAIL"})  terminal-band:${report.terminalBand ? "ok" : "FAIL"}`,
+      `      nav:sticky(${report.navSticky ? "ok" : "FAIL"})  hero:full-width ${Math.round(report.heroWidth)}/${Math.round(report.canvasWidth)}(${heroFullWidth ? "ok" : "FAIL"})  cards:${report.cardCount} heights=${report.cardHeights.join("/")}(${cardsOk ? "ok" : "FAIL"})  proof:${report.proof ? "ok" : "FAIL"}(${report.proofSlots} pending)  terminal-band:${report.terminalBand ? "ok" : "FAIL"}  cta:${report.cta ? "ok" : "FAIL"}`,
     );
   }
 

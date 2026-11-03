@@ -79,28 +79,60 @@ test("the mobile menu button toggles aria-expanded and the list state", () => {
   target.remove();
 });
 
-test("the board composition mounts the full-width hero, flow, and terminal band", () => {
+test("the redesigned page mounts the sticky nav, hero, proof, and bands in place", () => {
   const target = document.createElement("div");
   document.body.appendChild(target);
   const app = mount(App, { target });
 
-  expect(document.querySelector('aside[aria-label="Brand identity"]')).toBeNull();
-  expect(document.querySelector(".tv-flow")?.getAttribute("aria-hidden")).toBe("true");
+  // LP-01: one nav at template level in a sticky wrapper; no nested hero nav.
+  const navs = document.querySelectorAll('nav[aria-label="Main"]');
+  expect(navs).toHaveLength(1);
+  expect(navs[0]!.closest(".tv-topnav")).toBeTruthy();
+  expect(document.querySelector(".tv-hero")?.querySelector('nav[aria-label="Main"]')).toBeNull();
+
+  // LP-02…LP-07: the redesigned sections all mount.
+  expect(document.querySelector(".tv-hero")).toBeTruthy();
+  expect(document.querySelector(".tv-values")).toBeTruthy();
+  expect(document.querySelector(".tv-proof")).toBeTruthy();
   expect(document.querySelector(".tv-terminal-band")).toBeTruthy();
-  expect(document.querySelector(".tv-canvas")).toBeTruthy();
+  expect(document.querySelector(".tv-cta")).toBeTruthy();
+  expect(document.querySelector('aside[aria-label="Brand identity"]')).toBeNull();
+  expect(document.querySelectorAll("h1")).toHaveLength(1);
 
   unmount(app);
   target.remove();
 });
 
-test("the terminal showcase example is labeled illustrative in the dom", () => {
+test("the hero renders the documented engine session and the pending proof band", () => {
   const target = document.createElement("div");
   document.body.appendChild(target);
   const app = mount(App, { target });
 
-  const label = document.querySelector(".tv-terminal-card__note");
-  expect(label?.textContent).toContain("Illustrative example");
+  const hero = document.querySelector(".tv-hero")!;
+  expect(hero.textContent).toContain("Documented engine session");
+  expect(hero.textContent).toContain('"event":"startup"');
+  expect(hero.textContent).not.toContain("Illustrative example");
+
+  const slots = document.querySelectorAll(".tv-proof__value[data-pending]");
+  expect(slots).toHaveLength(3);
+  for (const slot of slots) expect(slot.textContent).not.toMatch(/\d/);
+  expect(document.querySelector(".tv-proof")?.textContent).toContain(
+    "No performance number is claimed until the first benchmark run publishes",
+  );
+
+  unmount(app);
+  target.remove();
+});
+
+test("the terminal band pairs its copy with the illustrative example in the dom", () => {
+  const target = document.createElement("div");
+  document.body.appendChild(target);
+  const app = mount(App, { target });
+
   const band = document.querySelector(".tv-terminal-band")!;
+  expect(band.querySelector("h2")?.textContent).toContain("Up and running in minutes.");
+  const label = band.querySelector(".tv-terminal-card__note");
+  expect(label?.textContent).toContain("Illustrative example");
   expect(band.textContent).toContain("pip install torviello");
   expect(band.textContent).toContain("Ready.");
 

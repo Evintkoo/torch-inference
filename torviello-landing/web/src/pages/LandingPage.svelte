@@ -1,26 +1,47 @@
 <!-- Copyright (c) 2026 Torviello. -->
-<!-- Sheet P1 (slice-3 amendment, ticket 0038/0039/0040): the full board
-     composition — the full-width O4 hero panel, the O7 showcase grid (three M4
-     audience cards with torviello-media photography), the M8 terminal example
-     in its own band below the row, then the footer. The brand identity sheet
-     drawn on the board is internal design documentation and is not rendered
-     (ticket 0040). Copy is embedded verbatim from the approved brand board; the
-     terminal band carries the board's pip/serve example under the M8
-     illustrative label. Anchors: #product on the hero panel, #use-cases on the
-     showcase, #community on the footer. -->
+<!-- Landing redesign P1 (ticket 0041, LP-01…LP-09): the page is a product
+     page, not a board reproduction. Sticky template-level nav, unboxed hero
+     with the documented engine session, the value props as a headed section,
+     the honest pending-benchmark proof band, the three audience cards, the
+     two-column illustrative terminal band, the closing CTA band, and the
+     structured footer. Copy is the approved board copy; the only transcript
+     presented as verified behavior is the documented engine session; the
+     pip/serve example keeps its visible ILLUSTRATIVE label. Anchors:
+     #product on the value section, #use-cases on the showcase, #community on
+     the footer. -->
 <script lang="ts">
+  import CtaBand from "../components/organisms/CtaBand.svelte";
   import HeroPanel from "../components/organisms/HeroPanel.svelte";
+  import ProofBand from "../components/organisms/ProofBand.svelte";
+  import FeatureStrip from "../components/organisms/FeatureStrip.svelte";
   import ShowcaseGrid from "../components/organisms/ShowcaseGrid.svelte";
+  import NavBar from "../components/ui/NavBar.svelte";
   import SiteFooter from "../components/sections/SiteFooter.svelte";
   import TerminalCard from "../components/sections/TerminalCard.svelte";
+  import Icon from "../components/ui/Icon.svelte";
   import LandingTemplate from "../template/LandingTemplate.svelte";
   import { icons } from "../lib/icons";
-  // Ticket 0039: the showcase photography is owned by torviello-media and
-  // imported through the alias (GOV-12.07), sliced from the approved reference
-  // board — never generated copies inside this unit.
+  // The showcase photography is owned by torviello-media and imported through
+  // the alias (GOV-12.07), sliced from the approved reference board — never
+  // generated copies inside this unit.
   import buildersPhoto from "@torviello/media/assets/landing/builders.jpg";
   import teamsPhoto from "@torviello/media/assets/landing/teams.jpg";
   import cityPhoto from "@torviello/media/assets/landing/city.jpg";
+
+  const navLinks = [
+    { label: "Product", href: "#product" },
+    { label: "Use Cases", href: "#use-cases" },
+    { label: "Docs", href: "https://docs.torviello.dev", external: true },
+    { label: "Community", href: "#community" },
+  ];
+
+  // LP-02: the documented engine session — the only transcript presented as
+  // verified behavior (carried from the slice-two truthfulness rule).
+  const engineSession = {
+    commands: ["torviello-engine --help", "TORCH_PORT=8000 torviello-engine"],
+    output:
+      '{"event":"startup","version":"1.0.0","correlation_id":"…","message":"engine started"}',
+  };
 
   const flowStages = [
     { icon: icons.box, title: "DEVELOP", caption: "Experiment, iterate, and optimize." },
@@ -28,7 +49,7 @@
     { icon: icons.zap, title: "INFER", caption: "Real-world impact." },
   ];
 
-  const stripItems = [
+  const valueItems = [
     { icon: icons.zap, title: "High Performance", subcopy: "Optimized for real workloads" },
     { icon: icons.layers, title: "Flexible Deployment", subcopy: "Cloud, on-prem, or edge" },
     {
@@ -38,6 +59,9 @@
     },
     { icon: icons.users, title: "Built for Real Teams", subcopy: "From research to production" },
   ];
+
+  // LP-04: labels only — the band itself renders pending states, no numbers.
+  const proofMetrics = [{ label: "p99 latency" }, { label: "Throughput" }, { label: "Cold start" }];
 
   const showcaseCards = [
     {
@@ -77,6 +101,7 @@
     },
   ];
 
+  // LP-06: the pip/serve example stays visibly ILLUSTRATIVE (BC-06 carried).
   const terminalExample = {
     commands: ["pip install torviello", "torviello serve --model my-model"],
     steps: [
@@ -86,39 +111,70 @@
       "Ready.",
     ],
   };
-
-  const navLinks = [
-    { label: "Product", href: "#product" },
-    { label: "Use Cases", href: "#use-cases" },
-    { label: "Docs", href: "https://docs.torviello.dev", external: true },
-    { label: "Community", href: "#community" },
-  ];
 </script>
 
 <LandingTemplate>
-  {#snippet children()}
-    <HeroPanel
+  {#snippet nav()}
+    <NavBar
       links={navLinks}
       getStartedHref="https://docs.torviello.dev/install"
       githubHref="https://github.com/torviello"
+    />
+  {/snippet}
+
+  {#snippet children()}
+    <HeroPanel
       eyebrow="AI-native inference engine"
-      line1="Torviello"
-      line2="Built to"
+      promiseLine="Built to"
       accent="infer."
       body="An AI-native inference engine for the next generation of builders. From experimentation to production, Torviello gives you the speed, control, and flexibility to run AI your way."
       primaryLabel="Get Started"
       primaryHref="https://docs.torviello.dev/install"
       ghostLabel="View on GitHub"
+      githubHref="https://github.com/torviello"
       stages={flowStages}
-      strip={stripItems}
+      session={engineSession}
     />
 
-    <section id="use-cases" class="tv-showcase" aria-label="Torviello for every stage">
+    <section id="product" class="tv-section tv-values" aria-labelledby="tv-values-title">
+      <h2 class="tv-section__title" id="tv-values-title">Why Torviello</h2>
+      <p class="tv-section__sub">The speed, control, and flexibility to run AI your way.</p>
+      <FeatureStrip items={valueItems} />
+    </section>
+
+    <ProofBand metrics={proofMetrics} />
+
+    <section id="use-cases" class="tv-section tv-showcase" aria-labelledby="tv-showcase-title">
+      <h2 class="tv-section__title" id="tv-showcase-title">Torviello for every stage.</h2>
       <ShowcaseGrid cards={showcaseCards} />
       <div class="tv-terminal-band">
-        <TerminalCard commands={terminalExample.commands} steps={terminalExample.steps} />
+        <div class="tv-terminal-band__copy">
+          <h2 class="tv-section__title">Up and running in minutes.</h2>
+          <p class="tv-section__sub">
+            Install the package, point it at a model, and serve. The docs walk through every
+            step, from local experiments to production deployments.
+          </p>
+          <a
+            class="tv-button tv-button--ghost"
+            href="https://docs.torviello.dev"
+            target="_blank"
+            rel="noopener noreferrer"><Icon name="book-open" />Read the docs</a
+          >
+        </div>
+        <div class="tv-terminal-band__terminal">
+          <TerminalCard commands={terminalExample.commands} steps={terminalExample.steps} />
+        </div>
       </div>
     </section>
+
+    <CtaBand
+      heading="Start building today."
+      body="From install to a running server — the docs walk you through every step."
+      primaryLabel="Get Started"
+      primaryHref="https://docs.torviello.dev/install"
+      ghostLabel="View on GitHub"
+      githubHref="https://github.com/torviello"
+    />
   {/snippet}
 
   {#snippet footer()}

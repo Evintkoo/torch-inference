@@ -75,6 +75,17 @@
   background: var(--tv-surface-glass);
 }
 
+/* LP-07 inverse: the CTA band's primary on the brand gradient — midnight
+   fill keeps the 4.5:1 label contrast the orange-on-orange pairing loses */
+.tv-button--inverse {
+  background: var(--tv-surface-base);
+  color: var(--tv-text-primary);
+}
+
+.tv-button--inverse:hover:not([aria-disabled="true"]) {
+  background: var(--tv-surface-elevated);
+}
+
 .tv-button[aria-disabled="true"],
 .tv-button[data-state="loading"] {
   background: var(--tv-surface-raised);

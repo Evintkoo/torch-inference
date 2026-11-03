@@ -26,19 +26,24 @@ Public landing page and marketing site. Brand message: The execution layer for A
 - Components: `web/src/components/ui/` — slice-one atoms (Button, NavLink,
   SectionLabel, TerminalLine, Logo) and molecules (NavBar, GlassCard,
   FeatureItem, AudienceCard), each with Bun server-render tests.
-- Page: `web/src/components/organisms/` (HeroPanel, InferenceFlow, ShowcaseGrid,
-  FeatureStrip), `web/src/components/sections/` (TerminalCard, SiteFooter),
-  `web/src/template/LandingTemplate.svelte`, and
-  `web/src/pages/LandingPage.svelte` assemble the board composition (tickets
-  0038/0039/0040): a full-width hero panel, the three-card audience row with
-  product / use-cases / community anchors, and the illustrative terminal band
-  below the row. The design-standard brand sheet drawn on the board is internal
-  design documentation and is not rendered on the site (ticket 0040). The three
-  audience cards carry the showcase photography imported from
-  `torviello-media/assets/landing` (sliced from the approved reference board);
-  the terminal band presents the board's pip/serve example under a visible
-  ILLUSTRATIVE label; every transcript presented as real behavior stays the
-  documented engine session. Webfonts (Inter, JetBrains Mono) load locally via
+- Page: `web/src/components/organisms/` (HeroPanel, ProofBand, CtaBand,
+  ShowcaseGrid, FeatureStrip), `web/src/components/sections/` (TerminalCard,
+  SiteFooter), `web/src/template/LandingTemplate.svelte`, and
+  `web/src/pages/LandingPage.svelte` assemble the conversion-focused product
+  page (ticket 0041, [`specifications/landing-redesign.md`](specifications/landing-redesign.md)):
+  a sticky template-level nav, the unboxed hero with the documented engine
+  session as its visual anchor, the value props as a headed section, the
+  pending-benchmark proof band, the three-card audience row, the two-column
+  illustrative terminal band, the closing CTA band, and the structured footer
+  (#product / #use-cases / #community anchors). The design-standard brand
+  sheet drawn on the board is internal design documentation and is not
+  rendered on the site (ticket 0040). The three audience cards carry the
+  showcase photography imported from `torviello-media/assets/landing` (sliced
+  from the approved reference board); the terminal band presents the board's
+  pip/serve example under a visible ILLUSTRATIVE label; the only transcript
+  presented as real behavior stays the documented engine session. The proof
+  band shows pending states only — no performance number is claimed until a
+  benchmark run publishes. Webfonts (Inter, JetBrains Mono) load locally via
   fontsource.
 - `web/src/console/` — React inference-demo scaffold inherited from the engine
   scaffold. It is not landing scope; relocation to a console unit awaits an
@@ -65,18 +70,24 @@ Repository-wide: `uv run --locked pytest torviello-design/tests torviello-engine
 
 ## Status
 
-Slice three implemented on tickets 0038, 0039, and 0040: the board composition —
-full-width hero panel (in-panel nav, promise, inference-flow artwork, feature
-strip), the three-card audience row with torviello-media photography sliced from
-the approved board, and the illustrative terminal band beneath the row — with
-desktop, tablet, and mobile behavior. The design-standard brand sheet is not part
-of the site (ticket 0040). Slice one and slice two history:
+The landing page is the conversion-focused product page implemented on ticket
+0041 ([landing-redesign specification](specifications/landing-redesign.md),
+owner direction 2026-11-03): sticky nav, unboxed hero with the documented
+engine session, value section, pending-benchmark proof band, three audience
+cards, two-column illustrative terminal band, CTA band, structured footer —
+with desktop, tablet, and mobile behavior and zero horizontal overflow from
+320 to 1536. The design-standard brand sheet is not part of the site (ticket
+0040). Earlier history: board composition on tickets 0038/0039/0040 (layout
+superseded by the redesign), slice one and slice two:
 [2026-10-24-landing-slice-one-qa.md](evaluations/reports/2026-10-24-landing-slice-one-qa.md),
 [2026-10-24-landing-slice-two-actions.md](evaluations/reports/2026-10-24-landing-slice-two-actions.md);
 showcase-photography evaluation:
 [2026-10-25-landing-showcase-photos.md](evaluations/reports/2026-10-25-landing-showcase-photos.md);
 re-composition evaluation:
-[2026-10-25-landing-recomposition.md](evaluations/reports/2026-10-25-landing-recomposition.md).
+[2026-10-25-landing-recomposition.md](evaluations/reports/2026-10-25-landing-recomposition.md);
+redesign evaluation:
+[2026-11-03-landing-redesign.md](evaluations/reports/2026-11-03-landing-redesign.md).
 Follow-ups: confirm the placeholder domains (docs.torviello.dev,
-github.com/torviello), replace the vector-interpreted logo mark when official
+github.com/torviello), fill the proof-band slots when the first benchmark run
+publishes, replace the vector-interpreted logo mark when official
 brand files exist, and run the screen-reader pass (designer role evidence).

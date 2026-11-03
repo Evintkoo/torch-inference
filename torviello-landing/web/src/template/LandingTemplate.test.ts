@@ -1,37 +1,33 @@
 // Copyright (c) 2026 Torviello.
-// Sheet T1 (slice-3 amendment, ticket 0038) — canvas main + footer slots; the
-// nav renders inside the hero panel, not the template.
+// Landing redesign T1 (ticket 0041) — the page shell: sticky nav wrapper,
+// canvas main, and footer slots; the nav renders at the template level (LP-01).
 import { expect, test } from "bun:test";
 import { render } from "svelte/server";
 
 import LandingTemplate from "./LandingTemplate.svelte";
 
-test("template renders the canvas main and footer slots in order", () => {
-  const html = render(LandingTemplate, {
-    props: {
-      // Mirror the server-compiled snippet signature: a function that pushes
-      // markup into the server renderer.
-      children: ($$renderer: { push: (value: string) => void }) => $$renderer.push("CANVAS-CONTENT"),
-      footer: ($$renderer: { push: (value: string) => void }) => $$renderer.push("FOOTER-CONTENT"),
-    },
-  }).html;
+const snippets = {
+  nav: ($$renderer: { push: (value: string) => void }) => $$renderer.push("NAV-CONTENT"),
+  children: ($$renderer: { push: (value: string) => void }) => $$renderer.push("CANVAS-CONTENT"),
+  footer: ($$renderer: { push: (value: string) => void }) => $$renderer.push("FOOTER-CONTENT"),
+};
+
+test("template renders nav, canvas main, and footer slots in order", () => {
+  const html = render(LandingTemplate, { props: snippets }).html;
+  expect(html).toContain('class="tv-topnav"');
   expect(html).toContain('class="tv-template__main"');
   expect(html).toContain('class="tv-canvas"');
   expect(html).toContain('class="tv-template__footer"');
-  expect(html).not.toContain('class="tv-template__nav"');
+  const navAt = html.indexOf("NAV-CONTENT");
   const canvasAt = html.indexOf("CANVAS-CONTENT");
   const footerAt = html.indexOf("FOOTER-CONTENT");
-  expect(canvasAt).toBeGreaterThan(-1);
+  expect(navAt).toBeGreaterThan(-1);
+  expect(canvasAt).toBeGreaterThan(navAt);
   expect(footerAt).toBeGreaterThan(canvasAt);
 });
 
 test("template keeps the skip link and the #top anchor", () => {
-  const html = render(LandingTemplate, {
-    props: {
-      children: ($$renderer: { push: (value: string) => void }) => $$renderer.push(""),
-      footer: ($$renderer: { push: (value: string) => void }) => $$renderer.push(""),
-    },
-  }).html;
+  const html = render(LandingTemplate, { props: snippets }).html;
   expect(html).toContain('class="tv-skip-link" href="#main"');
   expect(html).toContain('id="top"');
 });
