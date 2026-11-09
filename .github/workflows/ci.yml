@@ -13,8 +13,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  enforcer-check:
-    name: enforcer-check
+  # Context name `rules-check` is the branch-protection required check on main
+  # (restored — the protection predates a job rename; same validation).
+  rules-check:
+    name: rules-check
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
