@@ -74,7 +74,7 @@ From `web/`:
 
 From the unit root:
 
-- `bun test tests/integration` — hermetic deployment suite (contract validation plus deploy/rollback behavior against stubbed `ssh`/`rsync`/`bun`; no network).
+- `bun test tests/integration` — hermetic deployment suite (contract validation plus deploy/rollback behavior against stubbed `ssh`/`rsync`/`bun`; no network) and the SEO suite, which builds into an isolated `dist-seo` and asserts the static head tags, `robots.txt`, `sitemap.xml`, JSON-LD, and byte-level sync of the published og/favicon assets with the owning units (ticket 0045, SEO-01…08).
 - `bun run test:interaction` — DOM interaction category; requires the dev
   dependencies of the stack only, runs with `SVELTE_COMPILE_MODE=client`.
 - `bun run typecheck` — `tsc --noEmit` over the app sources.

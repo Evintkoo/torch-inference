@@ -199,6 +199,45 @@ Consequences for this specification, applied by ticket
 - **Scope note:** `tests/integration/deploy-script.test.ts` keeps the name it
   has had since 0043; "deploy-script" now refers to `deploy.ts`.
 
+## Search-engine readiness (SEO-01…SEO-08)
+
+**Amendment — 2026-11-09, third pass (owner direction, GOV-07.05):** the
+owner wants the site "ready to do SEO stuffs". The canonical base is
+**`https://torviello.dev/`** — note the `.dev` TLD is HSTS-preloaded, so the
+site serves HTTPS from day one once the domain is registered; until then the
+public link is the VM's HTTP address. Chosen scope: the full static SEO
+package without prerendering (client-rendered app; prerendering remains a
+future option). Requirement IDs, tracked by ticket
+[0045](../../../torviello-roles/tickets/0045-make-the-landing-page-search-engine-ready.md):
+
+- **SEO-01 — Primary meta.** The built `index.html` ships a document title
+  and a meta description (≥ 50 characters) in the static head.
+- **SEO-02 — Canonical.** `<link rel="canonical" href="https://torviello.dev/" />`
+  is present in the built HTML.
+- **SEO-03 — Indexing.** `<meta name="robots" content="index, follow" />` is
+  present; `robots.txt` allows all agents and names the sitemap.
+- **SEO-04 — Open Graph.** `og:url` equals the canonical; `og:image` is an
+  absolute URL at the base with declared width/height and honest alt text;
+  `og:locale` is `en_US`.
+- **SEO-05 — Twitter card.** `summary_large_image` card with title,
+  description, and image at the base URL.
+- **SEO-06 — Structured data.** A JSON-LD `@graph` declares `Organization`
+  and `WebSite` entities anchored at the canonical base, with no claims
+  beyond the truthfulness rules (no fabricated ratings, reviews, or metrics).
+- **SEO-07 — Crawler files.** The build output contains `robots.txt`
+  (allow-all + sitemap) and `sitemap.xml` listing the canonical URL, plus a
+  stable unhashed `favicon.svg` in the static head.
+- **SEO-08 — Shared-asset sync (GOV-12.07).** The og image and favicon are
+  published into the build by the unit's own prebuild step
+  (`web/scripts/seo-assets.ts`) from the owning units
+  (`torviello-media`, `torviello-design`); the published bytes MUST equal the
+  owning assets — the sync test proves equality and a stale copy is a
+  finding. The generated copies are gitignored (GOV-12.05).
+
+Verification: `bun test tests/integration/seo.test.ts` builds the site into
+an isolated `dist-seo` directory and asserts every requirement above against
+the built bytes.
+
 ## Out of scope
 
 - CI/CD automation (GitHub Actions deploy workflow) — a later ticket may add

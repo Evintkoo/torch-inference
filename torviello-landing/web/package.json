@@ -5,6 +5,7 @@
   "description": "Torviello landing page — Svelte 5 app with Bun tooling.",
   "scripts": {
     "dev": "bunx --bun vite",
+    "prebuild": "bun run scripts/seo-assets.ts",
     "build": "bunx --bun vite build",
     "typecheck": "bunx --bun tsc --noEmit",
     "test": "bun test src",
