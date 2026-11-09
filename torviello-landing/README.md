@@ -11,6 +11,15 @@ Public landing page and marketing site. Brand message: The execution layer for A
 - `tests/` — unit, contract, and integration tests.
 - `evaluations/` — plans, datasets, reports, and release decisions.
 - `web/` — the landing web app: Svelte 5 components, Bun tooling, Vite build.
+- `deploy/` — deployment of the built site to the Oracle server: `deploy.sh`
+  (rsync-based release publishing with on-server checksum verification,
+  atomic activation, and verified rollback), `Caddyfile` (server config
+  source of truth), and the one-time OCI provisioning runbook
+  [`deploy/server-setup.md`](deploy/server-setup.md). The interface is
+  contracted in
+  [`contracts/deployment/deploy-contract.json`](contracts/deployment/deploy-contract.json)
+  and hermetically tested by `bun test tests/integration` (ticket 0043,
+  [`specifications/landing-deployment.md`](specifications/landing-deployment.md)).
 
 ## Web app
 
@@ -51,13 +60,17 @@ Public landing page and marketing site. Brand message: The execution layer for A
 
 ## Packaging
 
-Per [GOV-12](../torviello-enforcer/governance/rules/12-independent-unit-packaging.md), this unit is packageable as an independent, versioned artifact (site build artifact); its packaging manifest, version, and build command live inside this unit, never at the repository root. Status: partial — the web app builds inside the unit (`web/` manifest, `bun run build` to `web/dist/`), but no versioned package manifest or packaging evidence exists yet.
+Per [GOV-12](../torviello-enforcer/governance/rules/12-independent-unit-packaging.md), this unit is packageable as an independent, versioned artifact (site build artifact); its packaging manifest, version, and build command live inside this unit, never at the repository root. Status: partial — the web app builds inside the unit (`web/` manifest, `bun run build` to `web/dist/`), but no versioned package manifest or packaging evidence exists yet. The unit also owns its deployment artifact (GOV-12.04): the deploy kit in `deploy/` — release-publishing script, server configuration source, and provisioning runbook — is versioned with the unit and travels with it; deployment output and staging trees stay gitignored.
 
 ## Validation
 
 From `web/`:
 
 - `bun test` — component suite (server-render semantics and class contracts).
+
+From the unit root:
+
+- `bun test tests/integration` — hermetic deployment suite (contract validation plus deploy/rollback behavior against stubbed `ssh`/`rsync`/`bun`; no network).
 - `bun run test:interaction` — DOM interaction category; requires the dev
   dependencies of the stack only, runs with `SVELTE_COMPILE_MODE=client`.
 - `bun run typecheck` — `tsc --noEmit` over the app sources.

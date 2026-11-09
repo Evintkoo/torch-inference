@@ -14,6 +14,9 @@ coverage/
 /dist/
 /torviello-landing/web/qa-out/
 
+# Landing deploy staging output (GOV-12.05)
+/torviello-landing/deploy/.staging/
+
 # Generated documentation site
 /torviello-docs/target/
 /data/

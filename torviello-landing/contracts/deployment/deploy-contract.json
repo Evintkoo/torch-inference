@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "torviello-landing/contracts/deployment/deploy-contract.json",
+  "title": "torviello-landing deploy script interface",
+  "version": "1.0.0",
+  "status": "active",
+  "description": "Interface of torviello-landing/deploy/deploy.sh: commands, flags, environment, exit codes, remote layout, and release identity. Consumers are operators, tests, and future CI automation. Changes to any field here are contract changes under GOV-08.",
+  "specification": "torviello-landing/specifications/landing-deployment.md",
+  "script": "torviello-landing/deploy/deploy.sh",
+  "commands": {
+    "deploy": {
+      "default": true,
+      "description": "Build, stage with a SHA256SUMS manifest, upload into a new release directory, verify on the server, atomically repoint current, prune.",
+      "flags": ["--dry-run", "--skip-build", "--host", "--keep", "--release-id"]
+    },
+    "rollback": {
+      "default": false,
+      "description": "Verify the checksums of a previously uploaded release on the server, then atomically repoint current at it. Default target: the newest release that is not currently active.",
+      "flags": ["--into", "--host", "--dry-run"]
+    }
+  },
+  "flags": {
+    "--dry-run": "Local path runs in full; rsync gets --dry-run; no SSH command is issued, so remote state is never touched.",
+    "--skip-build": "Reuse the existing web/dist output (must contain index.html) instead of running bun run build.",
+    "--host": "user@host or host overriding LANDING_DEPLOY_HOST for this invocation.",
+    "--keep": "Retention count for deploy; 0 disables pruning. Overrides LANDING_DEPLOY_KEEP.",
+    "--release-id": "Override the release id (deterministic runs in tests and CI). Must match ^[A-Za-z0-9._-]+$. Requires --skip-build to be reproducible.",
+    "--into": "rollback only: explicit target release id."
+  },
+  "environment": {
+    "LANDING_DEPLOY_HOST": {
+      "required": true,
+      "description": "SSH destination in scp/rsync syntax: [user@]host."
+    },
+    "LANDING_DEPLOY_SSH_PORT": {
+      "required": false,
+      "default": "22",
+      "description": "Port passed to ssh/rsync -e."
+    },
+    "LANDING_DEPLOY_WEBROOT": {
+      "required": false,
+      "default": "/var/www/torviello-landing",
+      "description": "Remote webroot containing releases/ and current. Must match ^[A-Za-z0-9/._-]+$ (shell-safe)."
+    },
+    "LANDING_DEPLOY_KEEP": {
+      "required": false,
+      "default": "5",
+      "description": "Release retention count; 0 disables pruning."
+    },
+    "LANDING_DEPLOY_RELEASE_ID": {
+      "required": false,
+      "description": "Override the release id; otherwise YYYYmmddHHMMSS-<git-short-sha> (nogit suffix outside a git worktree)."
+    },
+    "LANDING_DEPLOY_SSH_OPTIONS": {
+      "required": false,
+      "description": "Extra options appended to every ssh invocation (e.g. -i keyfile -J bastion). Never store key material in the repository."
+    }
+  },
+  "exit_codes": {
+    "0": "success",
+    "2": "usage error: unknown command or flag, missing required environment, or unsafe webroot/release id",
+    "3": "missing dependency: rsync, ssh, or bun (when building) not on PATH",
+    "4": "build failed: bun run build exited non-zero",
+    "5": "remote verification failed: checksum mismatch or missing index.html; current untouched",
+    "6": "rollback target missing: no releases or unknown --into id",
+    "7": "local artifact integrity failure: staging failed or --skip-build output missing index.html"
+  },
+  "remote_layout": {
+    "webroot": "$LANDING_DEPLOY_WEBROOT",
+    "releases_dir": "$LANDING_DEPLOY_WEBROOT/releases",
+    "release_dir": "$LANDING_DEPLOY_WEBROOT/releases/<release-id>",
+    "current_link": "$LANDING_DEPLOY_WEBROOT/current -> releases/<release-id>",
+    "invariants": [
+      "release directories are never rewritten by a later deploy",
+      "current is replaced by rename (mv -T on GNU); platforms without mv -T fall back to rm+rename with a tiny non-atomic window",
+      "the release current points at is never pruned",
+      "activation happens only after on-server checksum verification plus index.html presence"
+    ]
+  },
+  "release_id_format": {
+    "pattern": "^[A-Za-z0-9._-]+$",
+    "default_shape": "YYYYmmddHHMMSS-<git-short-sha>",
+    "fallback_shape": "YYYYmmddHHMMSS-nogit",
+    "sort_order": "lexicographic ascending equals chronological ascending"
+  },
+  "verification_marker": {
+    "token": "TORVIELLO_RELEASE_OK",
+    "description": "Echoed by the on-server verification script after checksums validate and index.html is present; the script only activates a release whose verification output ends with this token."
+  }
+}

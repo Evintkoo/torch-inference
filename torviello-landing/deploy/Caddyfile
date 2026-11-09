@@ -1,0 +1,32 @@
+# torviello-landing — Caddy server configuration
+#
+# Ownership: GOV-12.04 — this file is a torviello-landing unit artifact; it is
+# rendered into /etc/caddy/Caddyfile by deploy/server-setup.md, never edited on
+# the server by hand.
+#
+# State today (owner direction 2026-11-09): the domain points at the Oracle
+# VM, HTTP only. TLS is a deliberate later step (UC-LD-4): replace the site
+# address `http://<domain>` with `<domain>` and reload — Caddy then provisions
+# and renews ACME certificates automatically (TCP 443 must be open in the OCI
+# security list first). Nothing else in this file changes.
+
+http://landing.example {
+	# Root is the unit's remote layout (deploy-contract.json): the `current`
+	# symlink that deploy.sh atomically repoints after on-server verification.
+	root * /var/www/torviello-landing/current
+
+	encode zstd gzip
+
+	# Vite emits hashed, immutable asset filenames.
+	@immutable path /assets/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+	header Cache-Control "no-cache"
+	header X-Content-Type-Options "nosniff"
+	header Referrer-Policy "strict-origin-when-cross-origin"
+	header X-Frame-Options "DENY"
+
+	# Single-page entry: unknown paths fall back to the app shell.
+	try_files {path} /index.html
+	file_server
+}

@@ -16,4 +16,7 @@ Schemas lint or validate in required checks; contract tests verify both sides.
 
 ## Status
 
-Repository shape only. No artifact, implementation, or evaluation evidence is recorded here yet.
+Active for deployment: `deployment/deploy-contract.json` (v1.0.0) defines the
+deploy script interface and is cross-checked by the integration suite on
+ticket [0043](../../../torviello-roles/tickets/0043-integrate-landing-page-deployment-to-the-oracle-server.md).
+`events/` remains repository shape only.

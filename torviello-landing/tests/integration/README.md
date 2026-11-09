@@ -16,4 +16,8 @@ Prerequisites are documented and the environment is reported with results.
 
 ## Status
 
-Repository shape only. No artifact, implementation, or evaluation evidence is recorded here yet.
+Active — the deployment integration suite lives here: `deploy-script.test.ts`
+(22 hermetic tests: contract cross-check, deploy happy path, dry-run purity,
+edge cases E1–E10, verified rollback, retention). Verified 2026-11-09 on
+ticket [0043](../../../torviello-roles/tickets/0043-integrate-landing-page-deployment-to-the-oracle-server.md);
+run with `bun test tests/integration` from the unit root.
