@@ -22,7 +22,14 @@ const WEB = join(UNIT_ROOT, "web");
 const OUT = join(WEB, "dist-seo");
 const REAL_BUN = Bun.which("bun") as string;
 
-const BASE = "https://torviello.dev";
+/** The canonical base URL comes from web/.env (VITE_SITE_URL) — the single
+ * declared source. Tests assert the built artifact matches it exactly. */
+const BASE = readFileSync(join(WEB, ".env"), "utf8")
+  .split("\n")
+  .find((line) => line.startsWith("VITE_SITE_URL="))
+  ?.slice("VITE_SITE_URL=".length)
+  .trim()
+  .replace(/\/+$/, "") as string;
 const DESIGN_FAVICON = join(UNIT_ROOT, "..", "torviello-design", "brand", "favicon.svg");
 const MEDIA_OG = join(UNIT_ROOT, "..", "torviello-media", "assets", "landing", "builders.jpg");
 
