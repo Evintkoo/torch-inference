@@ -7,54 +7,108 @@
  * clamps) is not token territory.
  */
 
-/* LP-02 Hero — unboxed, copy left, documented engine session right */
+/* LP-02 Hero (second amendment) — centered composition: badge, display
+   promise, rail, actions, trust, and the decorative artwork below, over a
+   dot-grid floor and an aurora */
 .tv-hero {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--tv-space-12);
-  padding: clamp(64px, 7vw, 112px) clamp(var(--tv-space-4), 3vw, var(--tv-space-8));
+  gap: var(--tv-space-8);
+  padding: clamp(72px, 8vw, 128px) clamp(var(--tv-space-4), 3vw, var(--tv-space-8))
+    clamp(48px, 5vw, 80px);
   overflow: hidden;
   border-radius: var(--tv-radius-panel);
+  text-align: center;
 }
 
-/* Ambient aurora: two token-derived lights giving the canvas depth */
+/* Ambient depth: aurora light + a fading dot grid */
 .tv-hero::before {
   content: "";
   position: absolute;
   inset: 0;
   background:
     radial-gradient(
-      50rem 34rem at 10% 8%,
-      color-mix(in srgb, var(--tv-action-primary) 11%, transparent),
-      transparent 62%
+      52rem 30rem at 50% -6%,
+      color-mix(in srgb, var(--tv-action-primary) 12%, transparent),
+      transparent 64%
     ),
     radial-gradient(
-      44rem 30rem at 96% 96%,
+      44rem 26rem at 88% 100%,
       color-mix(in srgb, var(--tv-accent-secondary) 6%, transparent),
-      transparent 68%
-    );
+      transparent 70%
+    ),
+    radial-gradient(color-mix(in srgb, var(--tv-color-warm-white) 5%, transparent) 1px, transparent 1px);
+  background-size: auto, auto, 26px 26px;
+  mask-image: radial-gradient(80% 70% at 50% 30%, #000 40%, transparent 100%);
+  -webkit-mask-image: radial-gradient(80% 70% at 50% 30%, #000 40%, transparent 100%);
+  pointer-events: none;
+}
+
+/* The beam: a hairline of light on the horizon under the copy */
+.tv-hero::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: clamp(140px, 18vw, 240px);
+  width: min(680px, 76%);
+  height: 1px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--tv-action-primary) 55%, transparent),
+    transparent
+  );
   pointer-events: none;
 }
 
 .tv-hero__copy {
   position: relative;
   z-index: 1;
-  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 780px;
+}
+
+/* The eyebrow as a glass chip with a status dot — the reference-site badge */
+.tv-hero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tv-space-2);
+  padding: var(--tv-space-1) var(--tv-space-3);
+  background: var(--tv-surface-glass);
+  border: 1px solid var(--tv-border-glass);
+  border-radius: 999px;
+}
+
+.tv-hero__badge .tv-section-label {
+  margin: 0;
+  font-size: var(--tv-size-micro);
+  letter-spacing: 0.22em;
+}
+
+.tv-hero__badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--tv-action-primary);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--tv-action-primary) 70%, transparent);
 }
 
 .tv-hero__heading {
-  margin: 0;
+  margin: var(--tv-space-6) 0 0;
   color: var(--tv-text-primary);
   font-family: var(--tv-font-sans);
-  /* 44px at the 768px step, 84px at the 1536px reference — the promise is
+  /* 48px at the 768px step, 96px at the 1536px reference — the promise is
      the page's largest type and reads as display, not body-plus */
-  font-size: clamp(44px, 6vw, 84px);
+  font-size: clamp(48px, 7vw, 96px);
   font-weight: var(--tv-weight-semibold);
-  line-height: 1;
+  line-height: 0.98;
   letter-spacing: -0.045em;
-  max-width: 9.5em;
+  max-width: 10em;
 }
 
 .tv-hero__line {
@@ -76,8 +130,8 @@
 }
 
 .tv-hero__body-copy {
-  margin: var(--tv-space-6) 0 0;
-  max-width: 440px;
+  margin: var(--tv-space-6) auto 0;
+  max-width: 560px;
   color: var(--tv-text-muted);
   font-family: var(--tv-font-sans);
   font-size: var(--tv-size-body);
@@ -87,10 +141,11 @@
 /* LP-02 rail — the three stages in normal flow; nothing can clip */
 .tv-hero__rail {
   display: flex;
-  align-items: stretch;
+  align-items: flex-start;
+  justify-content: center;
   flex-wrap: wrap;
-  gap: var(--tv-space-2);
-  margin: var(--tv-space-6) 0 0;
+  gap: var(--tv-space-3);
+  margin: var(--tv-space-8) 0 0;
   padding: 0;
   list-style: none;
 }
@@ -98,6 +153,7 @@
 .tv-hero__stage {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: var(--tv-space-2);
   min-width: 0;
 }
@@ -108,8 +164,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--tv-radius-control);
   background: var(--tv-surface-glass);
   border: 1px solid var(--tv-border-glass);
@@ -132,6 +188,7 @@
 
 .tv-hero__stage-caption {
   margin: 0;
+  max-width: 150px;
   color: var(--tv-text-muted);
   font-family: var(--tv-font-sans);
   font-size: var(--tv-size-small);
@@ -139,15 +196,16 @@
 
 .tv-hero__rail-connector {
   flex-shrink: 0;
-  align-self: center;
-  width: clamp(var(--tv-space-4), 3vw, var(--tv-space-8));
+  width: clamp(var(--tv-space-6), 4vw, var(--tv-space-12));
   height: 1px;
+  margin-top: 17px;
   background: linear-gradient(90deg, transparent, var(--tv-action-primary), transparent);
 }
 
 .tv-hero__actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: var(--tv-space-4);
   margin-top: var(--tv-space-8);
 }
@@ -160,39 +218,106 @@
   letter-spacing: 0.06em;
 }
 
-.tv-hero__terminal {
+/* The decorative artwork anchors the composition below the copy */
+.tv-hero__visual {
   position: relative;
   z-index: 1;
-  min-width: 0;
+  width: min(880px, 100%);
+  margin-top: var(--tv-space-4);
 }
 
-/* A brand halo behind the window lifts it off the canvas */
-.tv-hero__terminal::before {
+.tv-hero__visual::before {
   content: "";
   position: absolute;
-  inset: -12% -8%;
+  inset: -10% -6%;
   background: radial-gradient(
-    60% 60% at 50% 45%,
-    color-mix(in srgb, var(--tv-action-primary) 13%, transparent),
+    55% 60% at 50% 52%,
+    color-mix(in srgb, var(--tv-action-primary) 10%, transparent),
     transparent 72%
   );
   pointer-events: none;
 }
 
-/* The hero terminal reuses the M8 window chrome; its note reads "Documented
-   engine session" — the verified transcript, never the illustrative label */
-.tv-hero__terminal .tv-terminal-card__window {
+.tv-artwork {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Artwork motion: a slow dash-flow along the stream and drifting nodes */
+@media (prefers-reduced-motion: no-preference) {
+  .tv-artwork__stream {
+    animation: tv-art-flow 9s linear infinite;
+  }
+
+  .tv-artwork__node {
+    animation: tv-art-float 7s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes tv-art-flow {
+  to {
+    stroke-dashoffset: -280;
+  }
+}
+
+@keyframes tv-art-float {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-10px);
+  }
+}
+
+/* Hero load-in: a quiet fade-rise, motion-allowed builds only */
+@media (prefers-reduced-motion: no-preference) {
+  .tv-hero__copy,
+  .tv-hero__visual {
+    animation: tv-hero-in 700ms ease both;
+  }
+
+  .tv-hero__visual {
+    animation-delay: 150ms;
+  }
+}
+
+@keyframes tv-hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+/* LP-10 session band — the verified transcript, centered */
+.tv-session {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.tv-session .tv-section__sub {
+  margin-bottom: var(--tv-space-8);
+}
+
+.tv-session__window {
+  width: min(760px, 100%);
+  text-align: left;
+}
+
+/* The session window carries the halo + gradient ring of a hero element */
+.tv-session__window .tv-terminal-card__window {
   background: color-mix(in srgb, var(--tv-surface-canvas) 92%, transparent);
   box-shadow:
     0 1px 0 color-mix(in srgb, var(--tv-color-warm-white) 10%, transparent) inset,
-    0 0 0 1px color-mix(in srgb, var(--tv-action-primary) 16%, transparent),
-    0 32px 80px color-mix(in srgb, var(--tv-color-canvas) 78%, transparent),
-    0 0 80px color-mix(in srgb, var(--tv-action-primary) 10%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--tv-action-primary) 14%, transparent),
+    0 28px 72px color-mix(in srgb, var(--tv-color-canvas) 74%, transparent);
 }
 
-.tv-hero__session {
+.tv-session__transcript {
   margin: 0;
-  padding: var(--tv-space-6) var(--tv-space-6) var(--tv-space-8);
+  padding: var(--tv-space-6);
   overflow-x: auto;
   font-family: var(--tv-font-mono);
   font-size: var(--tv-size-label);
@@ -200,16 +325,37 @@
   white-space: pre;
 }
 
-.tv-hero__session .tv-terminal-line {
+.tv-session__transcript .tv-terminal-line {
   font-size: var(--tv-size-label);
 }
 
-.tv-hero__session-output {
+.tv-session__output {
   display: block;
   margin-top: var(--tv-space-3);
   color: var(--tv-accent-secondary);
   word-break: break-all;
   white-space: pre-wrap;
+}
+
+.tv-session > .tv-button {
+  margin-top: var(--tv-space-8);
+}
+
+/* LP-09 reveal — sections fade-rise once observed; reduced-motion builds
+   never hide content (the action refuses to mark nodes there) */
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(18px);
+    transition:
+      opacity 600ms ease,
+      transform 600ms ease;
+  }
+
+  [data-reveal][data-revealed] {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* LP-03/LP-04/LP-05 shared section rhythm */
@@ -416,6 +562,11 @@
   align-items: stretch;
 }
 
+/* The reveal wrapper stretches; the card fills it */
+.tv-showcase-grid__slot {
+  display: flex;
+}
+
 .tv-showcase-grid > * {
   min-height: 384px;
 }
@@ -445,7 +596,7 @@
   }
 }
 
-/* LP-02…LP-07 breakpoints */
+/* LP-02…LP-10 breakpoints */
 @media (max-width: 1279px) {
   .tv-showcase-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -472,11 +623,6 @@
         transparent 42%
       );
   }
-
-  .tv-hero {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--tv-space-8);
-  }
 }
 
 @media (max-width: 767px) {
@@ -486,17 +632,17 @@
   }
 
   .tv-hero {
-    padding-top: var(--tv-space-8);
-    padding-bottom: var(--tv-space-8);
+    padding-top: var(--tv-space-12);
   }
 
   .tv-hero__heading {
-    font-size: clamp(40px, 11vw, 46px);
+    font-size: clamp(40px, 11.5vw, 48px);
   }
 
   /* The rail stacks and drops its connectors instead of squeezing */
   .tv-hero__rail {
     flex-direction: column;
+    align-items: center;
     gap: var(--tv-space-3);
   }
 

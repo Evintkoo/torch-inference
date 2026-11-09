@@ -4,10 +4,12 @@
      data-pending until a real benchmark run publishes, and the footnote says
      so. ED rule: no claimed performance numbers. -->
 <script lang="ts">
+  import { reveal } from "../../lib/reveal";
+
   let { metrics }: { metrics: { label: string }[] } = $props();
 </script>
 
-<section class="tv-proof" aria-labelledby="tv-proof-title">
+<section class="tv-proof" aria-labelledby="tv-proof-title" use:reveal>
   <h2 class="tv-section__title" id="tv-proof-title">Numbers, not claims.</h2>
   <dl class="tv-proof__grid">
     {#each metrics as metric (metric.label)}

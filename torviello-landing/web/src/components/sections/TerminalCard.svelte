@@ -1,9 +1,11 @@
 <!-- Copyright (c) 2026 Torviello. -->
-<!-- Sheet M8 (slice 3, ticket 0038): the terminal execution showcase card. The
-     pip/serve commands are the board's design example — a visible mono label
-     marks the card ILLUSTRATIVE so nothing reads as verified engine behavior
-     (BC-06; the F-07 amendment on ticket 0038). Real selectable text, window
-     chrome, and a four-step status rail with an orange connector line. -->
+<!-- Sheet M8 (slice 3, ticket 0038; LP-06 amendment ticket 0041): the terminal
+     execution showcase card. The pip/serve commands are the board's design
+     example — a visible mono label marks the card ILLUSTRATIVE so nothing
+     reads as verified engine behavior. The chrome carries a Copy chip for the
+     install command: it writes to the clipboard only on success and confirms
+     with a "Copied" state. Real selectable text, window chrome, and a
+     four-step status rail with an orange connector line. -->
 <script lang="ts">
   import TerminalLine from "../ui/TerminalLine.svelte";
 
@@ -14,6 +16,23 @@
     commands: string[];
     steps: string[];
   } = $props();
+
+  let copied = $state(false);
+  let resetTimer: ReturnType<typeof setTimeout> | undefined;
+
+  async function copyInstall() {
+    try {
+      await navigator.clipboard?.writeText(commands[0] ?? "");
+      copied = true;
+      clearTimeout(resetTimer);
+      resetTimer = setTimeout(() => (copied = false), 2000);
+    } catch {
+      // Clipboard unavailable or denied: the chip stays "Copy" — no fake
+      // success state.
+    }
+  }
+
+  $effect(() => () => clearTimeout(resetTimer));
 </script>
 
 <article class="tv-showcase-card tv-showcase-card--terminal">
@@ -26,6 +45,14 @@
           <span class="tv-terminal-card__dot"></span>
         </span>
         <p class="tv-terminal-card__note">Illustrative example</p>
+        <button
+          type="button"
+          class="tv-terminal-card__copy"
+          aria-label="Copy install command"
+          onclick={copyInstall}
+        >
+          <span>{copied ? "Copied" : "Copy"}</span>
+        </button>
       </div>
       <pre class="tv-terminal-card__transcript"
         >{#each commands as command (command)}<TerminalLine kind="prompt" text={command} />{/each}</pre

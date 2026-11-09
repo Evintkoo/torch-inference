@@ -4,21 +4,43 @@
  * Consumes ONLY the semantic tokens from tokens.css.
  */
 
-/* LP-01 sticky nav wrapper — glass blur over the scrolling page */
+/* LP-01 sticky nav wrapper (second amendment) — the bar floats as a glass
+   pill; the wrapper itself stays transparent so the page scrolls under it */
 .tv-topnav {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: color-mix(in srgb, var(--tv-surface-canvas) 82%, transparent);
-  -webkit-backdrop-filter: blur(16px) saturate(1.4);
-  backdrop-filter: blur(16px) saturate(1.4);
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--tv-color-warm-white) 7%, transparent);
+  padding: var(--tv-space-3) var(--tv-space-4) 0;
 }
 
 .tv-topnav .tv-navbar__inner {
-  max-width: 1568px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tv-space-4);
+  max-width: 1200px;
   margin: 0 auto;
-  padding: var(--tv-space-2) var(--tv-space-8);
+  padding: var(--tv-space-2) var(--tv-space-4) var(--tv-space-2) var(--tv-space-6);
+  background: color-mix(in srgb, var(--tv-surface-canvas) 78%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+  border: 1px solid var(--tv-border-glass);
+  border-radius: 999px;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--tv-color-warm-white) 8%, transparent),
+    0 12px 40px color-mix(in srgb, var(--tv-color-canvas) 55%, transparent);
+}
+
+/* The open mobile menu needs a settled surface inside the pill */
+@media (max-width: 767px) {
+  .tv-topnav {
+    padding: var(--tv-space-2) var(--tv-space-3) 0;
+  }
+
+  .tv-topnav .tv-navbar__inner {
+    border-radius: var(--tv-radius-glass);
+    padding: var(--tv-space-2) var(--tv-space-4);
+  }
 }
 
 /* Sections breathe on the unboxed canvas; panels remain for cards and bands */
@@ -124,9 +146,11 @@
   transform: translateY(0);
 }
 
-/* LP-08 footer — brand column, link columns, copyright bar */
+/* LP-08 footer (second amendment) — brand block, link columns, the oversized
+   decorative wordmark, and the legal bar */
 .tv-footer {
-  padding: var(--tv-space-16) 0 var(--tv-space-8);
+  padding: var(--tv-space-16) 0 var(--tv-space-6);
+  overflow: hidden;
 }
 
 .tv-footer__layout {
@@ -199,6 +223,11 @@
   margin-top: var(--tv-space-8);
   padding-top: var(--tv-space-6);
   border-top: 1px solid var(--tv-border-glass);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--tv-space-4);
 }
 
 .tv-footer__copyright {
@@ -206,6 +235,30 @@
   color: var(--tv-text-muted);
   font-family: var(--tv-font-sans);
   font-size: var(--tv-size-label);
+}
+
+.tv-footer__legal {
+  margin: 0;
+  color: color-mix(in srgb, var(--tv-text-muted) 72%, transparent);
+  font-family: var(--tv-font-mono);
+  font-size: var(--tv-size-small);
+  letter-spacing: 0.06em;
+}
+
+/* The oversized decorative wordmark — the signature reference-site close.
+   Clipped by the footer's overflow so it can never widen the page. */
+.tv-footer__mega {
+  margin-top: var(--tv-space-12);
+  color: color-mix(in srgb, var(--tv-color-warm-white) 4%, transparent);
+  font-family: var(--tv-font-sans);
+  font-size: clamp(96px, 17vw, 280px);
+  font-weight: var(--tv-weight-semibold);
+  letter-spacing: -0.04em;
+  line-height: 0.72;
+  white-space: nowrap;
+  text-align: center;
+  user-select: none;
+  pointer-events: none;
 }
 
 /* Narrow steps: relaxed padding, stacked bands */

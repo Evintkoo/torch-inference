@@ -13,6 +13,7 @@
   import CtaBand from "../components/organisms/CtaBand.svelte";
   import HeroPanel from "../components/organisms/HeroPanel.svelte";
   import ProofBand from "../components/organisms/ProofBand.svelte";
+  import SessionBand from "../components/organisms/SessionBand.svelte";
   import FeatureStrip from "../components/organisms/FeatureStrip.svelte";
   import ShowcaseGrid from "../components/organisms/ShowcaseGrid.svelte";
   import NavBar from "../components/ui/NavBar.svelte";
@@ -21,6 +22,7 @@
   import Icon from "../components/ui/Icon.svelte";
   import LandingTemplate from "../template/LandingTemplate.svelte";
   import { icons, type IconName } from "../lib/icons";
+  import { reveal } from "../lib/reveal";
   // The showcase photography is owned by torviello-media and imported through
   // the alias (GOV-12.07), sliced from the approved reference board — never
   // generated copies inside this unit.
@@ -31,7 +33,7 @@
   const navLinks = [
     { label: "Product", href: "#product" },
     { label: "Use Cases", href: "#use-cases" },
-    { label: "Docs", href: "https://docs.torviello.dev", external: true },
+    { label: "Docs", href: "https://github.com/Evintkoo/torch-inference/tree/main/torviello-docs", external: true },
     { label: "Community", href: "#community" },
   ];
 
@@ -75,7 +77,7 @@
       image: buildersPhoto,
       action: {
         label: "Start building",
-        href: "https://docs.torviello.dev/install",
+        href: "https://github.com/Evintkoo/torch-inference/blob/main/torviello-docs/docs/INSTALL.md",
         icon: "arrow-right",
       },
     },
@@ -86,7 +88,7 @@
       image: teamsPhoto,
       action: {
         label: "Read the docs",
-        href: "https://docs.torviello.dev",
+        href: "https://github.com/Evintkoo/torch-inference/tree/main/torviello-docs",
         external: true,
         icon: "book-open",
       },
@@ -121,7 +123,7 @@
   {#snippet nav()}
     <NavBar
       links={navLinks}
-      getStartedHref="https://docs.torviello.dev/install"
+      getStartedHref="https://github.com/Evintkoo/torch-inference/blob/main/torviello-docs/docs/INSTALL.md"
       githubHref="https://github.com/torviello"
     />
   {/snippet}
@@ -133,14 +135,13 @@
       accent="infer."
       body="An AI-native inference engine for the next generation of builders. From experimentation to production, Torviello gives you the speed, control, and flexibility to run AI your way."
       primaryLabel="Get Started"
-      primaryHref="https://docs.torviello.dev/install"
+      primaryHref="https://github.com/Evintkoo/torch-inference/blob/main/torviello-docs/docs/INSTALL.md"
       ghostLabel="View on GitHub"
       githubHref="https://github.com/torviello"
       stages={flowStages}
-      session={engineSession}
     />
 
-    <section id="product" class="tv-section tv-values" aria-labelledby="tv-values-title">
+    <section id="product" class="tv-section tv-values" aria-labelledby="tv-values-title" use:reveal>
       <h2 class="tv-section__title" id="tv-values-title">Why Torviello</h2>
       <p class="tv-section__sub">The speed, control, and flexibility to run AI your way.</p>
       <FeatureStrip items={valueItems} />
@@ -148,10 +149,12 @@
 
     <ProofBand metrics={proofMetrics} />
 
+    <SessionBand session={engineSession} />
+
     <section id="use-cases" class="tv-section tv-showcase" aria-labelledby="tv-showcase-title">
       <h2 class="tv-section__title" id="tv-showcase-title">Torviello for every stage.</h2>
       <ShowcaseGrid cards={showcaseCards} />
-      <div class="tv-terminal-band">
+      <div class="tv-terminal-band" use:reveal>
         <div class="tv-terminal-band__copy">
           <h2 class="tv-section__title">Up and running in minutes.</h2>
           <p class="tv-section__sub">
@@ -160,7 +163,7 @@
           </p>
           <a
             class="tv-button tv-button--ghost"
-            href="https://docs.torviello.dev"
+            href="https://github.com/Evintkoo/torch-inference/tree/main/torviello-docs"
             target="_blank"
             rel="noopener noreferrer"><Icon name="book-open" />Read the docs</a
           >
@@ -175,7 +178,7 @@
       heading="Start building today."
       body="From install to a running server — the docs walk you through every step."
       primaryLabel="Get Started"
-      primaryHref="https://docs.torviello.dev/install"
+      primaryHref="https://github.com/Evintkoo/torch-inference/blob/main/torviello-docs/docs/INSTALL.md"
       ghostLabel="View on GitHub"
       githubHref="https://github.com/torviello"
     />

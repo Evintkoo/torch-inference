@@ -10,7 +10,7 @@ const base = {
   heading: "Start building today.",
   body: "From install to a running server — the docs walk you through every step.",
   primaryLabel: "Get Started",
-  primaryHref: "https://docs.torviello.dev/install",
+  primaryHref: "https://github.com/Evintkoo/torch-inference/blob/main/torviello-docs/docs/INSTALL.md",
   ghostLabel: "View on GitHub",
   githubHref: "https://github.com/torviello",
 };
@@ -19,7 +19,7 @@ test("the CTA band renders its heading, supporting line, and both actions", () =
   const html = render(CtaBand, { props: base }).html;
   expect(html).toContain(">Start building today.</h2>");
   expect(html).toContain("From install to a running server — the docs walk you through every step.");
-  expect(html).toContain('class="tv-button tv-button--inverse" href="https://docs.torviello.dev/install"');
+  expect(html).toContain('class="tv-button tv-button--inverse" href="https://github.com/Evintkoo/torch-inference/blob/main/torviello-docs/docs/INSTALL.md"');
   expect(html).toContain(">Get Started</a>");
   expect(html).toContain(">View on GitHub</a>");
 });

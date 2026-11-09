@@ -103,15 +103,19 @@ test("the redesigned page mounts the sticky nav, hero, proof, and bands in place
   target.remove();
 });
 
-test("the hero renders the documented engine session and the pending proof band", () => {
+test("the hero renders the decorative artwork and the pending proof band", () => {
   const target = document.createElement("div");
   document.body.appendChild(target);
   const app = mount(App, { target });
 
   const hero = document.querySelector(".tv-hero")!;
-  expect(hero.textContent).toContain("Documented engine session");
-  expect(hero.textContent).toContain('"event":"startup"');
-  expect(hero.textContent).not.toContain("Illustrative example");
+  expect(hero.querySelector(".tv-artwork")?.getAttribute("aria-hidden")).toBe("true");
+  expect(hero.textContent).not.toContain("Documented engine session");
+
+  // The verified transcript lives in the session band.
+  const session = document.querySelector(".tv-session")!;
+  expect(session.textContent).toContain("Documented engine session");
+  expect(session.textContent).toContain('"event":"startup"');
 
   const slots = document.querySelectorAll(".tv-proof__value[data-pending]");
   expect(slots).toHaveLength(3);
@@ -119,6 +123,19 @@ test("the hero renders the documented engine session and the pending proof band"
   expect(document.querySelector(".tv-proof")?.textContent).toContain(
     "No performance number is claimed until the first benchmark run publishes",
   );
+
+  unmount(app);
+  target.remove();
+});
+
+test("the footer renders the mega wordmark and the copy chip is present", () => {
+  const target = document.createElement("div");
+  document.body.appendChild(target);
+  const app = mount(App, { target });
+
+  const mega = document.querySelector(".tv-footer__mega");
+  expect(mega?.getAttribute("aria-hidden")).toBe("true");
+  expect(document.querySelector('button[aria-label="Copy install command"]')).toBeTruthy();
 
   unmount(app);
   target.remove();

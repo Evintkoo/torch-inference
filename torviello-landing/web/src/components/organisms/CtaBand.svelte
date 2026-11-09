@@ -4,6 +4,7 @@
      ghost keeps the safe external GitHub link. -->
 <script lang="ts">
   import Icon from "../ui/Icon.svelte";
+  import { reveal } from "../../lib/reveal";
 
   let {
     heading,
@@ -22,7 +23,7 @@
   } = $props();
 </script>
 
-<section class="tv-cta" aria-label="Get started">
+<section class="tv-cta" aria-label="Get started" use:reveal>
   <div class="tv-cta__copy">
     <h2 class="tv-cta__heading">{heading}</h2>
     <p class="tv-cta__body">{body}</p>

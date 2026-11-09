@@ -1,14 +1,13 @@
 <!-- Copyright (c) 2026 Torviello. -->
-<!-- Landing redesign O4 (ticket 0041, LP-02): the unboxed hero. One promise
-     h1 (the brand name lives in the sticky nav, not the headline), the
-     approved body copy, the inline DEVELOP → DEPLOY → INFER rail in normal
-     flow (nothing can clip), the two actions with the factual trust line,
-     and the documented engine session in a terminal window — the only
-     transcript on the page presented as verified behavior. -->
+<!-- Landing redesign O4 (ticket 0041, second amendment, LP-02): the centered
+     hero. Badge chip, display promise, centered body, the inline
+     DEVELOP → DEPLOY → INFER rail, the actions with the factual trust line,
+     and the decorative aria-hidden inference artwork as the visual anchor.
+     The documented engine session lives in its own band (LP-10), not here. -->
 <script lang="ts">
   import SectionLabel from "../ui/SectionLabel.svelte";
-  import TerminalLine from "../ui/TerminalLine.svelte";
   import Icon from "../ui/Icon.svelte";
+  import InferenceArtwork from "./InferenceArtwork.svelte";
   import type { IconName } from "../../lib/icons";
 
   interface FlowStage {
@@ -27,7 +26,6 @@
     ghostLabel,
     githubHref,
     stages,
-    session,
   }: {
     eyebrow: string;
     promiseLine: string;
@@ -38,13 +36,15 @@
     ghostLabel: string;
     githubHref: string;
     stages: FlowStage[];
-    session: { commands: string[]; output: string };
   } = $props();
 </script>
 
 <section class="tv-hero">
   <div class="tv-hero__copy">
-    <SectionLabel label={eyebrow} accent />
+    <div class="tv-hero__badge">
+      <span class="tv-hero__badge-dot" aria-hidden="true"></span>
+      <SectionLabel label={eyebrow} accent />
+    </div>
     <h1 class="tv-hero__heading">
       <span class="tv-hero__line">{promiseLine} <em class="tv-hero__accent">{accent}</em></span>
     </h1>
@@ -74,21 +74,7 @@
     </div>
     <p class="tv-hero__trust">MIT licensed · Runs on your machine</p>
   </div>
-  <div class="tv-hero__terminal">
-    <div class="tv-terminal-card__window">
-      <div class="tv-terminal-card__chrome">
-        <span class="tv-terminal-card__dots" aria-hidden="true">
-          <span class="tv-terminal-card__dot"></span>
-          <span class="tv-terminal-card__dot"></span>
-          <span class="tv-terminal-card__dot"></span>
-        </span>
-        <p class="tv-terminal-card__note">Documented engine session</p>
-      </div>
-      <pre class="tv-hero__session"
-        >{#each session.commands as command (command)}<TerminalLine kind="prompt" text={command} />{/each}<span
-            class="tv-hero__session-output">{session.output}</span
-          ></pre
-      >
-    </div>
+  <div class="tv-hero__visual">
+    <InferenceArtwork />
   </div>
 </section>

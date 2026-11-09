@@ -45,3 +45,15 @@ test("terminal card transcript stays real selectable text, not an image", () => 
   expect(html).toContain("<pre");
   expect(html).not.toContain("<img");
 });
+
+test("the chrome offers a labeled copy affordance for the install command (LP-06)", () => {
+  const html = render(TerminalCard, { props: { commands, steps } }).html;
+  expect(html).toContain('aria-label="Copy install command"');
+  expect(html).toContain(">Copy</span>");
+  // The chip sits in the chrome, before the transcript.
+  const chromeAt = html.indexOf("tv-terminal-card__chrome");
+  const copyAt = html.indexOf('aria-label="Copy install command"');
+  const transcriptAt = html.indexOf("tv-terminal-card__transcript");
+  expect(copyAt).toBeGreaterThan(chromeAt);
+  expect(copyAt).toBeLessThan(transcriptAt);
+});

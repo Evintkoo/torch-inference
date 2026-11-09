@@ -8,7 +8,7 @@ import NavBar from "./NavBar.svelte";
 const links = [
   { label: "Product", href: "#product" },
   { label: "Use Cases", href: "#use-cases" },
-  { label: "Docs", href: "https://docs.torviello.dev", external: true },
+  { label: "Docs", href: "https://github.com/Evintkoo/torch-inference/tree/main/torviello-docs", external: true },
   { label: "Community", href: "#community" },
 ];
 
@@ -40,8 +40,8 @@ test("navbar marks a current section with aria-current", () => {
 test("navbar docs link opens the documentation site safely in a new tab", () => {
   const html = render(NavBar, { props: base }).html;
   const docs = html.slice(
-    Math.max(0, html.indexOf("https://docs.torviello.dev") - 200),
-    html.indexOf("https://docs.torviello.dev") + 80
+    Math.max(0, html.indexOf("https://github.com/Evintkoo/torch-inference/tree/main/torviello-docs") - 200),
+    html.indexOf("https://github.com/Evintkoo/torch-inference/tree/main/torviello-docs") + 140
   );
   expect(docs).toContain('target="_blank"');
   expect(docs).toContain('rel="noopener noreferrer"');

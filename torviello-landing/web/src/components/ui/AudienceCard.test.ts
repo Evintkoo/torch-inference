@@ -53,14 +53,14 @@ test("audience card renders exactly one ghost action below the body", () => {
       body: "Ship in days.",
       action: {
         label: "Start building",
-        href: "https://docs.torviello.dev/install",
+        href: "https://github.com/Evintkoo/torch-inference/blob/main/torviello-docs/docs/INSTALL.md",
       },
     },
   }).html;
   expect(html.match(/<a /g)).toHaveLength(1);
   expect(html).toContain("tv-button--ghost");
   expect(html).toContain(">Start building</a>");
-  expect(html).toContain('href="https://docs.torviello.dev/install"');
+  expect(html).toContain('href="https://github.com/Evintkoo/torch-inference/blob/main/torviello-docs/docs/INSTALL.md"');
 
   const bodyAt = html.indexOf(">Ship in days.</p>");
   const actionAt = html.indexOf(">Start building</a>");
@@ -73,7 +73,7 @@ test("audience card DOM order reads eyebrow -> heading -> body -> action", () =>
       eyebrow: "For AI teams",
       heading: "Build, deploy, scale together.",
       body: "One workflow.",
-      action: { label: "Read the docs", href: "https://docs.torviello.dev" },
+      action: { label: "Read the docs", href: "https://github.com/Evintkoo/torch-inference/tree/main/torviello-docs" },
     },
   }).html;
   const eyebrowAt = html.indexOf("tv-audience-card__eyebrow");

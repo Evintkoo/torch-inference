@@ -254,10 +254,18 @@
   }
 }
 
-/* M4 AudienceCard — copy over a decorative photo with a gradient scrim */
+/* M4 AudienceCard — copy over a decorative photo with a gradient scrim.
+   The card is a stretch container: content fills it and the card grows with
+   its content (LP-05 defect, 2026-11-03: height:100% inside a min-height
+   grid item resolved circularly and the action button crossed the card's
+   bottom border by ~24px). */
 .tv-audience-card {
   position: relative;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
+  width: 100%;
+  height: 100%;
   background: var(--tv-surface-glass);
   border: 1px solid var(--tv-border-panel);
   border-radius: var(--tv-radius-card);
@@ -290,8 +298,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 280px;
-  height: 100%;
+  flex: 1;
   justify-content: flex-start;
   padding: var(--tv-space-6);
   /* One shared scrim system (LP-05): a left-weighted wash keeps the copy
@@ -432,6 +439,38 @@
   font-size: var(--tv-size-small);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+/* LP-06 Copy chip — a chrome utility, not an A1/A2 button: text-only,
+   keyboard operable, confirms only on real clipboard success */
+.tv-terminal-card__copy {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: var(--tv-space-1) var(--tv-space-3);
+  background: transparent;
+  border: 1px solid var(--tv-border-glass);
+  border-radius: var(--tv-radius-control);
+  color: var(--tv-text-muted);
+  font-family: var(--tv-font-mono);
+  font-size: var(--tv-size-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    color 120ms ease,
+    border-color 120ms ease;
+}
+
+.tv-terminal-card__copy:hover {
+  color: var(--tv-text-primary);
+  border-color: color-mix(in srgb, var(--tv-action-primary) 45%, transparent);
+}
+
+.tv-terminal-card__copy:focus-visible {
+  outline: 2px solid var(--tv-focus-ring);
+  outline-offset: 2px;
 }
 
 .tv-terminal-card__transcript {

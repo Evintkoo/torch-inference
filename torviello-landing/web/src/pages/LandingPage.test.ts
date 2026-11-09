@@ -46,15 +46,19 @@ test("the hero rail stage chips render real glyph data, not empty icons", () => 
   }
 });
 
-test("the hero shows the documented engine session as the only verified transcript (LP-02)", () => {
+test("the hero leaves the engine session to its own band (LP-02, LP-10)", () => {
   const hero = html.slice(html.indexOf('class="tv-hero"'), html.indexOf('id="product"'));
-  expect(hero).toContain("Documented engine session");
-  expect(hero).toContain(">torviello-engine --help</span>");
-  expect(hero).toContain(">TORCH_PORT=8000 torviello-engine</span>");
-  expect(hero).toContain('"event":"startup"');
-  // The verified session is not labeled illustrative, and the hero carries
-  // no illustrative content at all.
-  expect(hero).not.toContain("Illustrative example");
+  expect(hero).not.toContain("Documented engine session");
+  expect(hero).not.toContain("torviello-engine --help");
+  expect(hero).toContain('<svg class="tv-artwork"');
+  // The verified transcript lives in the session band between proof and
+  // use cases.
+  const session = html.slice(html.indexOf('class="tv-session"'), html.indexOf('id="use-cases"'));
+  expect(session).toContain(">A real session.</h2>");
+  expect(session).toContain("Documented engine session");
+  expect(session).toContain(">torviello-engine --help</span>");
+  expect(session).toContain('"event":"startup"');
+  expect(session).not.toContain("Illustrative example");
 });
 
 test("the value section heads the four value props (LP-03)", () => {
@@ -93,12 +97,23 @@ test("the terminal band pairs explanatory copy with the illustrative example (LP
   expect(band).toContain(">pip install torviello</span>");
   expect(band).toContain(">torviello serve --model my-model</span>");
   expect(band).toContain(">Read the docs</a>");
+  expect(band).toContain('aria-label="Copy install command"');
+});
+
+test("the footer closes with the oversized decorative wordmark and legal bar (LP-08)", () => {
+  const footer = html.slice(html.indexOf('class="tv-footer"'));
+  expect(footer).toContain('class="tv-container tv-footer__mega" aria-hidden="true"');
+  expect(footer).toContain(">Product</p>");
+  expect(footer).toContain(">Resources</p>");
+  expect(footer).toContain(">Community</p>");
+  expect(footer).toContain("© 2026 Torviello");
+  expect(footer).toContain("MIT licensed");
 });
 
 test("the CTA band closes the page above the footer (LP-07)", () => {
   const cta = html.slice(html.indexOf('class="tv-cta"'), html.indexOf('class="tv-template__footer"'));
   expect(cta).toContain(">Start building today.</h2>");
-  expect(cta).toContain('class="tv-button tv-button--inverse" href="https://docs.torviello.dev/install"');
+  expect(cta).toContain('class="tv-button tv-button--inverse" href="https://github.com/Evintkoo/torch-inference/blob/main/torviello-docs/docs/INSTALL.md"');
   expect(cta).toContain(">View on GitHub</a>");
 });
 
@@ -114,12 +129,13 @@ test("the footer renders brand, product, and community columns (LP-08)", () => {
   expect(footer).toContain("© 2026 Torviello");
 });
 
-test("the section order is nav, hero, values, proof, use cases, terminal, cta, footer (LP-09)", () => {
+test("the section order is nav, hero, values, proof, session, use cases, terminal, cta, footer (LP-09)", () => {
   const order = [
     html.indexOf('class="tv-topnav"'),
     html.indexOf('class="tv-hero"'),
     html.indexOf('id="product"'),
     html.indexOf('class="tv-proof"'),
+    html.indexOf('class="tv-session"'),
     html.indexOf('id="use-cases"'),
     html.indexOf('class="tv-terminal-band"'),
     html.indexOf('class="tv-cta"'),
@@ -158,7 +174,7 @@ test("nav anchors resolve to their sections (LP-01)", () => {
 test("the hero and cta actions keep their destinations (LP-02, LP-07)", () => {
   expect(html.match(/tv-button--primary"/g)).toHaveLength(2);
   expect(html.match(/tv-button--inverse"/g)).toHaveLength(1);
-  expect(html).toContain('class="tv-button tv-button--primary" href="https://docs.torviello.dev/install"');
+  expect(html).toContain('class="tv-button tv-button--primary" href="https://github.com/Evintkoo/torch-inference/blob/main/torviello-docs/docs/INSTALL.md"');
 });
 
 test("the audience actions keep the m4 destinations (carried from BC/0038)", () => {

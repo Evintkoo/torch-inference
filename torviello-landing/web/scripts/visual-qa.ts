@@ -35,6 +35,20 @@ for (const width of widths) {
   });
   await page.goto("http://localhost:5173/", { waitUntil: "networkidle" });
 
+  // LP-09 reveal: walk the page so IntersectionObserver reveals fire before
+  // the full-page capture (the fallback timer is the safety net). The walk
+  // forces instant jumps — the page's smooth scroll-behavior would otherwise
+  // animate every step and never reach the lower sections.
+  await page.evaluate(async () => {
+    const step = window.innerHeight / 2;
+    for (let y = 0; y <= document.body.scrollHeight; y += step) {
+      window.scrollTo({ top: y, behavior: "instant" });
+      await new Promise((resolve) => setTimeout(resolve, 120));
+    }
+    window.scrollTo({ top: 0, behavior: "instant" });
+  });
+  await page.waitForTimeout(900);
+
   const report = await page.evaluate(() => {
     const menu = document.querySelector(".tv-navbar__menu");
     const menuDisplay = menu ? getComputedStyle(menu).display : "missing";

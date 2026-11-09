@@ -12,13 +12,13 @@ const cards = [
     eyebrow: "For builders",
     heading: "From idea to impact.",
     body: "The inference engine that moves with you — from notebooks to production.",
-    action: { label: "Start building", href: "https://docs.torviello.dev/install" },
+    action: { label: "Start building", href: "https://github.com/Evintkoo/torch-inference/blob/main/torviello-docs/docs/INSTALL.md" },
   },
   {
     eyebrow: "For AI teams",
     heading: "Build, deploy, scale together.",
     body: "A unified inference engine for researchers, engineers, and product teams.",
-    action: { label: "Read the docs", href: "https://docs.torviello.dev", external: true },
+    action: { label: "Read the docs", href: "https://github.com/Evintkoo/torch-inference/tree/main/torviello-docs", external: true },
   },
   {
     eyebrow: "For real-world AI",

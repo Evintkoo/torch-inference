@@ -5,6 +5,7 @@
      page. Card order is the board order: builders, AI teams, real-world AI. -->
 <script lang="ts">
   import AudienceCard from "../ui/AudienceCard.svelte";
+  import { reveal } from "../../lib/reveal";
   import type { IconName } from "../../lib/icons";
 
   interface ShowcaseCard {
@@ -24,14 +25,16 @@
 </script>
 
 <div class="tv-showcase-grid">
-  {#each cards as card (card.heading)}
-    <AudienceCard
-      eyebrow={card.eyebrow}
-      heading={card.heading}
-      body={card.body}
-      image={card.image}
-      art={card.art}
-      action={card.action}
-    />
+  {#each cards as card, index (card.heading)}
+    <div class="tv-showcase-grid__slot" use:reveal={{ delay: index * 90 }}>
+      <AudienceCard
+        eyebrow={card.eyebrow}
+        heading={card.heading}
+        body={card.body}
+        image={card.image}
+        art={card.art}
+        action={card.action}
+      />
+    </div>
   {/each}
 </div>

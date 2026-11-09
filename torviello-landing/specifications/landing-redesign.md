@@ -19,6 +19,43 @@ structure, `prefers-reduced-motion`)
 **Functional design:** [`torviello-design/specifications/landing-functional-design.md`](../../../torviello-design/specifications/landing-functional-design.md)
 **Tokens:** [`torviello-design/contracts/design-tokens.json`](../../../torviello-design/contracts/design-tokens.json) — components consume semantic tokens only
 
+## Amendment — 2026-11-03, second round (owner direction, GOV-07.05)
+
+Owner authority (recorded on ticket 0041): "the design still need some
+references, touches from the best website", "why i still see the card
+overflow", "the header need to be better design not the documented engine
+session", "footer also bad". Deltas to the requirements above:
+
+- **LP-01 (amended):** the sticky nav renders as a floating glass pill
+  (rounded container, brand hairline, blur) rather than a full-width bar; the
+  menu-button behavior below 768px is unchanged.
+- **LP-02 (amended):** the hero composes centered — badge chip, display
+  h1, centered body, the inline rail, centered actions, trust line — and its
+  visual anchor is a **decorative aria-hidden inference artwork** (abstract
+  stream-and-nodes composition, no data, no claimed behavior), not the engine
+  session. The hero renders no terminal.
+- **LP-10 (new):** a dedicated **"A real session"** band renders the
+  documented engine session (the only verified transcript on the page) in a
+  centered terminal window with the caption naming it as such, between the
+  proof band and the use-cases row.
+- **LP-06 (amended):** the illustrative terminal's chrome gains a **Copy
+  affordance** for the install command — a labeled chip that writes to the
+  clipboard only on success and confirms with a "Copied" state; it presents no
+  new behavior claims.
+- **LP-08 (amended):** the footer composes as brand block + four link
+  columns (Product, Resources, Community, plus the legal row), all resolving
+  to the designated placeholder hosts, above an oversized decorative aria
+  -hidden wordmark and a hairline legal bar.
+- **LP-09 (amended):** section order is nav → hero → values → proof → real
+  session → use cases → terminal band → CTA → footer; decorative artwork is
+  `aria-hidden`; reveal animations sit behind `prefers-reduced-motion` and an
+  IntersectionObserver with a forced-reveal fallback, so content is never
+  permanently hidden.
+- **Defect (all widths ≥1280):** audience-card content overflowed its card by
+  ~47px (the action button crossed the card's bottom border) — `height: 100%`
+  inside a `min-height` grid item resolves circularly; the card becomes a
+  stretch container so the content fills and the card grows.
+
 ## Use cases
 
 - UC-LP-1 — A first-time visitor lands on the page, reads a one-line promise
