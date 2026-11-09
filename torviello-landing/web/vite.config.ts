@@ -7,6 +7,10 @@ export default defineConfig(async () => {
   const { svelte } = await import("@sveltejs/vite-plugin-svelte");
   return {
     plugins: [svelte()],
+    // Relative asset base: the site must work under any mount path —
+    // GitHub Pages serves the project site from /torch-inference/ (ticket
+    // 0047), a VM serves it from / — without rebuilding per target.
+    base: "./",
     resolve: {
       alias: {
         // GOV-12.07: design and media assets are imported from the owning unit.
