@@ -7,11 +7,61 @@ deployed component's unit)
 **Contract:** [`contracts/deployment/deploy-contract.json`](../contracts/deployment/deploy-contract.json)
 
 State when this runbook was written (owner direction 2026-11-09): the Oracle
-Cloud VM exists but SSH access is not set up yet; the domain points at the
-server; HTTP only for now, TLS later. This document is the one-time path from
-"instance exists" to "first deploy lands". Placeholder values —
-`landing.example` (domain), `<vm-public-ip>` (OCI public IP) — are filled in
-here and nowhere committed to the repository.
+Cloud VM exists but SSH access is not set up yet; the domain (torviello.dev)
+is **not registered yet** — registration is deferred, so the site first
+serves from the VM's bare address over `:80` (LD-09 bootstrap), and the
+domain + auto-TLS flip follows when it is registered (UC-LD-4). Placeholder
+values — `landing.example` (domain), `<vm-public-ip>` (OCI public IP) — are
+filled in here and nowhere committed to the repository.
+
+## 0. Fast path — Cloud Shell enrollment and firewall (no local credentials)
+
+If you prefer CLI over console clicks, paste this into **OCI Cloud Shell**
+(Developer tools → Cloud Shell; it is pre-authenticated as you). It enrolls
+the deploy key via the instance agent's Run Command, opens TCP 80/443 in the
+subnet security list, and prints the public IP the deploy tool needs:
+
+```bash
+set -e
+KEY="ssh-ed25519 REPLACE_WITH_THE_PUBLISHED_DEPLOY_KEY torviello-landing deploy key"
+COMP_IDS=("$OCI_TENANCY" $(oci iam list-compartments --all --access-level ANY \
+  --query "data[?\"lifecycle-state\"=='ACTIVE'].id" --raw-output | tr -d '[],"'))
+INST=""; C=""
+for c in "${COMP_IDS[@]}"; do
+  I=$(oci compute instance list --compartment-id "$c" --lifecycle-state RUNNING \
+      --query 'data | sort_by(@, &"time-created") | [0]' --raw-output 2>/dev/null || true)
+  [ -n "$I" ] && [ "$I" != "null" ] && { INST="$I"; C="$c"; break; }
+done
+[ -n "$INST" ] || { echo "No RUNNING instance found"; exit 1; }
+IID=$(jq -r .id <<<"$INST")
+VA=$(oci compute vnic-attachment list --compartment-id "$C" --instance-id "$IID" \
+     --query 'data[0]."vnic-id"' --raw-output)
+IP=$(oci network vnic get --vnic-id "$VA" --query 'data."public-ip"' --raw-output)
+echo "instance public IP: $IP"
+printf 'mkdir -p /home/ubuntu/.ssh && chmod 700 /home/ubuntu/.ssh && echo "%s" >> /home/ubuntu/.ssh/authorized_keys; chmod 600 /home/ubuntu/.ssh/authorized_keys; chown -R ubuntu:ubuntu /home/ubuntu/.ssh\n' "$KEY" > /tmp/enroll.sh
+oci compute instance run-command create --instance-id "$IID" --compartment-id "$C" \
+  --display-name enroll-deploy-key --content-file /tmp/enroll.sh \
+  --execution-timeout-in-seconds 60 >/dev/null && echo "key enrollment scheduled (~30s)"
+SUB=$(oci network vnic get --vnic-id "$VA" --query 'data."subnet-id"' --raw-output)
+SL=$(oci network subnet get --subnet-id "$SUB" --query 'data."security-list-ids"[0]' --raw-output)
+oci network security-list update --security-list-id "$SL" --force --add-security-rules \
+  '[{"direction":"INGRESS","protocol":"6","source":"0.0.0.0/0","source-type":"CIDR_BLOCK","tcp-options":{"destination-port-range":{"min":80,"max":80}},"description":"landing HTTP"},{"direction":"INGRESS","protocol":"6","source":"0.0.0.0/0","source-type":"CIDR_BLOCK","tcp-options":{"destination-port-range":{"min":443,"max":443}},"description":"landing HTTPS"}]' >/dev/null
+echo "ports 80+443 open"
+```
+
+Then bring the server up and deploy — two commands from the unit root, no
+manual server steps (`bootstrap` covers § 3 and § 4 automatically, including
+the OCI iptables fix):
+
+```sh
+cd torviello-landing
+LANDING_DEPLOY_HOST=ubuntu@<vm-public-ip> bun deploy/deploy.ts bootstrap   # one-time
+LANDING_DEPLOY_HOST=ubuntu@<vm-public-ip> bun deploy/deploy.ts deploy      # publishes the site
+```
+
+Verify: `curl -fsI http://<vm-public-ip>/ | head`. When the domain is later
+registered and DNS points at the VM, re-run bootstrap with
+`--domain your-domain.example` — Caddy then provisions TLS automatically.
 
 ## 1. SSH access (local machine)
 

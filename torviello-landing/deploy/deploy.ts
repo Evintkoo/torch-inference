@@ -2,8 +2,8 @@
 /**
  * torviello-landing deploy — build, publish, verify, activate, rollback.
  *
- * Contract:  ../contracts/deployment/deploy-contract.json (v1.1.0)
- * Spec:      ../specifications/landing-deployment.md (LD-01..LD-08)
+ * Contract:  ../contracts/deployment/deploy-contract.json (v1.2.0)
+ * Spec:      ../specifications/landing-deployment.md (LD-01..LD-09)
  * Ownership: GOV-12.04 — this deploy tooling is a torviello-landing unit
  *            artifact and never lives outside the unit.
  * Runtime:   GOV-13 — repository tooling is implemented in the owning unit's
@@ -44,12 +44,14 @@ const SSH_EXTRA = process.env.LANDING_DEPLOY_SSH_OPTIONS ?? "";
 
 const RELEASE_ID_PATTERN = "^[A-Za-z0-9._-]+$";
 const VERIFICATION_MARKER = "TORVIELLO_RELEASE_OK";
+const BOOTSTRAP_MARKER = "TORVIELLO_BOOTSTRAP_OK";
 
 type ExitCode = 0 | 2 | 3 | 4 | 5 | 6 | 7;
-let COMMAND: "deploy" | "rollback" = "deploy";
+let COMMAND: "deploy" | "rollback" | "bootstrap" = "deploy";
 let DRY_RUN = false;
 let SKIP_BUILD = false;
 let ROLLBACK_INTO = "";
+let DOMAIN = "";
 
 function die(code: ExitCode, message: string): never {
   console.error(`deploy: ${message}`);
@@ -59,13 +61,14 @@ function die(code: ExitCode, message: string): never {
 function usage(): string {
   return `torviello-landing deploy — build, publish, verify, activate, rollback.
 
-Contract:  contracts/deployment/deploy-contract.json (v1.1.0)
-Spec:      specifications/landing-deployment.md (LD-01..LD-08)
+Contract:  contracts/deployment/deploy-contract.json (v1.2.0)
+Spec:      specifications/landing-deployment.md (LD-01..LD-09)
 
 Usage:
-  bun deploy/deploy.ts deploy   [--dry-run] [--skip-build] [--host H] [--keep N]
-                                [--release-id ID]
-  bun deploy/deploy.ts rollback [--dry-run] [--host H] [--into ID]
+  bun deploy/deploy.ts deploy    [--dry-run] [--skip-build] [--host H] [--keep N]
+                                 [--release-id ID]
+  bun deploy/deploy.ts rollback  [--dry-run] [--host H] [--into ID]
+  bun deploy/deploy.ts bootstrap [--dry-run] [--host H] [--domain NAME]
 
 Environment:
   LANDING_DEPLOY_HOST        (required) SSH destination: [user@]host
@@ -86,6 +89,7 @@ function parseArgs(argv: string[]): void {
     switch (arg) {
       case "deploy":
       case "rollback":
+      case "bootstrap":
         if (commandSeen) die(2, "duplicate command");
         commandSeen = true;
         COMMAND = arg;
@@ -114,6 +118,11 @@ function parseArgs(argv: string[]): void {
         if (COMMAND !== "rollback") die(2, "--into applies to rollback");
         ROLLBACK_INTO = argv.shift() ?? die(2, "--into needs a value");
         break;
+      case "--domain": {
+        if (COMMAND !== "bootstrap") die(2, "--domain applies to bootstrap");
+        DOMAIN = argv.shift() ?? die(2, "--domain needs a value");
+        break;
+      }
       case "--help":
       case "-h":
         console.log(usage());
@@ -146,6 +155,9 @@ function validateConfig(): void {
   if (ROLLBACK_INTO !== "" && unsafe(ROLLBACK_INTO, new RegExp(RELEASE_ID_PATTERN))) {
     die(2, "unsafe --into id: allowed [A-Za-z0-9._-]");
   }
+  if (DOMAIN !== "" && unsafe(DOMAIN, /^[A-Za-z0-9.-]+$/)) {
+    die(2, "unsafe --domain: allowed [A-Za-z0-9.-]");
+  }
 }
 
 // ---- dependencies (E2, E3) ----------------------------------------------------
@@ -158,7 +170,9 @@ function toolMissing(tool: string): boolean {
 
 function requireTools(): void {
   const missing: string[] = [];
-  for (const tool of ["rsync", "ssh"]) {
+  // rollback and bootstrap only need ssh; deploy also needs rsync and bun.
+  const needed = COMMAND === "deploy" ? ["rsync", "ssh"] : ["ssh"];
+  for (const tool of needed) {
     if (toolMissing(tool)) missing.push(tool);
   }
   if (!SKIP_BUILD && toolMissing("bun")) {
@@ -281,6 +295,64 @@ ls -1 | LC_ALL=C sort -r | tail -n +"$((keep + 1))" | while IFS= read -r old; do
   echo "pruned $old"
 done
 `;
+
+/** One-time server bring-up (UC-LD-6/LD-09): Ubuntu server, passwordless
+ * sudo (OCI default). The Caddy config is rendered locally from the unit's
+ * Caddyfile and embedded here; the script echoes TORVIELLO_BOOTSTRAP_OK only
+ * after every step succeeded. */
+const REMOTE_BOOTSTRAP_TEMPLATE = `
+set -eu
+export DEBIAN_FRONTEND=noninteractive
+sudo apt-get update -q
+sudo apt-get install -yq caddy rsync
+sudo mkdir -p "__WEBROOT__/releases"
+sudo chown -R "$(id -un)" "__WEBROOT__"
+for port in 80 443; do
+  sudo iptables -C INPUT -p tcp --dport "$port" -j ACCEPT 2>/dev/null || {
+    line=$(sudo iptables -L INPUT --line-numbers -n | awk '/REJECT|DROP/ {print $1; exit}')
+    sudo iptables -I INPUT "\${line:-1}" -p tcp --dport "$port" -j ACCEPT
+  }
+done
+sudo netfilter-persistent save >/dev/null 2>&1 || sudo sh -c 'iptables-save > /etc/iptables/rules.v4'
+sudo tee /etc/caddy/Caddyfile > /dev/null <<'CADDY_EOF'
+__CADDY_CONFIG__
+CADDY_EOF
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl enable --now caddy
+sudo systemctl restart caddy
+echo TORVIELLO_BOOTSTRAP_OK
+`;
+
+/** Render the unit Caddyfile for the current phase: bare :80 (IP-only, the
+ * pre-domain phase) or the domain form (Caddy auto-TLS via ACME). */
+function renderCaddyConfig(): string {
+  const source = readFileSync(join(UNIT_ROOT, "deploy", "Caddyfile"), "utf8");
+  const site = DOMAIN === "" ? ":80" : DOMAIN;
+  let config = source.replaceAll("http://landing.example {", `${site} {`);
+  // The root follows the configured webroot (tests use a different webroot).
+  config = config.replaceAll("/var/www/torviello-landing/current", `${WEBROOT}/current`);
+  if (config.includes("landing.example")) die(2, "Caddyfile render failed: site address not found");
+  return config;
+}
+
+function doBootstrap(): void {
+  const config = renderCaddyConfig();
+  const script = remoteScript(REMOTE_BOOTSTRAP_TEMPLATE, { WEBROOT })
+    .replace("__CADDY_CONFIG__", config);
+
+  if (DRY_RUN) {
+    console.log(`==> would bootstrap ${HOST} (site address: ${DOMAIN === "" ? ":80" : DOMAIN}; dry run; nothing changed)`);
+    console.log(script);
+    process.exit(0);
+  }
+
+  console.log(`==> bootstrapping ${HOST} (install caddy/rsync, webroot, firewall, render ${DOMAIN === "" ? ":80" : DOMAIN}, start caddy)`);
+  const res = ssh([script]);
+  if (res.status !== 0 || !(res.stdout as string).includes(BOOTSTRAP_MARKER)) {
+    die(5, `bootstrap failed on ${HOST}; the script ran with set -eu, so the first failed step is in the output above`);
+  }
+  console.log("==> bootstrap complete: caddy is serving; run deploy to publish a release");
+}
 
 function verifyRemoteRelease(id: string): boolean {
   const script = remoteScript(REMOTE_VERIFY_TEMPLATE, {
@@ -429,8 +501,10 @@ function main(): void {
   if (COMMAND === "deploy") {
     requireTools();
     doDeploy();
-  } else {
+  } else if (COMMAND === "rollback") {
     doRollback();
+  } else {
+    doBootstrap();
   }
   process.exit(0);
 }

@@ -238,6 +238,28 @@ Verification: `bun test tests/integration/seo.test.ts` builds the site into
 an isolated `dist-seo` directory and asserts every requirement above against
 the built bytes.
 
+## Bootstrap bring-up (UC-LD-6, LD-09)
+
+**Amendment — 2026-11-09, fourth pass (owner direction, GOV-07.05):** the
+owner deferred the domain registration ("torviello.dev will go after") and
+asked for the rest to be done for them. The pre-domain phase is therefore
+explicit: the site first serves from the VM's bare address (`:80`), and the
+domain + auto-TLS flip happens when the owner registers it (UC-LD-4).
+
+- **UC-LD-6 — Bootstrap the server.** `bun deploy/deploy.ts bootstrap`
+  performs the one-time server bring-up over SSH: install `caddy` and
+  `rsync`, create the webroot (`releases/` owned by the SSH user), correct
+  the OCI iptables INPUT chain so ports 80/443 are accepted ahead of the
+  default REJECT rule and persisted, render the unit `Caddyfile` into
+  `/etc/caddy/Caddyfile`, enable and restart Caddy, and verify itself. By
+  default the site address is bare `:80`; `--domain <name>` renders the
+  domain form (auto-TLS via ACME) for the registered-domain flip.
+- **LD-09 — Bootstrap verification.** The remote script ends by echoing the
+  `TORVIELLO_BOOTSTRAP_OK` marker only after every step succeeded (apt,
+  webroot, firewall, render, service); the tool exits 5 when the marker is
+  absent. Idempotent: re-running a bootstrap is safe (apt and firewall steps
+  are guarded).
+
 ## Out of scope
 
 - CI/CD automation (GitHub Actions deploy workflow) — a later ticket may add

@@ -159,10 +159,18 @@ beforeAll(() => {
 
   // Fake ssh: log argv, rewrite the webroot prefix to the fake remote root,
   // execute the remote command locally with sh. FAKE_SSH_FAIL_VERIFY=1
-  // simulates a failing on-server verification (E5).
+  // simulates a failing on-server verification (E5). In mock mode
+  // (TORVIELLO_FAKE_SSH_MOCK=1) commands are logged, never executed —
+  // bootstrap's Linux commands (apt, iptables) cannot run on macOS — and the
+  // success marker is echoed when present; FAKE_SSH_MOCK_FAIL=1 forces exit 1.
   stub(
     "ssh",
     `echo "$*" >> "$TORVIELLO_FAKE_SSH_LOG"
+     if [ -n "\${TORVIELLO_FAKE_SSH_MOCK:-}" ]; then
+       if [ -n "\${TORVIELLO_FAKE_SSH_MOCK_FAIL:-}" ]; then echo "mock ssh: command failed" >&2; exit 1; fi
+       case "$*" in *TORVIELLO_BOOTSTRAP_OK*) echo TORVIELLO_BOOTSTRAP_OK ;; esac
+       exit 0
+     fi
      cmd=""
      prev=""
      for a in "$@"; do
@@ -223,18 +231,22 @@ afterAll(() => {
 
 describe("deploy contract (AC-LD-3, GOV-08)", () => {
   test("contract document parses and carries the required sections", () => {
-    expect(CONTRACT.version).toBe("1.1.0");
+    expect(CONTRACT.version).toBe("1.2.0");
     expect(CONTRACT.script).toContain("deploy.ts");
     expect(CONTRACT.invocation).toContain("bun deploy/deploy.ts");
     expect(CONTRACT.compatibility).toContain("GOV-13");
-    expect(Object.keys(CONTRACT.commands)).toEqual(expect.arrayContaining(["deploy", "rollback"]));
+    expect(Object.keys(CONTRACT.commands)).toEqual(
+      expect.arrayContaining(["deploy", "rollback", "bootstrap"]),
+    );
     expect(CONTRACT.environment.LANDING_DEPLOY_HOST.required).toBe(true);
     for (const code of ["0", "2", "3", "4", "5", "6", "7"]) {
       expect(CONTRACT.exit_codes[code], `exit code ${code}`).toBeString();
     }
     expect(CONTRACT.remote_layout.current_link).toContain("current");
     expect(CONTRACT.release_id_format.pattern).toBe("^[A-Za-z0-9._-]+$");
-    expect(CONTRACT.verification_marker.token).toBe("TORVIELLO_RELEASE_OK");
+    for (const marker of Object.keys(CONTRACT.verification_markers)) {
+      expect(marker).toMatch(/^TORVIELLO_[A-Z_]+_OK$/);
+    }
   });
 
   test("script implements the contract: commands, flags, env, exit codes, marker", () => {
@@ -252,7 +264,9 @@ describe("deploy contract (AC-LD-3, GOV-08)", () => {
       // The tool returns codes through die(code, ...) or process.exit(code).
       expect(src, `exit path for code ${code}`).toMatch(new RegExp(`(die|process\\.exit)\\(${code}\\b`));
     }
-    expect(src).toContain(CONTRACT.verification_marker.token);
+    for (const marker of Object.keys(CONTRACT.verification_markers)) {
+      expect(src, `marker ${marker}`).toContain(marker);
+    }
     expect(src).toContain(CONTRACT.release_id_format.pattern);
   });
 });
@@ -467,6 +481,54 @@ describe("LD-05/E6 — rollback with no candidate", () => {
     mkdirSync(fakeRemote, { recursive: true });
     const res = run(["rollback"]);
     expect(res.exitCode).toBe(6);
+  });
+});
+
+describe("LD-09 — bootstrap", () => {
+  beforeEach(() => {
+    rmSync(sshLog, { force: true });
+  });
+
+  test("happy path runs the bring-up script and requires the marker", () => {
+    const res = run(["bootstrap"], { TORVIELLO_FAKE_SSH_MOCK: "1" });
+    expect(res.exitCode, res.stderr).toBe(0);
+    expect(res.stdout).toContain("bootstrap complete");
+    const log = sshInvocations().join("\n");
+    expect(log).toContain("apt-get install -yq caddy rsync");
+    expect(log).toContain(`mkdir -p "${WEBROOT}/releases"`);
+    expect(log).toContain("iptables");
+    expect(log).toContain("80");
+    expect(log).toContain("443");
+    expect(log).toContain("/etc/caddy/Caddyfile");
+    expect(log).toContain("systemctl restart caddy");
+    expect(log).toContain(":80 {");
+  });
+
+  test("--domain renders the domain site address for auto-TLS", () => {
+    const res = run(["bootstrap", "--domain", "torviello.dev"], { TORVIELLO_FAKE_SSH_MOCK: "1" });
+    expect(res.exitCode).toBe(0);
+    const log = sshInvocations().join("\n");
+    expect(log).toContain("torviello.dev {");
+    expect(log).not.toContain(":80 {");
+  });
+
+  test("unsafe --domain is rejected", () => {
+    const res = run(["bootstrap", "--domain", "bad host!"], { TORVIELLO_FAKE_SSH_MOCK: "1" });
+    expect(res.exitCode).toBe(2);
+    expect(sshInvocations()).toEqual([]);
+  });
+
+  test("dry run issues no SSH command", () => {
+    const res = run(["bootstrap", "--dry-run"]);
+    expect(res.exitCode).toBe(0);
+    expect(res.stdout).toContain("would bootstrap");
+    expect(sshInvocations()).toEqual([]);
+  });
+
+  test("failed remote script exits 5", () => {
+    const res = run(["bootstrap"], { TORVIELLO_FAKE_SSH_MOCK: "1", TORVIELLO_FAKE_SSH_MOCK_FAIL: "1" });
+    expect(res.exitCode).toBe(5);
+    expect(res.stderr).toContain("bootstrap failed");
   });
 });
 

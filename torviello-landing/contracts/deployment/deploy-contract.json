@@ -2,13 +2,13 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "torviello-landing/contracts/deployment/deploy-contract.json",
   "title": "torviello-landing deploy script interface",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "status": "active",
   "description": "Interface of torviello-landing/deploy/deploy.ts: commands, flags, environment, exit codes, remote layout, and release identity. Consumers are operators, tests, and CI automation. Changes to any field here are contract changes under GOV-08.",
   "specification": "torviello-landing/specifications/landing-deployment.md",
   "script": "torviello-landing/deploy/deploy.ts",
   "invocation": "bun deploy/deploy.ts <command> [flags]  (from the torviello-landing unit root)",
-  "compatibility": "1.0.0 -> 1.1.0: implementation moved from deploy.sh (bash, deleted per GOV-13) to deploy.ts (TypeScript executed by Bun). Commands, flags, environment variables, exit codes, remote layout, release-id format, and the verification marker are unchanged; only the invocation changed (bash deploy/deploy.sh -> bun deploy/deploy.ts).",
+  "compatibility": "1.0.0 -> 1.1.0: implementation moved from deploy.sh (bash, deleted per GOV-13) to deploy.ts (TypeScript executed by Bun). Commands, flags, environment variables, exit codes, remote layout, release-id format, and the verification marker are unchanged; only the invocation changed (bash deploy/deploy.sh -> bun deploy/deploy.ts). 1.1.0 -> 1.2.0: added the bootstrap command (UC-LD-6/LD-09) with the --domain flag; all existing commands and fields are unchanged and backward compatible.",
   "commands": {
     "deploy": {
       "default": true,
@@ -19,6 +19,11 @@
       "default": false,
       "description": "Verify the checksums of a previously uploaded release on the server, then atomically repoint current at it. Default target: the newest release that is not currently active.",
       "flags": ["--into", "--host", "--dry-run"]
+    },
+    "bootstrap": {
+      "default": false,
+      "description": "One-time server bring-up over SSH: install caddy and rsync, create the webroot, fix the OCI iptables INPUT chain for ports 80/443 with persistence, render the unit Caddyfile (bare :80 by default, domain with auto-TLS via --domain), enable and restart caddy, and verify with the TORVIELLO_BOOTSTRAP_OK marker (LD-09).",
+      "flags": ["--domain", "--host", "--dry-run"]
     }
   },
   "flags": {
@@ -27,7 +32,9 @@
     "--host": "user@host or host overriding LANDING_DEPLOY_HOST for this invocation.",
     "--keep": "Retention count for deploy; 0 disables pruning. Overrides LANDING_DEPLOY_KEEP.",
     "--release-id": "Override the release id (deterministic runs in tests and CI). Must match ^[A-Za-z0-9._-]+$. Requires --skip-build to be reproducible.",
-    "--into": "rollback only: explicit target release id."
+    "--into": "rollback only: explicit target release id.",
+    "--domain": "bootstrap only: render the Caddyfile site address for the named domain with Caddy auto-TLS instead of the bare :80 address." ,
+    "--help": "Print usage and exit 0."
   },
   "environment": {
     "LANDING_DEPLOY_HOST": {
@@ -85,8 +92,8 @@
     "fallback_shape": "YYYYmmddHHMMSS-nogit",
     "sort_order": "lexicographic ascending equals chronological ascending"
   },
-  "verification_marker": {
-    "token": "TORVIELLO_RELEASE_OK",
-    "description": "Echoed by the on-server verification script after checksums validate and index.html is present; the script only activates a release whose verification output ends with this token."
+  "verification_markers": {
+    "TORVIELLO_RELEASE_OK": "Echoed by the on-server verification script after checksums validate and index.html is present; the tool only activates a release whose verification output ends with this token.",
+    "TORVIELLO_BOOTSTRAP_OK": "Echoed at the end of the bootstrap remote script after apt, webroot, firewall, render, and service steps all succeeded; bootstrap exits 5 when it is absent (LD-09)."
   }
 }

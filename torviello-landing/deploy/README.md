@@ -11,7 +11,7 @@ provisioned — follow [`server-setup.md`](server-setup.md).
 
 | File | Purpose |
 |---|---|
-| `deploy.ts` | build → stage → upload → verify → activate → prune; `rollback` — TypeScript executed by Bun (GOV-13: no committed shell scripts) |
+| `deploy.ts` | `bootstrap` (one-time server bring-up), build → stage → upload → verify → activate → prune, and `rollback` — TypeScript executed by Bun (GOV-13: no committed shell scripts) |
 | `Caddyfile` | server configuration source of truth (HTTP today; TLS flip documented inside) |
 | `server-setup.md` | one-time Oracle Cloud VM provisioning runbook (SSH, firewall, Caddy, DNS, first deploy, CI secrets, TLS upgrade) |
 | `.staging/` | generated local staging output — gitignored, never committed |
@@ -31,10 +31,15 @@ secret names).
 
 ```sh
 cd torviello-landing
+LANDING_DEPLOY_HOST=<user>@<host> bun deploy/deploy.ts bootstrap          # one-time server bring-up (packages, webroot, firewall, caddy)
 LANDING_DEPLOY_HOST=<user>@<host> bun deploy/deploy.ts deploy          # build + publish + verify + activate
 LANDING_DEPLOY_HOST=<user>@<host> bun deploy/deploy.ts deploy --dry-run # local path + rsync preview, zero remote writes
 LANDING_DEPLOY_HOST=<user>@<host> bun deploy/deploy.ts deploy --skip-build --keep 5
 ```
+
+`bootstrap` renders the Caddyfile with the bare `:80` site address by default
+(the pre-domain phase); pass `--domain <name>` once DNS exists and Caddy
+provisions TLS automatically.
 
 Environment: `LANDING_DEPLOY_HOST` (required), `LANDING_DEPLOY_SSH_PORT`
 (22), `LANDING_DEPLOY_WEBROOT` (`/var/www/torviello-landing`),
