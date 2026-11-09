@@ -2,10 +2,11 @@
 
 Part of **torviello-landing** — Public landing page and marketing site.
 
-**Status:** integrated and verified hermetically (ticket
-[0043](../../../torviello-roles/tickets/0043-integrate-landing-page-deployment-to-the-oracle-server.md)).
-The first real deployment against the Oracle VM runs as soon as SSH access is
-provisioned — follow [`server-setup.md`](server-setup.md).
+**Status:** live at **https://evintkoo.github.io/torch-inference/** (GitHub
+Pages, the interim public link while torviello.dev is unregistered — ticket
+0047). The first real deployment against an Oracle VM runs as soon as the
+owner creates an Oracle account and provisions SSH access — follow
+[`server-setup.md`](server-setup.md).
 
 ## What lives here
 

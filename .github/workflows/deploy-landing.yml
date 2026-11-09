@@ -22,16 +22,18 @@ on:
       - "torviello-landing/**"
       - ".github/workflows/deploy-landing.yml"
 
-# The deployment logic, manifests, and server configuration live inside
-# torviello-landing (GOV-12.04); this file is only a thin CI invoker that
-# runs the unit's own tooling (bun deploy/deploy.ts). The root placement of
-# the workflow file is the recorded owner decision on ticket 0044.
+# Two thin CI invokers in one file:
+#  - landing-deploy: runs the unit's SSH deploy tooling against the Oracle VM
+#    (dormant until the VM/SSH access exists; dispatch supports rollback).
+#  - publish-pages: publishes the built site to GitHub Pages so every push to
+#    main touching torviello-landing goes live at
+#    https://evintkoo.github.io/torch-inference/ (the interim public link,
+#    ticket 0047).
+# All deployment logic, manifests, and server configuration live inside
+# torviello-landing (GOV-12.04). The root placement of this workflow file is
+# the recorded owner decision on ticket 0044.
 permissions:
   contents: read
-
-concurrency:
-  group: landing-deploy
-  cancel-in-progress: false
 
 defaults:
   run:
@@ -42,6 +44,9 @@ jobs:
     name: landing-${{ github.event.inputs.mode || 'deploy' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    concurrency:
+      group: landing-deploy
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -98,3 +103,38 @@ jobs:
       - name: Remove CI deploy key
         if: always()
         run: rm -f ~/.ssh/landing_deploy_key
+
+  publish-pages:
+    name: publish-pages
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+
+      - name: Install web dependencies
+        run: cd torviello-landing/web && bun install --frozen-lockfile
+
+      - name: Build the landing site
+        run: cd torviello-landing/web && bun run build
+
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: torviello-landing/web/dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
