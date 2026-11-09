@@ -8,18 +8,22 @@
     <meta name="theme-color" content="#0b1020" />
     <title>Torviello — The execution layer for AI</title>
 
-    <!-- SEO-01..03: primary meta (SEO readiness, ticket 0045) -->
-    <link rel="canonical" href="https://torviello.dev/" />
+    <!-- SEO-01..03: primary meta (SEO readiness, ticket 0045). The base URL
+         is the declared canonical; it lives in web/.env (VITE_SITE_URL) and
+         is replaced here and in robots/sitemap by the build (ticket 0047).
+         Flip web/.env to https://torviello.dev/ once the domain is registered
+         and wired as the Pages custom domain. -->
+    <link rel="canonical" href="https://evintkoo.github.io/torch-inference/" />
     <meta name="robots" content="index, follow" />
 
     <!-- SEO-04: Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Torviello" />
     <meta property="og:locale" content="en_US" />
-    <meta property="og:url" content="https://torviello.dev/" />
+    <meta property="og:url" content="https://evintkoo.github.io/torch-inference/" />
     <meta property="og:title" content="Torviello — The execution layer for AI" />
     <meta property="og:description" content="An AI-native inference engine built to infer. From experimentation to production: speed, control, and flexibility to run AI your way." />
-    <meta property="og:image" content="https://torviello.dev/og-image.jpg" />
+    <meta property="og:image" content="https://evintkoo.github.io/torch-inference/og-image.jpg" />
     <meta property="og:image:width" content="776" />
     <meta property="og:image:height" content="346" />
     <meta property="og:image:alt" content="Builders working with the Torviello engine" />
@@ -28,7 +32,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Torviello — The execution layer for AI" />
     <meta name="twitter:description" content="An AI-native inference engine built to infer. From experimentation to production: speed, control, and flexibility to run AI your way." />
-    <meta name="twitter:image" content="https://torviello.dev/og-image.jpg" />
+    <meta name="twitter:image" content="https://evintkoo.github.io/torch-inference/og-image.jpg" />
 
     <!-- SEO-06: structured data -->
     <script type="application/ld+json">
@@ -37,26 +41,26 @@
         "@graph": [
           {
             "@type": "Organization",
-            "@id": "https://torviello.dev/#organization",
+            "@id": "https://evintkoo.github.io/torch-inference/#organization",
             "name": "Torviello",
-            "url": "https://torviello.dev/",
+            "url": "https://evintkoo.github.io/torch-inference/",
             "logo": {
               "@type": "ImageObject",
-              "url": "https://torviello.dev/favicon.svg"
+              "url": "https://evintkoo.github.io/torch-inference/favicon.svg"
             }
           },
           {
             "@type": "WebSite",
-            "@id": "https://torviello.dev/#website",
-            "url": "https://torviello.dev/",
+            "@id": "https://evintkoo.github.io/torch-inference/#website",
+            "url": "https://evintkoo.github.io/torch-inference/",
             "name": "Torviello",
             "description": "The execution layer for AI. An AI-native inference engine built to infer.",
-            "publisher": { "@id": "https://torviello.dev/#organization" }
+            "publisher": { "@id": "https://evintkoo.github.io/torch-inference/#organization" }
           }
         ]
       }
     </script>
-    <script type="module" crossorigin src="./assets/index-B462q1z4.js"></script>
+    <script type="module" crossorigin src="./assets/index-DYueyhbS.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-DxRV7lQ0.css">
   </head>
   <body>
