@@ -257,6 +257,19 @@ hits = count(r"#!?\[allow\(dead_code\)\]")
 require(hits == 0, f"dead_code suppressions remain in repository sources: {hits}")
 '''
 
+BUNDLES["no_shell_scripts"] = r'''
+GOV13_SUFFIXES = {".sh", ".bash", ".zsh"}
+suffix_hits = [str(path.relative_to(SOURCE)) for path in all_files(GOV13_SUFFIXES)]
+require(not suffix_hits, f"committed shell scripts are prohibited (GOV-13.01): {sorted(suffix_hits)[:10]}")
+GOV13_SHEBANG = re.compile(r"^#!\s*/(?:bin|usr/bin)/(?:ba|z)?sh\b|^#!\s*/usr/bin/env\s+(?:ba|z)?sh\b")
+shebang_hits = []
+for path in all_files(TEXT_SUFFIXES):
+    first_line = read_path(path).split("\n", 1)[0]
+    if GOV13_SHEBANG.match(first_line):
+        shebang_hits.append(str(path.relative_to(SOURCE)))
+require(not shebang_hits, f"shell-shebang scripts are prohibited (GOV-13.01): {sorted(shebang_hits)[:10]}")
+'''
+
 BUNDLES["no_println"] = r'''
 hits = count(r"\bprintln!\s*\(|\beprintln!\s*\(|\bconsole\.(?:log|debug|info|warn|error)\s*\(|\bSystem\.out\.print|\bfmt\.Print(?:ln|f)?\s*\(|\bprint\s*\(")
 require(hits == 0, f"stdout logging remains in repository sources: {hits}")
@@ -1550,6 +1563,7 @@ OVERRIDES: dict[tuple[str, int], list[str]] = {
     ("governance", 10): ["edd_artifacts", "traceability"],
     ("governance", 11): ["ticket_workflow"],
     ("governance", 12): ["unit_packaging"],
+    ("governance", 13): ["no_shell_scripts"],
     ("licensing", 1): ["license"],
     ("licensing", 2): ["third_party_notices"],
     ("licensing", 3): ["copyright_headers"],

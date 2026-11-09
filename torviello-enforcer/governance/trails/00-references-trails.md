@@ -34,6 +34,14 @@ The control structure uses outcome-focused requirements and assessment methods i
 
 [Test-Driven Development](https://martinfowler.com/bliki/TestDrivenDevelopment.html)
 
+### R7 — Repository owner direction, 2026-11-09: no committed shell scripts
+
+Repository owner directive recorded on tickets 0043 and 0044 ("i dont want
+any sh please add that to rules"): the repository contains no committed shell
+script files, and the preference is a normative control ([GOV-13](../rules/13-no-committed-shell-scripts.md)).
+Project authority; cited in the trail as the source of the control, not as an
+external standard.
+
 ## Rule mapping
 
 | Rule document | Requirement IDs | Source trail |
@@ -50,6 +58,7 @@ The control structure uses outcome-focused requirements and assessment methods i
 | [10-evaluation-driven-development.md](../rules/10-evaluation-driven-development.md) | ED-014, ED-042, ED-054, ED-055 | R1,R2 |
 | [11-work-item-tracking-and-role-memory.md](../rules/11-work-item-tracking-and-role-memory.md) | CSC-005, ED-011, ED-042, ORG-001, ORG-002, PDL-010, PDL-011, PDL-013, PDL-014 | R2,R3 |
 | [12-independent-unit-packaging.md](../rules/12-independent-unit-packaging.md) | CSC-005, ED-011, ED-042, ENG-026, PDL-013 | R1,R2 |
+| [13-no-committed-shell-scripts.md](../rules/13-no-committed-shell-scripts.md) | ED-022 | R7 |
 
 ## Coverage review
 
