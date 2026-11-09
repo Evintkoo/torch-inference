@@ -21,7 +21,8 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
 const UNIT_ROOT = resolve(import.meta.dir, "../..");
-const SCRIPT = join(UNIT_ROOT, "deploy", "deploy.sh");
+const SCRIPT = join(UNIT_ROOT, "deploy", "deploy.ts");
+const REAL_BUN = Bun.which("bun") as string;
 const CONTRACT = JSON.parse(readFileSync(join(UNIT_ROOT, "contracts", "deployment", "deploy-contract.json"), "utf8"));
 
 const WEBROOT = "/var/www/torviello-landing";
@@ -58,7 +59,9 @@ function run(args: string[], extraEnv: Record<string, string> = {}, pathOverride
     ...extraEnv,
   };
   for (const [k, v] of Object.entries(env)) if (v === undefined) delete env[k];
-  const res = spawnSync("/bin/bash", [SCRIPT, ...args], { env, encoding: "utf8" });
+  // deploy.ts is executed by the real Bun binary directly; its child
+  // processes (ssh, rsync, bun run build) resolve through the stubbed PATH.
+  const res = spawnSync(REAL_BUN, [SCRIPT, ...args], { env, encoding: "utf8" });
   // spawnSync exposes the exit status as `status`; surface it as exitCode for
   // readable assertions below.
   const withStatus = res as typeof res & { exitCode?: number | null };
@@ -220,7 +223,10 @@ afterAll(() => {
 
 describe("deploy contract (AC-LD-3, GOV-08)", () => {
   test("contract document parses and carries the required sections", () => {
-    expect(CONTRACT.version).toBe("1.0.0");
+    expect(CONTRACT.version).toBe("1.1.0");
+    expect(CONTRACT.script).toContain("deploy.ts");
+    expect(CONTRACT.invocation).toContain("bun deploy/deploy.ts");
+    expect(CONTRACT.compatibility).toContain("GOV-13");
     expect(Object.keys(CONTRACT.commands)).toEqual(expect.arrayContaining(["deploy", "rollback"]));
     expect(CONTRACT.environment.LANDING_DEPLOY_HOST.required).toBe(true);
     for (const code of ["0", "2", "3", "4", "5", "6", "7"]) {
@@ -243,8 +249,8 @@ describe("deploy contract (AC-LD-3, GOV-08)", () => {
       expect(src, `env ${envVar}`).toContain(envVar);
     }
     for (const code of Object.keys(CONTRACT.exit_codes)) {
-      // The script returns codes either directly (exit N) or via die (die N).
-      expect(src, `exit path for code ${code}`).toMatch(new RegExp(`(exit|die) ${code}\\b`));
+      // The tool returns codes through die(code, ...) or process.exit(code).
+      expect(src, `exit path for code ${code}`).toMatch(new RegExp(`(die|process\\.exit)\\(${code}\\b`));
     }
     expect(src).toContain(CONTRACT.verification_marker.token);
     expect(src).toContain(CONTRACT.release_id_format.pattern);

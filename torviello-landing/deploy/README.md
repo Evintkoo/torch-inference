@@ -11,25 +11,29 @@ provisioned — follow [`server-setup.md`](server-setup.md).
 
 | File | Purpose |
 |---|---|
-| `deploy.sh` | build → stage → upload → verify → activate → prune; `rollback` |
+| `deploy.ts` | build → stage → upload → verify → activate → prune; `rollback` — TypeScript executed by Bun (GOV-13: no committed shell scripts) |
 | `Caddyfile` | server configuration source of truth (HTTP today; TLS flip documented inside) |
-| `server-setup.md` | one-time Oracle Cloud VM provisioning runbook (SSH, firewall, Caddy, DNS, first deploy, TLS upgrade) |
+| `server-setup.md` | one-time Oracle Cloud VM provisioning runbook (SSH, firewall, Caddy, DNS, first deploy, CI secrets, TLS upgrade) |
 | `.staging/` | generated local staging output — gitignored, never committed |
 
 **Contract:** [`../contracts/deployment/deploy-contract.json`](../contracts/deployment/deploy-contract.json)
-(v1.0.0) — commands, flags, environment, exit codes, remote layout.
+(v1.1.0) — commands, flags, environment, exit codes, remote layout, release
+identity, and invocation.
 **Specification:** [`../specifications/landing-deployment.md`](../specifications/landing-deployment.md)
 (LD-01…LD-08).
 **Tests:** `bun test tests/integration` from the unit root — hermetic, no
 network; the suite stubs `ssh`/`rsync`/`bun`.
+**CI:** `.github/workflows/deploy-landing.yml` runs this same tooling with
+repository secrets (see `server-setup.md` § 9 for the key enrollment and
+secret names).
 
 ## Deploy
 
 ```sh
 cd torviello-landing
-LANDING_DEPLOY_HOST=<user>@<host> deploy/deploy.sh deploy          # build + publish + verify + activate
-LANDING_DEPLOY_HOST=<user>@<host> deploy/deploy.sh deploy --dry-run # local path + rsync preview, zero remote writes
-LANDING_DEPLOY_HOST=<user>@<host> deploy/deploy.sh deploy --skip-build --keep 5
+LANDING_DEPLOY_HOST=<user>@<host> bun deploy/deploy.ts deploy          # build + publish + verify + activate
+LANDING_DEPLOY_HOST=<user>@<host> bun deploy/deploy.ts deploy --dry-run # local path + rsync preview, zero remote writes
+LANDING_DEPLOY_HOST=<user>@<host> bun deploy/deploy.ts deploy --skip-build --keep 5
 ```
 
 Environment: `LANDING_DEPLOY_HOST` (required), `LANDING_DEPLOY_SSH_PORT`
@@ -47,10 +51,24 @@ passes on-server checksum verification and `index.html` presence
 ## Rollback
 
 ```sh
-LANDING_DEPLOY_HOST=<user>@<host> deploy/deploy.sh rollback            # newest non-active release, verified first
-LANDING_DEPLOY_HOST=<user>@<host> deploy/deploy.sh rollback --into <release-id>
-LANDING_DEPLOY_HOST=<user>@<host> deploy/deploy.sh rollback --dry-run
+LANDING_DEPLOY_HOST=<user>@<host> bun deploy/deploy.ts rollback            # newest non-active release, verified first
+LANDING_DEPLOY_HOST=<user>@<host> bun deploy/deploy.ts rollback --into <release-id>
+LANDING_DEPLOY_HOST=<user>@<host> bun deploy/deploy.ts rollback --dry-run
 ```
+
+Rollback re-verifies the target's checksums on the server before flipping
+(LD-05, SO-031). The last `KEEP` releases (default 5) are always on the
+server, so rollback never needs a rebuild or the local machine to be current.
+Rollback is also available from CI: run the **Deploy landing** workflow with
+`mode: rollback` (and optionally `into: <release-id>`).
+
+## CI deployment
+
+`.github/workflows/deploy-landing.yml` deploys on every push to `main` that
+touches `torviello-landing/**`, and on manual dispatch with a `rollback`
+mode. It runs the same `deploy.ts` tooling with repository secrets — nothing
+about the release format, verification, or rollback differs from a local
+deploy. The one-time enrollment is in `server-setup.md` § 9.
 
 ## Exit codes
 

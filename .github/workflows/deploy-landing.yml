@@ -1,0 +1,100 @@
+name: Deploy landing
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "deploy publishes a new release; rollback repoints the active release"
+        required: true
+        default: deploy
+        type: choice
+        options:
+          - deploy
+          - rollback
+      into:
+        description: "rollback only: explicit target release id (default: newest non-active)"
+        required: false
+        default: ""
+        type: string
+  push:
+    branches: [main]
+    paths:
+      - "torviello-landing/**"
+      - ".github/workflows/deploy-landing.yml"
+
+# The deployment logic, manifests, and server configuration live inside
+# torviello-landing (GOV-12.04); this file is only a thin CI invoker that
+# runs the unit's own tooling (bun deploy/deploy.ts). The root placement of
+# the workflow file is the recorded owner decision on ticket 0044.
+permissions:
+  contents: read
+
+concurrency:
+  group: landing-deploy
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  landing-deploy:
+    name: landing-${{ github.event.inputs.mode || 'deploy' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check deploy secrets
+        env:
+          HAS_HOST: ${{ secrets.LANDING_DEPLOY_HOST != '' }}
+          HAS_KEY: ${{ secrets.LANDING_DEPLOY_SSH_KEY != '' }}
+        run: |
+          if [ "$HAS_HOST" != "true" ] || [ "$HAS_KEY" != "true" ]; then
+            echo "::error::Deploy secrets missing. Add them under Settings -> Secrets and variables -> Actions:"
+            echo "::error::  LANDING_DEPLOY_HOST    - SSH destination, e.g. ubuntu@<vm-ip> (see torviello-landing/deploy/server-setup.md)"
+            echo "::error::  LANDING_DEPLOY_SSH_KEY - PEM private key of a dedicated CI deploy key enrolled on the VM"
+            exit 1
+          fi
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+
+      - name: Install web dependencies
+        run: cd torviello-landing/web && bun install --frozen-lockfile
+
+      - name: Write CI deploy key
+        env:
+          LANDING_DEPLOY_SSH_KEY: ${{ secrets.LANDING_DEPLOY_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$LANDING_DEPLOY_SSH_KEY" > ~/.ssh/landing_deploy_key
+          chmod 600 ~/.ssh/landing_deploy_key
+
+      - name: Deploy new release
+        if: ${{ github.event.inputs.mode != 'rollback' }}
+        env:
+          LANDING_DEPLOY_HOST: ${{ secrets.LANDING_DEPLOY_HOST }}
+          LANDING_DEPLOY_SSH_PORT: ${{ secrets.LANDING_DEPLOY_SSH_PORT || '22' }}
+          LANDING_DEPLOY_SSH_OPTIONS: "-i $HOME/.ssh/landing_deploy_key -o StrictHostKeyChecking=accept-new"
+        run: cd torviello-landing && bun deploy/deploy.ts deploy
+
+      - name: Roll back to previous release
+        if: ${{ github.event.inputs.mode == 'rollback' && github.event.inputs.into == '' }}
+        env:
+          LANDING_DEPLOY_HOST: ${{ secrets.LANDING_DEPLOY_HOST }}
+          LANDING_DEPLOY_SSH_PORT: ${{ secrets.LANDING_DEPLOY_SSH_PORT || '22' }}
+          LANDING_DEPLOY_SSH_OPTIONS: "-i $HOME/.ssh/landing_deploy_key -o StrictHostKeyChecking=accept-new"
+        run: cd torviello-landing && bun deploy/deploy.ts rollback
+
+      - name: Roll back to explicit release
+        if: ${{ github.event.inputs.mode == 'rollback' && github.event.inputs.into != '' }}
+        env:
+          LANDING_DEPLOY_HOST: ${{ secrets.LANDING_DEPLOY_HOST }}
+          LANDING_DEPLOY_SSH_PORT: ${{ secrets.LANDING_DEPLOY_SSH_PORT || '22' }}
+          LANDING_DEPLOY_SSH_OPTIONS: "-i $HOME/.ssh/landing_deploy_key -o StrictHostKeyChecking=accept-new"
+        run: cd torviello-landing && bun deploy/deploy.ts rollback --into "${{ github.event.inputs.into }}"
+
+      - name: Remove CI deploy key
+        if: always()
+        run: rm -f ~/.ssh/landing_deploy_key

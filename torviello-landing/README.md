@@ -11,15 +11,19 @@ Public landing page and marketing site. Brand message: The execution layer for A
 - `tests/` — unit, contract, and integration tests.
 - `evaluations/` — plans, datasets, reports, and release decisions.
 - `web/` — the landing web app: Svelte 5 components, Bun tooling, Vite build.
-- `deploy/` — deployment of the built site to the Oracle server: `deploy.sh`
-  (rsync-based release publishing with on-server checksum verification,
-  atomic activation, and verified rollback), `Caddyfile` (server config
+- `deploy/` — deployment of the built site to the Oracle server: `deploy.ts`
+  (TypeScript on Bun; rsync-based release publishing with on-server checksum
+  verification, atomic activation, and verified rollback),
+  `Caddyfile` (server config
   source of truth), and the one-time OCI provisioning runbook
   [`deploy/server-setup.md`](deploy/server-setup.md). The interface is
   contracted in
   [`contracts/deployment/deploy-contract.json`](contracts/deployment/deploy-contract.json)
   and hermetically tested by `bun test tests/integration` (ticket 0043,
   [`specifications/landing-deployment.md`](specifications/landing-deployment.md)).
+  CI deployment runs the same tooling through
+  `.github/workflows/deploy-landing.yml`; the repository carries no committed
+  shell scripts (GOV-13, ticket 0044).
 
 ## Web app
 

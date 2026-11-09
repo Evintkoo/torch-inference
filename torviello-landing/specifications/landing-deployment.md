@@ -167,6 +167,38 @@ The contract is versioned; changes to it are contract changes under GOV-08.
 | Ticket store | `uv run python -m torviello_roles check` | ok |
 | Python/ruff baseline | `uv run pytest torviello-roles`, `uv run ruff check .` | no new findings beyond the pre-existing baseline |
 
+## Amendment — 2026-11-09, second pass (owner direction, GOV-07.05)
+
+Owner authority (recorded on tickets 0043 and 0044): "i dont want any sh
+please add that to rules" — no committed shell scripts in the repository.
+Consequences for this specification, applied by ticket
+[0044](../../../torviello-roles/tickets/0044-replace-landing-deploy-tooling-with-bun-typescript-ban-commi.md):
+
+- **Tooling form (all LD references to `deploy.sh`):** the deploy tool is
+  `deploy/deploy.ts`, TypeScript executed by Bun (`bun deploy/deploy.ts`),
+  replacing the deleted `deploy/deploy.sh`. Every LD-01…LD-08 requirement
+  reads `deploy.ts` wherever it names the deploy script; the semantics —
+  build, stage with `SHA256SUMS`, upload, on-server verification, atomic
+  relative-symlink activation, verified rollback, bounded retention,
+  dry-run purity — are unchanged. The new normative control
+  [GOV-13](../../../torviello-enforcer/governance/rules/13-no-committed-shell-scripts.md)
+  carries the repository-wide prohibition; the remote command strings the
+  tool constructs at runtime and passes to SSH are not committed files
+  (GOV-13.03).
+- **Contract:** `deploy-contract.json` is versioned to **1.1.0**; only the
+  invocation changed (`bash deploy/deploy.sh` → `bun deploy/deploy.ts`);
+  every interface field is unchanged.
+- **CI (UC-LD-6 extension):** `.github/workflows/deploy-landing.yml` runs
+  the same tooling with repository secrets (`LANDING_DEPLOY_HOST`,
+  `LANDING_DEPLOY_SSH_KEY`); enrollment is documented in
+  `deploy/server-setup.md` § 9. The workflow file is a thin invoker; all
+  deployment manifests and tooling remain inside this unit (GOV-12.04).
+- **Verification plan commands:** every occurrence of
+  `torviello-landing/deploy/deploy.sh` in the table above reads
+  `bun deploy/deploy.ts` from the unit root.
+- **Scope note:** `tests/integration/deploy-script.test.ts` keeps the name it
+  has had since 0043; "deploy-script" now refers to `deploy.ts`.
+
 ## Out of scope
 
 - CI/CD automation (GitHub Actions deploy workflow) — a later ticket may add

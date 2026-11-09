@@ -2,11 +2,13 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "torviello-landing/contracts/deployment/deploy-contract.json",
   "title": "torviello-landing deploy script interface",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "status": "active",
-  "description": "Interface of torviello-landing/deploy/deploy.sh: commands, flags, environment, exit codes, remote layout, and release identity. Consumers are operators, tests, and future CI automation. Changes to any field here are contract changes under GOV-08.",
+  "description": "Interface of torviello-landing/deploy/deploy.ts: commands, flags, environment, exit codes, remote layout, and release identity. Consumers are operators, tests, and CI automation. Changes to any field here are contract changes under GOV-08.",
   "specification": "torviello-landing/specifications/landing-deployment.md",
-  "script": "torviello-landing/deploy/deploy.sh",
+  "script": "torviello-landing/deploy/deploy.ts",
+  "invocation": "bun deploy/deploy.ts <command> [flags]  (from the torviello-landing unit root)",
+  "compatibility": "1.0.0 -> 1.1.0: implementation moved from deploy.sh (bash, deleted per GOV-13) to deploy.ts (TypeScript executed by Bun). Commands, flags, environment variables, exit codes, remote layout, release-id format, and the verification marker are unchanged; only the invocation changed (bash deploy/deploy.sh -> bun deploy/deploy.ts).",
   "commands": {
     "deploy": {
       "default": true,

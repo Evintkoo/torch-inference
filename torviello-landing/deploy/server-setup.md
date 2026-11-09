@@ -92,7 +92,7 @@ dig +short your-domain.example   # -> <vm-public-ip>
 
 ```sh
 cd torviello-landing
-LANDING_DEPLOY_HOST=torviello-landing deploy/deploy.sh deploy
+LANDING_DEPLOY_HOST=torviello-landing bun deploy/deploy.ts deploy
 ```
 
 Then check:
@@ -120,16 +120,54 @@ symlink are identical under TLS.
 
 ```sh
 cd torviello-landing
-LANDING_DEPLOY_HOST=torviello-landing deploy/deploy.sh rollback            # previous release
-LANDING_DEPLOY_HOST=torviello-landing deploy/deploy.sh rollback --into <release-id>
-LANDING_DEPLOY_HOST=torviello-landing deploy/deploy.sh rollback --dry-run  # preview
+LANDING_DEPLOY_HOST=torviello-landing bun deploy/deploy.ts rollback            # previous release
+LANDING_DEPLOY_HOST=torviello-landing bun deploy/deploy.ts rollback --into <release-id>
+LANDING_DEPLOY_HOST=torviello-landing bun deploy/deploy.ts rollback --dry-run  # preview
 ```
 
 Rollback re-verifies the target's checksums on the server before flipping
 (LD-05, SO-031). The last `KEEP` releases (default 5) are always on the
 server, so rollback never needs a rebuild or the local machine to be current.
 
-## 9. Troubleshooting
+## 9. CI deployment (GitHub Actions)
+
+`.github/workflows/deploy-landing.yml` deploys automatically on pushes to
+`main` touching `torviello-landing/**`, and supports manual dispatch with
+`deploy`/`rollback` modes. It runs the same unit tooling
+(`bun deploy/deploy.ts`) on GitHub's runners. One-time setup:
+
+1. **Dedicated CI key** — generate a keypair used *only* by CI, separate from
+   your personal key:
+
+   ```sh
+   ssh-keygen -t ed25519 -C "torviello-landing CI deploy" -f ~/.ssh/torviello_landing_ci
+   ```
+
+   Append `~/.ssh/torviello_landing_ci.pub` to
+   `~/.ssh/authorized_keys` on the VM (same `ubuntu` user). Never reuse your
+   personal key for CI; the CI key can be revoked independently by removing
+   its line from `authorized_keys`.
+
+2. **Repository secrets** — under *Settings → Secrets and variables →
+   Actions*, add:
+
+   | Secret | Value |
+   |---|---|
+   | `LANDING_DEPLOY_HOST` | the SSH destination, e.g. `ubuntu@<vm-public-ip>` |
+   | `LANDING_DEPLOY_SSH_KEY` | the full contents of `~/.torviello_landing_ci` private key (PEM) |
+   | `LANDING_DEPLOY_SSH_PORT` | optional; only when not `22` |
+
+   Secrets are write-only in GitHub; this repository's code never stores
+   them (LD-08, GOV-13: the workflow writes the key to a `0600` file at run
+   time and deletes it after).
+
+3. **First CI run** — *Actions → Deploy landing → Run workflow* with
+   `mode: deploy`. The run fails with actionable guidance if the secrets are
+   missing. Host-key verification uses `StrictHostKeyChecking=accept-new`;
+   for stricter checking, pre-seed a `LANDING_DEPLOY_KNOWN_HOSTS` secret and
+   extend the workflow.
+
+## 10. Troubleshooting
 
 | Symptom | Exit code | Where to look |
 |---|---|---|
