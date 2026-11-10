@@ -23,7 +23,7 @@ def _fake_engine(tmp_path: Path) -> Path:
 
     The generated script writes through sys.stdout — the repository's CLI
     convention — because the corpus logging controls scan committed sources
-    for print() calls (CQ-02/OBS-01), including fixture text.
+    for bare print calls (CQ-02/OBS-01), including fixture text.
     """
     binary = tmp_path / "engine-under-test"
     boot_line = BOOT_LINE + "\n"
