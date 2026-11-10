@@ -5,7 +5,7 @@
      page. Card order is the board order: builders, AI teams, real-world AI. -->
 <script lang="ts">
   import AudienceCard from "../ui/AudienceCard.svelte";
-  import { reveal } from "../../lib/reveal";
+  import { reveal } from "../../features/reveal/reveal";
   import type { IconName } from "../../lib/icons";
 
   interface ShowcaseCard {

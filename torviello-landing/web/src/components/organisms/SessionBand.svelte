@@ -6,7 +6,7 @@
 <script lang="ts">
   import Icon from "../ui/Icon.svelte";
   import TerminalLine from "../ui/TerminalLine.svelte";
-  import { reveal } from "../../lib/reveal";
+  import { reveal } from "../../features/reveal/reveal";
 
   let {
     session,

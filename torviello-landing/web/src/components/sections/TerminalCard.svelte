@@ -7,6 +7,7 @@
      with a "Copied" state. Real selectable text, window chrome, and a
      four-step status rail with an orange connector line. -->
 <script lang="ts">
+  import { copyText } from "../../features/copy-command/copy-command";
   import TerminalLine from "../ui/TerminalLine.svelte";
 
   let {
@@ -21,15 +22,11 @@
   let resetTimer: ReturnType<typeof setTimeout> | undefined;
 
   async function copyInstall() {
-    try {
-      await navigator.clipboard?.writeText(commands[0] ?? "");
-      copied = true;
-      clearTimeout(resetTimer);
-      resetTimer = setTimeout(() => (copied = false), 2000);
-    } catch {
-      // Clipboard unavailable or denied: the chip stays "Copy" — no fake
-      // success state.
-    }
+    // Unavailable or denied clipboard: the chip stays "Copy" (no fake success).
+    if (!(await copyText(commands[0] ?? "", navigator.clipboard))) return;
+    copied = true;
+    clearTimeout(resetTimer);
+    resetTimer = setTimeout(() => (copied = false), 2000);
   }
 
   $effect(() => () => clearTimeout(resetTimer));

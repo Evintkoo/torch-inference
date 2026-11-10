@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Torviello.
-// Landing redesign (ticket 0041, LP-09 amendment): the scroll-reveal action.
+// Landing redesign (ticket 0041, LP-09 amendment): the scroll-reveal action
+// (feature layer since ticket 0048).
 // Marks the node with data-reveal, then data-revealed once it intersects.
 // Motion-unsafe environments (reduced motion, no IntersectionObserver) return
 // untouched, and a fallback timer force-reveals so content is never

@@ -11,7 +11,12 @@ Public landing page and marketing site. Brand message: The execution layer for A
 - `tests/` — unit, contract, and integration tests.
 - `evaluations/` — plans, datasets, reports, and release decisions.
 - `web/` — the landing web app: Svelte 5 components, Bun tooling, Vite build.
-- `deploy/` — deployment of the built site to the Oracle server: `deploy.ts`
+  `web/src/components/` holds the atomic UI layers (`ui/`, `sections/`,
+  `organisms/`); `web/src/features/` holds behavior modules with their own
+  tests (`reveal/` scroll reveal, `copy-command/` clipboard copy).
+- `deploy/` — `deploy.ts` plus `remote-scripts.ts` (the runtime-built SSH
+  command strings, GOV-13.03).
+- `deploy/` (detail) — deployment of the built site to the Oracle server: `deploy.ts`
   (TypeScript on Bun; rsync-based release publishing with on-server checksum
   verification, atomic activation, and verified rollback),
   `Caddyfile` (server config

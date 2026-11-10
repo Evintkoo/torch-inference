@@ -4,7 +4,7 @@
      ghost keeps the safe external GitHub link. -->
 <script lang="ts">
   import Icon from "../ui/Icon.svelte";
-  import { reveal } from "../../lib/reveal";
+  import { reveal } from "../../features/reveal/reveal";
 
   let {
     heading,

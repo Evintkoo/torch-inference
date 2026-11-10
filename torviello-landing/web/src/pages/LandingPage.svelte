@@ -22,7 +22,7 @@
   import Icon from "../components/ui/Icon.svelte";
   import LandingTemplate from "../template/LandingTemplate.svelte";
   import { icons, type IconName } from "../lib/icons";
-  import { reveal } from "../lib/reveal";
+  import { reveal } from "../features/reveal/reveal";
   // The showcase photography is owned by torviello-media and imported through
   // the alias (GOV-12.07), sliced from the approved reference board — never
   // generated copies inside this unit.

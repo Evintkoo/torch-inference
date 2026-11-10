@@ -4,7 +4,7 @@
      data-pending until a real benchmark run publishes, and the footnote says
      so. ED rule: no claimed performance numbers. -->
 <script lang="ts">
-  import { reveal } from "../../lib/reveal";
+  import { reveal } from "../../features/reveal/reveal";
 
   let { metrics }: { metrics: { label: string }[] } = $props();
 </script>
