@@ -389,7 +389,7 @@ fn env_bool(name: &str) -> AppResult<Option<bool>> {
 }
 
 /// The accepted boolean grammar for env overrides; split from `env_bool` so
-/// tests can exercise it without mutating process state (set_var is not
+/// tests can exercise it without mutating process state (`set_var` is not
 /// callable from safe code in edition 2024, and the workspace forbids
 /// unsafety).
 fn parse_bool(value: &str) -> AppResult<Option<bool>> {
