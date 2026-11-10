@@ -338,7 +338,7 @@ mod tests {
             assert_eq!(envelope.type_uri, error.type_uri());
             assert_eq!(envelope.retryable, error.retryable());
             assert_eq!(envelope.instance, "urn:torviello:request:request-1");
-            assert!(!envelope.detail.is_empty());
+            assert_ne!(envelope.detail, "");
             assert!(!error.into_response().status().is_success());
         }
         let limited = AppError::TooManyRequests {

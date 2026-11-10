@@ -6,6 +6,7 @@ meet the quality standard (structure, budgets, board render parity)."""
 from __future__ import annotations
 
 import re
+import shutil
 import subprocess
 import textwrap
 from pathlib import Path
@@ -120,15 +121,17 @@ def iou(mask_a: bytes, mask_b: bytes) -> float:
     a = [v < 128 for v in mask_a]
     b = [v < 128 for v in mask_b]
     assert len(a) == len(b) and a, "parity normalization failed"
-    inter = sum(1 for x, y in zip(a, b) if x and y)
-    union = sum(1 for x, y in zip(a, b) if x or y)
+    inter = sum(1 for x, y in zip(a, b, strict=True) if x and y)
+    union = sum(1 for x, y in zip(a, b, strict=True) if x or y)
     return inter / union
 
 
 def shape_bytes(image: Path, flatten: bool) -> bytes:
     """Rasterize to 400x400, binarize, trim to ink, normalize to 200x200 —
     an aspect- and framing-independent shape signature."""
-    cmd = ["magick"]
+    # Resolve the executable to a full path (S607); the arguments are fixed
+    # literals and repository paths, never untrusted input.
+    cmd = [shutil.which("magick") or "magick"]
     if flatten:
         cmd += [str(image), "-background", "#0B1020", "-alpha", "remove", "-alpha", "off"]
     else:
@@ -149,7 +152,7 @@ def shape_bytes(image: Path, flatten: bool) -> bytes:
         "8",
         "gray:-",
     ]
-    return subprocess.run(cmd, capture_output=True, check=True).stdout
+    return subprocess.run(cmd, capture_output=True, check=True).stdout  # noqa: S603
 
 
 RENDER_SCRIPT = textwrap.dedent(
@@ -197,8 +200,10 @@ def _write_and_render(
         ),
         encoding="utf-8",
     )
-    subprocess.run(
-        ["bun", "run", str(script), str(out_png)], check=True, cwd=str(landing_web)
+    subprocess.run(  # noqa: S603 - fixed argv, repository-owned script
+        [shutil.which("bun") or "bun", "run", str(script), str(out_png)],
+        check=True,
+        cwd=str(landing_web),
     )
 
 

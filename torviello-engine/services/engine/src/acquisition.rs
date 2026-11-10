@@ -407,5 +407,8 @@ fn now_rfc3339() -> String {
         .unwrap_or_else(|_| "1970-01-01T00:00:00Z".to_owned())
 }
 
+// Not named `tests/`: cargo-llvm-cov ignores any `tests/` directory, which
+// would count this module differently from auth/tests.rs and config/tests.rs.
 #[cfg(test)]
+#[path = "acquisition/unit_tests/mod.rs"]
 mod tests;

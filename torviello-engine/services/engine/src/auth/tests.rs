@@ -160,7 +160,7 @@ fn local_authentication_validates_secret_claims_and_roles() {
     ));
     let principal = verify_local_token_with_secret(&valid, secret).expect("authenticated");
     assert_eq!(principal.actor, "operator-1");
-    assert!(principal.scopes.is_empty());
+    assert_eq!(principal.scopes, Vec::<String>::new());
     require_auth(Some(&principal)).expect("present");
     require_role(&principal, "operator").expect("role");
     assert!(matches!(

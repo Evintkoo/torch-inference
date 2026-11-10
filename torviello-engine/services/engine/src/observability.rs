@@ -163,7 +163,7 @@ mod tests {
         assert!(output.contains("http_requests_total"));
         assert!(output.contains("request_duration_seconds"));
         assert!(output.contains("http_requests_in_flight"));
-        assert!(!correlation_id().is_empty());
+        assert_ne!(correlation_id(), "");
     }
 
     #[test]
