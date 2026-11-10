@@ -625,6 +625,22 @@
   }
 }
 
+/* Phone step (ticket 0049 defect): at phone width the copy spans the whole
+   card, so the left-weighted wash above leaves it over the photo's bright
+   center; the scrim weights the top text region instead. Placed after the
+   1279 step so it wins the cascade. */
+@media (max-width: 767px) {
+  .tv-audience-card__content {
+    background:
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--tv-surface-canvas) 88%, transparent) 0%,
+        color-mix(in srgb, var(--tv-surface-canvas) 72%, transparent) 55%,
+        color-mix(in srgb, var(--tv-surface-canvas) 40%, transparent) 100%
+      );
+  }
+}
+
 @media (max-width: 767px) {
   /* LP-04: the proof slots keep three across until the phone step */
   .tv-proof__grid {

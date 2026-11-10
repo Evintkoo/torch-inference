@@ -125,7 +125,7 @@ test("the footer renders brand, product, and community columns (LP-08)", () => {
   expect(footer).toContain(">Install</a>");
   expect(footer).toContain(">Docs</a>");
   expect(footer).toContain(">GitHub</a>");
-  expect(footer).toContain(">Discussions</a>");
+  expect(footer).toContain(">Issues</a>"); // LP-11: Discussions is disabled
   expect(footer).toContain("© 2026 Torviello");
 });
 
@@ -181,7 +181,8 @@ test("the audience actions keep the m4 destinations (carried from BC/0038)", () 
   expect(html).toContain(">Start building</a>");
   expect(html).toContain(">Read the docs</a>");
   expect(html).toContain(">See it on GitHub</a>");
-  const githubLinks = html.match(/href="https:\/\/github\.com\/torviello"/g) ?? [];
+  // LP-11: the repository replaces the nonexistent github.com/torviello org.
+  const githubLinks = html.match(/href="https:\/\/github\.com\/Evintkoo\/torch-inference"/g) ?? [];
   expect(githubLinks.length).toBeGreaterThanOrEqual(4);
 });
 
@@ -216,4 +217,28 @@ test("the design-standard brand sheet stays off the site (BC-04, carried)", () =
   expect(html).not.toContain('aria-label="Brand identity"');
   expect(html).not.toContain(">LOGO VARIATIONS</p>");
   expect(html).not.toContain(">COLOR PALETTE</p>");
+});
+
+// LP-11 (third amendment, ticket 0049): every outbound link resolves inside
+// the public repository; the nonexistent github.com/torviello org (HTTP 404
+// on 2026-11-10) and the disabled Discussions page are never linked.
+test("every outbound link targets the public repository (LP-11)", () => {
+  const hrefs = [...html.matchAll(/href="(https?:[^"]+)"/g)].map((m) => m[1]);
+  expect(hrefs.length).toBeGreaterThan(0);
+  for (const href of hrefs) {
+    expect(href).toMatch(/^https:\/\/github\.com\/Evintkoo\/torch-inference(\/|$)/);
+    expect(href).not.toContain("/discussions");
+  }
+  expect(html).not.toContain('href="https://github.com/torviello"');
+});
+
+// LP-02 (third amendment): three visually distinct rail glyphs — box and
+// package share three of four paths and read as a duplicate at chip size.
+test("the hero rail uses the sliders, package, zap glyphs in order (LP-02)", async () => {
+  const { icons } = await import("../lib/icons");
+  const chips = html.match(/<span class="tv-hero__stage-icon"[^>]*>[\s\S]*?<\/span>/g) ?? [];
+  expect(chips).toHaveLength(3);
+  const expected = [icons.sliders, icons.package, icons.zap];
+  chips.forEach((chip, index) => expect(chip).toContain(expected[index]));
+  for (const chip of chips) expect(chip).not.toContain(icons.box);
 });

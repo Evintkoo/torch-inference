@@ -56,6 +56,31 @@ session", "footer also bad". Deltas to the requirements above:
   inside a `min-height` grid item resolves circularly; the card becomes a
   stretch container so the content fills and the card grows.
 
+## Amendment — 2026-11-10, third round (owner direction, GOV-07.05)
+
+Owner authority (recorded on ticket 0049): "please fix and improve the landing
+page". A link audit (curl + GitHub API, 2026-11-10) found destinations that do
+not resolve, and the 1440/390 screenshots show rhythm defects. Deltas:
+
+- **LP-11 (new) — link reachability.** Every outbound link targets the public
+  repository `https://github.com/Evintkoo/torch-inference` or a path inside
+  it. The nonexistent `github.com/torviello` organization (HTTP 404) is never
+  linked; the footer's Discussions entry (Discussions is disabled on the
+  repository) is replaced by **Issues**; **API Reference** resolves to the
+  published OpenAPI contract `torviello-engine/contracts/openapi.yaml`, not
+  the generic docs tree. Supersedes the "designated placeholder hosts"
+  wording in LP-08.
+- **LP-12 (new) — content rail.** Every canvas section shares the nav's
+  1200px centered content rail (the floating pill and the content start on
+  the same left edge at ≥1280px), and every section title keeps a fixed
+  `--tv-space-8` gap above the section content (the use-cases heading no
+  longer touches the cards).
+- **LP-02 (amended):** the rail stages use three visually distinct glyphs —
+  DEVELOP `sliders`, DEPLOY `package`, INFER `zap` (the `box` and `package`
+  glyphs are near-identical at chip size and read as a duplicate).
+- **Defect (≤767px):** audience-card copy sat over the brightest parts of
+  the photography; the phone scrim darkens the text region.
+
 ## Use cases
 
 - UC-LP-1 — A first-time visitor lands on the page, reads a one-line promise
@@ -173,6 +198,8 @@ session", "footer also bad". Deltas to the requirements above:
 | LP-06 | `LandingPage.test.ts`, `interaction.test.ts` (illustrative label, prompts, rail) | automatic |
 | LP-07 | `CtaBand.test.ts`, `LandingPage.test.ts` | automatic |
 | LP-08 | `SiteFooter.test.ts` (columns, anchors, safe rel) | automatic |
+| LP-11 | `LandingPage.test.ts` (every outbound href inside the public repository, no org or Discussions link), `SiteFooter.test.ts` (Issues, OpenAPI reference) | automatic |
+| LP-12 | visual QA rail and title-gap probes at 8 widths (`web/scripts/visual-qa.ts`) | automatic + manual review |
 | LP-09 | `bun run typecheck`, `bun run build`, visual QA overflow probe at 8 widths with screenshots | automatic + manual review |
 | Repo health | `uv run --locked pytest …`, `uv run ruff check .` (5 pre-existing only), `torviello_roles check` | automatic |
 

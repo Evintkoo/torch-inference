@@ -68,7 +68,28 @@ for (const width of widths) {
     const cta = document.querySelector(".tv-cta");
     const canvasWidth = canvas ? canvas.getBoundingClientRect().width : 0;
     const heroWidth = hero ? hero.getBoundingClientRect().width : 0;
+    // LP-12 (ticket 0049): every canvas section except the full-bleed hero
+    // shares the nav's content rail, and a section title followed directly by
+    // content (not its subline) keeps at least a 24px gap.
+    const navInner = document.querySelector(".tv-topnav .tv-navbar__inner");
+    const navLeft = navInner ? navInner.getBoundingClientRect().left : 0;
+    const railSections = canvas
+      ? [...canvas.children].filter((child) => !child.classList.contains("tv-hero"))
+      : [];
+    const railOffsets = railSections.map((section) => {
+      const box = section.getBoundingClientRect();
+      return { left: Math.round(box.left - navLeft), width: Math.round(box.width) };
+    });
+    const titleGaps = [...document.querySelectorAll(".tv-section__title")]
+      .filter((title) => title.nextElementSibling && !title.nextElementSibling.classList.contains("tv-section__sub"))
+      .map((title) =>
+        Math.round(
+          (title.nextElementSibling as Element).getBoundingClientRect().top - title.getBoundingClientRect().bottom,
+        ),
+      );
     return {
+      railOffsets,
+      titleGaps,
       menuDisplay,
       overflow,
       h1Count,
@@ -89,6 +110,16 @@ for (const width of widths) {
   const menuVisible = width < 768 ? report.menuDisplay !== "none" : report.menuDisplay === "none";
   const overflowOk = report.overflow <= 0;
   if (!menuVisible || !overflowOk || report.h1Count !== 1) failures += 1;
+
+  // LP-12: the rail holds at the desktop steps; the title gap holds everywhere.
+  const railOk =
+    width < 1280 ||
+    report.railOffsets.every((offset) => Math.abs(offset.left) <= 2 && offset.width <= 1200);
+  const gapOk = report.titleGaps.every((gap) => gap >= 24);
+  if (!railOk || !gapOk) failures += 1;
+  console.log(
+    `      rail:${railOk ? "ok" : "FAIL " + JSON.stringify(report.railOffsets)}  title-gaps:${report.titleGaps.join("/")}(${gapOk ? "ok" : "FAIL"})`,
+  );
 
   // Ticket 0041: the sticky nav, unboxed hero, proof band with pending slots,
   // CTA band, three equal-height cards, and the terminal band must all hold.

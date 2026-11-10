@@ -50,7 +50,7 @@
   // rendered empty chips, the FeatureItem {@html} contract vs the Icon
   // name contract.)
   const flowStages: { icon: IconName; title: string; caption: string }[] = [
-    { icon: "box", title: "DEVELOP", caption: "Experiment, iterate, and optimize." },
+    { icon: "sliders", title: "DEVELOP", caption: "Experiment, iterate, and optimize." },
     { icon: "package", title: "DEPLOY", caption: "Scale with confidence." },
     { icon: "zap", title: "INFER", caption: "Real-world impact." },
   ];
@@ -100,7 +100,7 @@
       image: cityPhoto,
       action: {
         label: "See it on GitHub",
-        href: "https://github.com/torviello",
+        href: "https://github.com/Evintkoo/torch-inference",
         external: true,
         icon: "github",
       },
@@ -124,7 +124,7 @@
     <NavBar
       links={navLinks}
       getStartedHref="https://github.com/Evintkoo/torch-inference/blob/main/torviello-docs/docs/INSTALL.md"
-      githubHref="https://github.com/torviello"
+      githubHref="https://github.com/Evintkoo/torch-inference"
     />
   {/snippet}
 
@@ -137,7 +137,7 @@
       primaryLabel="Get Started"
       primaryHref="https://github.com/Evintkoo/torch-inference/blob/main/torviello-docs/docs/INSTALL.md"
       ghostLabel="View on GitHub"
-      githubHref="https://github.com/torviello"
+      githubHref="https://github.com/Evintkoo/torch-inference"
       stages={flowStages}
     />
 
@@ -180,7 +180,7 @@
       primaryLabel="Get Started"
       primaryHref="https://github.com/Evintkoo/torch-inference/blob/main/torviello-docs/docs/INSTALL.md"
       ghostLabel="View on GitHub"
-      githubHref="https://github.com/torviello"
+      githubHref="https://github.com/Evintkoo/torch-inference"
     />
   {/snippet}
 

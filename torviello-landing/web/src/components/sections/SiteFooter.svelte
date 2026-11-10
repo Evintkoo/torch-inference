@@ -43,7 +43,7 @@
         >
         <a
           class="tv-footer__link"
-          href="https://github.com/Evintkoo/torch-inference/tree/main/torviello-docs"
+          href="https://github.com/Evintkoo/torch-inference/blob/main/torviello-engine/contracts/openapi.yaml"
           target="_blank"
           rel="noopener noreferrer">API Reference</a
         >
@@ -58,9 +58,9 @@
         >
         <a
           class="tv-footer__link"
-          href="https://github.com/Evintkoo/torch-inference"
+          href="https://github.com/Evintkoo/torch-inference/issues"
           target="_blank"
-          rel="noopener noreferrer">Discussions</a
+          rel="noopener noreferrer">Issues</a
         >
         <a
           class="tv-footer__link"
