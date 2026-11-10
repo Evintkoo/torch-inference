@@ -40,6 +40,21 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt, clippy
+      # torch-sys 0.27 (tch 0.27, libtorch 2.15.0) looks up the PyPI wheel
+      # torch-2.15.0-cp311-none-macosx_11_0_arm64.whl, but PyPI now tags the
+      # wheel cp311-cp311-macosx_14_0_arm64, so the download fails on Apple
+      # silicon (PyTorch publishes no arm64 libtorch zip at all). Provision
+      # the wheel directly and point LIBTORCH at it; the wheel has no
+      # build-version file, which skips torch-sys's version check. The pinned
+      # torch version below is coupled to tch's TORCH_VERSION: bump together.
+      - name: Provision libtorch 2.15.0 (macOS arm64)
+        if: runner.os == 'macOS'
+        run: |
+          wheel_url="$(curl -s https://pypi.org/pypi/torch/2.15.0/json | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(u["url"] for u in d["urls"] if u["filename"] == "torch-2.15.0-cp311-cp311-macosx_14_0_arm64.whl"))')"
+          mkdir -p "$RUNNER_TEMP/libtorch-wheel"
+          curl -sL -o "$RUNNER_TEMP/libtorch-wheel/torch.whl" "$wheel_url"
+          unzip -q "$RUNNER_TEMP/libtorch-wheel/torch.whl" -d "$RUNNER_TEMP/libtorch-wheel"
+          echo "LIBTORCH=$RUNNER_TEMP/libtorch-wheel/torch" >> "$GITHUB_ENV"
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       - run: cargo test --workspace --locked

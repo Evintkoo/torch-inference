@@ -1,0 +1,27 @@
+# Dependency-audit disposition (cargo-audit config).
+# Owner authority for dispositions is recorded on ticket 0050 (2026-11-11:
+# "approved" for the upgrade path, with explicit dispositions - never silent
+# ignores - for advisories that have no fix path in this tree).
+
+[advisories]
+ignore = [
+    # RUSTSEC-2026-0459 / CVE-2026-119375 (libsqlite3-sys bundled SQLite
+    # < 3.54.0): a local attacker-crafted database + mismatched sibling -wal
+    # file can make queries return uninitialized page-cache memory.
+    #
+    # No fix path: sqlx-sqlite 0.9.0 pins libsqlite3-sys below the patched
+    # 0.39 (`cargo update -p libsqlite3-sys --precise 0.39.0` is rejected by
+    # sqlx-sqlite's requirement), and 0.39 needs sqlx to ship it.
+    #
+    # Why the exposure is accepted for now: the engine uses SQLite only as an
+    # embedded local audit log written by the engine itself in its own state
+    # directory; no less-trusted party writes the database or its -wal file,
+    # which is the advisory's stated attack precondition. Queries are
+    # parameterized. The `persistence` feature is not enabled in the default
+    # build.
+    #
+    # Review: re-check on the next sqlx 0.9.x release (or by 2027-02-11,
+    # whichever first); remove the ignore and bump when sqlx allows
+    # libsqlite3-sys >= 0.39.
+    "RUSTSEC-2026-0459",
+]
