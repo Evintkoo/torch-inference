@@ -118,7 +118,7 @@ function seedDist(): void {
   const dist = join(UNIT_ROOT, "web", "dist");
   mkdirSync(join(dist, "assets"), { recursive: true });
   writeFileSync(join(dist, "index.html"), "<html>landing</html>");
-  writeFileSync(join(dist, "assets", "app-42.js"), "console.log(42)");
+  writeFileSync(join(dist, "assets", "app-42.js"), "export const answer = 42;");
 }
 
 let distBackup: string | null = null;
@@ -220,7 +220,7 @@ beforeAll(() => {
      if [ -n "\${TORVIELLO_FAKE_BUN_FAIL:-}" ]; then echo "bun: build failed" >&2; exit 1; fi
      mkdir -p dist/assets
      printf '<html>built</html>' > dist/index.html
-     echo 'console.log(1)' > dist/assets/app-7.js`,
+     echo 'export const answer = 1;' > dist/assets/app-7.js`,
   );
 });
 

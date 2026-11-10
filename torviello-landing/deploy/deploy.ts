@@ -64,8 +64,14 @@ let SKIP_BUILD = false;
 let ROLLBACK_INTO = "";
 let DOMAIN = "";
 
+/** Operator CLI output (OBS-01 scope: this is a CLI, not a runtime service):
+ * explicit stream writes, the repository's CLI convention (torviello_roles
+ * writes through sys.stdout). */
+const out = (line: string): void => void process.stdout.write(`${line}\n`);
+const err = (line: string): void => void process.stderr.write(`${line}\n`);
+
 function die(code: ExitCode, message: string): never {
-  console.error(`deploy: ${message}`);
+  err(`deploy: ${message}`);
   process.exit(code);
 }
 
@@ -136,11 +142,11 @@ function parseArgs(argv: string[]): void {
       }
       case "--help":
       case "-h":
-        console.log(usage());
+        out(usage());
         process.exit(0);
       default:
-        console.error(`deploy: unknown argument: ${arg}\n`);
-        console.error(usage());
+        err(`deploy: unknown argument: ${arg}\n`);
+        err(usage());
         process.exit(2);
     }
   }
@@ -190,7 +196,7 @@ function requireTools(): void {
     missing.push("bun (needed to build; use --skip-build to reuse web/dist)");
   }
   if (missing.length > 0) {
-    for (const tool of missing) console.error(`deploy: missing dependency: ${tool}`);
+    for (const tool of missing) err(`deploy: missing dependency: ${tool}`);
     process.exit(3);
   }
 }
@@ -231,17 +237,17 @@ function doBootstrap(): void {
     .replace("__CADDY_CONFIG__", config);
 
   if (DRY_RUN) {
-    console.log(`==> would bootstrap ${HOST} (site address: ${DOMAIN === "" ? ":80" : DOMAIN}; dry run; nothing changed)`);
-    console.log(script);
+    out(`==> would bootstrap ${HOST} (site address: ${DOMAIN === "" ? ":80" : DOMAIN}; dry run; nothing changed)`);
+    out(script);
     process.exit(0);
   }
 
-  console.log(`==> bootstrapping ${HOST} (install caddy/rsync, webroot, firewall, render ${DOMAIN === "" ? ":80" : DOMAIN}, start caddy)`);
+  out(`==> bootstrapping ${HOST} (install caddy/rsync, webroot, firewall, render ${DOMAIN === "" ? ":80" : DOMAIN}, start caddy)`);
   const res = ssh([script]);
   if (res.status !== 0 || !(res.stdout as string).includes(BOOTSTRAP_MARKER)) {
     die(5, `bootstrap failed on ${HOST}; the script ran with set -eu, so the first failed step is in the output above`);
   }
-  console.log("==> bootstrap complete: caddy is serving; run deploy to publish a release");
+  out("==> bootstrap complete: caddy is serving; run deploy to publish a release");
 }
 
 function verifyRemoteRelease(id: string): boolean {
@@ -255,7 +261,7 @@ function verifyRemoteRelease(id: string): boolean {
 // ---- build + stage ---------------------------------------------------------------
 
 function buildSite(): void {
-  console.log("==> building web/ (bun run build)");
+  out("==> building web/ (bun run build)");
   const res = spawnSync("bun", ["run", "build"], { cwd: WEB_DIR, encoding: "utf8" });
   if (res.status !== 0) die(4, "build failed: bun run build exited non-zero");
 }
@@ -284,30 +290,30 @@ function stageRelease(id: string): string {
 function doDeploy(): void {
   const id = releaseId();
   if (unsafe(id, new RegExp(RELEASE_ID_PATTERN))) die(2, `unsafe release id generated: ${id}`);
-  console.log(`==> release ${id}${DRY_RUN ? " (dry run)" : ""}`);
+  out(`==> release ${id}${DRY_RUN ? " (dry run)" : ""}`);
 
   if (!SKIP_BUILD) buildSite();
   const stage = stageRelease(id);
-  console.log(`==> staged ${stage}`);
+  out(`==> staged ${stage}`);
 
   if (DRY_RUN) {
     // LD-07: rsync --dry-run only; no SSH command runs at all.
-    console.log(`==> would upload to ${HOST}:${WEBROOT}/releases/${id}/`);
+    out(`==> would upload to ${HOST}:${WEBROOT}/releases/${id}/`);
     const res = spawnSync(
       "rsync",
       ["-a", "--delete", "--dry-run", "--itemize-changes", `${stage}/`, `${HOST}:${WEBROOT}/releases/${id}/`],
       { stdio: "inherit" },
     );
     if (res.status !== 0) process.exit(res.status ?? 1);
-    console.log("==> dry run complete: no remote state was touched");
+    out("==> dry run complete: no remote state was touched");
     process.exit(0);
   }
 
-  console.log("==> preparing remote directories");
+  out("==> preparing remote directories");
   const mkdir = ssh([`mkdir -p '${WEBROOT}/releases'`]);
   if (mkdir.status !== 0) die(5, `cannot create ${WEBROOT}/releases on ${HOST}`);
 
-  console.log("==> uploading release");
+  out("==> uploading release");
   const extra = SSH_EXTRA === "" ? [] : SSH_EXTRA.split(" ").filter((part) => part !== "");
   const upload = spawnSync(
     "rsync",
@@ -323,7 +329,7 @@ function doDeploy(): void {
   );
   if (upload.status !== 0) die(5, `upload failed: rsync exited ${upload.status}`);
 
-  console.log("==> verifying release on server");
+  out("==> verifying release on server");
   if (!verifyRemoteRelease(id)) {
     die(
       5,
@@ -331,16 +337,16 @@ function doDeploy(): void {
     );
   }
 
-  console.log("==> activating (atomic symlink flip)");
+  out("==> activating (atomic symlink flip)");
   const flip = ssh([remoteScript(REMOTE_FLIP_SCRIPT, { WEBROOT, RELEASE_ID: id })]);
   const activated = flip.status === 0 ? (flip.stdout as string).trim() : "";
   if (activated === "") die(5, `activation failed on ${HOST}`);
-  console.log(`==> active release: ${activated}`);
+  out(`==> active release: ${activated}`);
 
-  console.log(`==> pruning (keep=${KEEP})`);
+  out(`==> pruning (keep=${KEEP})`);
   ssh([remoteScript(REMOTE_PRUNE_SCRIPT, { WEBROOT, KEEP })]);
 
-  console.log(`==> deployed ${id} to ${HOST}:${WEBROOT}`);
+  out(`==> deployed ${id} to ${HOST}:${WEBROOT}`);
 }
 
 // ---- rollback ------------------------------------------------------------------------
@@ -367,20 +373,20 @@ function doRollback(): void {
   }
 
   if (DRY_RUN) {
-    console.log(`==> would roll back ${current === "" ? "<none>" : current} -> ${target} (dry run; nothing changed)`);
+    out(`==> would roll back ${current === "" ? "<none>" : current} -> ${target} (dry run; nothing changed)`);
     process.exit(0);
   }
 
-  console.log(`==> verifying target release ${target} on server`);
+  out(`==> verifying target release ${target} on server`);
   if (!verifyRemoteRelease(target)) {
     die(5, `target release ${target} failed verification on server; refusing to activate it`);
   }
 
-  console.log("==> rolling back (atomic symlink flip)");
+  out("==> rolling back (atomic symlink flip)");
   const flip = ssh([remoteScript(REMOTE_FLIP_SCRIPT, { WEBROOT, RELEASE_ID: target })]);
   const activated = flip.status === 0 ? (flip.stdout as string).trim() : "";
   if (activated === "") die(5, `rollback activation failed on ${HOST}`);
-  console.log(`==> active release: ${activated} (was ${current === "" ? "<none>" : current})`);
+  out(`==> active release: ${activated} (was ${current === "" ? "<none>" : current})`);
 }
 
 // ---- main ------------------------------------------------------------------------------

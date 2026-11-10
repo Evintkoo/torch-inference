@@ -51,7 +51,7 @@ def test_register_keeps_exceptions_evidence_based() -> None:
 
 def test_control_records_do_not_claim_operational_approval_without_measurement() -> None:
     records = sorted(GOVERNANCE.joinpath("records").glob("*.json"))
-    assert len(records) == 38, "unexpected governance record count"
+    assert len(records) == 39, "unexpected governance record count"  # +col-04.json (ticket 0048)
     for path in records:
         record = json.loads(path.read_text(encoding="utf-8"))
         metric = record["metric"]

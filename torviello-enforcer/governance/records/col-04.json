@@ -1,0 +1,27 @@
+{
+  "control": "COL-04",
+  "title": "Approved digital tools and human oversight of AI-assisted work",
+  "owner": "Repository Owner",
+  "status": "active",
+  "reviewed_at": "2026-11-10",
+  "review_cycle": "quarterly",
+  "artifact": "torviello-enforcer/governance/policies/ai-oversight.md",
+  "required_terms": [
+    "human owner",
+    "review",
+    "provenance"
+  ],
+  "metric": {
+    "name": "agent_changes_with_ticket_evidence",
+    "target": 100,
+    "unit": "percent",
+    "direction": "at_least",
+    "source": "ticket store logs",
+    "window": "per quarter",
+    "method": "share of agent-authored commits whose ticket log records the owner direction and verification results",
+    "measurement_status": "not_yet_measured",
+    "current_value": null,
+    "last_measured_at": null
+  },
+  "assurance_scope": "structural_only"
+}

@@ -8,6 +8,12 @@
 // captures full-page screenshots for review.
 import { chromium } from "playwright-core";
 
+/** Operator CLI output (OBS-01 scope: this is a CLI, not a runtime service):
+ * explicit stream writes, the repository's CLI convention (torviello_roles
+ * writes through sys.stdout). */
+const out = (line: string): void => void process.stdout.write(`${line}\n`);
+const err = (line: string): void => void process.stderr.write(`${line}\n`);
+
 const chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const outDir = process.argv[2] ?? "./qa-out";
 const widths = [1536, 1440, 1280, 1024, 768, 390, 375, 320];
@@ -117,7 +123,7 @@ for (const width of widths) {
     report.railOffsets.every((offset) => Math.abs(offset.left) <= 2 && offset.width <= 1200);
   const gapOk = report.titleGaps.every((gap) => gap >= 24);
   if (!railOk || !gapOk) failures += 1;
-  console.log(
+  out(
     `      rail:${railOk ? "ok" : "FAIL " + JSON.stringify(report.railOffsets)}  title-gaps:${report.titleGaps.join("/")}(${gapOk ? "ok" : "FAIL"})`,
   );
 
@@ -131,12 +137,12 @@ for (const width of widths) {
       Math.max(...report.cardHeights) - Math.min(...report.cardHeights) <= 2;
     const bandsOk = report.terminalBand && report.proof && report.cta && report.navSticky;
     if (!heroFullWidth || !cardsOk || !bandsOk || report.proofSlots !== 3) failures += 1;
-    console.log(
+    out(
       `      nav:sticky(${report.navSticky ? "ok" : "FAIL"})  hero:full-width ${Math.round(report.heroWidth)}/${Math.round(report.canvasWidth)}(${heroFullWidth ? "ok" : "FAIL"})  cards:${report.cardCount} heights=${report.cardHeights.join("/")}(${cardsOk ? "ok" : "FAIL"})  proof:${report.proof ? "ok" : "FAIL"}(${report.proofSlots} pending)  terminal-band:${report.terminalBand ? "ok" : "FAIL"}  cta:${report.cta ? "ok" : "FAIL"}`,
     );
   }
 
-  console.log(
+  out(
     `${String(width).padStart(4)}px  menu:${report.menuDisplay}(${
       menuVisible ? "ok" : "FAIL"
     })  overflow:${report.overflow}px(${overflowOk ? "ok" : "FAIL"})  h1:${report.h1Count}` +
@@ -148,5 +154,5 @@ for (const width of widths) {
 }
 
 await browser.close();
-console.log(failures === 0 ? "VISUAL QA PASS" : `VISUAL QA: ${failures} width(s) failing`);
+out(failures === 0 ? "VISUAL QA PASS" : `VISUAL QA: ${failures} width(s) failing`);
 process.exit(failures === 0 ? 0 : 1);

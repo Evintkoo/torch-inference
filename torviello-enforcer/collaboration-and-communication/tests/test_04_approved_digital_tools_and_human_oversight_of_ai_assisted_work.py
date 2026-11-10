@@ -228,6 +228,8 @@ def test_collaboration_and_communication_04_approved_digital_tools_and_human_ove
     require((RULES_ROOT / "AGENTS.md").exists() or (RULES_ROOT / "torviello-enforcer" / "AGENTS.md").exists(), "no AI-assistance operating policy")
     require(
         (RULES_ROOT / "notes" / "manual_review_checks.md").exists()
-        or (RULES_ROOT / "docs" / "ai-oversight.md").exists(),
+        or (RULES_ROOT / "docs" / "ai-oversight.md").exists()
+        # The unit-owned home since the root-clean rule (AGENTS.md, GOV-12):
+        or (RULES_ROOT / "torviello-enforcer" / "governance" / "policies" / "ai-oversight.md").exists(),
         "no human-oversight record for AI-assisted work",
     )

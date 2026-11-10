@@ -24,6 +24,12 @@ import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+/** Operator CLI output (OBS-01 scope: this is a CLI, not a runtime service):
+ * explicit stream writes, the repository's CLI convention (torviello_roles
+ * writes through sys.stdout). */
+const out = (line: string): void => void process.stdout.write(`${line}\n`);
+const err = (line: string): void => void process.stderr.write(`${line}\n`);
+
 const WEB = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const UNIT_ROOT = resolve(WEB, "..");
 const REPO_ROOT = resolve(UNIT_ROOT, "..");
@@ -48,7 +54,7 @@ const SOURCES: Array<[string, string]> = [
 mkdirSync(PUBLIC, { recursive: true });
 for (const [from, to] of SOURCES) {
   copyFileSync(from, to);
-  console.log(`seo-assets: published ${to.replace(REPO_ROOT + "/", "")}`);
+  out(`seo-assets: published ${to.replace(REPO_ROOT + "/", "")}`);
 }
 
 const base = siteUrl();
@@ -60,4 +66,4 @@ writeFileSync(
   join(PUBLIC, "sitemap.xml"),
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>${base}/</loc>\n    <lastmod>2026-11-09</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>1.0</priority>\n  </url>\n</urlset>\n`,
 );
-console.log(`seo-assets: generated robots.txt + sitemap.xml for ${base}`);
+out(`seo-assets: generated robots.txt + sitemap.xml for ${base}`);

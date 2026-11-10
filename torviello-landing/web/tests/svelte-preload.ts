@@ -20,7 +20,7 @@ Bun.plugin({
         runes: true,
       });
       for (const warning of warnings) {
-        console.warn(`[svelte] ${args.path}: ${warning.message}`);
+        process.stderr.write(`[svelte] ${args.path}: ${warning.message}\n`);
       }
       return { contents: js.code, loader: "js" };
     });
