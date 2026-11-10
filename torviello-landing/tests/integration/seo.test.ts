@@ -1,3 +1,4 @@
+/* Copyright (c) 2026 Torviello. */
 /**
  * SEO readiness tests for the landing build output.
  *

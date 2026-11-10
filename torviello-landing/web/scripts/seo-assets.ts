@@ -1,3 +1,4 @@
+/* Copyright (c) 2026 Torviello. */
 /**
  * Publish the SEO asset forms into web/public/ before the Vite build.
  *

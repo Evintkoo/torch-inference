@@ -1,3 +1,4 @@
+/* Copyright (c) 2026 Torviello. */
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 

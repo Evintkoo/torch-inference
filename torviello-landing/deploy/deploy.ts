@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+/* Copyright (c) 2026 Torviello. */
 /**
  * torviello-landing deploy — build, publish, verify, activate, rollback.
  *
@@ -29,6 +30,18 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  BOOTSTRAP_MARKER,
+  REMOTE_BOOTSTRAP_TEMPLATE,
+  REMOTE_FLIP_SCRIPT,
+  REMOTE_LIST_SCRIPT,
+  REMOTE_PRUNE_SCRIPT,
+  REMOTE_VERIFY_TEMPLATE,
+  VERIFICATION_MARKER,
+  manifestText,
+  remoteScript,
+  renderCaddyConfig,
+} from "./remote-scripts.ts";
 
 const UNIT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const WEB_DIR = join(UNIT_ROOT, "web");
@@ -43,8 +56,6 @@ let RELEASE_ID_OVERRIDE = process.env.LANDING_DEPLOY_RELEASE_ID ?? "";
 const SSH_EXTRA = process.env.LANDING_DEPLOY_SSH_OPTIONS ?? "";
 
 const RELEASE_ID_PATTERN = "^[A-Za-z0-9._-]+$";
-const VERIFICATION_MARKER = "TORVIELLO_RELEASE_OK";
-const BOOTSTRAP_MARKER = "TORVIELLO_BOOTSTRAP_OK";
 
 type ExitCode = 0 | 2 | 3 | 4 | 5 | 6 | 7;
 let COMMAND: "deploy" | "rollback" | "bootstrap" = "deploy";
@@ -209,134 +220,13 @@ function releaseId(): string {
   return `${timestamp}-${sha}`;
 }
 
-function sha256File(path: string): string {
-  return new Bun.CryptoHasher("sha256").update(readFileSync(path)).digest("hex");
-}
-
-/** Relative "./path" list of every file under dir, C-locale sorted (LD-03). */
-function manifestEntries(dir: string): string[] {
-  const entries: string[] = [];
-  const walk = (current: string): void => {
-    for (const name of readdirSync(current).sort()) {
-      const full = join(current, name);
-      if (statSync(full).isDirectory()) {
-        walk(full);
-      } else {
-        entries.push(`./${full.slice(dir.length + 1)}`);
-      }
-    }
-  };
-  walk(dir);
-  return entries.sort();
-}
-
-function manifestText(dir: string): string {
-  const skip = (relative: string) => relative.split("/").pop()?.startsWith("SHA256SUMS") ?? false;
-  return manifestEntries(dir)
-    .filter((relative) => !skip(relative))
-    .map((relative) => `${sha256File(join(dir, relative))}  ${relative}`)
-    .join("\n") + "\n";
-}
-
-/** Remote scripts are constructed here and executed by the server's shell
- * over SSH (GOV-13.03). Values inlined are strictly validated above. */
-function remoteScript(template: string, values: Record<string, string>): string {
-  let script = template;
-  for (const [key, value] of Object.entries(values)) {
-    script = script.replaceAll(`__${key}__`, value);
-  }
-  return script;
-}
-
-const REMOTE_VERIFY_TEMPLATE = `
-set -eu
-cd "__RELEASE_DIR__"
-if command -v sha256sum >/dev/null 2>&1; then
-  sha256sum -c SHA256SUMS >/dev/null
-else
-  shasum -a 256 -c SHA256SUMS >/dev/null
-fi
-test -f index.html
-echo ${VERIFICATION_MARKER}
-`;
-
-const REMOTE_LIST_SCRIPT = `
-set -eu
-cd "__WEBROOT__/releases" 2>/dev/null || exit 6
-ls -1 | LC_ALL=C sort
-printf "CURRENT=%s\\n" "$(basename "$(readlink "__WEBROOT__/current" 2>/dev/null)" 2>/dev/null || true)"
-`;
-
-/** Activation by rename (LD-04) with a relative symlink target. GNU mv needs
- * -T to rename over a symlink-to-directory; platforms without -T fall back to
- * rm+rename (the Linux deployment platform always takes the atomic path). */
-const REMOTE_FLIP_SCRIPT = `
-set -eu
-ln -sfn "releases/__RELEASE_ID__" "__WEBROOT__/.current.new"
-if mv -Tf "__WEBROOT__/.current.new" "__WEBROOT__/current" 2>/dev/null; then
-  :
-else
-  rm -rf "__WEBROOT__/current"
-  mv -f "__WEBROOT__/.current.new" "__WEBROOT__/current"
-fi
-basename "$(readlink "__WEBROOT__/current")"
-`;
-
-const REMOTE_PRUNE_SCRIPT = `
-set -eu
-cd "__WEBROOT__/releases" || exit 0
-keep="__KEEP__"
-[ "$keep" -gt 0 ] || exit 0
-current_target="$(basename "$(readlink "__WEBROOT__/current" 2>/dev/null)" 2>/dev/null || true)"
-ls -1 | LC_ALL=C sort -r | tail -n +"$((keep + 1))" | while IFS= read -r old; do
-  [ -n "$old" ] || continue
-  [ "$old" = "$current_target" ] && continue
-  rm -rf -- "$old"
-  echo "pruned $old"
-done
-`;
-
-/** One-time server bring-up (UC-LD-6/LD-09): Ubuntu server, passwordless
- * sudo (OCI default). The Caddy config is rendered locally from the unit's
- * Caddyfile and embedded here; the script echoes TORVIELLO_BOOTSTRAP_OK only
- * after every step succeeded. */
-const REMOTE_BOOTSTRAP_TEMPLATE = `
-set -eu
-export DEBIAN_FRONTEND=noninteractive
-sudo apt-get update -q
-sudo apt-get install -yq caddy rsync
-sudo mkdir -p "__WEBROOT__/releases"
-sudo chown -R "$(id -un)" "__WEBROOT__"
-for port in 80 443; do
-  sudo iptables -C INPUT -p tcp --dport "$port" -j ACCEPT 2>/dev/null || {
-    line=$(sudo iptables -L INPUT --line-numbers -n | awk '/REJECT|DROP/ {print $1; exit}')
-    sudo iptables -I INPUT "\${line:-1}" -p tcp --dport "$port" -j ACCEPT
-  }
-done
-sudo netfilter-persistent save >/dev/null 2>&1 || sudo sh -c 'iptables-save > /etc/iptables/rules.v4'
-sudo tee /etc/caddy/Caddyfile > /dev/null <<'CADDY_EOF'
-__CADDY_CONFIG__
-CADDY_EOF
-sudo caddy validate --config /etc/caddy/Caddyfile
-sudo systemctl enable --now caddy
-sudo systemctl restart caddy
-echo TORVIELLO_BOOTSTRAP_OK
-`;
-
-/** Render the unit Caddyfile for the current phase: bare :80 (IP-only, the
- * pre-domain phase) or the domain form (Caddy auto-TLS via ACME). */
-function renderCaddyConfig(): string {
-  const source = readFileSync(join(UNIT_ROOT, "deploy", "Caddyfile"), "utf8");
-  const site = DOMAIN === "" ? ":80" : DOMAIN;
-  let config = source.replaceAll("http://landing.example {", `${site} {`);
-  // The root follows the configured webroot (tests use a different webroot).
-  config = config.replaceAll("/var/www/torviello-landing/current", `${WEBROOT}/current`);
-  if (config.includes("landing.example")) die(2, "Caddyfile render failed: site address not found");
-  return config;
-}
-
 function doBootstrap(): void {
-  const config = renderCaddyConfig();
+  let config: string;
+  try {
+    config = renderCaddyConfig(UNIT_ROOT, WEBROOT, DOMAIN);
+  } catch (error) {
+    die(2, (error as Error).message);
+  }
   const script = remoteScript(REMOTE_BOOTSTRAP_TEMPLATE, { WEBROOT })
     .replace("__CADDY_CONFIG__", config);
 

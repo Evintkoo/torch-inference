@@ -1,3 +1,4 @@
+/* Copyright (c) 2026 Torviello. */
 /**
  * Integration tests for torviello-landing/deploy/deploy.sh.
  *
@@ -250,7 +251,10 @@ describe("deploy contract (AC-LD-3, GOV-08)", () => {
   });
 
   test("script implements the contract: commands, flags, env, exit codes, marker", () => {
-    const src = readFileSync(SCRIPT, "utf8");
+    // The tool is deploy.ts plus its remote-script module (split for CQ-02).
+    const src = [SCRIPT, join(UNIT_ROOT, "deploy", "remote-scripts.ts")]
+      .map((path) => readFileSync(path, "utf8"))
+      .join("\n");
     for (const cmd of Object.keys(CONTRACT.commands)) {
       expect(src).toContain(`"${cmd}"`);
     }
