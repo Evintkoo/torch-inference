@@ -33,6 +33,7 @@ from benchlib.paths import (
     DEFAULT_CONFIG,
     DEFAULT_RATE_LIMIT,
     MODEL_ID,
+    MODEL_ROOT,
     PROFILE,
     REPO_ROOT,
 )
@@ -195,7 +196,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             process.kill()
             process.wait(timeout=5)
         log.close()
-    model_asset = REPO_ROOT / "models" / MODEL_ID / "asset.bin"
+    model_asset = REPO_ROOT / MODEL_ROOT / MODEL_ID / "asset.bin"
     artifact_bytes = binary.stat().st_size + model_asset.stat().st_size
     runtime_libraries, runtime_library_bytes = loaded_runtime_libraries(binary)
     result = {

@@ -417,6 +417,18 @@ def command_verify(args: argparse.Namespace) -> int:
     return 0
 
 
+def wix_build_command(wix: str, definition: Path) -> tuple[list[str], Path]:
+    """Return the `wix build` argv and the directory to run it from.
+
+    The definition references its payload as relative Source="payload/..."
+    paths, which WiX resolves against the working directory, so the build
+    runs beside the definition with absolute in/out paths.
+    """
+    definition = definition.resolve()
+    msi = definition.with_suffix(".msi")
+    return [wix, "build", "-arch", "x64", "-out", str(msi), str(definition)], definition.parent
+
+
 def command_installer(args: argparse.Namespace) -> int:
     wix_installer = _load_wix_installer()
     summary = wix_installer.installer_document(args.manifest, args.archive, args.out)
@@ -429,9 +441,9 @@ def command_installer(args: argparse.Namespace) -> int:
         raise PackagingError(
             "wix toolset not found on PATH; install with `dotnet tool install --global wix`"
         )
-    msi = definition.with_suffix(".msi")
-    run([wix, "build", "-arch", "x64", "-out", str(msi), str(definition)])
-    emit(f"installer: {msi}")
+    command, cwd = wix_build_command(wix, definition)
+    run(command, cwd=cwd)
+    emit(f"installer: {command[5]}")
     return 0
 
 

@@ -152,3 +152,21 @@ def test_written_payload_is_a_readable_zip(tmp_path: Path) -> None:
     archive = write_archive(tmp_path)
     with zipfile.ZipFile(archive) as bundle:
         assert bundle.read("bin/torviello-engine.exe") == MEMBERS["bin/torviello-engine.exe"]
+
+
+def test_wix_build_runs_beside_the_definition(tmp_path: Path) -> None:
+    # 2026-11-10 CI defect (windows-installer, WIX0103 x17): the definition's
+    # Source="payload/..." paths resolved against the repository root, where
+    # no payload exists. wix must run from the definition's directory.
+    definition = tmp_path / "out" / "torviello-engine-1.0.0-x86_64-pc-windows-msvc.wxs"
+    command, cwd = package.wix_build_command("wix", definition)
+    assert cwd == definition.parent.resolve()
+    assert command == [
+        "wix",
+        "build",
+        "-arch",
+        "x64",
+        "-out",
+        str(definition.with_suffix(".msi").resolve()),
+        str(definition.resolve()),
+    ]

@@ -28,7 +28,6 @@ import { fileURLToPath } from "node:url";
  * explicit stream writes, the repository's CLI convention (torviello_roles
  * writes through sys.stdout). */
 const out = (line: string): void => void process.stdout.write(`${line}\n`);
-const err = (line: string): void => void process.stderr.write(`${line}\n`);
 
 const WEB = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const UNIT_ROOT = resolve(WEB, "..");

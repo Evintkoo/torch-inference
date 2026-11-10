@@ -18,7 +18,6 @@
 import { beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync, rmSync, readFileSync, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { spawnSync } from "node:child_process";
 
 import { CONTRACT, RELEASE_ID, SCRIPT, UNIT_ROOT, fakeRemote, pointCurrent, readCurrent, removeDist, root, rsyncInvocations, rsyncLog, run, seedDist, sshInvocations, sshLog, installHarness } from "./deploy-harness.ts";
 

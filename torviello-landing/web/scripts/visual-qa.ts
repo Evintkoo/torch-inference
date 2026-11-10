@@ -12,7 +12,6 @@ import { chromium } from "playwright-core";
  * explicit stream writes, the repository's CLI convention (torviello_roles
  * writes through sys.stdout). */
 const out = (line: string): void => void process.stdout.write(`${line}\n`);
-const err = (line: string): void => void process.stderr.write(`${line}\n`);
 
 const chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const outDir = process.argv[2] ?? "./qa-out";

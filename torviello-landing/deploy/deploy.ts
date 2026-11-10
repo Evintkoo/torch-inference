@@ -27,7 +27,7 @@
  * destination comes from LANDING_DEPLOY_HOST or --host.
  */
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -314,7 +314,6 @@ function doDeploy(): void {
   if (mkdir.status !== 0) die(5, `cannot create ${WEBROOT}/releases on ${HOST}`);
 
   out("==> uploading release");
-  const extra = SSH_EXTRA === "" ? [] : SSH_EXTRA.split(" ").filter((part) => part !== "");
   const upload = spawnSync(
     "rsync",
     [
