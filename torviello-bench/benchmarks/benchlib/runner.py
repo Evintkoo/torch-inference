@@ -54,6 +54,30 @@ def _failed_quality_cases(quality: dict[str, Any]) -> str:
     return ", ".join(failed) if failed else "none"
 
 
+class EngineRunError(RuntimeError):
+    """A bench run failed; the engine's own log tail is attached.
+
+    2026-11-10 CI defect (ticket 0048): the runner raised a bare TimeoutError
+    while server.log — which holds the engine's actual startup error — stayed
+    unread on disk, so CI showed no cause.
+    """
+
+
+def _engine_log_tail(log_path: Path, lines: int = 40) -> str:
+    """Best-effort tail of the engine log for failure diagnostics."""
+    try:
+        content = log_path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return f"(engine log at {log_path} is unreadable)"
+    if not content:
+        return f"(engine log at {log_path} is empty)"
+    tail = content[-lines:]
+    return (
+        f"engine log tail ({log_path}, last {len(tail)} of {len(content)} "
+        f"lines):\n" + "\n".join(tail)
+    )
+
+
 def summary_markdown(result: dict[str, Any]) -> str:
     latency = result["latency"]["concurrency_1"]
     throughput = result["latency"]["concurrency_8"]
@@ -188,6 +212,10 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 port, token, image, args.requests, args.throughput_concurrency
             )
             quality = quality_check(port, token)
+    except Exception as error:
+        # Surface the engine's own record with the failure; without it a
+        # failed start is undiagnosable from CI output alone.
+        raise EngineRunError(f"{error}\n{_engine_log_tail(log_path)}") from error
     finally:
         process.send_signal(signal.SIGTERM)
         try:
