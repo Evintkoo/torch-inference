@@ -52,7 +52,7 @@ Priorities follow the repository convention: **MUST** is needed for the stated b
 | Layer | Location |
 |---|---|
 | Product and platform requirements | [`product-and-architecture.md`](product-and-architecture.md), [`runtime-and-platform.md`](runtime-and-platform.md), [`security-and-operations.md`](security-and-operations.md) |
-| Engine domain model | [`../torviello-engine/domain/`](../torviello-engine/domain/README.md) |
-| Engine specifications | [`../torviello-engine/specifications/`](../torviello-engine/specifications/README.md) |
-| Engine API contract | [`../torviello-engine/contracts/openapi.yaml`](../torviello-engine/contracts/openapi.yaml) |
-| Normative controls | [`../torviello-enforcer/`](../torviello-enforcer/README.md) |
+| Engine domain model | [`../torviello-engine/domain/`](../../torviello-engine/domain/README.md) |
+| Engine specifications | [`../torviello-engine/specifications/`](../../torviello-engine/specifications/README.md) |
+| Engine API contract | [`../torviello-engine/contracts/openapi.yaml`](../../torviello-engine/contracts/openapi.yaml) |
+| Normative controls | [`../torviello-enforcer/`](../README.md) |

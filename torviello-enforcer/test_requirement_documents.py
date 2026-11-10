@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-REQUIREMENTS = ROOT / "requirements"
+REQUIREMENTS = ROOT / "torviello-enforcer" / "requirements"
 ITEMS = REQUIREMENTS / "items"
 CHECKS = {
     "torviello-engine": ROOT / "torviello-engine" / "specifications" / "acceptance-criteria.md",

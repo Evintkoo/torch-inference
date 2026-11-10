@@ -4,7 +4,7 @@ Copyright (c) 2026 Torviello.
 
 Release and package definitions for the engine-only and full distributions.
 Container definitions live in `../containers/`. The workflow decision is
-recorded in [ADR 0003](../docs/adr/0003-packaging-automation.md) and implements
+recorded in [ADR 0003](../../torviello-docs/docs/adr/0003-packaging-automation.md) and implements
 ED-021, ED-022, ED-024, and REL-01.
 
 ## Ownership and toolchain
@@ -85,3 +85,23 @@ The extracted bundle started from the packaged config, returned 200 from
   profile (REL-01.06).
 - Platform signing and notarization, which remain separate non-deterministic
   steps after the unsigned bundle is produced (REL-01.05).
+
+## Validation
+
+Apply [HPA-4](../../torviello-enforcer/requirements/assurance-standard.md) to
+every change here. From the repository root:
+
+```sh
+uv run --locked pytest torviello-engine/packaging/tests
+uv run python torviello-engine/packaging/torviello_package.py validate
+```
+
+Passing driver tests are not platform evidence: record the clean-host bundle
+build, tamper rejection, and start/health/stop smoke per platform (ticket 0002).
+
+## Status
+
+The driver validates, plans, and builds the engine profile, with tests for
+deterministic archives and tamper rejection. The macOS smoke run is recorded on
+ticket 0002; Windows MSI output is CI-produced, and clean-host Linux and
+Windows bundle evidence is still open on tickets 0002 and 0018.

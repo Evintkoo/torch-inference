@@ -5,7 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ENGINE = ROOT / "torviello-engine"
-REQUIREMENTS = ROOT / "requirements"
+REQUIREMENTS = ROOT / "torviello-enforcer" / "requirements"
 
 
 def _local_links(path: Path) -> list[str]:
@@ -16,7 +16,7 @@ def _local_links(path: Path) -> list[str]:
 
 def test_every_engine_markdown_is_hpa4_governed() -> None:
     documents = sorted(ENGINE.rglob("*.md"))
-    assert len(documents) == 138
+    assert len(documents) == 140  # +containers/README.md, +packaging/README.md (unit consolidation 76b21e8)
     for document in documents:
         text = document.read_text(encoding="utf-8")
         assert "HPA-4" in text, document

@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-REQUIREMENTS = ROOT / "requirements"
+REQUIREMENTS = ROOT / "torviello-enforcer" / "requirements"
 ITEMS = REQUIREMENTS / "items"
 ENGINE = ROOT / "torviello-engine"
 CHECKS = ENGINE / "specifications" / "checks"
@@ -65,7 +65,7 @@ def test_engine_checks_meet_hpa4_structure() -> None:
         text = doc.read_text()
         assert text.startswith(f"# {check_id} — "), f"{check_id}: invalid heading"
         assert f"**Requirement:** {req_id}" in text, f"{check_id}: wrong requirement"
-        assert "[HPA-4](../../../requirements/assurance-standard.md)" in text, f"{check_id}: missing HPA-4 link"
+        assert "[HPA-4](../../../torviello-enforcer/requirements/assurance-standard.md)" in text, f"{check_id}: missing HPA-4 link"
         for section in CHECK_SECTIONS:
             assert section in text, f"{check_id}: missing {section}"
         assert "Highest-standard assurance evidence is missing" in text, f"{check_id}: missing assurance fail condition"

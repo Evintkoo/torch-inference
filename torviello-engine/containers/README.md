@@ -10,7 +10,7 @@ Container definitions live here; release and package definitions live in
 From the repository root:
 
 ```sh
-docker compose -f containers/compose.yaml --profile cpu up --build
+docker compose -f torviello-engine/containers/compose.yaml --profile cpu up --build
 ```
 
 The default image builds the engine-only profile, runs as the unprivileged
@@ -32,3 +32,22 @@ publishes it on `127.0.0.1:8000` only.
   `read_only: true`, so the state path must be an explicit volume.
 - The base images are pinned by release tag. Pin by digest before publishing a
   supported release (REL-02.05).
+
+## Validation
+
+Apply [HPA-4](../../torviello-enforcer/requirements/assurance-standard.md) to
+every change here. From the repository root:
+
+```sh
+docker compose -f torviello-engine/containers/compose.yaml config --quiet
+uv run --locked pytest torviello-engine/packaging/tests
+```
+
+A compose file that renders is not a published image: record the CI image
+build and smoke run as release evidence (REL-01).
+
+## Status
+
+The CPU engine Dockerfile and compose file are defined. No accelerator image
+exists, base images are pinned by tag rather than digest, and no release image
+has been recorded as evidence in this repository.
