@@ -281,8 +281,8 @@ fn environment_helpers_reject_invalid_absent_values() {
 #[test]
 fn environment_value_parsers_accept_and_reject_present_values() {
     // The parsers are split from the env readers so present-value behavior is
-    // testable without mutating process state (set_var is unsafe in edition
-    // 2024 and the workspace forbids unsafe code).
+    // testable without mutating process state: set_var is not callable from
+    // safe code in edition 2024 and the workspace forbids unsafety.
     assert_eq!(super::parse_bool("true").expect("true"), Some(true));
     assert_eq!(super::parse_bool("false").expect("false"), Some(false));
     assert!(super::parse_bool("yes").is_err());
