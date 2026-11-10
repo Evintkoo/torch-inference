@@ -4,13 +4,23 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "deploy publishes a new release; rollback repoints the active release"
-        required: true
+        description: "deploy publishes a new release; rollback repoints the active release (ignored when publish_pages is checked)"
+        required: false
         default: deploy
         type: choice
         options:
           - deploy
           - rollback
+      into:
+        description: "rollback only: explicit target release id (default: newest non-active)"
+        required: false
+        default: ""
+        type: string
+      publish_pages:
+        description: "publish the built site to GitHub Pages instead of deploying to the VM"
+        required: false
+        default: false
+        type: boolean
       into:
         description: "rollback only: explicit target release id (default: newest non-active)"
         required: false
@@ -42,9 +52,11 @@ defaults:
 jobs:
   landing-deploy:
     name: landing-${{ github.event.inputs.mode || 'deploy' }}
-    # VM deploys are deliberate actions (dispatch), never implicit on push:
-    # the Oracle VM is dormant until the owner provisions it (ticket 0047).
-    if: ${{ github.event_name == 'workflow_dispatch' }}
+    # VM deploys are deliberate actions (dispatch with publish_pages unset),
+    # never implicit on push: the Oracle VM is dormant until the owner
+    # provisions it (ticket 0047). A dispatch with publish_pages checked
+    # republishes the site without a content push (ticket 0050).
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_pages != true }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
@@ -109,7 +121,7 @@ jobs:
 
   publish-pages:
     name: publish-pages
-    if: ${{ github.event_name == 'push' }}
+    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_pages == true) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
