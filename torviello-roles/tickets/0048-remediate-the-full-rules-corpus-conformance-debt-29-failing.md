@@ -5,7 +5,7 @@ status = "review"
 priority = "P2"
 owner = "engineer"
 created = "2026-11-10"
-updated = "2026-11-10"
+updated = "2026-11-11"
 requirements = ["ED-014", "SO-012"]
 controls = ["GOV-02", "GOV-03", "GOV-05"]
 depends_on = []
@@ -57,3 +57,4 @@ er/docs green (every job a470fa9 targeted); performance-cpu failed with 'engine 
 - 2026-11-10 — performance-cpu GREEN on CI (run 42857411633, commit 370244e): engine started under LD_LIBRARY_PATH=out/libtorch/libtorch/lib, full benchmark ran, budget met - CI measured p50 0.327ms / p95 0.404ms / p99 0.449ms (budget 10/250/50), AMD EPYC 7763. All CI jobs green on the PR run except dependency-audit (9 RustSec advisories - owner decision, not a required check; tch 0.27 would move libtorch 2.9.0 -> 2.15.0). rules-check green on 370244e; fast-forwarding main per owner-approved D4
 - 2026-11-10 — status -> review
 - 2026-11-10 — moved to review: acceptance met - full corpus 297 passed / 0 failed on a clean tree of 239dc65 (was 23 failed at ba390ed), rules-check runs the full committed suite (never narrowed; the uncommitted ci.yml narrowing was discarded in task 1), all CI jobs green except dependency-audit which is an owner decision outside the conformance scope (9 RustSec advisories: zip/zstd cluster needs tch 0.22 -> 0.27 = libtorch 2.9.0 -> 2.15.0 runtime change; libsqlite3-sys needs sqlx 0.9; rsa has no fix path; tokio/rustls-webpki semver bumps were tested but reverted to protect disk). Known residues recorded honestly: production-only coverage ~94.96% at the threshold edge (CI passes via the repo's prior counting convention, restored for consistency); publish-pages workflow job fails by design because the github-pages environment only permits the gh-pages branch while Pages is in legacy branch mode - repo settings not touched without authorization, site published via gh-pages. Closure is the owner's
+- 2026-11-11 — main unblocked and pushed 56a1aca..f2004a6 (fast-forward; branch protection satisfied by rules-check green on f2004a6). CI on main (run 42861168774): rules-check, python, coverage, performance-cpu, rust-ubuntu, rust-macos, windows-installer, web, docs all green; only dependency-audit red (9 RustSec advisories - owner decision). PR #25 auto-marked merged when main reached the head. Deploy landing workflow fails by the documented github-pages-environment restriction (not touched without authorization; the site is served from the gh-pages branch). f2004a6 adds no landing-page content, so the published Pages build stays current
