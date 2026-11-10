@@ -159,7 +159,7 @@ def test_wix_build_runs_beside_the_definition(tmp_path: Path) -> None:
     # Source="payload/..." paths resolved against the repository root, where
     # no payload exists. wix must run from the definition's directory.
     definition = tmp_path / "out" / "torviello-engine-1.0.0-x86_64-pc-windows-msvc.wxs"
-    command, cwd = package.wix_build_command("wix", definition)
+    command, cwd = installer.wix_build_command("wix", definition)
     assert cwd == definition.parent.resolve()
     assert command == [
         "wix",
