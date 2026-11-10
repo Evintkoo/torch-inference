@@ -73,6 +73,17 @@ jobs:
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
       - run: uv sync --locked
       - run: cargo build --release --locked --no-default-features --features torchscript
+      # tch/download-libtorch extracts the runtime into torch-sys's OUT_DIR but
+      # links it without an embedded rpath, so the engine dies at exec on Linux
+      # with "libtorch_cpu.so: cannot open shared object file" (ticket 0048,
+      # CI runs 42844563097/42848594814 — the bench saw a bare liveness
+      # timeout). Export the loader path for the bench step; fail fast here if
+      # the layout ever moves.
+      - name: Locate the downloaded libtorch runtime
+        run: |
+          libdir="$(find target/release/build -type d -path '*/out/libtorch/lib' -print -quit)"
+          test -f "$libdir/libtorch_cpu.so"
+          echo "LD_LIBRARY_PATH=$libdir" >> "$GITHUB_ENV"
       - run: >-
           uv run python torviello-bench/benchmarks/classify_bench.py
           --requests 1000

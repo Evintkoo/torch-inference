@@ -19,12 +19,19 @@ BOOT_LINE = "FAKE-ENGINE-BOOT-MSG config rejected"
 
 
 def _fake_engine(tmp_path: Path) -> Path:
-    """An executable that boots, logs one line, and never serves traffic."""
+    """An executable that boots, logs one line, and never serves traffic.
+
+    The generated script writes through sys.stdout — the repository's CLI
+    convention — because the corpus logging controls scan committed sources
+    for print() calls (CQ-02/OBS-01), including fixture text.
+    """
     binary = tmp_path / "engine-under-test"
+    boot_line = BOOT_LINE + "\n"
     binary.write_text(
         "#!/usr/bin/env python3\n"
-        "import time\n"
-        f"print({BOOT_LINE!r}, flush=True)\n"
+        "import sys, time\n"
+        f"sys.stdout.write({boot_line!r})\n"
+        "sys.stdout.flush()\n"
         "time.sleep(300)\n",
         encoding="utf-8",
     )
