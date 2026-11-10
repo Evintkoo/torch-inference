@@ -383,29 +383,42 @@ fn validate_against_schema(text: &str, path: &Path) -> AppResult<()> {
 
 fn env_bool(name: &str) -> AppResult<Option<bool>> {
     match env::var(name) {
-        Ok(value) if value == "true" => Ok(Some(true)),
-        Ok(value) if value == "false" => Ok(Some(false)),
-        Ok(_) => Err(AppError::InvalidInput),
+        Ok(value) => parse_bool(&value),
         Err(_) => Ok(None),
+    }
+}
+
+/// The accepted boolean grammar for env overrides; split from `env_bool` so
+/// tests can exercise it without mutating process state (edition 2024 makes
+/// `set_var` unsafe, and the workspace forbids unsafe code).
+fn parse_bool(value: &str) -> AppResult<Option<bool>> {
+    match value {
+        "true" => Ok(Some(true)),
+        "false" => Ok(Some(false)),
+        _ => Err(AppError::InvalidInput),
     }
 }
 
 fn env_allowlist(name: &str) -> AppResult<Option<Vec<String>>> {
     match env::var(name) {
-        Ok(value) => {
-            let hosts: Vec<String> = value
-                .split(',')
-                .map(str::trim)
-                .filter(|entry| !entry.is_empty())
-                .map(str::to_owned)
-                .collect();
-            if hosts.is_empty() {
-                return Err(AppError::InvalidInput);
-            }
-            Ok(Some(hosts))
-        }
+        Ok(value) => parse_allowlist(&value),
         Err(_) => Ok(None),
     }
+}
+
+/// Comma-separated allowlist parsing; split from `env_allowlist` for the same
+/// reason as `parse_bool`.
+fn parse_allowlist(value: &str) -> AppResult<Option<Vec<String>>> {
+    let hosts: Vec<String> = value
+        .split(',')
+        .map(str::trim)
+        .filter(|entry| !entry.is_empty())
+        .map(str::to_owned)
+        .collect();
+    if hosts.is_empty() {
+        return Err(AppError::InvalidInput);
+    }
+    Ok(Some(hosts))
 }
 
 fn default_allowlist() -> Vec<String> {
@@ -421,9 +434,15 @@ where
     T: std::str::FromStr,
 {
     match env::var(name) {
-        Ok(value) => value.parse().map(Some).map_err(|_| AppError::InvalidInput),
+        Ok(value) => parse_value(&value).map(Some),
         Err(_) => Ok(None),
     }
+}
+
+/// `FromStr` parsing with the config error mapping; split from `env_parse` for
+/// the same reason as `parse_bool`.
+fn parse_value<T: std::str::FromStr>(value: &str) -> AppResult<T> {
+    value.parse().map_err(|_| AppError::InvalidInput)
 }
 
 pub fn reload_config() -> AppResult<Config> {

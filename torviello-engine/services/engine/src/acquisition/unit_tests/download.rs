@@ -186,6 +186,25 @@ fn job() -> JobRef {
     Arc::new(RwLock::new(crate::acquisition::installed_job("demo", 0)))
 }
 
+/// Serve a body with no content-length header (close-delimited), so the
+/// client cannot pre-check the declared size and must rely on the
+/// accumulated-bytes bound.
+fn serve_untagged(body: &'static [u8]) -> String {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("listener");
+    let address = listener.local_addr().expect("address");
+    std::thread::spawn(move || {
+        let (mut stream, _) = listener.accept().expect("accept");
+        let mut buffer = [0_u8; 4096];
+        let _ = stream.read(&mut buffer);
+        let _ = write!(
+            stream,
+            "HTTP/1.1 200 OK\r\ncontent-type: application/octet-stream\r\nconnection: close\r\n\r\n"
+        );
+        let _ = stream.write_all(body);
+    });
+    format!("http://{address}/model.bin")
+}
+
 #[tokio::test]
 async fn streamed_download_writes_progress_and_rejects_failures() {
     let root = std::env::temp_dir().join(format!("torviello-dl-{}", uuid::Uuid::new_v4()));
@@ -282,6 +301,132 @@ async fn installed_assets_are_reported_without_a_job() {
     assert_eq!(job.state, DownloadState::Ready);
 }
 
+#[tokio::test]
+async fn start_reports_download_in_progress_while_a_job_is_running() {
+    // download_concurrency 0 parks the spawned job on a permit that never
+    // opens, so the second start takes the in-progress branch
+    // deterministically instead of racing a fast local copy.
+    let fixture = Fixture::new_with(b"model bytes", 1024, 4, 0);
+    let request = || crate::acquisition::DownloadRequest {
+        source: Fixture::local(),
+        expected_digest: None,
+    };
+    let first = fixture
+        .acquisition
+        .start("demo", request())
+        .await
+        .expect("first start");
+    assert_eq!(first.state, DownloadState::Queued);
+    assert_eq!(
+        fixture.acquisition.state("demo").await,
+        Some(DownloadState::Queued)
+    );
+    assert!(matches!(
+        fixture.acquisition.start("demo", request()).await,
+        Err(AppError::DownloadInProgress)
+    ));
+}
+
+#[tokio::test]
+async fn start_reports_installed_assets_without_redownloading() {
+    let fixture = Fixture::new(b"model bytes", 1024, 4);
+    let digest = sha256_hex(b"model bytes");
+    let staging = fixture
+        .acquisition
+        .store
+        .copy_local_to_staging("model.bin", "installed-task")
+        .expect("staging");
+    fixture
+        .acquisition
+        .store
+        .commit(&staging, "demo", &digest)
+        .expect("commit");
+    let job = fixture
+        .acquisition
+        .start(
+            "demo",
+            crate::acquisition::DownloadRequest {
+                source: Fixture::local(),
+                expected_digest: None,
+            },
+        )
+        .await
+        .expect("start on an installed asset");
+    assert_eq!(job.task_id, "installed");
+    assert_eq!(job.state, DownloadState::Ready);
+}
+
+#[tokio::test]
+async fn chunked_oversized_downloads_are_rejected_and_staging_removed() {
+    // No content-length header means the declared-size precheck cannot fire;
+    // the accumulated-bytes bound must still reject the transfer and remove
+    // the staging file (defense in depth against a lying server).
+    let root = std::env::temp_dir().join(format!("torviello-dl-{}", uuid::Uuid::new_v4()));
+    let store = AssetStore::new(&root, 16).expect("store");
+    let client = reqwest::Client::builder()
+        .redirect(reqwest::redirect::Policy::none())
+        .build()
+        .expect("client");
+    let url = serve_untagged(&[b'x'; 17]);
+    let task_id = "task-chunked";
+    assert!(matches!(
+        download_to_staging(
+            &client,
+            &store,
+            &url,
+            task_id,
+            &job(),
+            std::time::Duration::from_secs(2)
+        )
+        .await,
+        Err(AppError::ModelTooLarge)
+    ));
+    assert!(!store.staging_path(task_id).expect("staging path").exists());
+    std::fs::remove_dir_all(root).expect("cleanup");
+}
+
+#[tokio::test]
+async fn commit_detects_a_tampered_source_and_capacity_prunes_it() {
+    // The registry declares the digest of "model bytes"; a source with
+    // different bytes must fail the job at commit time even when the client
+    // sends no expected digest, and the failed terminal job must be pruned
+    // at capacity so the retried start proceeds instead of bouncing.
+    let fixture = Fixture::new_with(b"model bytes", 1024, 1, 2);
+    std::fs::write(fixture.root.join("tampered.bin"), b"tampered bytes").expect("write");
+    fixture
+        .acquisition
+        .start(
+            "demo",
+            crate::acquisition::DownloadRequest {
+                source: SourceRequest::Local {
+                    path: "tampered.bin".to_owned(),
+                },
+                expected_digest: None,
+            },
+        )
+        .await
+        .expect("start");
+    let failed = fixture.wait("demo").await;
+    assert_eq!(failed.state, DownloadState::Failed);
+    assert_eq!(failed.error_code, Some("model.digest_mismatch"));
+
+    let retried = fixture
+        .acquisition
+        .start(
+            "demo",
+            crate::acquisition::DownloadRequest {
+                source: Fixture::local(),
+                expected_digest: None,
+            },
+        )
+        .await
+        .expect("retried start prunes the failed job");
+    assert!(matches!(
+        retried.state,
+        DownloadState::Queued | DownloadState::Downloading | DownloadState::Ready
+    ));
+}
+
 #[test]
 fn terminal_jobs_are_pruned_at_capacity() {
     let mut jobs = HashMap::new();
@@ -291,4 +436,14 @@ fn terminal_jobs_are_pruned_at_capacity() {
     );
     prune_terminal(&mut jobs);
     assert!(jobs.is_empty());
+}
+
+#[test]
+fn prune_terminal_leaves_live_jobs() {
+    let mut jobs = HashMap::new();
+    let mut queued = crate::acquisition::installed_job("demo", 0);
+    queued.state = DownloadState::Queued;
+    jobs.insert("demo".to_owned(), Arc::new(RwLock::new(queued)));
+    prune_terminal(&mut jobs);
+    assert!(jobs.contains_key("demo"));
 }

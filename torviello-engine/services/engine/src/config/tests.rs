@@ -277,3 +277,26 @@ fn environment_helpers_reject_invalid_absent_values() {
         None
     );
 }
+
+#[test]
+fn environment_value_parsers_accept_and_reject_present_values() {
+    // The parsers are split from the env readers so present-value behavior is
+    // testable without mutating process state (set_var is unsafe in edition
+    // 2024 and the workspace forbids unsafe code).
+    assert_eq!(super::parse_bool("true").expect("true"), Some(true));
+    assert_eq!(super::parse_bool("false").expect("false"), Some(false));
+    assert!(super::parse_bool("yes").is_err());
+
+    assert_eq!(super::parse_value::<u16>("8443").expect("port"), 8443);
+    assert!(super::parse_value::<u16>("not-a-port").is_err());
+
+    assert_eq!(
+        super::parse_allowlist("a.example, b.example ,,c.example").expect("allowlist"),
+        Some(vec![
+            "a.example".to_owned(),
+            "b.example".to_owned(),
+            "c.example".to_owned()
+        ])
+    );
+    assert!(super::parse_allowlist(" , ").is_err());
+}

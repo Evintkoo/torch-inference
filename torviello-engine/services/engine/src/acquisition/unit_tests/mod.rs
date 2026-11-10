@@ -79,6 +79,12 @@ struct Fixture {
 
 impl Fixture {
     fn new(contents: &[u8], max_bytes: u64, queue_depth: usize) -> Self {
+        Self::new_with(contents, max_bytes, queue_depth, 2)
+    }
+
+    /// `download_concurrency` 0 parks the spawned job on a permit that never
+    /// opens, so the job holds a deterministic non-terminal state.
+    fn new_with(contents: &[u8], max_bytes: u64, queue_depth: usize, concurrency: usize) -> Self {
         let root = std::env::temp_dir().join(format!("torviello-acq-{}", uuid::Uuid::new_v4()));
         std::fs::create_dir_all(&root).expect("temp");
         std::fs::write(root.join("model.bin"), contents).expect("source");
@@ -97,6 +103,7 @@ impl Fixture {
             .expect("register");
         let mut config = config(root.to_str().expect("utf8"), max_bytes);
         config.max_queue_depth = queue_depth;
+        config.download_concurrency = concurrency;
         let store = Arc::new(AssetStore::new(&root, max_bytes).expect("store"));
         Self {
             root,
