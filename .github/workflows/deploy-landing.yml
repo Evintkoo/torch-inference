@@ -21,11 +21,6 @@ on:
         required: false
         default: false
         type: boolean
-      into:
-        description: "rollback only: explicit target release id (default: newest non-active)"
-        required: false
-        default: ""
-        type: string
   push:
     branches: [main]
     paths:
