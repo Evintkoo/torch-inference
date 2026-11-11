@@ -173,7 +173,11 @@ jobs:
       - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2
         with:
           tool: cargo-audit
-      - run: cargo audit
+      # The audit disposition lives in the engine unit (ticket 0051) so the
+      # repository root keeps its fixed committed file set; the workspace
+      # lockfile stays at the root.
+      - run: cargo audit -f ../Cargo.lock
+        working-directory: torviello-engine
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
