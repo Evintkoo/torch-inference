@@ -1,7 +1,7 @@
 +++
 id = "0051"
 title = "Move the audit disposition into the engine unit and disposition the untracked root product tree"
-status = "in_progress"
+status = "review"
 priority = "P1"
 owner = "engineer"
 created = "2026-11-11"
@@ -26,3 +26,6 @@ the repository root contains only its fixed committed file set plus the owner-di
 - 2026-11-11 — created
 - 2026-11-11 — started
 - 2026-11-11 — owner direction 2026-11-11: root must always be clean. Accounting: the only root file the agent added was .cargo/audit.toml (ticket 0050) - relocated to torviello-engine/.cargo/audit.toml (cargo-audit auto-reads .cargo/audit.toml from the CWD and has no --config flag; verified locally: cd torviello-engine && cargo audit -f ../Cargo.lock = 0 vulnerabilities + 1 allowed unmaintained warning); ci.yml dependency-audit now runs from the unit. Root caches .pytest_cache/.ruff_cache removed (regenerable). IMPORTANT correction to earlier framing: the ~29 remaining untracked root entries are NOT retired-engine leftovers - they are the owner's ACTIVE second product (actix multimodal inference server: src/ web/ services/ benches/ tests/ scripts/ docs/ Dockerfile Makefile compose*.yaml nginx.conf model_registry.json models.json convert_kokoro.py CLAUDE.md with live TTS/STT/detect/LLM guidance); working copies DIFFER from the feature branches that track 8 of these paths, i.e. uncommitted work exists and nothing may be deleted. Root was in this mixed state before the agent's sessions (recorded in the prior session's logs as untracked legacy). Awaiting owner decision on consolidating the product tree (options: dedicated branch + worktree; separate repo; leave as-is). canvas/README.md documents the committed canvas/data.json - owner call to commit or relocate
+- 2026-11-11 — root cleanup executed (owner-approved: product branch + worktree): backup tarball ~/torviello-backups/root-untracked-2026-11-11.tar.gz (576 files, 10MB) created FIRST; product worktree ../ti-product on new branch product/multimodal-server (commit 928c6af, 501 files / 201848 lines: src web services benches tests scripts docs Docker/Makefile/compose/nginx model registries convert_kokoro.py CLAUDE.md notes, canvas/README.md); copy verified file-for-file before removal (caught and fixed cp -R canvas/README.md overwriting the worktree root README.md - restored from git); all 31 untracked entries + notes/ + transcript removed from the root; dist (regenerable product build output) removed; .venv/.crush/.claude kept as tooling. git status: 0 untracked. Product development continues at ../ti-product
+- 2026-11-11 — status -> review
+- 2026-11-11 — verified after cleanup: git status 0 untracked; root = committed set + gitignored tooling (.venv .claude .crush); full corpus pytest in the MAIN checkout = 297 passed / 0 failed (the local-only false failures from the untracked files are gone - local runs now match CI exactly); product preserved at ../ti-product on product/multimodal-server (928c6af) + tarball backup. Moved to review; closure is the owner's
